@@ -339,6 +339,7 @@ class FileEntry : Entry {
 
 	public FileEntry () {
 		changed.connect (complete);
+		complete ();
 	}
 
 	void complete () {
@@ -403,8 +404,8 @@ class FileEntry : Entry {
 	}
 
 	public override bool key_press_event (Gdk.EventKey e) {
-		if (e.keyval == Gdk.Key.Escape) {
-			Idle.add (() => { destroy (); return false; });
+		if (e.keyval == Gdk.Key.Escape || (e.keyval == Gdk.Key.g && Gdk.ModifierType.CONTROL_MASK in e.state)) {
+			Idle.add (() => { get_parent().destroy (); return false; });
 			return true;
 		} else if (e.keyval == Gdk.Key.Up) {
 			choices_box.back ();
@@ -558,28 +559,33 @@ class Editor : SourceView {
 		}
 
 		if (ctrl_x_pressed) {
-			if (e.keyval == Gdk.Key.f && Gdk.ModifierType.CONTROL_MASK in e.state) {
-				// OPEN FILE
-				var file = new EntryOverlay ("", true);
-				file.activate.connect ((s) => {
-						file.destroy ();
-						open_file (s);
-					});
-				set_overlay (file);
-				return true;
-			} else if (e.keyval == Gdk.Key.s && Gdk.ModifierType.CONTROL_MASK in e.state) {
-				// SAVE FILE
-				if (current_filename != null) {
-					var f = File.new_for_path (current_filename);
-					TextIter start, end;
-					buffer.get_start_iter (out start);
-					buffer.get_end_iter (out end);
-					string text = buffer.get_text (start, end, false);
-					f.replace_contents_async.begin (text.data, null, true, FileCreateFlags.NONE, null);
+			if (Gdk.ModifierType.CONTROL_MASK in e.state) {
+				if (e.keyval == Gdk.Key.f) {
+					// OPEN FILE
+					var file = new EntryOverlay ("", true);
+					file.activate.connect ((s) => {
+							file.destroy ();
+							open_file (s);
+						});
+					set_overlay (file);
+					return true;
+				} else if (e.keyval == Gdk.Key.s) {
+					// SAVE FILE
+					if (current_filename != null) {
+						var f = File.new_for_path (current_filename);
+						TextIter start, end;
+						buffer.get_start_iter (out start);
+						buffer.get_end_iter (out end);
+						string text = buffer.get_text (start, end, false);
+						f.replace_contents_async.begin (text.data, null, true, FileCreateFlags.NONE, null, (s,r) => {
+								f.replace_contents_async.end (r, null);
+								text = null;
+							});
+					}
+				} else if (e.keyval == Gdk.Key.c) {
+					// QUIT
+					Gtk.main_quit ();
 				}
-			} else if (e.keyval == Gdk.Key.c && Gdk.ModifierType.CONTROL_MASK in e.state) {
-				// QUIT
-				Gtk.main_quit ();
 			} else {
 				do_cut ();
 			}
