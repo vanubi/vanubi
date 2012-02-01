@@ -1,67 +1,352 @@
 using Gtk;
 
-TextTag in_string_tag = null;
+namespace Vanubi {
+	// returns a ranking, lower is better (0 = perfect match)
+	public int pattern_match (string pattern, string haystack) {
+		int rank = 0;
+		int n = pattern.length;
+		int m = haystack.length;
+		int j = 0;
+		for (int i=0; i < n; i++) {
+			char c = pattern[i];
+			bool found = false;
+			for (; j < m; j++) {
+				if (c == haystack[j]) {
+					found = true;
+					break;
+				}
+				rank++;
+			}
+			if (!found) {
+				// no match
+				return -1;
+			}
+			j++;
+		}
+		rank += m-j;
+		return rank;
+	}
 
-bool is_in_string (TextIter iter) {
-	var tags = iter.get_tags ();
-	return tags == null || tags.data.foreground_gdk.equal (in_string_tag.foreground_gdk);
-}
+	public struct Key {
+		uint keyval;
+		Gdk.ModifierType modifiers;
 
-public string lcs (string x, string y, out int len) {
-	int m = x.length;
-	int n = y.length;
-	int[,] c = new int[m+1,n+1];
-	for (int i=0; i < m; i++) {
-		for (int j=0; j < n; j++) {
-			if (x[i] == y[j]) {
-				c[i+1,j+1] = c[i,j]+1;
+		public Key (uint keyval, Gdk.ModifierType modifiers) {
+			this.keyval = keyval;
+			this.modifiers = modifiers;
+		}
+
+		public uint hash () {
+			return keyval | (modifiers << 16);
+		}
+
+		public bool equal (Key? other) {
+			return keyval == other.keyval && modifiers == other.modifiers;
+		}
+	}
+
+	public class Manager : Overlay {
+		class KeyNode {
+			public string command;
+			Key key;
+			HashTable<Key?, KeyNode> children = new HashTable<Key?, KeyNode> (Key.hash, Key.equal);
+
+			public KeyNode get_child (Key key, bool create) {
+				KeyNode child = children.get (key);
+				if (create && child == null) {
+					child = new KeyNode ();
+					child.key = key;
+					children[key] = child;
+				}
+				return child;
+			}
+
+			public bool has_children () {
+				return children.size() > 0;
+			}
+		}
+
+		GenericArray<Editor> editors = new GenericArray<Editor> ();
+
+		KeyNode key_root = new KeyNode ();
+		KeyNode current_key;
+		uint key_timeout = 0;
+
+		[Signal (detailed = true)]
+		public signal void execute_command (Editor editor, string command);
+
+		public Manager () {
+			current_key = key_root;
+
+			// setup commands
+			set_command ({
+					Key (Gdk.Key.x, Gdk.ModifierType.CONTROL_MASK),
+						Key (Gdk.Key.f, Gdk.ModifierType.CONTROL_MASK) },
+				"open-file");
+			execute_command["open-file"].connect (on_open_file);
+
+			set_command ({
+					Key (Gdk.Key.x, Gdk.ModifierType.CONTROL_MASK),
+						Key (Gdk.Key.s, Gdk.ModifierType.CONTROL_MASK) },
+				"save-file");
+			execute_command["save-file"].connect (on_save_file);
+
+			set_command ({
+					Key (Gdk.Key.x, Gdk.ModifierType.CONTROL_MASK),
+						Key (Gdk.Key.c, Gdk.ModifierType.CONTROL_MASK) },
+				"quit");
+			execute_command["quit"].connect (on_quit);
+
+			set_command ({ Key (Gdk.Key.Tab, 0) }, "tab");
+			execute_command["tab"].connect (on_tab);
+
+			// setup empty buffer
+			var ed = new Editor (this);
+			var s = new ScrolledWindow (null, null);
+			s.expand = true;
+			s.add (ed);
+			add (s);
+			Idle.add (() => { ed.grab_focus (); return false; });
+		}
+
+		public void set_command (Key[] keyseq, string cmd) {
+			KeyNode cur = key_root;
+			foreach (var key in keyseq) {
+				cur = cur.get_child (key, true);
+			}
+			cur.command = cmd;
+		}
+
+		public bool key_pressed (Editor editor, uint keyval, Gdk.ModifierType modifiers) {
+			if (key_timeout != 0) {
+				Source.remove (key_timeout);
+			}
+			modifiers &= Gdk.ModifierType.CONTROL_MASK;
+			if (keyval == Gdk.Key.Escape || (keyval == Gdk.Key.g && modifiers == Gdk.ModifierType.CONTROL_MASK)) {
+				// abort
+				current_key = key_root;
+				return true;
+			}
+			if (modifiers == 0 && keyval != Gdk.Key.Tab && current_key == key_root) {
+				// normal key, avoid a table lookup
+				return false;
+			}
+
+			current_key = current_key.get_child (Key (keyval, modifiers), false);
+			if (current_key == null) {
+				// no match
+				current_key = key_root;
+				return false;
+			}
+
+			if (current_key.has_children ()) {
+				if (current_key.command != null) {
+					// wait for further keys
+					Timeout.add (300, () => {
+							key_timeout = 0;
+							unowned string command = current_key.command;
+							current_key = key_root;
+							execute_command[command] (editor, command);
+							return false;
+						});
+				}
 			} else {
-				c[i+1,j+1] = int.max (c[i+1,j], c[i,j+1]);
+				unowned string command = current_key.command;
+				current_key = key_root;
+				execute_command[command] (editor, command);
+			}
+			return true;
+		}
+
+		void on_open_file (Editor editor) {
+#if 0
+			var file = new EntryOverlay ("", true);
+			file.activate.connect ((s) => {
+					file.destroy ();
+					open_file (s);
+				});
+			set_overlay (file);
+#endif
+		}
+
+		void on_save_file (Editor editor) {
+#if 0
+			if (current_filename != null) {
+				var f = File.new_for_path (current_filename);
+				TextIter start, end;
+				buffer.get_start_iter (out start);
+				buffer.get_end_iter (out end);
+				string text = buffer.get_text (start, end, false);
+				f.replace_contents_async.begin (text.data, null, true, FileCreateFlags.NONE, null, (s,r) => {
+						try {
+							f.replace_contents_async.end (r, null);
+						} catch (Error e) {
+							message (e.message);
+						}
+						text = null;
+					});
+			}
+#endif
+		}
+
+		void on_quit () {
+			Gtk.main_quit ();
+		}
+
+		void on_tab (Editor ed) {
+			var buf = ed.buffer;
+
+			TextIter insert_iter;
+			buf.get_iter_at_mark (out insert_iter, buf.get_insert ());
+			int line = insert_iter.get_line ();
+			if (line == 0) {
+				ed.set_line_indentation (line, 0);
+				return;
+			}
+
+			// find first non-blank prev line
+			int prev_line = line-1;
+			while (prev_line >= 0) {
+				TextIter line_start;
+				buf.get_iter_at_line (out line_start, prev_line);
+				TextIter line_end = line_start;
+				line_end.forward_to_line_end ();
+				if (line_start.get_line () != line_end.get_line ()) {
+					// empty line
+					prev_line--;
+					continue;
+				}
+				string text = buf.get_text (line_start, line_end, false);
+				if (text.strip()[0] == '\0') {
+					prev_line--;
+				} else {
+					break;
+				}
+			}
+
+			if (prev_line < 0) {
+				ed.set_line_indentation (line, 0);
+			} else {
+				int new_indent = ed.get_line_indentation (prev_line);
+				var tab_width = (int) ed.tab_width;
+
+				// opened/closed braces
+				TextIter iter;
+				buf.get_iter_at_line (out iter, prev_line);
+				bool first_nonspace = true;
+				while (!iter.ends_line () && !iter.is_end ()) {
+					var c = iter.get_char ();
+					if (c == '{' && !ed.is_in_string (iter)) {
+						new_indent += tab_width;
+					} else if (c == '}' && !first_nonspace && !ed.is_in_string (iter)) {
+						new_indent -= tab_width;
+					}
+					iter.forward_char ();
+					if (!c.isspace ()) {
+						first_nonspace = false;
+					}
+				}
+
+				// unindent
+				buf.get_iter_at_line (out iter, line);
+				while (!iter.ends_line () && !iter.is_end ()) {
+					unichar c = iter.get_char ();
+					if (!c.isspace ()) {
+						if (c == '}' && !ed.is_in_string (iter)) {
+							new_indent -= tab_width;
+						}
+						break;
+					}
+					iter.forward_char ();
+				}
+
+				ed.set_line_indentation (line, new_indent);
 			}
 		}
 	}
-	len = c[m,n];
 
-	StringBuilder b = new StringBuilder ();
-	int i=m-1, j=n-1;
-	while (i >= 0 && j >= 0) {
-		if (x[i] == y[j]) {
-			b.prepend_c (x[i]);
-			i--; j--;
-		} else if (c[i+1, j] > c[i, j+1]) {
-			j--;
-		} else {
-			i--;
+	public class Editor : SourceView {
+		unowned Manager manager;
+		public string filename;
+		TextTag in_string_tag = null;
+
+		public bool is_in_string (TextIter iter) {
+			var tags = iter.get_tags ();
+			return tags == null || tags.data.foreground_gdk.equal (in_string_tag.foreground_gdk);
 		}
-	}
-	return (owned) b.str;
-}
 
-int match_pattern (string pattern, string haystack) {
-	int rank = 0;
-	int n = pattern.length;
-	int m = haystack.length;
-	int j = 0;
-	for (int i=0; i < n; i++) {
-		char c = pattern[i];
-		bool found = false;
-		for (; j < m; j++) {
-			if (c == haystack[j]) {
-				found = true;
-				break;
+		public Editor (Manager manager) {
+			this.manager = manager;
+
+			var vala = SourceLanguageManager.get_default().get_language ("vala");
+			var buf = new SourceBuffer.with_language (vala);
+			this.buffer = buf;
+
+			// HACK: sourceview doesn't set the style in the tags :-(
+			buf.set_text ("\"foo\"", -1);
+			TextIter start, end;
+			buf.get_start_iter (out start);
+			buf.get_end_iter (out end);
+			buf.ensure_highlight (start, end);
+			start.forward_char ();
+			var tags = start.get_tags ();
+			if (tags != null) {
+				in_string_tag = tags.data;
 			}
-			rank++;
+
+			buf.set_text ("", 0);
 		}
-		if (!found) {
-			// no match
-			return -1;
+
+		public void set_line_indentation (int line, int indent) {
+			indent = int.max (indent, 0);
+
+			TextIter start;
+			var buf = buffer;
+			buf.get_iter_at_line (out start, line);
+
+			var iter = start;
+			while (iter.get_char().isspace() && !iter.ends_line () && !iter.is_end ()) {
+				iter.forward_char ();
+			}
+
+			buf.delete (ref start, ref iter);
+			var tab_width = this.tab_width;
+			buf.insert (ref start, string.nfill(indent/tab_width, '\t')+string.nfill(indent-(indent/tab_width)*tab_width, ' '), -1);
+
+			// reset cursor, textbuffer bug?
+			buf.get_iter_at_mark (out iter, buf.get_insert ());
+			buf.place_cursor (iter);
 		}
-		j++;
+
+		public int get_line_indentation (int line) {
+			uint tab_width = this.tab_width;
+			uint indent = 0;
+
+			TextIter iter;
+			var buf = buffer;
+			buf.get_iter_at_line (out iter, line);
+
+			while (iter.get_char().isspace () && !iter.ends_line () && !iter.is_end ()) {
+				if (iter.get_char() == '\t') {
+					indent += tab_width;
+				} else {
+					indent++;
+				}
+				iter.forward_char ();
+			}
+			return (int) indent;
+		}
+
+		public override bool key_press_event (Gdk.EventKey e) {
+			if (manager.key_pressed (this, e.keyval, e.state)) {
+				return true;
+			}
+			return base.key_press_event (e);
+		}
 	}
-	rank += m-j;
-	return rank;
 }
 
+#if 0
 class EntryOverlay : Grid {
 	Entry entry;
 
@@ -247,14 +532,14 @@ async string[] file_complete (owned string path, Cancellable cancellable) throws
 			}
 		}
 	}
-	// remove trailing nulls
+	// skip trailing nulls
 	while (comps.length > 0 && comps[comps.length-1] == null) {
 		comps.length--;
 	}
 	if (comps.length == 0) {
-		// TODO: root
 		return new string[0];
 	}
+	// skip leading nulls
 	int index = 0;
 	while (comps[index] == null) {
 		index++;
@@ -262,8 +547,12 @@ async string[] file_complete (owned string path, Cancellable cancellable) throws
 
 	var worker = new MatchWorker (cancellable);
 	File file = File.new_for_path ("/");
-	string[] result = yield file_complete_pattern (worker, file, index, comps, cancellable);
-	worker.terminate ();
+	string[] result = null;
+	try {
+		result = yield file_complete_pattern (worker, file, index, comps, cancellable);
+	} finally {
+		worker.terminate ();
+	}
 	cancellable.set_error_if_cancelled ();
 	return result;
 }
@@ -478,67 +767,41 @@ class Editor : SourceView {
 		grab_focus ();
 	}
 
-	void set_line_indentation (int line, int indent) {
-		indent = int.max (indent, 0);
-
-		TextIter start;
-		var buf = buffer;
-		buf.get_iter_at_line (out start, line);
-
-		var iter = start;
-		while (iter.get_char().isspace() && !iter.ends_line () && !iter.is_end ()) {
-			iter.forward_char ();
-		}
-
-		buf.delete (ref start, ref iter);
-		var tab_width = this.tab_width;
-		buf.insert (ref start, string.nfill(indent/tab_width, '\t')+string.nfill(indent-(indent/tab_width)*tab_width, ' '), -1);
-
-		// reset cursor, textbuffer bug?
-		buf.get_iter_at_mark (out iter, buf.get_insert ());
-		buf.place_cursor (iter);
-	}
-
-	int get_line_indentation (int line) {
-		uint tab_width = this.tab_width;
-		uint indent = 0;
-
-		TextIter iter;
-		var buf = buffer;
-		buf.get_iter_at_line (out iter, line);
-
-		while (iter.get_char().isspace () && !iter.ends_line () && !iter.is_end ()) {
-			if (iter.get_char() == '\t') {
-				indent += tab_width;
-			} else {
-				indent++;
-			}
-			iter.forward_char ();
-		}
-		return (int)indent;
-	}
-
 	void open_file (string name) {
 		set_progress_overlay ();
 		var file = File.new_for_path (name);
+		if (current_filename == file.get_path ()) {
+			// already opened
+			return;
+		}
+
 		file.load_contents_async (null, (s,r) => {
 				uint8[] content;
 				try {
 					file.load_contents_async.end (r, out content, null);
-					var buf = (SourceBuffer) buffer;
-					buf.begin_not_undoable_action ();
-					buf.set_text ((string) content, -1);
-					buf.end_not_undoable_action ();
-					grab_focus ();
-					TextIter start;
-					buf.get_start_iter (out start);
-					buf.place_cursor (start);
-					current_filename = file.get_path ();
 				} catch (Error e) {
 					message (e.message);
 				} finally {
 					unset_progress_overlay ();
 				}
+
+				var vala = SourceLanguageManager.get_default().get_language ("vala");
+				var buf = new SourceBuffer.with_language (vala);
+				var ed = new Editor ();
+				ed.buffer = buf;
+				ed.current_filename = file.get_path ();
+				buf.begin_not_undoable_action ();
+				buf.set_text ((string) content, -1);
+				buf.end_not_undoable_action ();
+				TextIter start;
+				buf.get_start_iter (out start);
+				buf.place_cursor (start);
+
+				var w = (ScrolledWindow) get_parent ();
+				w.remove (this);
+				w.add (ed);
+				w.show_all ();
+				Idle.add (() => { ed.grab_focus (); return false; });
 			});
 	}
 
@@ -578,7 +841,11 @@ class Editor : SourceView {
 						buffer.get_end_iter (out end);
 						string text = buffer.get_text (start, end, false);
 						f.replace_contents_async.begin (text.data, null, true, FileCreateFlags.NONE, null, (s,r) => {
-								f.replace_contents_async.end (r, null);
+								try {
+									f.replace_contents_async.end (r, null);
+								} catch (Error e) {
+									message (e.message);
+								}
 								text = null;
 							});
 					}
@@ -593,79 +860,10 @@ class Editor : SourceView {
 			ctrl_x_source = Timeout.add (300, () => { do_cut (); return false; });
 			return true;
 		}
-
-		if (e.keyval == Gdk.Key.Tab) {
-			// TAB
-			TextIter insert_iter;
-			buf.get_iter_at_mark (out insert_iter, buf.get_insert ());
-			int line = insert_iter.get_line ();
-			if (line == 0) {
-				set_line_indentation (line, 0);
-			} else {
-				// first non-blank prev line
-				int prev_line = line-1;
-				while (prev_line >= 0) {
-					TextIter line_start;
-					buf.get_iter_at_line (out line_start, prev_line);
-					TextIter line_end = line_start;
-					line_end.forward_to_line_end ();
-					if (line_start.get_line () != line_end.get_line ()) {
-						// empty line
-						prev_line--;
-						continue;
-					}
-					string text = buf.get_text (line_start, line_end, false);
-					if (text.strip()[0] == '\0') {
-						prev_line--;
-					} else {
-						break;
-					}
-				}
-
-				if (prev_line < 0) {
-					set_line_indentation (line, 0);
-				} else {
-					int new_indent = get_line_indentation (prev_line);
-					var tab_width = (int)this.tab_width;
-
-					// opened/closed braces
-					TextIter iter;
-					buf.get_iter_at_line (out iter, prev_line);
-					bool first_nonspace = true;
-					while (!iter.ends_line () && !iter.is_end ()) {
-						var c = iter.get_char ();
-						if (c == '{' && !is_in_string (iter)) {
-							new_indent += tab_width;
-						} else if (c == '}' && !first_nonspace && !is_in_string (iter)) {
-							new_indent -= tab_width;
-						}
-						iter.forward_char ();
-						if (!c.isspace ()) {
-							first_nonspace = false;
-						}
-					}
-
-					// unindent
-					buf.get_iter_at_line (out iter, line);
-					while (!iter.ends_line () && !iter.is_end ()) {
-						unichar c = iter.get_char ();
-						if (!c.isspace ()) {
-							if (c == '}' && !is_in_string (iter)) {
-								new_indent -= tab_width;
-							}
-							break;
-						}
-						iter.forward_char ();
-					}
-
-					set_line_indentation (line, new_indent);
-				}
-			}
-			return true;
-		}
 		return base.key_press_event (e);
 	}
 }
+#endif
 
 int main (string[] args) {
 	Gtk.init (ref args);
@@ -674,38 +872,9 @@ int main (string[] args) {
 	win.delete_event.connect (() => { Gtk.main_quit (); return false; });
 	win.set_default_size (800, 600);
 
-	var vala = SourceLanguageManager.get_default().get_language ("vala");
-	var buf = new SourceBuffer.with_language (vala);
-	var ed = new Editor ();
-	ed.buffer = buf;
-
-	// HACK: sourceview doesn't set the style in the tags :-(
-	// BRACE IN STRING
-	buf.set_text ("\"foo\"", -1);
-	TextIter start, end;
-	buf.get_start_iter (out start);
-	buf.get_end_iter (out end);
-	buf.ensure_highlight (start, end);
-	start.forward_char ();
-	var tags = start.get_tags ();
-	if (tags != null) {
-		in_string_tag = tags.data;
-	}
-
-	buf.set_text ("void foo () {\n\tfoo ();\n}\n", -1);
-
-	var s = new ScrolledWindow (null, null);
-	s.expand = true;
-	s.add (ed);
-	var grid = new Grid ();
-	grid.orientation = Orientation.VERTICAL;
-	grid.add (s);
-	ed.grid = grid;
-	win.add (grid);
+	win.add (new Vanubi.Manager ());
 
 	win.show_all ();
-	ed.grab_focus ();
-
 	Gtk.main ();
 
 	return 0;
