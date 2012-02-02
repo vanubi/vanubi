@@ -123,7 +123,7 @@ namespace Vanubi {
 			cur.command = cmd;
 		}
 
-		public void replace_widget (Widget old, Widget r) {
+		public void replace_widget (owned Widget old, Widget r) {
 			var parent = (Container) old.get_parent ();
 			if (parent is Paned) {
 				var paned = (Paned) parent;
@@ -138,6 +138,7 @@ namespace Vanubi {
 			} else {
 				parent.remove (old);
 				parent.add (r);
+				r.show_all ();
 			}
 			// HACK: SourceView bug
 			if (old is Editor) {
@@ -152,7 +153,7 @@ namespace Vanubi {
 				// HACK: SourceView bug
 				add (w);
 				w.hide ();
-			} else {
+			} else if (w is Container) {
 				var c = (Container) w;
 				foreach (var child in c.get_children ()) {
 					detach_editors (child);
@@ -430,6 +431,7 @@ namespace Vanubi {
 			parent.add (paned);
 
 			paned.pack1 (editor, true, false);
+			Idle.add (() => { editor.view.grab_focus (); return false; });
 
 			var ed = clone_editor (editor);
 			paned.pack2 (ed, true, false);
@@ -437,20 +439,31 @@ namespace Vanubi {
 		}
 
 		void on_join_all (Editor editor) {
-		}
-
-		void on_join (Editor editor) {
-			var parent = (Container) editor.get_parent ();
-			if (parent == this) {
+			var paned = editor.get_parent () as Paned;
+			if (paned == null) {
 				// already on front
 				return;
 			}
-			var pparent = (Container) parent.get_parent ();
+			unowned Widget parent = editor;
+			while (parent.get_parent() != this) {
+				parent = parent.get_parent ();
+			}
+			paned.remove (editor); // avoid detach
+			detach_editors (parent);
+			replace_widget (parent, editor);
+			Idle.add (() => { editor.view.grab_focus (); return false; });
+		}
 
-			var paned = (Paned) parent;
+		void on_join (Editor editor) {
+			var paned = (Container) editor.get_parent () as Paned;
+			if (paned == null) {
+				// already on front
+				return;
+			}
 			paned.remove (editor);
-			detach_editors (editor == paned.get_child1 () ? paned.get_child2 () : paned.get_child1 ());
+			detach_editors (paned);
 			replace_widget (paned, editor);
+			Idle.add (() => { editor.view.grab_focus (); return false; });
 		}
 
 		class SwitchBufferBar : Bar {
