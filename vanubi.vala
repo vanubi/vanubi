@@ -75,8 +75,14 @@ namespace Vanubi {
 			set_command ({ Key (Gdk.Key.Tab, 0) }, "tab");
 			execute_command["tab"].connect (on_tab);
 
+			set_command ({
+					Key (Gdk.Key.x, Gdk.ModifierType.CONTROL_MASK),
+						Key (Gdk.Key.b, 0)},
+				"switch-buffer");
+			execute_command["switch-buffer"].connect (on_switch_buffer);
+
 			// setup empty buffer
-			var ed = new Editor (this);
+			var ed = create_editor ();
 			var s = new ScrolledWindow (null, null);
 			s.expand = true;
 			s.add (ed);
@@ -96,14 +102,18 @@ namespace Vanubi {
 			cur.command = cmd;
 		}
 
-		public bool key_pressed (Editor editor, uint keyval, Gdk.ModifierType modifiers) {
+		public bool on_key_press_event (Widget w, Gdk.EventKey e) {
+			var editor = (Editor) w;
+			var keyval = e.keyval;
+			var modifiers = e.state;
+
 			if (key_timeout != 0) {
 				Source.remove (key_timeout);
 			}
 			modifiers &= Gdk.ModifierType.CONTROL_MASK;
 			if (keyval == Gdk.Key.Escape || (keyval == Gdk.Key.g && modifiers == Gdk.ModifierType.CONTROL_MASK)) {
 				// abort
-				abort ();
+				abort (editor);
 				return true;
 			}
 			if (modifiers == 0 && keyval != Gdk.Key.Tab && current_key == key_root) {
@@ -137,16 +147,18 @@ namespace Vanubi {
 			return true;
 		}
 
-		void set_loading () {
-		}
-
-		void unset_loading () {
-		}
-
 		public void open_file (Editor editor, string filename) {
 			set_loading ();
 
 			var file = File.new_for_path (filename);
+			if (!file.query_exists ()) {
+				var ed = create_editor ();
+				ed.file = file;
+				editor.replace_editor (ed);
+				Idle.add (() => { ed.grab_focus (); return false; });
+				return;
+			}
+
 			file.load_contents_async (null, (s,r) => {
 					uint8[] content;
 					try {
@@ -158,25 +170,49 @@ namespace Vanubi {
 						unset_loading ();
 					}
 
-					editor.filename = file.get_path ();
-					var buf = (SourceBuffer) editor.buffer;
+					var ed = create_editor ();
+					ed.file = file;
+					var buf = (SourceBuffer) ed.buffer;
 					buf.begin_not_undoable_action ();
 					buf.set_text ((string) content, -1);
 					buf.end_not_undoable_action ();
 					TextIter start;
 					buf.get_start_iter (out start);
 					buf.place_cursor (start);
-					Idle.add (() => { editor.grab_focus (); return false; });
+					editor.replace_editor (ed);
+					Idle.add (() => { ed.grab_focus (); return false; });
 				});
 		}
 
-		public void abort () {
+		public void abort (Editor editor) {
 			current_key = key_root;
 			foreach (unowned Widget w in get_children ()) {
 				if (!(w is ScrolledWindow)) {
 					remove (w);
 				}
 			}
+			Idle.add (() => { editor.grab_focus (); return false; });
+		}
+
+		void set_loading () {
+		}
+
+		void unset_loading () {
+		}
+
+		Editor create_editor () {
+			var ed = new Editor ();
+			ed.key_press_event.connect (on_key_press_event);
+			editors.add (ed);
+			return ed;
+		}
+
+		string[] get_editor_names () {
+			string[] ret = null;
+			for (int i=0; i < editors.length; i++) {
+				ret += editors[i].get_editor_name ();
+			}
+			return ret;
 		}
 
 		/* events */
@@ -185,25 +221,24 @@ namespace Vanubi {
 			var bar = new FileBar ();
 			bar.expand = false;
 			bar.activate.connect ((f) => {
-					abort ();
+					abort (editor);
 					open_file (editor, f);
 				});
-			bar.aborted.connect (abort);
+			bar.aborted.connect (() => { abort (editor); });
 			add_overlay (bar);
 			show_all ();
 		}
 
 		void on_save_file (Editor editor) {
-			if (editor.filename != null) {
-				var f = File.new_for_path (editor.filename);
+			if (editor.file != null) {
 				var buf = editor.buffer;
 				TextIter start, end;
 				buf.get_start_iter (out start);
 				buf.get_end_iter (out end);
 				string text = buf.get_text (start, end, false);
-				f.replace_contents_async.begin (text.data, null, true, FileCreateFlags.NONE, null, (s,r) => {
+				editor.file.replace_contents_async.begin (text.data, null, true, FileCreateFlags.NONE, null, (s,r) => {
 						try {
-							f.replace_contents_async.end (r, null);
+							editor.file.replace_contents_async.end (r, null);
 						} catch (Error e) {
 							message (e.message);
 						}
@@ -286,21 +321,56 @@ namespace Vanubi {
 				ed.set_line_indentation (line, new_indent);
 			}
 		}
+
+		void on_switch_buffer (Editor editor) {
+			var bar = new SwitchBufferBar (get_editor_names ());
+			bar.expand = false;
+			bar.activate.connect ((res) => {
+					abort (editor);
+					for (int i=0; i < editors.length; i++) {
+						var ed = editors[i];
+						if (res == ed.get_editor_name ()) {
+							editor.replace_editor (ed);
+							ed.grab_focus ();
+							break;
+						}
+					}
+				});
+			bar.aborted.connect (() => { abort (editor); });
+			add_overlay (bar);
+			show_all ();		
+		}
+
+		class SwitchBufferBar : Bar {
+			string[] choices;
+
+			public SwitchBufferBar (string[] choices) {
+				this.choices = choices;
+			}
+
+			protected override async string[]? complete (string pattern, Cancellable cancellable) {
+				var worker = new MatchWorker (cancellable);
+				worker.set_pattern (pattern);
+				foreach (unowned string choice in choices) {
+					worker.enqueue (choice);
+				}
+				try {
+					return yield worker.get_result ();
+				} catch (Error e) {
+					message (e.message);
+					return null;
+				} finally {
+					worker.terminate ();
+				}
+			}
+		}
 	}
 
 	public class Editor : SourceView {
-		unowned Manager manager;
-		public string filename;
+		public File file;
 		TextTag in_string_tag = null;
 
-		public bool is_in_string (TextIter iter) {
-			var tags = iter.get_tags ();
-			return tags == null || tags.data.foreground_gdk.equal (in_string_tag.foreground_gdk);
-		}
-
-		public Editor (Manager manager) {
-			this.manager = manager;
-
+		public Editor () {
 			var vala = SourceLanguageManager.get_default().get_language ("vala");
 			var buf = new SourceBuffer.with_language (vala);
 			this.buffer = buf;
@@ -318,6 +388,26 @@ namespace Vanubi {
 			}
 
 			buf.set_text ("", 0);
+		}
+
+		public string get_editor_name () {
+			if (file == null) {
+				return "*scratch*";
+			} else {
+				return file.get_basename ();
+			}
+		}
+
+		public bool is_in_string (TextIter iter) {
+			var tags = iter.get_tags ();
+			return tags == null || tags.data.foreground_gdk.equal (in_string_tag.foreground_gdk);
+		}
+
+		public void replace_editor (Editor editor) {
+			var parent = (Container) get_parent ();
+			parent.remove (this);
+			parent.add (editor);
+			parent.show_all ();
 		}
 
 		public void set_line_indentation (int line, int indent) {
@@ -359,13 +449,6 @@ namespace Vanubi {
 			}
 			return (int) indent;
 		}
-
-		public override bool key_press_event (Gdk.EventKey e) {
-			if (manager.key_pressed (this, e.keyval, e.state)) {
-				return true;
-			}
-			return base.key_press_event (e);
-		}
 	}
 
 	class Bar : Grid {
@@ -394,7 +477,7 @@ namespace Vanubi {
 				});
 			add (entry);
 
-			on_changed ();
+			Idle.add (() => { on_changed (); return false; });
 		}
 
 		protected virtual async string[]? complete (string pattern, Cancellable cancellable) {

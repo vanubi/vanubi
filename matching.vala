@@ -71,8 +71,8 @@ namespace Vanubi {
 			return result;
 		}
 
-		public void enqueue (string s) {
-			queue.push (s);
+		public void enqueue (owned string s) {
+			queue.push ((owned) s);
 		}
 
 		bool work (IOSchedulerJob job, Cancellable? cancellable) {
