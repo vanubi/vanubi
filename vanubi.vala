@@ -1,32 +1,6 @@
 using Gtk;
 
 namespace Vanubi {
-	// returns a ranking, lower is better (0 = perfect match)
-	public int pattern_match (string pattern, string haystack) {
-		int rank = 0;
-		int n = pattern.length;
-		int m = haystack.length;
-		int j = 0;
-		for (int i=0; i < n; i++) {
-			char c = pattern[i];
-			bool found = false;
-			for (; j < m; j++) {
-				if (c == haystack[j]) {
-					found = true;
-					break;
-				}
-				rank++;
-			}
-			if (!found) {
-				// no match
-				return -1;
-			}
-			j++;
-		}
-		rank += m-j;
-		return rank;
-	}
-
 	public struct Key {
 		uint keyval;
 		Gdk.ModifierType modifiers;
@@ -45,7 +19,7 @@ namespace Vanubi {
 		}
 	}
 
-	public class Manager : Overlay {
+	public class Manager : Grid {
 		class KeyNode {
 			public string command;
 			Key key;
@@ -76,6 +50,7 @@ namespace Vanubi {
 		public signal void execute_command (Editor editor, string command);
 
 		public Manager () {
+			orientation = Orientation.VERTICAL;
 			current_key = key_root;
 
 			// setup commands
@@ -109,6 +84,10 @@ namespace Vanubi {
 			Idle.add (() => { ed.grab_focus (); return false; });
 		}
 
+		public void add_overlay (Widget widget) {
+			add (widget);
+		}
+
 		public void set_command (Key[] keyseq, string cmd) {
 			KeyNode cur = key_root;
 			foreach (var key in keyseq) {
@@ -124,7 +103,7 @@ namespace Vanubi {
 			modifiers &= Gdk.ModifierType.CONTROL_MASK;
 			if (keyval == Gdk.Key.Escape || (keyval == Gdk.Key.g && modifiers == Gdk.ModifierType.CONTROL_MASK)) {
 				// abort
-				current_key = key_root;
+				abort ();
 				return true;
 			}
 			if (modifiers == 0 && keyval != Gdk.Key.Tab && current_key == key_root) {
@@ -158,25 +137,70 @@ namespace Vanubi {
 			return true;
 		}
 
-		void on_open_file (Editor editor) {
-#if 0
-			var file = new EntryOverlay ("", true);
-			file.activate.connect ((s) => {
-					file.destroy ();
-					open_file (s);
+		void set_loading () {
+		}
+
+		void unset_loading () {
+		}
+
+		public void open_file (Editor editor, string filename) {
+			set_loading ();
+
+			var file = File.new_for_path (filename);
+			file.load_contents_async (null, (s,r) => {
+					uint8[] content;
+					try {
+						file.load_contents_async.end (r, out content, null);
+					} catch (Error e) {
+						message (e.message);
+						return;
+					} finally {
+						unset_loading ();
+					}
+
+					editor.filename = file.get_path ();
+					var buf = (SourceBuffer) editor.buffer;
+					buf.begin_not_undoable_action ();
+					buf.set_text ((string) content, -1);
+					buf.end_not_undoable_action ();
+					TextIter start;
+					buf.get_start_iter (out start);
+					buf.place_cursor (start);
+					Idle.add (() => { editor.grab_focus (); return false; });
 				});
-			set_overlay (file);
-#endif
+		}
+
+		public void abort () {
+			current_key = key_root;
+			foreach (unowned Widget w in get_children ()) {
+				if (!(w is ScrolledWindow)) {
+					remove (w);
+				}
+			}
+		}
+
+		/* events */
+
+		void on_open_file (Editor editor) {
+			var bar = new FileBar ();
+			bar.expand = false;
+			bar.activate.connect ((f) => {
+					abort ();
+					open_file (editor, f);
+				});
+			bar.aborted.connect (abort);
+			add_overlay (bar);
+			show_all ();
 		}
 
 		void on_save_file (Editor editor) {
-#if 0
-			if (current_filename != null) {
-				var f = File.new_for_path (current_filename);
+			if (editor.filename != null) {
+				var f = File.new_for_path (editor.filename);
+				var buf = editor.buffer;
 				TextIter start, end;
-				buffer.get_start_iter (out start);
-				buffer.get_end_iter (out end);
-				string text = buffer.get_text (start, end, false);
+				buf.get_start_iter (out start);
+				buf.get_end_iter (out end);
+				string text = buf.get_text (start, end, false);
 				f.replace_contents_async.begin (text.data, null, true, FileCreateFlags.NONE, null, (s,r) => {
 						try {
 							f.replace_contents_async.end (r, null);
@@ -186,7 +210,6 @@ namespace Vanubi {
 						text = null;
 					});
 			}
-#endif
 		}
 
 		void on_quit () {
@@ -344,526 +367,167 @@ namespace Vanubi {
 			return base.key_press_event (e);
 		}
 	}
-}
 
-#if 0
-class EntryOverlay : Grid {
-	Entry entry;
+	class Bar : Grid {
+		Entry entry;
+		string original_pattern;
+		CompletionBox completion_box;
+		Cancellable current_completion;
+		int64 last_tab_time = 0;
+		bool navigated = false;
 
-	public new signal void activate (string s);
+		public new signal void activate (string s);
+		public signal void aborted ();
 
-	public EntryOverlay (string initial, bool file) {
-		orientation = Orientation.VERTICAL;
-		expand = false;
-		halign = Align.FILL;
-		valign = Align.END;
+		public Bar () {
+			entry = new Entry ();
+			entry.set_activates_default (true);
+			entry.expand = true;
+			entry.activate.connect (() => { activate (entry.get_text ()); });
+			entry.changed.connect (on_changed);
+			entry.key_press_event.connect (on_key_press_event);
 
-		if (file) {
-			entry = new FileEntry ();
-		} else {
-			entry = new Gtk.Entry ();
+			ulong conn = 0;
+			conn = entry.show.connect (() => {
+					entry.grab_focus ();
+					entry.disconnect (conn);
+				});
+			add (entry);
+
+			on_changed ();
 		}
-		entry.set_activates_default (true);
-		entry.set_text (initial);
-		entry.expand = true;
-		entry.activate.connect (() => { activate (entry.get_text ()); });
-		ulong conn = 0;
-		conn = entry.show.connect (() => {
-				entry.grab_focus ();
-				entry.disconnect (conn);
-			});
-		add (entry);
-	}
-}
 
-class MatchWorker {
-	AsyncQueue<string?> queue = new AsyncQueue<string?> ();
-	SourceFunc resume;
-	string[] matches;
-	int[] match_values;
-	string pattern; // should be volatile
-	Cancellable cancellable;
-
-	public MatchWorker (Cancellable cancellable) {
-		this.cancellable = cancellable;
-		matches = new string[0];
-		match_values = new int[0];
-		IOSchedulerJob.push (work, Priority.DEFAULT, cancellable);
-	}
-
-	public void set_pattern (string pattern) {
-		this.pattern = pattern;
-	}
-
-	public void terminate () {
-		string* foo = (string*)0x1beef;
-		queue.push ((owned)foo);
-	}
-
-	static int compare_func (int* a, int* b) {
-		return (*a & 0xFFFF) - (*b & 0xFFFF);
-	}
-
-	public async string[] get_result () throws Error {
-		this.resume = get_result.callback;
-		string* foo = (string*)0x0dead;
-		queue.push ((owned)foo);
-		yield;
-		cancellable.set_error_if_cancelled ();
-
-		qsort_with_data<int> (match_values, sizeof (int), (CompareDataFunc<int>) compare_func);
-		var result = new string[matches.length];
-		for (int i=0; i < matches.length; i++) {
-			var pos = (match_values[i] >> 16) & 0xFFFF;
-			result[i] = (owned) matches[pos];
+		protected virtual async string[]? complete (string pattern, Cancellable cancellable) {
+			return null;
 		}
-		matches.length = 0;
-		match_values.length = 0;
-		return result;
-	}
 
-	public void enqueue (string s) {
-		queue.push (s);
-	}
-
-	bool work (IOSchedulerJob job, Cancellable? cancellable) {
-		while (true) {
-			string* item = queue.pop ();
-			if ((int)(long)item == 0x0dead) {
-				// partial result
-				job.send_to_mainloop_async ((owned) resume);
-				continue;
-			} else if ((int)(long)item == 0x1beef) {
-				// job complete
-				break;
-			}
-			if (cancellable.is_cancelled ()) {
-				job.send_to_mainloop_async ((owned) resume);
-				break;
-			}
-			string haystack = (owned) item;
-			int match = match_pattern (pattern, haystack);
-			if (match >= 0) {
-				match_values += match | (matches.length << 16);
-				matches += (owned) haystack;
-			}
+		protected virtual string get_pattern_from_choice (string original_pattern, string choice) {
+			return choice;
 		}
-		return false;
-	}
-}
 
-async string[] file_complete_pattern (MatchWorker worker, File file, int index, string[] pattern, Cancellable cancellable) throws Error {
-	File child = file.get_child (pattern[index]);
-	if (index < pattern.length-1 && child.query_exists ()) {
-		// perfect directory match
-		return yield file_complete_pattern (worker, child, index+1, pattern, cancellable);
-	}
+		void set_choice () {
+			entry.set_text (get_pattern_from_choice (original_pattern, completion_box.get_choice ()));
+			entry.move_cursor (MovementStep.BUFFER_ENDS, 1, false);
+		}
 
-	try {
-		var enumerator = yield file.enumerate_children_async (FileAttribute.STANDARD_NAME+","+FileAttribute.STANDARD_TYPE, FileQueryInfoFlags.NONE, Priority.DEFAULT, cancellable);
-		cancellable.set_error_if_cancelled ();
-		worker.set_pattern (pattern[index]);
-		while (true) {
-			var infos = yield enumerator.next_files_async (1000, Priority.DEFAULT, cancellable);
-			cancellable.set_error_if_cancelled ();
+		void on_changed () {
+			original_pattern = entry.get_text ();
+			navigated = false;
+			if (current_completion != null) {
+				current_completion.cancel ();
+			}
+			var cancellable = current_completion = new Cancellable ();
+			complete (entry.get_text (), cancellable, (s,r) => {
+					try {
+						var result = complete.end (r);
+						cancellable.set_error_if_cancelled ();
+						cancellable = null;
+						if (completion_box != null) {
+							remove (completion_box);
+						}
+						if (result != null) {
+							completion_box = new CompletionBox (result);
+							attach_next_to (completion_box, entry, PositionType.TOP, 1, 1);
+							show_all ();
+						}
+					} catch (Error e) {
+						message (e.message);
+					}
+				});
+		}
 
-			foreach (var info in infos) {
-				if (info.get_file_type () == FileType.DIRECTORY) {
-					worker.enqueue (info.get_name ()+"/");
-				} else {
-					worker.enqueue (info.get_name ());
+		bool on_key_press_event (Gdk.EventKey e) {
+			if (e.keyval == Gdk.Key.Escape || (e.keyval == Gdk.Key.g && Gdk.ModifierType.CONTROL_MASK in e.state)) {
+				aborted ();
+				return true;
+			} else if (e.keyval == Gdk.Key.Up) {
+				completion_box.back ();
+				navigated = true;
+				return true;
+			} else if (e.keyval == Gdk.Key.Down) {
+				completion_box.next ();
+				navigated = true;
+				return true;
+			} else if (e.keyval == Gdk.Key.Tab) {
+				if (completion_box.get_choices().length > 0) {
+					if (navigated || completion_box.get_choices().length == 1) {
+						set_choice ();
+					} else {
+						int64 time = get_monotonic_time ();
+						if (time - last_tab_time < 300000) {
+							set_choice ();
+						}
+						last_tab_time = time;
+					}
 				}
+				return true;
 			}
-			if (infos.length () < 1000) {
-				break;
-			}
+			return false;
 		}
-	} catch (Error e) {
-	}
 
-	string[] matches = yield worker.get_result ();
-	cancellable.set_error_if_cancelled ();
-	if (index >= pattern.length-1) {
-		return matches;
-	}
-	string[] result = new string[0];
-	// compute next index
-	while (index < pattern.length-1 && pattern[++index] == null);
-	foreach (unowned string match in matches) {
-		bool is_directory = match[match.length-1] == '/';
-		if (!is_directory) {
-			result += match;
-			continue;
-		}
-		match.data[match.length-1] = '\0';
-		File cfile = file.get_child (match);
-		string[] children = yield file_complete_pattern (worker, cfile, index, pattern, cancellable);
-		cancellable.set_error_if_cancelled ();
-		if (children.length > 0) {
-			foreach (unowned string cmatch in children) {
-				result += match+"/"+cmatch;
-			}
-		}
-	}
-	return result;
-}
+		public class CompletionBox : Grid {
+			string[] choices;
+			int index = 0;
 
-async string[] file_complete (owned string path, Cancellable cancellable) throws Error {
-	path = File.new_for_path(".").get_path ()+"/"+path;
-	int abs = path.last_index_of ("//");
-	int home = path.last_index_of ("~/");
-	if (abs > home) {
-		path = path.substring (abs+1);
-	} else if (home > abs) {
-		path = Path.build_filename (Environment.get_home_dir (), path.substring (home+1));
-	}
-	string[] comps = path.split ("/");
-	comps[0] = null; // empty group before the first separator
-
-	// resolve ../ beforehand
-	for (int i=1; i < comps.length; i++) {
-		if (comps[i][0] == '.' && comps[i][1] == '.' && comps[i][2] == 0) {
-			comps[i] = null;
-			for (int j=i-1; j >= 0; j--) {
-				if (comps[j] != null) {
-					comps[j] = null;
-					break;
+			public CompletionBox (string[] choices) {
+				orientation = Orientation.HORIZONTAL;
+				column_spacing = 10;
+				this.choices = choices;
+				for (int i=0; i < 5 && i < choices.length; i++) {
+					if (i > 0) {
+						add (new Separator (Orientation.VERTICAL));
+					}
+					var l = new Label (choices[i]);
+					l.ellipsize = Pango.EllipsizeMode.MIDDLE;
+					add (l);
 				}
-			}
-		}
-	}
-	// skip trailing nulls
-	while (comps.length > 0 && comps[comps.length-1] == null) {
-		comps.length--;
-	}
-	if (comps.length == 0) {
-		return new string[0];
-	}
-	// skip leading nulls
-	int index = 0;
-	while (comps[index] == null) {
-		index++;
-	}
-
-	var worker = new MatchWorker (cancellable);
-	File file = File.new_for_path ("/");
-	string[] result = null;
-	try {
-		result = yield file_complete_pattern (worker, file, index, comps, cancellable);
-	} finally {
-		worker.terminate ();
-	}
-	cancellable.set_error_if_cancelled ();
-	return result;
-}
-
-class ChoiceBox : Grid {
-	string[] choices;
-	int index = 0;
-
-	public ChoiceBox (string[] choices) {
-		orientation = Orientation.HORIZONTAL;
-		column_spacing = 10;
-		this.choices = choices;
-		for (int i=0; i < 5 && i < choices.length; i++) {
-			if (i > 0) {
-				add (new Separator (Orientation.VERTICAL));
-			}
-			var l = new Label (choices[i]);
-			l.ellipsize = Pango.EllipsizeMode.MIDDLE;
-			add (l);
-		}
-		show_all ();
-	}
-
-	public void next () {
-		if (index < choices.length-1) {
-			remove (get_child_at (index*2, 0));
-			remove (get_child_at (index*2+1, 0));
-			index++;
-			if (index+4 < choices.length) {
-				add (new Separator (Orientation.VERTICAL));
-				var l = new Label (choices[index+4]);
-				l.ellipsize = Pango.EllipsizeMode.MIDDLE;
-				add (l);
 				show_all ();
 			}
-		}
-	}
 
-	public void back () {
-		if (index > 0) {
-			var c1 = get_child_at ((index+4)*2, 0);
-			var c2 = get_child_at ((index+4)*2-1, 0);
-			if (c1 != null) {
-				remove (c1);
-			}
-			if (c2 != null) {
-				remove (c2);
-			}
-			index--;
-			attach (new Separator (Orientation.VERTICAL), index*2+1, 0, 1, 1);
-			var l = new Label (choices[index]);
-			l.ellipsize = Pango.EllipsizeMode.MIDDLE;
-			attach (l, index*2, 0, 1, 1);
-			show_all ();
-		}
-	}
-
-	public unowned string get_choice () {
-		return ((Label) get_child_at (index*2, 0)).get_label ();
-	}
-
-	public unowned string[] get_choices () {
-		return choices;
-	}
-}
-
-class FileEntry : Entry {
-	ChoiceBox choices_box;
-	Cancellable current_completion;
-	string original_pattern;
-	int64 last_tab_time = 0;
-	bool navigated = false;
-
-	public FileEntry () {
-		changed.connect (complete);
-		complete ();
-	}
-
-	void complete () {
-		original_pattern = get_text ();
-		navigated = false;
-		if (current_completion != null) {
-			current_completion.cancel ();
-		}
-		var cancellable = current_completion = new Cancellable ();
-		file_complete (original_pattern, cancellable, (s,r) => {
-				try {
-					cancellable.set_error_if_cancelled ();
-					var result = file_complete.end (r);
-					cancellable = null;
-					if (choices_box != null) {
-						choices_box.destroy ();
+			public void next () {
+				if (index < choices.length-1) {
+					remove (get_child_at (index*2, 0));
+					remove (get_child_at (index*2+1, 0));
+					index++;
+					if (index+4 < choices.length) {
+						add (new Separator (Orientation.VERTICAL));
+						var l = new Label (choices[index+4]);
+						l.ellipsize = Pango.EllipsizeMode.MIDDLE;
+						add (l);
+						show_all ();
 					}
-					choices_box = new ChoiceBox (result);
-					var grid = (Grid) get_parent ();
-					grid.attach_next_to (choices_box, this, PositionType.TOP, 1, 1);
-				} catch (Error e) {
-					message (e.message);
 				}
-			});
-	}
-
-	int count (string haystack, unichar c) {
-		int cnt = 0;
-		int idx = 0;
-		while (true) {
-			idx = haystack.index_of_char (c, idx);
-			if (idx < 0) {
-				break;
 			}
-			cnt++;
-			idx++;
-		}
-		return cnt;
-	}
 
-	string get_relative_pattern (string choice) {
-		int choice_seps = count (choice, '/');
-		int pattern_seps = count (original_pattern, '/');
-		if (choice[choice.length-1] == '/' && original_pattern[original_pattern.length-1] != '/') {
-			// automatically added to determine a directory
-			choice_seps--;
-		}
-		int keep_seps = pattern_seps - choice_seps;
-
-		int idx = 0;
-		for (int i=0; i < keep_seps; i++) {
-			idx = original_pattern.index_of_char ('/', idx);
-			idx++;
-		}
-		return original_pattern.substring (0, idx)+choice;
-	}
-
-	void set_choice () {
-		unowned string choice = choices_box.get_choice ();
-		set_text (get_relative_pattern (choice));
-		move_cursor (MovementStep.BUFFER_ENDS, 1, false);
-	}
-
-	public override bool key_press_event (Gdk.EventKey e) {
-		if (e.keyval == Gdk.Key.Escape || (e.keyval == Gdk.Key.g && Gdk.ModifierType.CONTROL_MASK in e.state)) {
-			Idle.add (() => { get_parent().destroy (); return false; });
-			return true;
-		} else if (e.keyval == Gdk.Key.Up) {
-			choices_box.back ();
-			navigated = true;
-			return true;
-		} else if (e.keyval == Gdk.Key.Down) {
-			choices_box.next ();
-			navigated = true;
-			return true;
-		} else if (e.keyval == Gdk.Key.Tab) {
-			if (choices_box.get_choices().length > 0) {
-				if (navigated || choices_box.get_choices().length == 1) {
-					set_choice ();
-				} else {
-					int64 time = get_monotonic_time ();
-					if (time - last_tab_time < 300000) {
-						set_choice ();
+			public void back () {
+				if (index > 0) {
+					var c1 = get_child_at ((index+4)*2, 0);
+					var c2 = get_child_at ((index+4)*2-1, 0);
+					if (c1 != null) {
+						remove (c1);
 					}
-					last_tab_time = time;
-				}
-			}
-			return true;
-		}
-		return base.key_press_event (e);
-	}
-}
-
-class ProgressOverlay : Spinner {
-	public ProgressOverlay () {
-		set_size_request (20, 20);
-	}
-}
-
-class Editor : SourceView {
-	public Grid grid;
-	public ProgressOverlay progress;
-	public weak EntryOverlay overlay;
-
-	void unset_overlay () {
-		if (this.overlay != null) {
-			this.overlay.destroy ();
-		}
-	}
-
-	void set_progress_overlay () {
-		if (progress != null) {
-			return;
-		}
-		progress = new ProgressOverlay ();
-		grid.add (progress);
-		progress.show_all ();
-	}
-
-	void unset_progress_overlay () {
-		if (progress != null) {
-			progress.destroy ();
-		}
-	}
-
-	void set_overlay (EntryOverlay overlay) {
-		unset_overlay ();
-		this.overlay = overlay;
-		overlay.destroy.connect (overlay_destroyed);
-		grid.add (overlay);
-		overlay.show_all ();
-	}
-
-	void overlay_destroyed () {
-		overlay = null;
-		grab_focus ();
-	}
-
-	void open_file (string name) {
-		set_progress_overlay ();
-		var file = File.new_for_path (name);
-		if (current_filename == file.get_path ()) {
-			// already opened
-			return;
-		}
-
-		file.load_contents_async (null, (s,r) => {
-				uint8[] content;
-				try {
-					file.load_contents_async.end (r, out content, null);
-				} catch (Error e) {
-					message (e.message);
-				} finally {
-					unset_progress_overlay ();
-				}
-
-				var vala = SourceLanguageManager.get_default().get_language ("vala");
-				var buf = new SourceBuffer.with_language (vala);
-				var ed = new Editor ();
-				ed.buffer = buf;
-				ed.current_filename = file.get_path ();
-				buf.begin_not_undoable_action ();
-				buf.set_text ((string) content, -1);
-				buf.end_not_undoable_action ();
-				TextIter start;
-				buf.get_start_iter (out start);
-				buf.place_cursor (start);
-
-				var w = (ScrolledWindow) get_parent ();
-				w.remove (this);
-				w.add (ed);
-				w.show_all ();
-				Idle.add (() => { ed.grab_focus (); return false; });
-			});
-	}
-
-	uint ctrl_x_source = 0;
-	string current_filename = null;
-
-	void do_cut () {
-		unowned Clipboard c = Clipboard.get (Gdk.SELECTION_CLIPBOARD);
-		buffer.cut_clipboard (c, true);
-	}
-
-	public override bool key_press_event (Gdk.EventKey e) {
-		var buf = this.buffer;
-		bool ctrl_x_pressed = ctrl_x_source != 0;
-		if (ctrl_x_pressed) {
-			Source.remove (ctrl_x_source);
-			ctrl_x_source = 0;
-		}
-
-		if (ctrl_x_pressed) {
-			if (Gdk.ModifierType.CONTROL_MASK in e.state) {
-				if (e.keyval == Gdk.Key.f) {
-					// OPEN FILE
-					var file = new EntryOverlay ("", true);
-					file.activate.connect ((s) => {
-							file.destroy ();
-							open_file (s);
-						});
-					set_overlay (file);
-					return true;
-				} else if (e.keyval == Gdk.Key.s) {
-					// SAVE FILE
-					if (current_filename != null) {
-						var f = File.new_for_path (current_filename);
-						TextIter start, end;
-						buffer.get_start_iter (out start);
-						buffer.get_end_iter (out end);
-						string text = buffer.get_text (start, end, false);
-						f.replace_contents_async.begin (text.data, null, true, FileCreateFlags.NONE, null, (s,r) => {
-								try {
-									f.replace_contents_async.end (r, null);
-								} catch (Error e) {
-									message (e.message);
-								}
-								text = null;
-							});
+					if (c2 != null) {
+						remove (c2);
 					}
-				} else if (e.keyval == Gdk.Key.c) {
-					// QUIT
-					Gtk.main_quit ();
+					index--;
+					attach (new Separator (Orientation.VERTICAL), index*2+1, 0, 1, 1);
+					var l = new Label (choices[index]);
+					l.ellipsize = Pango.EllipsizeMode.MIDDLE;
+					attach (l, index*2, 0, 1, 1);
+					show_all ();
 				}
-			} else {
-				do_cut ();
 			}
-		} else if (e.keyval == Gdk.Key.x && Gdk.ModifierType.CONTROL_MASK in e.state) {
-			ctrl_x_source = Timeout.add (300, () => { do_cut (); return false; });
-			return true;
+
+			public unowned string get_choice () {
+				return ((Label) get_child_at (index*2, 0)).get_label ();
+			}
+
+			public unowned string[] get_choices () {
+				return choices;
+			}
 		}
-		return base.key_press_event (e);
 	}
 }
-#endif
 
 int main (string[] args) {
 	Gtk.init (ref args);
