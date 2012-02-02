@@ -123,7 +123,7 @@ namespace Vanubi {
 			cur.command = cmd;
 		}
 
-		public void replace_editor (Editor old, Editor r) {
+		public void replace_widget (Widget old, Widget r) {
 			var parent = (Container) old.get_parent ();
 			if (parent is Paned) {
 				var paned = (Paned) parent;
@@ -139,8 +139,25 @@ namespace Vanubi {
 				parent.remove (old);
 				parent.add (r);
 			}
-			add (old);
-			old.hide ();
+			// HACK: SourceView bug
+			if (old is Editor) {
+				add (old);
+				old.hide ();
+			}
+		}
+
+		public void detach_editors (Widget w) {
+			if (w is Editor) {
+				((Container) w.get_parent ()).remove (w);
+				// HACK: SourceView bug
+				add (w);
+				w.hide ();
+			} else {
+				var c = (Container) w;
+				foreach (var child in c.get_children ()) {
+					detach_editors (child);
+				}
+			}
 		}
 
 		public void open_file (Editor editor, string filename) {
@@ -149,14 +166,14 @@ namespace Vanubi {
 			var file = File.new_for_path (filename);
 			if (!file.query_exists ()) {
 				var ed = create_editor (file);
-				replace_editor (editor, ed);
+				replace_widget (editor, ed);
 				Idle.add (() => { ed.view.grab_focus (); return false; });
 				return;
 			}
 			for (int i=0; i < editors.length; i++) {
 				var ed = editors[i];
 				if (ed.file != null && ed.file.get_path () == file.get_path ()) {
-					replace_editor (editor, ed);
+					replace_widget (editor, ed);
 					ed.view.grab_focus ();
 					return;
 				}
@@ -181,7 +198,7 @@ namespace Vanubi {
 					TextIter start;
 					buf.get_start_iter (out start);
 					buf.place_cursor (start);
-					replace_editor (editor, ed);
+					replace_widget (editor, ed);
 					Idle.add (() => { ed.view.grab_focus (); return false; });
 				});
 		}
@@ -387,7 +404,7 @@ namespace Vanubi {
 					for (int i=0; i < editors.length; i++) {
 						var ed = editors[i];
 						if (res == ed.get_editor_name ()) {
-							replace_editor (editor, ed);
+							replace_widget (editor, ed);
 							ed.view.grab_focus ();
 							return;
 						}
@@ -431,25 +448,9 @@ namespace Vanubi {
 			var pparent = (Container) parent.get_parent ();
 
 			var paned = (Paned) parent;
-			var other = (Editor) (editor == paned.get_child1 () ? paned.get_child2 () : paned.get_child1 ());
 			paned.remove (editor);
-			paned.remove (other);
-			if (pparent == this) {
-				pparent.remove (paned);
-				pparent.add (editor);
-			} else {
-				var ppaned = (Paned) pparent;
-				if (paned == ppaned.get_child1 ()) {
-					ppaned.remove (paned);
-					ppaned.pack1 (editor, true, false);
-				} else {
-					ppaned.remove (paned);
-					ppaned.pack2 (editor, true, false);
-				}
-			}
-			// HACK: SourceView referring to the same buffer doesn't supporting destroy
-			add (other);
-			other.hide ();
+			detach_editors (editor == paned.get_child1 () ? paned.get_child2 () : paned.get_child1 ());
+			replace_widget (paned, editor);
 		}
 
 		class SwitchBufferBar : Bar {
