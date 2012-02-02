@@ -130,6 +130,10 @@ namespace Vanubi {
 
 		public void replace_widget (owned Widget old, Widget r) {
 			var parent = (Container) old.get_parent ();
+			var rparent = (Container) r.get_parent ();
+			if (rparent != null) {
+				rparent.remove (r);
+			}
 			if (parent is Paned) {
 				var paned = (Paned) parent;
 				if (old == paned.get_child1 ()) {
@@ -536,6 +540,7 @@ namespace Vanubi {
 			var vala = SourceLanguageManager.get_default().get_language ("vala");
 			var buf = new SourceBuffer.with_language (vala);
 			view = new SourceView.with_buffer (buf);
+			view.wrap_mode = WrapMode.CHAR;
 			view.set_data ("editor", (Editor*)this);
 
 			sw = new ScrolledWindow (null, null);
@@ -638,6 +643,7 @@ namespace Vanubi {
 			entry.changed.connect (on_changed);
 			entry.key_press_event.connect (on_key_press_event);
 			add (entry);
+			show_all ();
 
 			Idle.add (() => {
 					entry.grab_focus ();
