@@ -105,6 +105,10 @@ namespace Vanubi {
 	}
 
 	class FileBar : Bar {
+		public FileBar () {
+			base (true);
+		}
+
 		protected override async string[]? complete (string pattern, Cancellable cancellable) {
 			try {
 				return yield file_complete (pattern, cancellable);

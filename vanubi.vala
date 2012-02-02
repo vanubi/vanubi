@@ -54,28 +54,28 @@ namespace Vanubi {
 			current_key = key_root;
 
 			// setup commands
-			set_command ({
+			bind_command ({
 					Key (Gdk.Key.x, Gdk.ModifierType.CONTROL_MASK),
 						Key (Gdk.Key.f, Gdk.ModifierType.CONTROL_MASK) },
 				"open-file");
 			execute_command["open-file"].connect (on_open_file);
 
-			set_command ({
+			bind_command ({
 					Key (Gdk.Key.x, Gdk.ModifierType.CONTROL_MASK),
 						Key (Gdk.Key.s, Gdk.ModifierType.CONTROL_MASK) },
 				"save-file");
 			execute_command["save-file"].connect (on_save_file);
 
-			set_command ({
+			bind_command ({
 					Key (Gdk.Key.x, Gdk.ModifierType.CONTROL_MASK),
 						Key (Gdk.Key.c, Gdk.ModifierType.CONTROL_MASK) },
 				"quit");
 			execute_command["quit"].connect (on_quit);
 
-			set_command ({ Key (Gdk.Key.Tab, 0) }, "tab");
+			bind_command ({ Key (Gdk.Key.Tab, 0) }, "tab");
 			execute_command["tab"].connect (on_tab);
 
-			set_command ({
+			bind_command ({
 					Key (Gdk.Key.x, Gdk.ModifierType.CONTROL_MASK),
 						Key (Gdk.Key.b, 0)},
 				"switch-buffer");
@@ -94,57 +94,12 @@ namespace Vanubi {
 			add (widget);
 		}
 
-		public void set_command (Key[] keyseq, string cmd) {
+		public void bind_command (Key[] keyseq, string cmd) {
 			KeyNode cur = key_root;
 			foreach (var key in keyseq) {
 				cur = cur.get_child (key, true);
 			}
 			cur.command = cmd;
-		}
-
-		public bool on_key_press_event (Widget w, Gdk.EventKey e) {
-			var editor = (Editor) w;
-			var keyval = e.keyval;
-			var modifiers = e.state;
-
-			if (key_timeout != 0) {
-				Source.remove (key_timeout);
-			}
-			modifiers &= Gdk.ModifierType.CONTROL_MASK;
-			if (keyval == Gdk.Key.Escape || (keyval == Gdk.Key.g && modifiers == Gdk.ModifierType.CONTROL_MASK)) {
-				// abort
-				abort (editor);
-				return true;
-			}
-			if (modifiers == 0 && keyval != Gdk.Key.Tab && current_key == key_root) {
-				// normal key, avoid a table lookup
-				return false;
-			}
-
-			current_key = current_key.get_child (Key (keyval, modifiers), false);
-			if (current_key == null) {
-				// no match
-				current_key = key_root;
-				return false;
-			}
-
-			if (current_key.has_children ()) {
-				if (current_key.command != null) {
-					// wait for further keys
-					Timeout.add (300, () => {
-							key_timeout = 0;
-							unowned string command = current_key.command;
-							current_key = key_root;
-							execute_command[command] (editor, command);
-							return false;
-						});
-				}
-			} else {
-				unowned string command = current_key.command;
-				current_key = key_root;
-				execute_command[command] (editor, command);
-			}
-			return true;
 		}
 
 		public void open_file (Editor editor, string filename) {
@@ -157,6 +112,14 @@ namespace Vanubi {
 				editor.replace_editor (ed);
 				Idle.add (() => { ed.grab_focus (); return false; });
 				return;
+			}
+			for (int i=0; i < editors.length; i++) {
+				var ed = editors[i];
+				if (ed.file != null && ed.file.get_path () == file.get_path ()) {
+					editor.replace_editor (ed);
+					ed.grab_focus ();
+					return;
+				}
 			}
 
 			file.load_contents_async (null, (s,r) => {
@@ -216,6 +179,51 @@ namespace Vanubi {
 		}
 
 		/* events */
+
+		bool on_key_press_event (Widget w, Gdk.EventKey e) {
+			var editor = (Editor) w;
+			var keyval = e.keyval;
+			var modifiers = e.state;
+
+			if (key_timeout != 0) {
+				Source.remove (key_timeout);
+			}
+			modifiers &= Gdk.ModifierType.CONTROL_MASK;
+			if (keyval == Gdk.Key.Escape || (keyval == Gdk.Key.g && modifiers == Gdk.ModifierType.CONTROL_MASK)) {
+				// abort
+				abort (editor);
+				return true;
+			}
+			if (modifiers == 0 && keyval != Gdk.Key.Tab && current_key == key_root) {
+				// normal key, avoid a table lookup
+				return false;
+			}
+
+			current_key = current_key.get_child (Key (keyval, modifiers), false);
+			if (current_key == null) {
+				// no match
+				current_key = key_root;
+				return false;
+			}
+
+			if (current_key.has_children ()) {
+				if (current_key.command != null) {
+					// wait for further keys
+					Timeout.add (300, () => {
+							key_timeout = 0;
+							unowned string command = current_key.command;
+							current_key = key_root;
+							execute_command[command] (editor, command);
+							return false;
+						});
+				}
+			} else {
+				unowned string command = current_key.command;
+				current_key = key_root;
+				execute_command[command] (editor, command);
+			}
+			return true;
+		}
 
 		void on_open_file (Editor editor) {
 			var bar = new FileBar ();
@@ -332,19 +340,24 @@ namespace Vanubi {
 						if (res == ed.get_editor_name ()) {
 							editor.replace_editor (ed);
 							ed.grab_focus ();
-							break;
+							return;
 						}
+					}
+					// no match
+					if (res != "") {
+						open_file (editor, res);
 					}
 				});
 			bar.aborted.connect (() => { abort (editor); });
 			add_overlay (bar);
-			show_all ();		
+			show_all ();
 		}
 
 		class SwitchBufferBar : Bar {
 			string[] choices;
 
 			public SwitchBufferBar (string[] choices) {
+				base (false);
 				this.choices = choices;
 			}
 
@@ -458,15 +471,17 @@ namespace Vanubi {
 		Cancellable current_completion;
 		int64 last_tab_time = 0;
 		bool navigated = false;
+		bool allow_new_value;
 
 		public new signal void activate (string s);
 		public signal void aborted ();
 
-		public Bar () {
+		public Bar (bool allow_new_value) {
+			this.allow_new_value = allow_new_value;
 			entry = new Entry ();
 			entry.set_activates_default (true);
 			entry.expand = true;
-			entry.activate.connect (() => { activate (entry.get_text ()); });
+			entry.activate.connect (on_activate);
 			entry.changed.connect (on_changed);
 			entry.key_press_event.connect (on_key_press_event);
 
@@ -491,6 +506,15 @@ namespace Vanubi {
 		void set_choice () {
 			entry.set_text (get_pattern_from_choice (original_pattern, completion_box.get_choice ()));
 			entry.move_cursor (MovementStep.BUFFER_ENDS, 1, false);
+		}
+
+		void on_activate () {
+			unowned string choice = completion_box.get_choice ();
+			if (allow_new_value || choice == null) {
+				activate (entry.get_text ());
+			} else {
+				activate (choice);
+			}
 		}
 
 		void on_changed () {
@@ -601,7 +625,10 @@ namespace Vanubi {
 				}
 			}
 
-			public unowned string get_choice () {
+			public unowned string? get_choice () {
+				if (choices.length == 0) {
+					return null;
+				}
 				return ((Label) get_child_at (index*2, 0)).get_label ();
 			}
 
