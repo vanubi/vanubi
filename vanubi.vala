@@ -123,20 +123,40 @@ namespace Vanubi {
 			cur.command = cmd;
 		}
 
+		public void replace_editor (Editor old, Editor r) {
+			var parent = (Container) old.get_parent ();
+			if (parent is Paned) {
+				var paned = (Paned) parent;
+				if (old == paned.get_child1 ()) {
+					paned.remove (old);
+					paned.pack1 (r, true, false);
+				} else {
+					paned.remove (old);
+					paned.pack2 (r, true, false);
+				}
+				paned.show_all ();
+			} else {
+				parent.remove (old);
+				parent.add (r);
+			}
+			add (old);
+			old.hide ();
+		}
+
 		public void open_file (Editor editor, string filename) {
 			set_loading ();
 
 			var file = File.new_for_path (filename);
 			if (!file.query_exists ()) {
 				var ed = create_editor (file);
-				editor.replace_editor (ed);
+				replace_editor (editor, ed);
 				Idle.add (() => { ed.view.grab_focus (); return false; });
 				return;
 			}
 			for (int i=0; i < editors.length; i++) {
 				var ed = editors[i];
 				if (ed.file != null && ed.file.get_path () == file.get_path ()) {
-					editor.replace_editor (ed);
+					replace_editor (editor, ed);
 					ed.view.grab_focus ();
 					return;
 				}
@@ -161,7 +181,7 @@ namespace Vanubi {
 					TextIter start;
 					buf.get_start_iter (out start);
 					buf.place_cursor (start);
-					editor.replace_editor (ed);
+					replace_editor (editor, ed);
 					Idle.add (() => { ed.view.grab_focus (); return false; });
 				});
 		}
@@ -367,7 +387,7 @@ namespace Vanubi {
 					for (int i=0; i < editors.length; i++) {
 						var ed = editors[i];
 						if (res == ed.get_editor_name ()) {
-							editor.replace_editor (ed);
+							replace_editor (editor, ed);
 							ed.view.grab_focus ();
 							return;
 						}
@@ -504,13 +524,6 @@ namespace Vanubi {
 		public bool is_in_string (TextIter iter) {
 			var tags = iter.get_tags ();
 			return tags == null || tags.data.foreground_gdk.equal (in_string_tag.foreground_gdk);
-		}
-
-		public void replace_editor (Editor editor) {
-			var parent = (Container) get_parent ();
-			parent.remove (this);
-			parent.add (editor);
-			parent.show_all ();
 		}
 
 		public void set_line_indentation (int line, int indent) {
