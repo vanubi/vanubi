@@ -104,7 +104,7 @@ namespace Vanubi {
 		return result;
 	}
 
-	class FileBar : Bar {
+	class FileBar : CompletionBar {
 		public FileBar () {
 			base (true);
 		}

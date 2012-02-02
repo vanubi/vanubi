@@ -110,6 +110,9 @@ namespace Vanubi {
 				"join");
 			execute_command["join"].connect (on_join);
 
+			bind_command ({ Key (Gdk.Key.s, Gdk.ModifierType.CONTROL_MASK) }, "search-forward");
+			execute_command["search-forward"].connect (on_search_forward);
+
 			// setup empty buffer
 			var ed = get_available_editor (null);
 			add (ed);
@@ -324,7 +327,6 @@ namespace Vanubi {
 
 		void on_open_file (Editor editor) {
 			var bar = new FileBar ();
-			bar.expand = false;
 			bar.activate.connect ((f) => {
 					abort (editor);
 					open_file (editor, f);
@@ -429,7 +431,6 @@ namespace Vanubi {
 
 		void on_switch_buffer (Editor editor) {
 			var bar = new SwitchBufferBar (get_file_names ());
-			bar.expand = false;
 			bar.activate.connect ((res) => {
 					abort (editor);
 					if (res == "") {
@@ -500,7 +501,13 @@ namespace Vanubi {
 			focus_editor (editor);
 		}
 
-		class SwitchBufferBar : Bar {
+		void on_search_forward (Editor editor) {
+			var bar = new SearchBar (editor);
+			add_overlay (bar);
+			bar.show ();
+		}
+
+		class SwitchBufferBar : CompletionBar {
 			string[] choices;
 
 			public SwitchBufferBar (string[] choices) {
@@ -622,8 +629,39 @@ namespace Vanubi {
 		}
 	}
 
-	class Bar : Grid {
-		Entry entry;
+	public class Bar : Grid {
+		protected Entry entry;
+
+		public new signal void activate (string s);
+		public signal void aborted ();
+
+		public Bar () {
+			expand = false;
+			entry = new Entry ();
+			entry.set_activates_default (true);
+			entry.expand = true;
+			entry.activate.connect (on_activate);
+			entry.key_press_event.connect (on_key_press_event);
+			add (entry);
+			show_all ();
+
+			Idle.add (() => { entry.grab_focus (); return false; });
+		}
+
+		protected virtual void on_activate () {
+			activate (entry.get_text ());
+		}
+
+		protected virtual bool on_key_press_event (Gdk.EventKey e) {
+			if (e.keyval == Gdk.Key.Escape || (e.keyval == Gdk.Key.g && Gdk.ModifierType.CONTROL_MASK in e.state)) {
+				aborted ();
+				return true;
+			}
+			return false;
+		}
+	}
+
+	class CompletionBar : Bar {
 		string original_pattern;
 		CompletionBox completion_box;
 		Cancellable current_completion;
@@ -631,25 +669,10 @@ namespace Vanubi {
 		bool navigated = false;
 		bool allow_new_value;
 
-		public new signal void activate (string s);
-		public signal void aborted ();
-
-		public Bar (bool allow_new_value) {
+		public CompletionBar (bool allow_new_value) {
 			this.allow_new_value = allow_new_value;
-			entry = new Entry ();
-			entry.set_activates_default (true);
-			entry.expand = true;
-			entry.activate.connect (on_activate);
 			entry.changed.connect (on_changed);
-			entry.key_press_event.connect (on_key_press_event);
-			add (entry);
-			show_all ();
-
-			Idle.add (() => {
-					entry.grab_focus ();
-					on_changed ();
-					return false;
-				});
+			Idle.add (() => { on_changed (); return false; });
 		}
 
 		~Bar () {
@@ -671,7 +694,7 @@ namespace Vanubi {
 			entry.move_cursor (MovementStep.BUFFER_ENDS, 1, false);
 		}
 
-		void on_activate () {
+		protected override void on_activate () {
 			unowned string choice = completion_box.get_choice ();
 			if (allow_new_value || choice == null) {
 				activate (entry.get_text ());
@@ -706,7 +729,7 @@ namespace Vanubi {
 				});
 		}
 
-		bool on_key_press_event (Gdk.EventKey e) {
+		protected override bool on_key_press_event (Gdk.EventKey e) {
 			if (e.keyval == Gdk.Key.Escape || (e.keyval == Gdk.Key.g && Gdk.ModifierType.CONTROL_MASK in e.state)) {
 				aborted ();
 				return true;
@@ -798,6 +821,71 @@ namespace Vanubi {
 			public unowned string[] get_choices () {
 				return choices;
 			}
+		}
+	}
+
+	public class SearchBar : Bar {
+		weak Editor editor;
+		TextIter original_insert;
+		TextIter original_bound;
+
+		public SearchBar (Editor editor) {
+			this.editor = editor;
+			entry.changed.connect (on_changed);
+
+			var buf = editor.view.buffer;
+			buf.get_iter_at_mark (out original_insert, buf.get_insert ());
+			buf.get_iter_at_mark (out original_bound, buf.get_insert ());
+		}
+
+		void on_changed () {
+			var buf = editor.view.buffer;
+			TextIter iter;
+			buf.get_iter_at_mark (out iter, buf.get_insert ());
+			search (iter);
+		}
+
+		void search (TextIter iter) {
+			// inefficient naive implementation
+			var buf = editor.view.buffer;
+			var p = entry.get_text ();
+			while (!iter.is_end ()) {
+				var subiter = iter;
+				int i = 0;
+				unichar c;
+				bool found = true;
+				while (p.get_next_char (ref i, out c)) {
+					if (subiter.get_char () != c) {
+						found = false;
+						break;
+					}
+					subiter.forward_char ();
+				}
+				if (found) {
+					// found
+					buf.select_range (iter, subiter);
+					break;
+				}
+				iter.forward_char ();
+			}
+		}
+
+		protected override bool on_key_press_event (Gdk.EventKey e) {
+			if (e.keyval == Gdk.Key.Escape || (e.keyval == Gdk.Key.g && Gdk.ModifierType.CONTROL_MASK in e.state)) {
+				// abort
+				editor.view.buffer.select_range (original_insert, original_bound);
+				aborted ();
+				return true;
+			} else if (e.keyval == Gdk.Key.s && Gdk.ModifierType.CONTROL_MASK in e.state) {
+				// step
+				var buf = editor.view.buffer;
+				TextIter iter;
+				buf.get_iter_at_mark (out iter, buf.get_insert ());
+				iter.forward_char ();
+				search (iter);
+				return true;
+			}
+			return base.on_key_press_event (e);
 		}
 	}
 }
