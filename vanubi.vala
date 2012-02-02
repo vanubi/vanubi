@@ -19,6 +19,10 @@ namespace Vanubi {
 		}
 	}
 
+	public static void focus_editor (Editor editor) {
+		Idle.add (() => { editor.view.grab_focus (); return false; });
+	}
+
 	public class Manager : Grid {
 		class KeyNode {
 			public string command;
@@ -109,7 +113,7 @@ namespace Vanubi {
 			// setup empty buffer
 			var ed = get_available_editor (null);
 			add (ed);
-			Idle.add (() => { ed.view.grab_focus (); return false; });
+			focus_editor (ed);
 		}
 
 		public void add_overlay (Widget widget) {
@@ -171,7 +175,7 @@ namespace Vanubi {
 			if (f != null && f.equal (file)) {
 				unowned Editor ed = get_available_editor (f);
 				replace_widget (editor, ed);
-				Idle.add (() => { ed.view.grab_focus (); return false; });
+				focus_editor (ed);
 				return;
 			}
 
@@ -179,7 +183,7 @@ namespace Vanubi {
 			if (!file.query_exists ()) {
 				unowned Editor ed = get_available_editor (file);
 				replace_widget (editor, ed);
-				Idle.add (() => { ed.view.grab_focus (); return false; });
+				focus_editor (ed);
 				return;
 			}
 
@@ -204,7 +208,7 @@ namespace Vanubi {
 					buf.get_start_iter (out start);
 					buf.place_cursor (start);
 					replace_widget (editor, ed);
-					Idle.add (() => { ed.view.grab_focus (); return false; });
+					focus_editor (ed);
 				});
 		}
 
@@ -215,7 +219,7 @@ namespace Vanubi {
 					remove (w);
 				}
 			}
-			Idle.add (() => { editor.grab_focus (); return false; });
+			focus_editor (editor);
 		}
 
 		void set_loading () {
@@ -438,7 +442,7 @@ namespace Vanubi {
 					}
 					unowned Editor ed = get_available_editor (file);
 					replace_widget (editor, ed);
-					Idle.add (() => { ed.view.grab_focus (); return false; });
+					focus_editor (ed);
 				});
 			bar.aborted.connect (() => { abort (editor); });
 			add_overlay (bar);
@@ -456,7 +460,7 @@ namespace Vanubi {
 			parent.add (paned);
 
 			paned.pack1 (editor, true, false);
-			Idle.add (() => { editor.view.grab_focus (); return false; });
+			focus_editor (editor);
 
 			var ed = get_available_editor (editor.file);
 			paned.pack2 (ed, true, false);
@@ -477,7 +481,7 @@ namespace Vanubi {
 			paned.remove (editor); // avoid detach
 			detach_editors (parent);
 			replace_widget (parent, editor);
-			Idle.add (() => { editor.view.grab_focus (); return false; });
+			focus_editor (editor);
 		}
 
 		void on_join (Editor editor) {
@@ -489,7 +493,7 @@ namespace Vanubi {
 			paned.remove (editor);
 			detach_editors (paned);
 			replace_widget (paned, editor);
-			Idle.add (() => { editor.view.grab_focus (); return false; });
+			focus_editor (editor);
 		}
 
 		class SwitchBufferBar : Bar {
@@ -526,6 +530,7 @@ namespace Vanubi {
 
 		public Editor (File? file) {
 			this.file = file;
+			orientation = Orientation.VERTICAL;
 			expand = true;
 
 			var vala = SourceLanguageManager.get_default().get_language ("vala");
@@ -537,6 +542,11 @@ namespace Vanubi {
 			sw.expand = true;
 			sw.add (view);
 			add (sw);
+			if (file == null) {
+				add (new Label ("*scratch*"));
+			} else {
+				add (new Label (file.get_basename ()));
+			}
 
 			// HACK: sourceview doesn't set the style in the tags :-(
 			buf.set_text ("\"foo\"", -1);
@@ -627,15 +637,13 @@ namespace Vanubi {
 			entry.activate.connect (on_activate);
 			entry.changed.connect (on_changed);
 			entry.key_press_event.connect (on_key_press_event);
-
-			ulong conn = 0;
-			conn = entry.show.connect (() => {
-					entry.grab_focus ();
-					entry.disconnect (conn);
-				});
 			add (entry);
 
-			Idle.add (() => { on_changed (); return false; });
+			Idle.add (() => {
+					entry.grab_focus ();
+					on_changed ();
+					return false;
+				});
 		}
 
 		~Bar () {
