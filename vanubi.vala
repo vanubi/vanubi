@@ -81,13 +81,34 @@ namespace Vanubi {
 				"switch-buffer");
 			execute_command["switch-buffer"].connect (on_switch_buffer);
 
+			bind_command ({
+					Key (Gdk.Key.x, Gdk.ModifierType.CONTROL_MASK),
+						Key (Gdk.Key.@3, 0)},
+				"split-add-right");
+			execute_command["split-add-right"].connect (on_split);
+
+			bind_command ({
+					Key (Gdk.Key.x, Gdk.ModifierType.CONTROL_MASK),
+						Key (Gdk.Key.@2, 0)},
+				"split-add-down");
+			execute_command["split-add-down"].connect (on_split);
+
+			bind_command ({
+					Key (Gdk.Key.x, Gdk.ModifierType.CONTROL_MASK),
+						Key (Gdk.Key.@1, 0)},
+				"join-all");
+			execute_command["join-all"].connect (on_join_all);
+
+			bind_command ({
+					Key (Gdk.Key.x, Gdk.ModifierType.CONTROL_MASK),
+						Key (Gdk.Key.@1, Gdk.ModifierType.CONTROL_MASK)},
+				"join");
+			execute_command["join"].connect (on_join);
+
 			// setup empty buffer
-			var ed = create_editor ();
-			var s = new ScrolledWindow (null, null);
-			s.expand = true;
-			s.add (ed);
-			add (s);
-			Idle.add (() => { ed.grab_focus (); return false; });
+			var ed = create_editor (null);
+			add (ed);
+			Idle.add (() => { ed.view.grab_focus (); return false; });
 		}
 
 		public void add_overlay (Widget widget) {
@@ -107,17 +128,16 @@ namespace Vanubi {
 
 			var file = File.new_for_path (filename);
 			if (!file.query_exists ()) {
-				var ed = create_editor ();
-				ed.file = file;
+				var ed = create_editor (file);
 				editor.replace_editor (ed);
-				Idle.add (() => { ed.grab_focus (); return false; });
+				Idle.add (() => { ed.view.grab_focus (); return false; });
 				return;
 			}
 			for (int i=0; i < editors.length; i++) {
 				var ed = editors[i];
 				if (ed.file != null && ed.file.get_path () == file.get_path ()) {
 					editor.replace_editor (ed);
-					ed.grab_focus ();
+					ed.view.grab_focus ();
 					return;
 				}
 			}
@@ -133,9 +153,8 @@ namespace Vanubi {
 						unset_loading ();
 					}
 
-					var ed = create_editor ();
-					ed.file = file;
-					var buf = (SourceBuffer) ed.buffer;
+					var ed = create_editor (file);
+					var buf = (SourceBuffer) ed.view.buffer;
 					buf.begin_not_undoable_action ();
 					buf.set_text ((string) content, -1);
 					buf.end_not_undoable_action ();
@@ -143,14 +162,14 @@ namespace Vanubi {
 					buf.get_start_iter (out start);
 					buf.place_cursor (start);
 					editor.replace_editor (ed);
-					Idle.add (() => { ed.grab_focus (); return false; });
+					Idle.add (() => { ed.view.grab_focus (); return false; });
 				});
 		}
 
 		public void abort (Editor editor) {
 			current_key = key_root;
 			foreach (unowned Widget w in get_children ()) {
-				if (!(w is ScrolledWindow)) {
+				if (!(w is Editor) && !(w is Paned)) {
 					remove (w);
 				}
 			}
@@ -163,9 +182,16 @@ namespace Vanubi {
 		void unset_loading () {
 		}
 
-		Editor create_editor () {
-			var ed = new Editor ();
-			ed.key_press_event.connect (on_key_press_event);
+		Editor clone_editor (Editor editor) {
+			var ed = new Editor (editor.file);
+			ed.view.key_press_event.connect (on_key_press_event);
+			ed.view.buffer = editor.view.buffer;
+			return ed;
+		}
+
+		Editor create_editor (File? file) {
+			var ed = new Editor (file);
+			ed.view.key_press_event.connect (on_key_press_event);
 			editors.add (ed);
 			return ed;
 		}
@@ -181,7 +207,8 @@ namespace Vanubi {
 		/* events */
 
 		bool on_key_press_event (Widget w, Gdk.EventKey e) {
-			var editor = (Editor) w;
+			var sv = (SourceView) w;
+			Editor editor = sv.get_data ("editor");
 			var keyval = e.keyval;
 			var modifiers = e.state;
 
@@ -213,6 +240,7 @@ namespace Vanubi {
 							key_timeout = 0;
 							unowned string command = current_key.command;
 							current_key = key_root;
+							abort (editor);
 							execute_command[command] (editor, command);
 							return false;
 						});
@@ -220,6 +248,7 @@ namespace Vanubi {
 			} else {
 				unowned string command = current_key.command;
 				current_key = key_root;
+				abort (editor);
 				execute_command[command] (editor, command);
 			}
 			return true;
@@ -234,12 +263,12 @@ namespace Vanubi {
 				});
 			bar.aborted.connect (() => { abort (editor); });
 			add_overlay (bar);
-			show_all ();
+			bar.show ();
 		}
 
 		void on_save_file (Editor editor) {
 			if (editor.file != null) {
-				var buf = editor.buffer;
+				var buf = editor.view.buffer;
 				TextIter start, end;
 				buf.get_start_iter (out start);
 				buf.get_end_iter (out end);
@@ -260,7 +289,7 @@ namespace Vanubi {
 		}
 
 		void on_tab (Editor ed) {
-			var buf = ed.buffer;
+			var buf = ed.view.buffer;
 
 			TextIter insert_iter;
 			buf.get_iter_at_mark (out insert_iter, buf.get_insert ());
@@ -294,7 +323,7 @@ namespace Vanubi {
 				ed.set_line_indentation (line, 0);
 			} else {
 				int new_indent = ed.get_line_indentation (prev_line);
-				var tab_width = (int) ed.tab_width;
+				var tab_width = (int) ed.view.tab_width;
 
 				// opened/closed braces
 				TextIter iter;
@@ -339,7 +368,7 @@ namespace Vanubi {
 						var ed = editors[i];
 						if (res == ed.get_editor_name ()) {
 							editor.replace_editor (ed);
-							ed.grab_focus ();
+							ed.view.grab_focus ();
 							return;
 						}
 					}
@@ -350,7 +379,57 @@ namespace Vanubi {
 				});
 			bar.aborted.connect (() => { abort (editor); });
 			add_overlay (bar);
-			show_all ();
+			bar.show ();
+		}
+
+		void on_split (Editor editor, string command) {
+			Allocation alloc;
+			editor.get_allocation (out alloc);
+			var parent = (Container) editor.get_parent ();
+			parent.remove (editor);
+			var paned = new Paned (command == "split-add-right" ? Orientation.HORIZONTAL : Orientation.VERTICAL);
+			paned.expand = true;
+			paned.position = command == "split-add-right" ? alloc.width/2 : alloc.height/2;
+			parent.add (paned);
+
+			paned.pack1 (editor, true, false);
+
+			var ed = clone_editor (editor);
+			paned.pack2 (ed, true, false);
+			paned.show_all ();
+		}
+
+		void on_join_all (Editor editor) {
+		}
+
+		void on_join (Editor editor) {
+			var parent = (Container) editor.get_parent ();
+			if (parent == this) {
+				// already on front
+				return;
+			}
+			var pparent = (Container) parent.get_parent ();
+
+			var paned = (Paned) parent;
+			var other = (Editor) (editor == paned.get_child1 () ? paned.get_child2 () : paned.get_child1 ());
+			paned.remove (editor);
+			paned.remove (other);
+			if (pparent == this) {
+				pparent.remove (paned);
+				pparent.add (editor);
+			} else {
+				var ppaned = (Paned) pparent;
+				if (paned == ppaned.get_child1 ()) {
+					ppaned.remove (paned);
+					ppaned.pack1 (editor, true, false);
+				} else {
+					ppaned.remove (paned);
+					ppaned.pack2 (editor, true, false);
+				}
+			}
+			// HACK: SourceView referring to the same buffer doesn't supporting destroy
+			add (other);
+			other.hide ();
 		}
 
 		class SwitchBufferBar : Bar {
@@ -379,14 +458,25 @@ namespace Vanubi {
 		}
 	}
 
-	public class Editor : SourceView {
-		public File file;
+	public class Editor : Grid {
+		public File file { get; private set; }
+		public SourceView view { get; private set; }
+		ScrolledWindow sw;
 		TextTag in_string_tag = null;
 
-		public Editor () {
+		public Editor (File? file) {
+			this.file = file;
+			expand = true;
+
 			var vala = SourceLanguageManager.get_default().get_language ("vala");
 			var buf = new SourceBuffer.with_language (vala);
-			this.buffer = buf;
+			view = new SourceView.with_buffer (buf);
+			view.set_data ("editor", (Editor*)this);
+
+			sw = new ScrolledWindow (null, null);
+			sw.expand = true;
+			sw.add (view);
+			add (sw);
 
 			// HACK: sourceview doesn't set the style in the tags :-(
 			buf.set_text ("\"foo\"", -1);
@@ -427,7 +517,7 @@ namespace Vanubi {
 			indent = int.max (indent, 0);
 
 			TextIter start;
-			var buf = buffer;
+			var buf = view.buffer;
 			buf.get_iter_at_line (out start, line);
 
 			var iter = start;
@@ -436,7 +526,7 @@ namespace Vanubi {
 			}
 
 			buf.delete (ref start, ref iter);
-			var tab_width = this.tab_width;
+			var tab_width = view.tab_width;
 			buf.insert (ref start, string.nfill(indent/tab_width, '\t')+string.nfill(indent-(indent/tab_width)*tab_width, ' '), -1);
 
 			// reset cursor, textbuffer bug?
@@ -445,11 +535,11 @@ namespace Vanubi {
 		}
 
 		public int get_line_indentation (int line) {
-			uint tab_width = this.tab_width;
+			var tab_width = view.tab_width;
 			uint indent = 0;
 
 			TextIter iter;
-			var buf = buffer;
+			var buf = view.buffer;
 			buf.get_iter_at_line (out iter, line);
 
 			while (iter.get_char().isspace () && !iter.ends_line () && !iter.is_end ()) {
@@ -493,6 +583,12 @@ namespace Vanubi {
 			add (entry);
 
 			Idle.add (() => { on_changed (); return false; });
+		}
+
+		~Bar () {
+			if (current_completion != null) {
+				current_completion.cancel ();
+			}
 		}
 
 		protected virtual async string[]? complete (string pattern, Cancellable cancellable) {
