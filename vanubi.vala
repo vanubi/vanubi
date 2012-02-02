@@ -40,7 +40,8 @@ namespace Vanubi {
 			}
 		}
 
-		GenericArray<Editor> editors = new GenericArray<Editor> ();
+		HashTable<File, File> files = new HashTable<File, File> (File.hash, File.equal);
+		GenericArray<Editor> scratch_editors = new GenericArray<Editor> ();
 
 		KeyNode key_root = new KeyNode ();
 		KeyNode current_key;
@@ -106,7 +107,7 @@ namespace Vanubi {
 			execute_command["join"].connect (on_join);
 
 			// setup empty buffer
-			var ed = create_editor (null);
+			var ed = get_available_editor (null);
 			add (ed);
 			Idle.add (() => { ed.view.grab_focus (); return false; });
 		}
@@ -165,21 +166,24 @@ namespace Vanubi {
 			set_loading ();
 
 			var file = File.new_for_path (filename);
-			if (!file.query_exists ()) {
-				var ed = create_editor (file);
+			// first search already opened files
+			var f = files[file];
+			if (f != null && f.equal (file)) {
+				unowned Editor ed = get_available_editor (f);
 				replace_widget (editor, ed);
 				Idle.add (() => { ed.view.grab_focus (); return false; });
 				return;
 			}
-			for (int i=0; i < editors.length; i++) {
-				var ed = editors[i];
-				if (ed.file != null && ed.file.get_path () == file.get_path ()) {
-					replace_widget (editor, ed);
-					ed.view.grab_focus ();
-					return;
-				}
+
+			// if the file doesn't exist, don't try to read it
+			if (!file.query_exists ()) {
+				unowned Editor ed = get_available_editor (file);
+				replace_widget (editor, ed);
+				Idle.add (() => { ed.view.grab_focus (); return false; });
+				return;
 			}
 
+			// existing file, read it
 			file.load_contents_async (null, (s,r) => {
 					uint8[] content;
 					try {
@@ -191,7 +195,7 @@ namespace Vanubi {
 						unset_loading ();
 					}
 
-					var ed = create_editor (file);
+					var ed = get_available_editor (file);
 					var buf = (SourceBuffer) ed.view.buffer;
 					buf.begin_not_undoable_action ();
 					buf.set_text ((string) content, -1);
@@ -220,24 +224,42 @@ namespace Vanubi {
 		void unset_loading () {
 		}
 
-		Editor clone_editor (Editor editor) {
-			var ed = new Editor (editor.file);
-			ed.view.key_press_event.connect (on_key_press_event);
-			ed.view.buffer = editor.view.buffer;
-			return ed;
-		}
+		unowned Editor get_available_editor (File? file) {
+			unowned GenericArray<Editor> editors;
+			if (file == null) {
+				editors = scratch_editors;
+			} else {
+				var f = files[file];
+				if (f == null) {
+					files[file] = file;
+					var etors = new GenericArray<Editor> ();
+					editors = etors;
+					file.set_data ("editors", (owned) etors);
+				} else {
+					editors = file.get_data ("editors");
+				}
+			}
 
-		Editor create_editor (File? file) {
+			foreach (unowned Editor ed in editors.data) {
+				if (!ed.visible) {
+					return ed;
+				}
+			}
 			var ed = new Editor (file);
 			ed.view.key_press_event.connect (on_key_press_event);
-			editors.add (ed);
-			return ed;
+			if (editors.length > 0) {
+				// share buffer
+				ed.view.buffer = editors[0].view.buffer;
+			}
+			unowned Editor ret = ed;
+			editors.add ((owned) ed);
+			return ret;
 		}
 
-		string[] get_editor_names () {
-			string[] ret = null;
-			for (int i=0; i < editors.length; i++) {
-				ret += editors[i].get_editor_name ();
+		string[] get_file_names () {
+			string[] ret = {"*scratch*"};
+			foreach (unowned File file in files.get_keys ()) {
+				ret += file.get_basename ();
 			}
 			return ret;
 		}
@@ -398,22 +420,25 @@ namespace Vanubi {
 		}
 
 		void on_switch_buffer (Editor editor) {
-			var bar = new SwitchBufferBar (get_editor_names ());
+			var bar = new SwitchBufferBar (get_file_names ());
 			bar.expand = false;
 			bar.activate.connect ((res) => {
 					abort (editor);
-					for (int i=0; i < editors.length; i++) {
-						var ed = editors[i];
-						if (res == ed.get_editor_name ()) {
-							replace_widget (editor, ed);
-							ed.view.grab_focus ();
-							return;
+					if (res == "") {
+						return;
+					}
+					File file = null;
+					if (res != "*scratch*") {
+						foreach (unowned File f in files.get_keys ()) {
+							if (f.get_basename () == res) {
+								file = f;
+								break;
+							}
 						}
 					}
-					// no match
-					if (res != "") {
-						open_file (editor, res);
-					}
+					unowned Editor ed = get_available_editor (file);
+					replace_widget (editor, ed);
+					Idle.add (() => { ed.view.grab_focus (); return false; });
 				});
 			bar.aborted.connect (() => { abort (editor); });
 			add_overlay (bar);
@@ -433,7 +458,7 @@ namespace Vanubi {
 			paned.pack1 (editor, true, false);
 			Idle.add (() => { editor.view.grab_focus (); return false; });
 
-			var ed = clone_editor (editor);
+			var ed = get_available_editor (editor.file);
 			paned.pack2 (ed, true, false);
 			paned.show_all ();
 		}
@@ -444,6 +469,7 @@ namespace Vanubi {
 				// already on front
 				return;
 			}
+			// find the right manager child
 			unowned Widget parent = editor;
 			while (parent.get_parent() != this) {
 				parent = parent.get_parent ();
