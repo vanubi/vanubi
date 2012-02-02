@@ -146,7 +146,7 @@ namespace Vanubi {
 			}
 		}
 
-		public void detach_editors (Widget w) {
+		public void detach_editors (owned Widget w) {
 			if (w is Editor) {
 				((Container) w.get_parent ()).remove (w);
 				// HACK: SourceView bug
