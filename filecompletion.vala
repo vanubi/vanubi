@@ -31,7 +31,7 @@ namespace Vanubi {
 				foreach (var info in infos) {
 					if (info.get_file_type () == FileType.DIRECTORY) {
 						worker.enqueue (info.get_name ()+"/");
-					} else {
+					} else if (index < pattern.length-1) {
 						worker.enqueue (info.get_name ());
 					}
 				}
@@ -51,11 +51,6 @@ namespace Vanubi {
 		// compute next index
 		while (index < pattern.length-1 && pattern[++index] == null);
 		foreach (unowned string match in matches) {
-			bool is_directory = match[match.length-1] == '/';
-			if (!is_directory) {
-				result += match;
-				continue;
-			}
 			match.data[match.length-1] = '\0';
 			File cfile = file.get_child (match);
 			string[] children = yield file_complete_pattern (worker, cfile, index, pattern, common_prefixes, cancellable);

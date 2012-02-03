@@ -546,37 +546,9 @@ namespace Vanubi {
 			orientation = Orientation.VERTICAL;
 			expand = true;
 
+			// buffer
 			var vala = SourceLanguageManager.get_default().get_language ("vala");
 			var buf = new SourceBuffer.with_language (vala);
-			view = new SourceView.with_buffer (buf);
-			view.wrap_mode = WrapMode.CHAR;
-			view.set_data ("editor", (Editor*)this);
-
-			sw = new ScrolledWindow (null, null);
-			sw.expand = true;
-			sw.add (view);
-			add (sw);
-
-			Grid info = new Grid ();
-			info.expand = false;
-			info.orientation = Orientation.HORIZONTAL;
-			add (info);
-			Label file_label;
-			if (file == null) {
-				file_label = new Label ("*scratch*");
-			} else {
-				file_label = new Label (file.get_basename ());
-			}
-			file_label.margin_left = 30;
-			info.add (file_label);
-
-			file_count = new Label ("(0, 0)");
-			file_count.margin_left = 30;
-			info.add (file_count);
-			view.notify["buffer"].connect (on_file_count);
-			view.buffer.mark_set.connect (on_file_count);
-			view.buffer.changed.connect (on_file_count);
-
 			// HACK: sourceview doesn't set the style in the tags :-(
 			buf.set_text ("\"foo\"", -1);
 			TextIter start, end;
@@ -588,8 +560,38 @@ namespace Vanubi {
 			if (tags != null) {
 				in_string_tag = tags.data;
 			}
-
 			buf.set_text ("", 0);
+
+			// view
+			view = new SourceView.with_buffer (buf);
+			view.wrap_mode = WrapMode.CHAR;
+			view.set_data ("editor", (Editor*)this);
+
+			// scrolled window
+			sw = new ScrolledWindow (null, null);
+			sw.expand = true;
+			sw.add (view);
+			add (sw);
+
+			// lower information bar
+			Grid info = new Grid ();
+			info.expand = false;
+			info.orientation = Orientation.HORIZONTAL;
+			add (info);
+			Label file_label;
+			if (file == null) {
+				file_label = new Label ("*scratch*");
+			} else {
+				file_label = new Label (file.get_basename ());
+			}
+			file_label.margin_left = 20;
+			info.add (file_label);
+
+			file_count = new Label ("(0, 0)");
+			file_count.margin_left = 20;
+			info.add (file_count);
+			view.notify["buffer"].connect_after (on_buffer_changed);
+			on_buffer_changed ();
 		}
 
 		public string get_editor_name () {
@@ -646,6 +648,12 @@ namespace Vanubi {
 		}
 
 		/* events */
+
+		void on_buffer_changed () {
+			view.buffer.mark_set.connect (on_file_count);
+			view.buffer.changed.connect (on_file_count);
+			on_file_count ();
+		}
 
 		void on_file_count () {
 			TextIter insert;
