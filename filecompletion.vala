@@ -1,9 +1,23 @@
 namespace Vanubi {
-	async string[] file_complete_pattern (MatchWorker worker, File file, int index, string[] pattern, Cancellable cancellable) throws Error {
+	static int count (string haystack, unichar c) {
+		int cnt = 0;
+		int idx = 0;
+		while (true) {
+			idx = haystack.index_of_char (c, idx);
+			if (idx < 0) {
+				break;
+			}
+			cnt++;
+			idx++;
+		}
+		return cnt;
+	}
+
+	async string[]? file_complete_pattern (MatchWorker worker, File file, int index, string[] pattern, string[] common_prefixes, Cancellable cancellable) throws Error {
 		File child = file.get_child (pattern[index]);
 		if (index < pattern.length-1 && child.query_exists ()) {
 			// perfect directory match
-			return yield file_complete_pattern (worker, child, index+1, pattern, cancellable);
+			return yield file_complete_pattern (worker, child, index+1, pattern, common_prefixes, cancellable);
 		}
 
 		try {
@@ -28,12 +42,12 @@ namespace Vanubi {
 		} catch (Error e) {
 		}
 
-		string[] matches = yield worker.get_result ();
+		string[] matches = yield worker.get_result (out common_prefixes[index]);
 		cancellable.set_error_if_cancelled ();
 		if (index >= pattern.length-1) {
 			return matches;
 		}
-		string[] result = new string[0];
+		string[]? result = null;
 		// compute next index
 		while (index < pattern.length-1 && pattern[++index] == null);
 		foreach (unowned string match in matches) {
@@ -44,7 +58,7 @@ namespace Vanubi {
 			}
 			match.data[match.length-1] = '\0';
 			File cfile = file.get_child (match);
-			string[] children = yield file_complete_pattern (worker, cfile, index, pattern, cancellable);
+			string[] children = yield file_complete_pattern (worker, cfile, index, pattern, common_prefixes, cancellable);
 			cancellable.set_error_if_cancelled ();
 			if (children.length > 0) {
 				foreach (unowned string cmatch in children) {
@@ -55,16 +69,17 @@ namespace Vanubi {
 		return result;
 	}
 
-	async string[] file_complete (owned string path, Cancellable cancellable) throws Error {
-		path = File.new_for_path(".").get_path ()+"/"+path;
-		int abs = path.last_index_of ("//");
-		int home = path.last_index_of ("~/");
+	async string[]? file_complete (owned string pattern, out string? common_choice, Cancellable cancellable) throws Error {
+		common_choice = null;
+		pattern = File.new_for_path(".").get_path ()+"/"+pattern;
+		int abs = pattern.last_index_of ("//");
+		int home = pattern.last_index_of ("~/");
 		if (abs > home) {
-			path = path.substring (abs+1);
+			pattern = pattern.substring (abs+1);
 		} else if (home > abs) {
-			path = Path.build_filename (Environment.get_home_dir (), path.substring (home+1));
+			pattern = Path.build_filename (Environment.get_home_dir (), pattern.substring (home+1));
 		}
-		string[] comps = path.split ("/");
+		string[] comps = pattern.split ("/");
 		comps[0] = null; // empty group before the first separator
 
 		// resolve ../ beforehand
@@ -84,7 +99,7 @@ namespace Vanubi {
 			comps.length--;
 		}
 		if (comps.length == 0) {
-			return new string[0];
+			return null;
 		}
 		// skip leading nulls
 		int index = 0;
@@ -95,12 +110,32 @@ namespace Vanubi {
 		var worker = new MatchWorker (cancellable);
 		File file = File.new_for_path ("/");
 		string[] result = null;
+		var common_prefixes = new string[comps.length];
 		try {
-			result = yield file_complete_pattern (worker, file, index, comps, cancellable);
+			result = yield file_complete_pattern (worker, file, index, comps, common_prefixes, cancellable);
+		} catch (Error e) {
+			message (e.message);
+			return null;
 		} finally {
 			worker.terminate ();
 		}
 		cancellable.set_error_if_cancelled ();
+		common_choice = "";
+		for (; index < comps.length && (common_prefixes[index] == null || comps[index] == common_prefixes[index]); index++);
+		for (; index < comps.length; index++) {
+			if (comps[index] != null) {
+				if (common_prefixes[index] != null) {
+					common_choice += common_prefixes[index]+"/";
+				} else {
+					common_choice += comps[index]+"/";
+				}
+			}
+		}
+		if (common_choice.length == 0) {
+			common_choice = null;
+		} else if (pattern.length > 0 && pattern[pattern.length-1] != '/' && common_choice[common_choice.length-1] == '/') {
+			common_choice.data[common_choice.length-1] = '\0';
+		}
 		return result;
 	}
 
@@ -109,9 +144,9 @@ namespace Vanubi {
 			base (true);
 		}
 
-		protected override async string[]? complete (string pattern, Cancellable cancellable) {
+		protected override async string[]? complete (string pattern, out string? common_choice, Cancellable cancellable) {
 			try {
-				return yield file_complete (pattern, cancellable);
+				return yield file_complete (pattern, out common_choice, cancellable);
 			} catch (Error e) {
 				return null;
 			}
@@ -132,20 +167,6 @@ namespace Vanubi {
 				idx++;
 			}
 			return original_pattern.substring (0, idx)+choice;
-		}
-
-		static int count (string haystack, unichar c) {
-			int cnt = 0;
-			int idx = 0;
-			while (true) {
-				idx = haystack.index_of_char (c, idx);
-				if (idx < 0) {
-					break;
-				}
-				cnt++;
-				idx++;
-			}
-			return cnt;
 		}
 	}
 }

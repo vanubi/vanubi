@@ -515,16 +515,17 @@ namespace Vanubi {
 				this.choices = choices;
 			}
 
-			protected override async string[]? complete (string pattern, Cancellable cancellable) {
+			protected override async string[]? complete (string pattern, out string? common_choice, Cancellable cancellable) {
 				var worker = new MatchWorker (cancellable);
 				worker.set_pattern (pattern);
 				foreach (unowned string choice in choices) {
 					worker.enqueue (choice);
 				}
 				try {
-					return yield worker.get_result ();
+					return yield worker.get_result (out common_choice);
 				} catch (Error e) {
 					message (e.message);
+					common_choice = null;
 					return null;
 				} finally {
 					worker.terminate ();
@@ -663,6 +664,7 @@ namespace Vanubi {
 
 	class CompletionBar : Bar {
 		string original_pattern;
+		string? common_choice;
 		CompletionBox completion_box;
 		Cancellable current_completion;
 		int64 last_tab_time = 0;
@@ -681,7 +683,8 @@ namespace Vanubi {
 			}
 		}
 
-		protected virtual async string[]? complete (string pattern, Cancellable cancellable) {
+		protected virtual async string[]? complete (string pattern, out string? common_choice, Cancellable cancellable) {
+			common_choice = null;
 			return null;
 		}
 
@@ -692,6 +695,13 @@ namespace Vanubi {
 		void set_choice () {
 			entry.set_text (get_pattern_from_choice (original_pattern, completion_box.get_choice ()));
 			entry.move_cursor (MovementStep.BUFFER_ENDS, 1, false);
+		}
+
+		void set_common_pattern () {
+			if (common_choice != null) {
+				entry.set_text (get_pattern_from_choice (original_pattern, common_choice));
+				entry.move_cursor (MovementStep.BUFFER_ENDS, 1, false);
+			}
 		}
 
 		protected override void on_activate () {
@@ -705,6 +715,7 @@ namespace Vanubi {
 
 		void on_changed () {
 			original_pattern = entry.get_text ();
+			common_choice = null;
 			navigated = false;
 			if (current_completion != null) {
 				current_completion.cancel ();
@@ -712,7 +723,7 @@ namespace Vanubi {
 			var cancellable = current_completion = new Cancellable ();
 			complete (entry.get_text (), cancellable, (s,r) => {
 					try {
-						var result = complete.end (r);
+						var result = complete.end (r, out common_choice);
 						cancellable.set_error_if_cancelled ();
 						cancellable = null;
 						if (completion_box != null) {
@@ -749,6 +760,8 @@ namespace Vanubi {
 						int64 time = get_monotonic_time ();
 						if (time - last_tab_time < 300000) {
 							set_choice ();
+						} else {
+							set_common_pattern ();
 						}
 						last_tab_time = time;
 					}

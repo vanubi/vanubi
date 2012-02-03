@@ -30,7 +30,9 @@ namespace Vanubi {
 		SourceFunc resume;
 		string[] matches;
 		int[] match_values;
+		string[] unmatched;
 		string pattern; // should be volatile
+		string common_prefix;
 		Cancellable cancellable;
 
 		public MatchWorker (Cancellable cancellable) {
@@ -42,6 +44,10 @@ namespace Vanubi {
 
 		public void set_pattern (string pattern) {
 			this.pattern = pattern;
+			this.common_prefix = null;
+			matches.length = 0;
+			match_values.length = 0;
+			unmatched.length = 0;
 		}
 
 		public void terminate () {
@@ -53,7 +59,7 @@ namespace Vanubi {
 			return (*a & 0xFFFF) - (*b & 0xFFFF);
 		}
 
-		public async string[] get_result () throws Error {
+		public async string[] get_result (out string? common_prefix) throws Error {
 			this.resume = get_result.callback;
 			string* foo = (string*)0x0dead;
 			queue.push ((owned)foo);
@@ -66,8 +72,21 @@ namespace Vanubi {
 				var pos = (match_values[i] >> 16) & 0xFFFF;
 				result[i] = (owned) matches[pos];
 			}
-			matches.length = 0;
-			match_values.length = 0;
+			common_prefix = null;
+			if (this.common_prefix.has_prefix (pattern)) {
+				bool unmatched_match = false;
+				foreach (unowned string unmatch in unmatched) {
+					// unmatched string must not match against the common prefix
+					if (unmatch.has_prefix (this.common_prefix)) {
+						unmatched_match = true;
+						break;
+					}
+				}
+				if (!unmatched_match) {
+					common_prefix = this.common_prefix;
+				}
+			}
+
 			return result;
 		}
 
@@ -93,8 +112,24 @@ namespace Vanubi {
 				string haystack = (owned) item;
 				int match = pattern_match (pattern, haystack);
 				if (match >= 0) {
+					// common prefix
+					if (common_prefix == null) {
+						common_prefix = haystack;
+					} else {
+						var l = int.min (haystack.length, common_prefix.length);
+						for (int i=0; i < l; i++) {
+							if (common_prefix[i] != haystack[i]) {
+								common_prefix.data[i] = '\0';
+								break;
+							}
+						}
+					}
+					// store match
 					match_values += match | (matches.length << 16);
 					matches += (owned) haystack;
+				} else {
+					// no match
+					unmatched += (owned) haystack;
 				}
 			}
 			return false;
