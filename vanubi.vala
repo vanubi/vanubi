@@ -539,6 +539,7 @@ namespace Vanubi {
 		public SourceView view { get; private set; }
 		ScrolledWindow sw;
 		TextTag in_string_tag = null;
+		Label file_count;
 
 		public Editor (File? file) {
 			this.file = file;
@@ -555,11 +556,26 @@ namespace Vanubi {
 			sw.expand = true;
 			sw.add (view);
 			add (sw);
+
+			Grid info = new Grid ();
+			info.expand = false;
+			info.orientation = Orientation.HORIZONTAL;
+			add (info);
+			Label file_label;
 			if (file == null) {
-				add (new Label ("*scratch*"));
+				file_label = new Label ("*scratch*");
 			} else {
-				add (new Label (file.get_basename ()));
+				file_label = new Label (file.get_basename ());
 			}
+			file_label.margin_left = 30;
+			info.add (file_label);
+
+			file_count = new Label ("(0, 0)");
+			file_count.margin_left = 30;
+			info.add (file_count);
+			view.notify["buffer"].connect (on_file_count);
+			view.buffer.mark_set.connect (on_file_count);
+			view.buffer.changed.connect (on_file_count);
 
 			// HACK: sourceview doesn't set the style in the tags :-(
 			buf.set_text ("\"foo\"", -1);
@@ -627,6 +643,28 @@ namespace Vanubi {
 				iter.forward_char ();
 			}
 			return (int) indent;
+		}
+
+		/* events */
+
+		void on_file_count () {
+			TextIter insert;
+			var buf = view.buffer;
+			buf.get_iter_at_mark (out insert, buf.get_insert ());
+			int line = insert.get_line ();
+			TextIter iter;
+			buf.get_iter_at_line (out iter, line);
+			int column = 0;
+			while (!iter.equal (insert)) {
+				if (iter.get_char () == '\t') {
+					column += (int) view.tab_width;
+				} else {
+					column++;
+				}
+				iter.forward_char ();
+			}
+
+			file_count.set_label ("(%d, %d)".printf (line+1, column+1));
 		}
 	}
 
