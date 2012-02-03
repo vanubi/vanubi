@@ -179,7 +179,11 @@ namespace Vanubi {
 			var file = File.new_for_path (filename);
 			// first search already opened files
 			var f = files[file];
-			if (f != null && f.equal (file)) {
+			if (f != null) {
+				if (f == editor.file) {
+					// no-op
+					return;
+				}
 				unowned Editor ed = get_available_editor (f);
 				replace_widget (editor, ed);
 				focus_editor (ed);
@@ -444,6 +448,10 @@ namespace Vanubi {
 								break;
 							}
 						}
+					}
+					if (file == editor.file) {
+						// no-op
+						return;
 					}
 					unowned Editor ed = get_available_editor (file);
 					replace_widget (editor, ed);
