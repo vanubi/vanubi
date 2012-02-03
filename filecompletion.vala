@@ -31,7 +31,7 @@ namespace Vanubi {
 				foreach (var info in infos) {
 					if (info.get_file_type () == FileType.DIRECTORY) {
 						worker.enqueue (info.get_name ()+"/");
-					} else if (index < pattern.length-1) {
+					} else if (index == pattern.length-1) {
 						worker.enqueue (info.get_name ());
 					}
 				}
@@ -64,42 +64,29 @@ namespace Vanubi {
 		return result;
 	}
 
-	async string[]? file_complete (owned string pattern, out string? common_choice, Cancellable cancellable) throws Error {
-		common_choice = null;
-		pattern = File.new_for_path(".").get_path ()+"/"+pattern;
-		int abs = pattern.last_index_of ("//");
-		int home = pattern.last_index_of ("~/");
+	string absolutize_path (string path) {
+		string res = Environment.get_current_dir()+"/"+path;
+		int abs = path.last_index_of ("//");
+		int home = path.last_index_of ("~/");
 		if (abs > home) {
-			pattern = pattern.substring (abs+1);
+			res = path.substring (abs+1);
 		} else if (home > abs) {
-			pattern = Path.build_filename (Environment.get_home_dir (), pattern.substring (home+1));
+			res = Environment.get_home_dir()+path.substring (home+1);
 		}
-		string[] comps = pattern.split ("/");
-		comps[0] = null; // empty group before the first separator
+		var file = File.new_for_path (path);
+		res = file.get_path ();
+		if (path[path.length-1] == '/' || path[0] == '\0') {
+			res += "/";
+		}
+		return res;
+	}
 
-		// resolve ../ beforehand
-		for (int i=1; i < comps.length; i++) {
-			if (comps[i][0] == '.' && comps[i][1] == '.' && comps[i][2] == 0) {
-				comps[i] = null;
-				for (int j=i-1; j >= 0; j--) {
-					if (comps[j] != null) {
-						comps[j] = null;
-						break;
-					}
-				}
-			}
-		}
-		// skip trailing nulls
-		while (comps.length > 0 && comps[comps.length-1] == null) {
-			comps.length--;
-		}
+	async string[]? file_complete (string pattern_path, out string? common_choice, Cancellable cancellable) throws Error {
+		common_choice = null;
+		var pattern = absolutize_path (pattern_path);
+		string[] comps = pattern.split ("/");
 		if (comps.length == 0) {
 			return null;
-		}
-		// skip leading nulls
-		int index = 0;
-		while (comps[index] == null) {
-			index++;
 		}
 
 		var worker = new MatchWorker (cancellable);
@@ -107,7 +94,7 @@ namespace Vanubi {
 		string[] result = null;
 		var common_prefixes = new string[comps.length];
 		try {
-			result = yield file_complete_pattern (worker, file, index, comps, common_prefixes, cancellable);
+			result = yield file_complete_pattern (worker, file, 1, comps, common_prefixes, cancellable);
 		} catch (Error e) {
 			message (e.message);
 			return null;
@@ -115,20 +102,18 @@ namespace Vanubi {
 			worker.terminate ();
 		}
 		cancellable.set_error_if_cancelled ();
+
 		common_choice = "";
-		for (; index < comps.length && (common_prefixes[index] == null || comps[index] == common_prefixes[index]); index++);
-		for (; index < comps.length; index++) {
-			if (comps[index] != null) {
-				if (common_prefixes[index] != null) {
-					common_choice += common_prefixes[index]+"/";
-				} else {
-					common_choice += comps[index]+"/";
-				}
+		for (int i=1; i < comps.length; i++) {
+			if (common_prefixes[i] != null) {
+				common_choice += common_prefixes[i]+"/";
+			} else {
+				common_choice += comps[i]+"/";
 			}
 		}
 		if (common_choice.length == 0) {
 			common_choice = null;
-		} else if (pattern.length > 0 && pattern[pattern.length-1] != '/' && common_choice[common_choice.length-1] == '/') {
+		} else {
 			common_choice.data[common_choice.length-1] = '\0';
 		}
 		return result;
@@ -148,20 +133,48 @@ namespace Vanubi {
 		}
 
 		protected override string get_pattern_from_choice (string original_pattern, string choice) {
+			string absolute_pattern = absolutize_path (original_pattern);
 			int choice_seps = count (choice, '/');
-			int pattern_seps = count (original_pattern, '/');
-			if (choice[choice.length-1] == '/' && original_pattern[original_pattern.length-1] != '/') {
-				// automatically added to determine a directory
+			int pattern_seps = count (absolute_pattern, '/');
+			if (choice[choice.length-1] == '/') {
 				choice_seps--;
+			}
+			if (absolute_pattern[absolute_pattern.length-1] == '/') {
+				pattern_seps--;
 			}
 			int keep_seps = pattern_seps - choice_seps;
 
 			int idx = 0;
 			for (int i=0; i < keep_seps; i++) {
-				idx = original_pattern.index_of_char ('/', idx);
+				idx = absolute_pattern.index_of_char ('/', idx);
 				idx++;
 			}
-			return original_pattern.substring (0, idx)+choice;
+			string new_absolute_pattern = absolute_pattern.substring (0, idx)+choice;
+			if (original_pattern[0] == '/') {
+				// absolute path
+				return new_absolute_pattern;
+			} else {
+				var basepath = Environment.get_current_dir()+"/";
+				int n_sep = 0;
+				int last_sep = 0;
+				int len = int.min (basepath.length, new_absolute_pattern.length);
+				for (int i=0; i < len; i++) {
+					if (basepath[i] != new_absolute_pattern[i]) {
+						break;
+					}
+					if (basepath[i] == '/') {
+						last_sep = i;
+						n_sep++;
+					}
+				}
+				int base_seps = count (basepath, '/');
+				var relative = "";
+				for (int i=0; i < base_seps-n_sep; i++) {
+					relative += "../";
+				}
+				relative += new_absolute_pattern.substring (last_sep+1);
+				return relative;
+			}
 		}
 	}
 }

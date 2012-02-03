@@ -73,7 +73,7 @@ namespace Vanubi {
 				result[i] = (owned) matches[pos];
 			}
 			common_prefix = null;
-			if (this.common_prefix.has_prefix (pattern)) {
+			if (this.common_prefix != null && this.common_prefix.has_prefix (pattern)) {
 				bool unmatched_match = false;
 				foreach (unowned string unmatch in unmatched) {
 					// unmatched string must not match against the common prefix
