@@ -265,6 +265,14 @@ namespace Vanubi {
 			if (editors.length > 0) {
 				// share buffer
 				ed.view.buffer = editors[0].view.buffer;
+			} else if (file != null) {
+				bool uncertain;
+				var content_type = ContentType.guess (file.get_path (), null, out uncertain);
+				if (uncertain) {
+					content_type = null;
+				}
+				var lang = SourceLanguageManager.get_default().guess_language (file.get_path (), content_type);
+				((SourceBuffer) ed.view.buffer).set_language (lang);
 			}
 			unowned Editor ret = ed;
 			editors.add ((owned) ed);
@@ -554,24 +562,8 @@ namespace Vanubi {
 			orientation = Orientation.VERTICAL;
 			expand = true;
 
-			// buffer
-			var vala = SourceLanguageManager.get_default().get_language ("vala");
-			var buf = new SourceBuffer.with_language (vala);
-			// HACK: sourceview doesn't set the style in the tags :-(
-			buf.set_text ("\"foo\"", -1);
-			TextIter start, end;
-			buf.get_start_iter (out start);
-			buf.get_end_iter (out end);
-			buf.ensure_highlight (start, end);
-			start.forward_char ();
-			var tags = start.get_tags ();
-			if (tags != null) {
-				in_string_tag = tags.data;
-			}
-			buf.set_text ("", 0);
-
 			// view
-			view = new SourceView.with_buffer (buf);
+			view = new SourceView ();
 			view.wrap_mode = WrapMode.CHAR;
 			view.set_data ("editor", (Editor*)this);
 
@@ -612,7 +604,7 @@ namespace Vanubi {
 
 		public bool is_in_string (TextIter iter) {
 			var tags = iter.get_tags ();
-			return tags == null || tags.data.foreground_gdk.equal (in_string_tag.foreground_gdk);
+			return in_string_tag != null && tags != null && tags.data.foreground_gdk.equal (in_string_tag.foreground_gdk);
 		}
 
 		public void set_line_indentation (int line, int indent) {
@@ -658,9 +650,27 @@ namespace Vanubi {
 		/* events */
 
 		void on_buffer_changed () {
-			view.buffer.mark_set.connect (on_file_count);
-			view.buffer.changed.connect (on_file_count);
+			var buf = (SourceBuffer) view.buffer;
+			buf.mark_set.connect (on_file_count);
+			buf.changed.connect (on_file_count);
+			buf.notify["language"].connect (on_language_changed);
 			on_file_count ();
+		}
+
+		void on_language_changed () {
+			var buf = (SourceBuffer) view.buffer;
+			// HACK: sourceview doesn't set the style in the tags :-(
+			buf.set_text ("\"foo\"", -1);
+			TextIter start, end;
+			buf.get_start_iter (out start);
+			buf.get_end_iter (out end);
+			buf.ensure_highlight (start, end);
+			start.forward_char ();
+			var tags = start.get_tags ();
+			if (tags != null) {
+				in_string_tag = tags.data;
+			}
+			buf.set_text ("", 0);
 		}
 
 		void on_file_count () {
