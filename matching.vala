@@ -13,7 +13,7 @@ namespace Vanubi {
 					found = true;
 					break;
 				}
-				rank++;
+				rank += j+100;
 			}
 			if (!found) {
 				// no match
@@ -116,7 +116,12 @@ namespace Vanubi {
 					if (common_prefix == null) {
 						common_prefix = haystack;
 					} else {
-						var l = int.min (haystack.length, common_prefix.length);
+						var cpl = common_prefix.length;
+						var l = int.min (haystack.length, cpl);
+						if (l >= cpl) {
+							common_prefix.data[l] = '\0';
+						}
+						common_prefix.data[l] = '\0';
 						for (int i=0; i < l; i++) {
 							if (common_prefix[i] != haystack[i]) {
 								common_prefix.data[i] = '\0';
