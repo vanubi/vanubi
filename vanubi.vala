@@ -51,6 +51,8 @@ namespace Vanubi {
 		KeyNode current_key;
 		uint key_timeout = 0;
 
+		string last_search_string = "";
+
 		[Signal (detailed = true)]
 		public signal void execute_command (Editor editor, string command);
 
@@ -518,7 +520,13 @@ namespace Vanubi {
 		}
 
 		void on_search_forward (Editor editor) {
-			var bar = new SearchBar (editor);
+			var bar = new SearchBar (editor, last_search_string);
+			bar.activate.connect ((s) => {
+					last_search_string = s;
+				});
+			bar.aborted.connect (() => {
+					abort (editor);
+				});
 			add_overlay (bar);
 			bar.show ();
 		}
@@ -906,8 +914,9 @@ namespace Vanubi {
 		TextIter original_insert;
 		TextIter original_bound;
 
-		public SearchBar (Editor editor) {
+		public SearchBar (Editor editor, string initial) {
 			this.editor = editor;
+			entry.set_text (initial);
 			entry.changed.connect (on_changed);
 
 			var buf = editor.view.buffer;
@@ -941,6 +950,7 @@ namespace Vanubi {
 				if (found) {
 					// found
 					buf.select_range (iter, subiter);
+					editor.view.scroll_to_mark (buf.get_insert (), 0, true, 0.5, 0.5);
 					break;
 				}
 				iter.forward_char ();
@@ -951,6 +961,7 @@ namespace Vanubi {
 			if (e.keyval == Gdk.Key.Escape || (e.keyval == Gdk.Key.g && Gdk.ModifierType.CONTROL_MASK in e.state)) {
 				// abort
 				editor.view.buffer.select_range (original_insert, original_bound);
+				editor.view.scroll_to_mark (editor.view.buffer.get_insert (), 0, false, 0.5, 0.5);
 				aborted ();
 				return true;
 			} else if (e.keyval == Gdk.Key.s && Gdk.ModifierType.CONTROL_MASK in e.state) {
