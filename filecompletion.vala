@@ -64,30 +64,30 @@ namespace Vanubi {
 		return result;
 	}
 
-	string absolutize_path (string path) {
-		string res = Environment.get_current_dir()+"/"+path;
-		int abs = path.last_index_of ("//");
-		int home = path.last_index_of ("~/");
+	string absolutize_path (string base_directory, string path) {
+		string res = base_directory+path;
+		int abs = res.last_index_of ("//");
+		int home = res.last_index_of ("~/");
 		if (abs > home) {
-			res = path.substring (abs+1);
+			res = res.substring (abs+1);
 		} else if (home > abs) {
-			res = Environment.get_home_dir()+path.substring (home+1);
+			res = Environment.get_home_dir()+res.substring (home+1);
 		}
-		var file = File.new_for_path (path);
-		res = file.get_path ();
+		res = File.new_for_path (res).get_path ();
 		if (path[path.length-1] == '/' || path[0] == '\0') {
 			res += "/";
 		}
 		return res;
 	}
 
-	async string[]? file_complete (string pattern_path, out string? common_choice, Cancellable cancellable) throws Error {
+	async string[]? file_complete (string base_directory, string pattern_path, out string? common_choice, Cancellable cancellable) throws Error {
 		common_choice = null;
-		var pattern = absolutize_path (pattern_path);
+		var pattern = absolutize_path (base_directory, pattern_path);
 		string[] comps = pattern.split ("/");
 		if (comps.length == 0) {
 			return null;
 		}
+		message("%s %s", base_directory, pattern_path);
 
 		var worker = new MatchWorker (cancellable);
 		File file = File.new_for_path ("/");
@@ -120,20 +120,31 @@ namespace Vanubi {
 	}
 
 	class FileBar : CompletionBar {
-		public FileBar () {
+		string base_directory;
+
+		public FileBar (File? base_file) {
 			base (true);
+			if (base_file != null) {
+				var parent = base_file.get_parent ();
+				if (parent != null) {
+					base_directory = parent.get_path()+"/";
+				}
+			}
+			if (base_directory == null) {message("goo");
+				base_directory = Environment.get_current_dir()+"/";
+			}
 		}
 
 		protected override async string[]? complete (string pattern, out string? common_choice, Cancellable cancellable) {
 			try {
-				return yield file_complete (pattern, out common_choice, cancellable);
+				return yield file_complete (base_directory, pattern, out common_choice, cancellable);
 			} catch (Error e) {
 				return null;
 			}
 		}
 
 		protected override string get_pattern_from_choice (string original_pattern, string choice) {
-			string absolute_pattern = absolutize_path (original_pattern);
+			string absolute_pattern = absolutize_path (base_directory, original_pattern);
 			int choice_seps = count (choice, '/');
 			int pattern_seps = count (absolute_pattern, '/');
 			if (choice[choice.length-1] == '/') {
@@ -154,20 +165,19 @@ namespace Vanubi {
 				// absolute path
 				return new_absolute_pattern;
 			} else {
-				var basepath = Environment.get_current_dir()+"/";
 				int n_sep = 0;
 				int last_sep = 0;
-				int len = int.min (basepath.length, new_absolute_pattern.length);
+				int len = int.min (base_directory.length, new_absolute_pattern.length);
 				for (int i=0; i < len; i++) {
-					if (basepath[i] != new_absolute_pattern[i]) {
+					if (base_directory[i] != new_absolute_pattern[i]) {
 						break;
 					}
-					if (basepath[i] == '/') {
+					if (base_directory[i] == '/') {
 						last_sep = i;
 						n_sep++;
 					}
 				}
-				int base_seps = count (basepath, '/');
+				int base_seps = count (base_directory, '/');
 				var relative = "";
 				for (int i=0; i < base_seps-n_sep; i++) {
 					relative += "../";

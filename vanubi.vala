@@ -340,7 +340,7 @@ namespace Vanubi {
 		}
 
 		void on_open_file (Editor editor) {
-			var bar = new FileBar ();
+			var bar = new FileBar (editor.file);
 			bar.activate.connect ((f) => {
 					abort (editor);
 					open_file (editor, f);

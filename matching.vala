@@ -9,7 +9,7 @@ namespace Vanubi {
 			char c = pattern[i];
 			bool found = false;
 			for (; j < m; j++) {
-				if (c == haystack[j]) {
+				if (c.tolower () == haystack[j].tolower ()) {
 					found = true;
 					break;
 				}
@@ -73,11 +73,12 @@ namespace Vanubi {
 				result[i] = (owned) matches[pos];
 			}
 			common_prefix = null;
-			if (this.common_prefix != null && this.common_prefix.has_prefix (pattern)) {
+			var common_prefix_down = this.common_prefix != null ? this.common_prefix.down () : null;
+			if (common_prefix_down != null && common_prefix_down.has_prefix (pattern.down ())) {
 				bool unmatched_match = false;
 				foreach (unowned string unmatch in unmatched) {
 					// unmatched string must not match against the common prefix
-					if (unmatch.has_prefix (this.common_prefix)) {
+					if (unmatch.down().has_prefix (common_prefix_down)) {
 						unmatched_match = true;
 						break;
 					}
@@ -123,7 +124,7 @@ namespace Vanubi {
 						}
 						common_prefix.data[l] = '\0';
 						for (int i=0; i < l; i++) {
-							if (common_prefix[i] != haystack[i]) {
+							if (common_prefix[i].tolower() != haystack[i].tolower()) {
 								common_prefix.data[i] = '\0';
 								break;
 							}
