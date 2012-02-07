@@ -87,7 +87,6 @@ namespace Vanubi {
 		if (comps.length == 0) {
 			return null;
 		}
-		message("%s %s", base_directory, pattern_path);
 
 		var worker = new MatchWorker (cancellable);
 		File file = File.new_for_path ("/");
@@ -130,7 +129,7 @@ namespace Vanubi {
 					base_directory = parent.get_path()+"/";
 				}
 			}
-			if (base_directory == null) {message("goo");
+			if (base_directory == null) {
 				base_directory = Environment.get_current_dir()+"/";
 			}
 		}

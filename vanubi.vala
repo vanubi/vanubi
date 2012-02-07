@@ -75,6 +75,12 @@ namespace Vanubi {
 
 			bind_command ({
 					Key (Gdk.Key.x, Gdk.ModifierType.CONTROL_MASK),
+						Key (Gdk.Key.k, 0)},
+				"kill-buffer");
+			execute_command["kill-buffer"].connect (on_kill_buffer);
+
+			bind_command ({
+					Key (Gdk.Key.x, Gdk.ModifierType.CONTROL_MASK),
 						Key (Gdk.Key.c, Gdk.ModifierType.CONTROL_MASK) },
 				"quit");
 			execute_command["quit"].connect (on_quit);
@@ -116,7 +122,7 @@ namespace Vanubi {
 			execute_command["search-forward"].connect (on_search_forward);
 
 			// setup empty buffer
-			var ed = get_available_editor (null);
+			unowned Editor ed = get_available_editor (null);
 			add (ed);
 			focus_editor (ed);
 		}
@@ -365,6 +371,44 @@ namespace Vanubi {
 						}
 						text = null;
 					});
+			}
+		}
+
+		void on_kill_buffer (Editor editor) {
+			unowned File next_file = null;
+			foreach (unowned File f in files.get_keys ()) {
+				if (f != editor.file) {
+					next_file = f;
+					break;
+				}
+			}
+			GenericArray<Editor> editors;
+			if (editor.file == null) {
+				editors = scratch_editors;
+			} else {
+				editors = editor.file.get_data ("editors");
+			}
+			bool other_visible = false;
+			foreach (unowned Editor ed in editors.data) {
+				if (editor != ed && ed.visible) {
+					other_visible = true;
+					break;
+				}
+			}
+
+			if (!other_visible) {
+				// trash the data
+				if (editor.file == null) {
+					scratch_editors = new GenericArray<Editor> ();
+				} else {
+					files.remove (editor.file);
+				}
+			}
+			unowned Editor ed = get_available_editor (next_file);
+			replace_widget (editor, ed);
+			focus_editor (ed);
+			foreach (unowned Editor old_ed in editors.data) {
+				((Container) old_ed.get_parent ()).remove (old_ed);
 			}
 		}
 

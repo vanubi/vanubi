@@ -32,7 +32,7 @@ namespace Vanubi {
 		int[] match_values;
 		string[] unmatched;
 		string pattern; // should be volatile
-		string common_prefix;
+		string common_prefix; // should be volatile
 		Cancellable cancellable;
 
 		public MatchWorker (Cancellable cancellable) {
