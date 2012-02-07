@@ -374,6 +374,20 @@ namespace Vanubi {
 			}
 		}
 
+		void kill_buffer (Editor editor, GenericArray<Editor> editors, File? next_file) {
+			if (editor.file == null) {
+				scratch_editors = new GenericArray<Editor> ();
+			} else {
+				files.remove (editor.file);
+			}
+			unowned Editor ed = get_available_editor (next_file);
+			replace_widget (editor, ed);
+			focus_editor (ed);
+			foreach (unowned Editor old_ed in editors.data) {
+				((Container) old_ed.get_parent ()).remove (old_ed);
+			}
+		}
+
 		void on_kill_buffer (Editor editor) {
 			unowned File next_file = null;
 			foreach (unowned File f in files.get_keys ()) {
@@ -398,17 +412,22 @@ namespace Vanubi {
 
 			if (!other_visible) {
 				// trash the data
-				if (editor.file == null) {
-					scratch_editors = new GenericArray<Editor> ();
+				if (editor.view.buffer.get_modified ()) {
+					var bar = new Bar ("Your changes will be lost. Confirm?");
+					bar.activate.connect (() => {
+							abort (editor);
+							kill_buffer (editor, editors, next_file);
+						});
+					bar.aborted.connect (() => { abort (editor); });
+					add_overlay (bar);
+					bar.show ();
 				} else {
-					files.remove (editor.file);
+					kill_buffer (editor, editors, next_file);
 				}
-			}
-			unowned Editor ed = get_available_editor (next_file);
-			replace_widget (editor, ed);
-			focus_editor (ed);
-			foreach (unowned Editor old_ed in editors.data) {
-				((Container) old_ed.get_parent ()).remove (old_ed);
+			} else {
+				unowned Editor ed = get_available_editor (next_file);
+				replace_widget (editor, ed);
+				focus_editor (ed);
 			}
 		}
 
@@ -752,9 +771,12 @@ namespace Vanubi {
 		public new signal void activate (string s);
 		public signal void aborted ();
 
-		public Bar () {
+		public Bar (string? initial = null) {
 			expand = false;
 			entry = new Entry ();
+			if (initial != null) {
+				entry.set_text (initial);
+			}
 			entry.set_activates_default (true);
 			entry.expand = true;
 			entry.activate.connect (on_activate);
