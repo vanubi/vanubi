@@ -160,9 +160,10 @@ namespace Vanubi {
 				idx++;
 			}
 			string new_absolute_pattern = absolute_pattern.substring (0, idx)+choice;
+			string res;
 			if (original_pattern[0] == '/') {
 				// absolute path
-				return new_absolute_pattern;
+				res = (owned) new_absolute_pattern;
 			} else {
 				int n_sep = 0;
 				int last_sep = 0;
@@ -182,7 +183,12 @@ namespace Vanubi {
 					relative += "../";
 				}
 				relative += new_absolute_pattern.substring (last_sep+1);
-				return relative;
+				res = (owned) relative;
+			}
+			if (res[res.length-1] != '/' && File.new_for_path (res).query_file_type (FileQueryInfoFlags.NONE) == FileType.DIRECTORY) {
+				return res + "/";
+			} else {
+				return res;
 			}
 		}
 	}

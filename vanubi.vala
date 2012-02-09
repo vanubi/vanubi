@@ -357,8 +357,8 @@ namespace Vanubi {
 		}
 
 		void on_save_file (Editor editor) {
-			if (editor.file != null) {
-				var buf = editor.view.buffer;
+			var buf = editor.view.buffer;
+			if (editor.file != null && buf.get_modified ()) {
 				TextIter start, end;
 				buf.get_start_iter (out start);
 				buf.get_end_iter (out end);
@@ -366,6 +366,7 @@ namespace Vanubi {
 				editor.file.replace_contents_async.begin (text.data, null, true, FileCreateFlags.NONE, null, (s,r) => {
 						try {
 							editor.file.replace_contents_async.end (r, null);
+							buf.set_modified (false);
 						} catch (Error e) {
 							message (e.message);
 						}
