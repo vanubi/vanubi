@@ -127,8 +127,25 @@ namespace Vanubi {
 			focus_editor (ed);
 		}
 
-		public void add_overlay (Widget widget) {
-			add (widget);
+		public void add_overlay (Widget widget, bool paned = false) {
+			var self = this; // keep alive
+			var parent = (Container) get_parent ();
+			parent.remove (this);
+			if (paned) {
+				var p = new Paned (Orientation.VERTICAL);
+				p.pack1 (this, true, false);
+				p.pack2 (widget, true, false);
+				parent.add (p);
+				p.show ();
+			} else {
+				var grid = new Grid ();
+				grid.orientation = Orientation.VERTICAL;
+				grid.add (this);
+				grid.add (widget);
+				parent.add (grid);
+				grid.show ();
+			}
+			self = null;
 		}
 
 		public void bind_command (Key[] keyseq, string cmd) {
@@ -233,12 +250,17 @@ namespace Vanubi {
 
 		public void abort (Editor editor) {
 			current_key = key_root;
-			foreach (unowned Widget w in get_children ()) {
-				if (!(w is Editor) && !(w is Paned)) {
-					remove (w);
-				}
+			var self = this; // keep alive
+			var parent = (Container) get_parent ();
+			var pparent = (Container) parent.get_parent ();
+			if (pparent == null) {
+				return;
 			}
+			parent.remove (this);
+			pparent.remove (parent);
+			pparent.add (this);
 			focus_editor (editor);
+			self = null;
 		}
 
 		void set_loading () {
