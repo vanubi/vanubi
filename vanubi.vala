@@ -52,6 +52,7 @@ namespace Vanubi {
 		uint key_timeout = 0;
 
 		string last_search_string = "";
+		string last_command_string = "make";
 
 		[Signal (detailed = true)]
 		public signal void execute_command (Editor editor, string command);
@@ -120,6 +121,9 @@ namespace Vanubi {
 
 			bind_command ({ Key (Gdk.Key.s, Gdk.ModifierType.CONTROL_MASK) }, "search-forward");
 			execute_command["search-forward"].connect (on_search_forward);
+
+			bind_command ({ Key (Gdk.Key.F9, 0) }, "compile");
+			execute_command["compile"].connect (on_compile);
 
 			// setup empty buffer
 			unowned Editor ed = get_available_editor (null);
@@ -334,7 +338,7 @@ namespace Vanubi {
 				abort (editor);
 				return true;
 			}
-			if (modifiers == 0 && keyval != Gdk.Key.Tab && current_key == key_root) {
+			if (modifiers == 0 && keyval < 255 && current_key == key_root) {
 				// normal key, avoid a table lookup
 				return false;
 			}
@@ -609,6 +613,22 @@ namespace Vanubi {
 			var bar = new SearchBar (editor, last_search_string);
 			bar.activate.connect ((s) => {
 					last_search_string = s;
+				});
+			bar.aborted.connect (() => {
+					abort (editor);
+				});
+			add_overlay (bar);
+			bar.show ();
+		}
+
+		void on_compile (Editor editor) {
+			var bar = new Bar (last_command_string);
+			bar.activate.connect ((s) => {
+					abort (editor);
+					last_command_string = s;
+					var shell = new ShellBar (s, editor.file);
+					add_overlay (shell, true);
+					shell.show ();
 				});
 			bar.aborted.connect (() => {
 					abort (editor);

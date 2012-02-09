@@ -118,20 +118,22 @@ namespace Vanubi {
 		return result;
 	}
 
+	public string get_base_directory (File? base_file) {
+		if (base_file != null) {
+			var parent = base_file.get_parent ();
+			if (parent != null) {
+				return parent.get_path()+"/";
+			}
+		}
+		return Environment.get_current_dir()+"/";
+	}
+
 	class FileBar : CompletionBar {
 		string base_directory;
 
 		public FileBar (File? base_file) {
 			base (true);
-			if (base_file != null) {
-				var parent = base_file.get_parent ();
-				if (parent != null) {
-					base_directory = parent.get_path()+"/";
-				}
-			}
-			if (base_directory == null) {
-				base_directory = Environment.get_current_dir()+"/";
-			}
+			base_directory = get_base_directory (base_file);
 		}
 
 		protected override async string[]? complete (string pattern, out string? common_choice, Cancellable cancellable) {
