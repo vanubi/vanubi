@@ -1081,6 +1081,10 @@ namespace Vanubi {
 				iter.forward_char ();
 				search (iter);
 				return true;
+			} else if (e.keyval == 65293) { // enter
+				// abort
+				aborted ();
+				return true;
 			}
 			return base.on_key_press_event (e);
 		}
