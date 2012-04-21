@@ -244,6 +244,7 @@ namespace Vanubi {
 					buf.begin_not_undoable_action ();
 					buf.set_text ((string) content, -1);
 					buf.end_not_undoable_action ();
+					buf.set_modified (false);
 					TextIter start;
 					buf.get_start_iter (out start);
 					buf.place_cursor (start);
@@ -670,6 +671,7 @@ namespace Vanubi {
 		ScrolledWindow sw;
 		TextTag in_string_tag = null;
 		Label file_count;
+		Label file_status;
 
 		public Editor (File? file) {
 			this.file = file;
@@ -692,18 +694,18 @@ namespace Vanubi {
 			info.expand = false;
 			info.orientation = Orientation.HORIZONTAL;
 			add (info);
-			Label file_label;
-			if (file == null) {
-				file_label = new Label ("*scratch*");
-			} else {
-				file_label = new Label (file.get_basename ());
-			}
+			var file_label = new Label (get_editor_name ());
 			file_label.margin_left = 20;
 			info.add (file_label);
 
 			file_count = new Label ("(0, 0)");
 			file_count.margin_left = 20;
 			info.add (file_count);
+
+			file_status = new Label ("");
+			file_status.margin_left = 20;
+			info.add (file_status);
+
 			view.notify["buffer"].connect_after (on_buffer_changed);
 			on_buffer_changed ();
 		}
@@ -768,6 +770,7 @@ namespace Vanubi {
 			buf.mark_set.connect (on_file_count);
 			buf.changed.connect (on_file_count);
 			buf.notify["language"].connect (on_language_changed);
+			buf.modified_changed.connect (on_modified_changed);
 			on_file_count ();
 		}
 
@@ -805,6 +808,11 @@ namespace Vanubi {
 			}
 
 			file_count.set_label ("(%d, %d)".printf (line+1, column+1));
+		}
+
+		void on_modified_changed () {
+			var buf = view.buffer;
+			file_status.set_label (buf.get_modified () ? "*" : "");
 		}
 	}
 
