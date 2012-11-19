@@ -697,6 +697,9 @@ namespace Vanubi {
 
 			// view
 			view = new SourceView ();
+			var system_size = view.style.font_desc.get_size () / Pango.SCALE;
+			view.modify_font (Pango.FontDescription.from_string ("Monospace %d".printf (system_size)));
+			view.draw.connect (on_draw);
 			view.wrap_mode = WrapMode.CHAR;
 			view.set_data ("editor", (Editor*)this);
                         
@@ -731,6 +734,28 @@ namespace Vanubi {
 
 			view.notify["buffer"].connect_after (on_buffer_changed);
 			on_buffer_changed ();
+		}
+
+		public bool on_draw (Widget widget, Cairo.Context cr) {
+			TextView view = (TextView) widget;
+			var buffer = view.buffer;
+			TextIter it;
+			// get the location of the caret
+			buffer.get_iter_at_mark (out it, buffer.get_insert ());
+			Gdk.Rectangle rect;
+			view.get_iter_location (it, out rect);
+			int x, y;
+			// convert location to view coords
+			view.buffer_to_window_coords (TextWindowType.TEXT, rect.x, rect.y, out x, out y);
+			// now get the size of a generic character, assuming it's monospace
+			var layout = view.create_pango_layout ("X");
+			Pango.Rectangle extents;
+			layout.get_extents (null, out extents);
+			// draw a larger caret
+			cr.set_source_rgb (1, 0, 0);
+			cr.rectangle (x, y, extents.width / Pango.SCALE, extents.height / Pango.SCALE);
+			cr.fill ();
+			return false;
 		}
 
 		public string get_editor_name () {
