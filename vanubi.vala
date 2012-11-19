@@ -680,6 +680,7 @@ namespace Vanubi {
 	public class Editor : Grid {
 		public File file { get; private set; }
 		public SourceView view { get; private set; }
+                public SourceStyleSchemeManager editor_style { get; private set; }
 		ScrolledWindow sw;
 		TextTag in_string_tag = null;
 		Label file_count;
@@ -690,10 +691,19 @@ namespace Vanubi {
 			orientation = Orientation.VERTICAL;
 			expand = true;
 
+                        /* Style */
+			editor_style = new SourceStyleSchemeManager();
+			editor_style.set_search_path({"./styles/"}); /* TODO: use ~/.vanubi/styles/ */
+
 			// view
 			view = new SourceView ();
 			view.wrap_mode = WrapMode.CHAR;
 			view.set_data ("editor", (Editor*)this);
+                        
+                        /* TODO: read the style from the config file */
+                        SourceStyleScheme st = editor_style.get_scheme("omega");
+                        if (st != null) /* Use default if not found */
+                                ((SourceBuffer)view.buffer).set_style_scheme(st);
 
 			// scrolled window
 			sw = new ScrolledWindow (null, null);
