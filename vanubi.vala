@@ -1115,8 +1115,9 @@ int main (string[] args) {
 	Gtk.init (ref args);
 
 	var win = new Window ();
+	win.title = "Vanubi";
 	win.delete_event.connect (() => { Gtk.main_quit (); return false; });
-	win.set_default_size (800, 600);
+	win.set_default_size (800, 400);
 
 	win.add (new Vanubi.Manager ());
 
