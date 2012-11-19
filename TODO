@@ -1,5 +1,4 @@
 = BUGS
-* Crash C-x 3
 * Improve indentation support for vala and c
 
 = TODO

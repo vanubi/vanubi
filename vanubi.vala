@@ -402,6 +402,7 @@ namespace Vanubi {
 			}
 		}
 
+		/* Kill a buffer. The file of this buffer must not have any other editors visible. */
 		void kill_buffer (Editor editor, GenericArray<Editor> editors, File? next_file) {
 			if (editor.file == null) {
 				scratch_editors = new GenericArray<Editor> ();
@@ -564,19 +565,30 @@ namespace Vanubi {
 		}
 
 		void on_split (Editor editor, string command) {
+			// get bounding box of the editor
 			Allocation alloc;
 			editor.get_allocation (out alloc);
+			// unparent the editor
 			var parent = (Container) editor.get_parent ();
 			parent.remove (editor);
+			// create the GUI split
 			var paned = new Paned (command == "split-add-right" ? Orientation.HORIZONTAL : Orientation.VERTICAL);
 			paned.expand = true;
+			// set the position of the split at half of the editor width/height
 			paned.position = command == "split-add-right" ? alloc.width/2 : alloc.height/2;
 			parent.add (paned);
 
+			// pack the old editor
 			paned.pack1 (editor, true, false);
 			focus_editor (editor);
 
+			// get an editor for the same field
 			var ed = get_available_editor (editor.file);
+			if (ed.get_parent () != null) {
+				// ensure the new editor is unparented
+				((Container) ed.get_parent ()).remove (ed);
+			}
+			// pack the new editor
 			paned.pack2 (ed, true, false);
 			paned.show_all ();
 		}
