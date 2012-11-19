@@ -1,0 +1,16 @@
+= BUGS
+* Crash C-x 3
+* Improve indentation support for vala and c
+
+= TODO
+* Mimic emacs minibar for matching files and buffers
+
+= IDEAS
+* KEYS: Simple, complete, keyboard based, intelligent, unobtrusive, well integrated
+* KEYS: Implement what you really use, not what you don't use
+* KEYS: Implement what you expect, not what other editors do
+* KEYS: Implement what you really need, not what you think you need
+* File/directory-based settings, not project-based
+* Intelligent defaults based on the current opened file context
+* Easy to use contextual help... we can't remember all the keybindings
+* Semantic support for languages similar to eclipse but much less invasive
