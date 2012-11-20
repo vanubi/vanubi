@@ -15,3 +15,5 @@ C-x 1            split 1
 C-x 2            split 2
 C-x 3            split 3
 C-c C-c          Comment a region [not implemented yet!]
+C-x C-x          Exec shell command [not implemented yet!]
+
