@@ -1,0 +1,17 @@
+
+== Vanubi 0.1 aplha ==
+
+All editor suck. This one just sucks less.
+
+
+-- Key Bindings --
+
+C-x C-c          Quit vanubi
+C-x g            asd (name??)
+ESC              asd (name??)
+C-x f            Open file
+C-x k            Kill buffer
+C-x 1            split 1
+C-x 2            split 2
+C-x 3            split 3
+C-c C-c          Comment a region [not implemented yet!]
