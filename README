@@ -16,6 +16,6 @@ C-x 1            Join all the splits
 C-x C-1          Join the current split only
 C-x 2            Split vertically (one editor up, one down)
 C-x 3            split horizontally (one editor left, one right)
+TAB              Indent current line
 C-c C-c          Comment a region [not implemented yet!]
 C-x C-x          Exec shell command [not implemented yet!]
-
