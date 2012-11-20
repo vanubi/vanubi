@@ -677,10 +677,64 @@ namespace Vanubi {
 		}
 	}
 
+	public class CustomSourceView : SourceView {
+		construct {
+			buffer = new SourceBuffer (null);
+			((SourceBuffer) buffer).highlight_matching_brackets = false;
+			var provider = new CssProvider ();
+			var style = get_style_context ();
+			style.add_provider (provider, STYLE_PROVIDER_PRIORITY_USER);
+			provider.load_from_data ("GtkTextView {\n"+
+									 "-GtkWidget-cursor-aspect-ratio: 0.1;\n"+
+									 "-GtkWidget-cursor-color: white;\n"+
+									 "}\n", -1);
+		}
+
+		public override bool draw (Cairo.Context cr) {
+			var buffer = this.buffer;
+			TextIter it;
+			// get the location of the caret
+			buffer.get_iter_at_mark (out it, buffer.get_insert ());
+			Gdk.Rectangle rect;
+			get_iter_location (it, out rect);
+			int x, y;
+			// convert location to view coords
+			buffer_to_window_coords (TextWindowType.TEXT, rect.x, rect.y, out x, out y);
+			// now get the size of a generic character, assuming it's monospace
+			var layout = create_pango_layout ("X");
+			Pango.Rectangle extents;
+			layout.get_extents (null, out extents);
+			// draw a larger caret
+			cr.set_source_rgb (1, 0, 0);
+			int width = extents.width / Pango.SCALE;
+			int height = extents.height / Pango.SCALE;
+			// now x,y,width,height is the cursor rectangle
+
+			// first draw the code
+			base.draw (cr);
+
+			// now draw the big caret
+			cr.set_operator (Cairo.Operator.SOURCE);
+			cr.set_source_rgba (1, 1, 1, 1.0); // white caret
+			cr.rectangle (x-1, y, width+1, height); // hide original caret
+			cr.fill ();
+
+			/* now we redraw the code in the the caret rect by forcing it to be black
+			   with the CLEAR operator */
+			cr.set_operator (Cairo.Operator.CLEAR);
+			cr.rectangle (x+1, y, width-1, height); // exclude the original caret, otherwise it will be painted black
+			// clipping the region will result in faster rendering
+			cr.clip ();
+			base.draw (cr);
+
+			return true;
+		}
+	}
+
 	public class Editor : Grid {
 		public File file { get; private set; }
 		public SourceView view { get; private set; }
-                public SourceStyleSchemeManager editor_style { get; private set; }
+		public SourceStyleSchemeManager editor_style { get; private set; }
 		ScrolledWindow sw;
 		TextTag in_string_tag = null;
 		Label file_count;
@@ -696,10 +750,9 @@ namespace Vanubi {
 			editor_style.set_search_path({"./styles/"}); /* TODO: use ~/.vanubi/styles/ */
 
 			// view
-			view = new SourceView ();
+			view = new CustomSourceView ();
 			var system_size = view.style.font_desc.get_size () / Pango.SCALE;
 			view.modify_font (Pango.FontDescription.from_string ("Monospace %d".printf (system_size)));
-			view.draw.connect (on_draw);
 			view.wrap_mode = WrapMode.CHAR;
 			view.set_data ("editor", (Editor*)this);
                         
@@ -734,28 +787,6 @@ namespace Vanubi {
 
 			view.notify["buffer"].connect_after (on_buffer_changed);
 			on_buffer_changed ();
-		}
-
-		public bool on_draw (Widget widget, Cairo.Context cr) {
-			TextView view = (TextView) widget;
-			var buffer = view.buffer;
-			TextIter it;
-			// get the location of the caret
-			buffer.get_iter_at_mark (out it, buffer.get_insert ());
-			Gdk.Rectangle rect;
-			view.get_iter_location (it, out rect);
-			int x, y;
-			// convert location to view coords
-			view.buffer_to_window_coords (TextWindowType.TEXT, rect.x, rect.y, out x, out y);
-			// now get the size of a generic character, assuming it's monospace
-			var layout = view.create_pango_layout ("X");
-			Pango.Rectangle extents;
-			layout.get_extents (null, out extents);
-			// draw a larger caret
-			cr.set_source_rgb (1, 0, 0);
-			cr.rectangle (x, y, extents.width / Pango.SCALE, extents.height / Pango.SCALE);
-			cr.fill ();
-			return false;
 		}
 
 		public string get_editor_name () {
