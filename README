@@ -10,6 +10,7 @@ C-x g            Abort
 ESC              Abort
 C-x f            Open file
 C-x s            Save file
+C-x b            Switch buffer
 C-x k            Kill buffer
 C-x 1            Join all the splits
 C-x C-1          Join the current split only
