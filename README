@@ -1,19 +1,20 @@
 
 == Vanubi 0.1 aplha ==
 
-All editor suck. This one just sucks less.
-
+"All editors suck. This one just sucks less." -mutt, circa 1995
 
 -- Key Bindings --
 
 C-x C-c          Quit vanubi
-C-x g            asd (name??)
-ESC              asd (name??)
+C-x g            Abort
+ESC              Abort
 C-x f            Open file
+C-x s            Save file
 C-x k            Kill buffer
-C-x 1            split 1
-C-x 2            split 2
-C-x 3            split 3
+C-x 1            Join all the splits
+C-x C-1          Join the current split only
+C-x 2            Split vertically (one editor up, one down)
+C-x 3            split horizontally (one editor left, one right)
 C-c C-c          Comment a region [not implemented yet!]
 C-x C-x          Exec shell command [not implemented yet!]
 
