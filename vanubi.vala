@@ -704,7 +704,7 @@ namespace Vanubi {
 			view.set_data ("editor", (Editor*)this);
                         
 			/* TODO: read the style from the config file */
-			SourceStyleScheme st = editor_style.get_scheme("omega");
+			SourceStyleScheme st = editor_style.get_scheme("zen");
 			if (st != null) { /* Use default if not found */
 				((SourceBuffer)view.buffer).set_style_scheme(st);
 			}
