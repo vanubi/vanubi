@@ -119,6 +119,16 @@ namespace Vanubi {
 				"join");
 			execute_command["join"].connect (on_join);
 
+			bind_command ({
+					Key (Gdk.Key.n, Gdk.ModifierType.CONTROL_MASK)},
+				"forward-line");
+			execute_command["forward-line"].connect (on_forward_backward_line);
+
+			bind_command ({
+					Key (Gdk.Key.p, Gdk.ModifierType.CONTROL_MASK)},
+				"backward-line");
+			execute_command["backward-line"].connect (on_forward_backward_line);
+
 			bind_command ({ Key (Gdk.Key.s, Gdk.ModifierType.CONTROL_MASK) }, "search-forward");
 			execute_command["search-forward"].connect (on_search_forward);
 
@@ -648,6 +658,14 @@ namespace Vanubi {
 				});
 			add_overlay (bar);
 			bar.show ();
+		}
+
+		void on_forward_backward_line (Editor ed, string command) {
+			if (command == "forward-line") {
+				ed.view.move_cursor (MovementStep.DISPLAY_LINES, 1, false);
+			} else {
+				ed.view.move_cursor (MovementStep.DISPLAY_LINES, -1, false);
+			}
 		}
 
 		class SwitchBufferBar : CompletionBar {
