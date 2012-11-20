@@ -1,5 +1,6 @@
 = BUGS
 * Improve indentation support for vala and c
+* Improve edited buffer flag in the minibar
 
 = TODO
 * Mimic emacs minibar for matching files and buffers
@@ -13,3 +14,8 @@
 * Intelligent defaults based on the current opened file context
 * Easy to use contextual help... we can't remember all the keybindings
 * Semantic support for languages similar to eclipse but much less invasive
+
+== TOOLS
+
+* GDB
+* Hexdump
