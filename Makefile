@@ -1,9 +1,29 @@
 VALAC=valac
+CC=cc
+PKGCONFIG=pkg-config
+PKGS=vte-2.90 gtk+-3.0 gtksourceview-3.0
+SRCS=vanubi.vala matching.vala filecompletion.vala shell.vala
+
+COBJS=$(patsubst %.vala,%.c,$(SRCS))
+OBJS=$(patsubst %.c,%.o,$(COBJS))
+VALAPKGS=$(patsubst %,--pkg %,$(PKGS))
 
 all: vanubi
 
-vanubi: vanubi.vala matching.vala filecompletion.vala shell.vala
-	$(VALAC) -g --save-temps --pkg vte-2.90 --pkg gtk+-3.0 --pkg gtksourceview-3.0 -o vanubi vanubi.vala matching.vala filecompletion.vala shell.vala
+.valastamp: $(SRCS)
+	$(VALAC) -C -g $(VALAPKGS) $+
+	touch .valastamp
+
+%.o: %.c .valastamp
+	$(CC) `pkg-config $(PKGS) --cflags` $(CFLAGS) -ggdb -fPIC -c -o $@ $<
+
+vanubi: $(OBJS)
+	$(CC) `pkg-config $(PKGS) --libs` $(LDFLAGS) -fPIC -o $@ $+
+
+clean:
+	rm -f $(OBJS)
+	rm -f $(COBJS)
+	rm -f vanubi
 
 run: vanubi
 	./vanubi
