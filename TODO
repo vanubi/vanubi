@@ -1,11 +1,13 @@
 = BUGS
 * Improve indentation support for vala and c
 * Improve edited buffer flag in the minibar
+* Make caret bg/fg color configurable for different styles
 
 = TODO
 * Mimic emacs minibar for matching files and buffers
 * Pressing HOME should move the cursor to the first word in the line, not to column 0.
   Pressing HOME twice will move the cursor to column 0.
+* Code fold / Comment fold
 
 = IDEAS
 * KEYS: Simple, complete, keyboard based, intelligent, unobtrusive, well integrated
@@ -16,6 +18,7 @@
 * Intelligent defaults based on the current opened file context
 * Easy to use contextual help... we can't remember all the keybindings
 * Semantic support for languages similar to eclipse but much less invasive
+* Integrate with libinfinity for real-time collaborative editing
 
 == TOOLS
 * GDB

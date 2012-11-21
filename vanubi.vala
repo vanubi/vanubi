@@ -696,16 +696,24 @@ namespace Vanubi {
 	}
 
 	public class CustomSourceView : SourceView {
+		TextTag caret_text_tag;
+
 		construct {
 			buffer = new SourceBuffer (null);
-			((SourceBuffer) buffer).highlight_matching_brackets = false;
+			caret_text_tag = buffer.create_tag ("caret_text", foreground: "black");
+			((SourceBuffer) buffer).highlight_matching_brackets = true;
 			var provider = new CssProvider ();
-			var style = get_style_context ();
-			style.add_provider (provider, STYLE_PROVIDER_PRIORITY_USER);
 			provider.load_from_data ("GtkTextView {\n"+
 									 "-GtkWidget-cursor-aspect-ratio: 0.1;\n"+
 									 "-GtkWidget-cursor-color: white;\n"+
-									 "}\n", -1);
+									 "}\n"+
+									 "GtkTextView.caret:selected {\n"+
+									 "color: black;\n"+
+									 "background-color: white;\n"+
+									 "}\n"
+									 , -1);
+			var style = get_style_context ();
+			style.add_provider (provider, STYLE_PROVIDER_PRIORITY_USER);
 		}
 
 		public override bool draw (Cairo.Context cr) {
@@ -732,18 +740,30 @@ namespace Vanubi {
 			base.draw (cr);
 
 			// now draw the big caret
-			cr.set_operator (Cairo.Operator.SOURCE);
 			cr.set_source_rgba (1, 1, 1, 1.0); // white caret
 			cr.rectangle (x-1, y, width+1, height); // hide original caret
 			cr.fill ();
 
-			/* now we redraw the code in the the caret rect by forcing it to be black
-			   with the CLEAR operator */
-			cr.set_operator (Cairo.Operator.CLEAR);
-			cr.rectangle (x+1, y, width-1, height); // exclude the original caret, otherwise it will be painted black
-			// clipping the region will result in faster rendering
+			// get the iter of the caret
+			TextIter start_iter;
+			buffer.get_iter_at_mark (out start_iter, buffer.get_insert ());
+			TextIter end_iter = start_iter;
+			end_iter.forward_char ();
+			/* change the color of the text
+			   TODO: make it more efficient, we can avoid applying/removing the tag
+			   if the caret does not move */
+			buffer.apply_tag (caret_text_tag, start_iter, end_iter);
+			// make any selection be transparent
+			get_style_context().add_class ("caret");
+
+			// now redraw the code clipped to the new caret, exluding the old caret
+			cr.rectangle (x+1, y, width-1, height);
 			cr.clip ();
 			base.draw (cr);
+
+			// revert
+			get_style_context().remove_class ("caret");
+			buffer.remove_tag (caret_text_tag, start_iter, end_iter);
 
 			return true;
 		}
