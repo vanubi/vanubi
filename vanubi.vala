@@ -705,7 +705,7 @@ namespace Vanubi {
 			var provider = new CssProvider ();
 			provider.load_from_data ("GtkTextView {\n"+
 									 "-GtkWidget-cursor-aspect-ratio: 0.1;\n"+
-									 "-GtkWidget-cursor-color: white;\n"+
+									 "-GtkWidget-cursor-color: rgba(0,0,0,0);\n"+
 									 "}\n"+
 									 "GtkTextView.caret:selected {\n"+
 									 "color: black;\n"+
@@ -730,8 +730,6 @@ namespace Vanubi {
 			var layout = create_pango_layout ("X");
 			Pango.Rectangle extents;
 			layout.get_extents (null, out extents);
-			// draw a larger caret
-			cr.set_source_rgb (1, 0, 0);
 			int width = extents.width / Pango.SCALE;
 			int height = extents.height / Pango.SCALE;
 			// now x,y,width,height is the cursor rectangle
@@ -741,7 +739,7 @@ namespace Vanubi {
 
 			// now draw the big caret
 			cr.set_source_rgba (1, 1, 1, 1.0); // white caret
-			cr.rectangle (x-1, y, width+1, height); // hide original caret
+			cr.rectangle (x, y, width+1, height);
 			cr.fill ();
 
 			// get the iter of the caret
@@ -757,7 +755,7 @@ namespace Vanubi {
 			get_style_context().add_class ("caret");
 
 			// now redraw the code clipped to the new caret, exluding the old caret
-			cr.rectangle (x+1, y, width-1, height);
+			cr.rectangle (x+1, y, width-1, height); // don't render the original cursor
 			cr.clip ();
 			base.draw (cr);
 
