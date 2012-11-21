@@ -4,6 +4,8 @@
 
 = TODO
 * Mimic emacs minibar for matching files and buffers
+* Pressing HOME should move the cursor to the first word in the line, not to column 0.
+  Pressing HOME twice will move the cursor to column 0.
 
 = IDEAS
 * KEYS: Simple, complete, keyboard based, intelligent, unobtrusive, well integrated
