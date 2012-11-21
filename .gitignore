@@ -1,3 +1,5 @@
+.valastamp
+*.o
 *.c
 *~
 vanubi
