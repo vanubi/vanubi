@@ -314,6 +314,7 @@ namespace Vanubi {
 			}
 			var ed = new Editor (file);
 			ed.view.key_press_event.connect (on_key_press_event);
+			ed.view.scroll_event.connect (on_scroll_event);
 			if (editors.length > 0) {
 				// share buffer
 				ed.view.buffer = editors[0].view.buffer;
@@ -387,6 +388,22 @@ namespace Vanubi {
 				execute_command[command] (editor, command);
 			}
 			return true;
+		}
+
+		bool on_scroll_event (Widget w, Gdk.EventScroll ev) {
+			if (Gdk.ModifierType.CONTROL_MASK in ev.state) {
+				var sv = (SourceView) w;
+				var font = sv.get_style_context().get_font (StateFlags.NORMAL);
+				var size = font.get_size()/Pango.SCALE;
+				if (ev.direction == Gdk.ScrollDirection.UP || (ev.direction == Gdk.ScrollDirection.SMOOTH && ev.delta_y < 0)) {
+					size++;
+				} else if (ev.direction == Gdk.ScrollDirection.DOWN || (ev.direction == Gdk.ScrollDirection.SMOOTH && ev.delta_y > 0)) {
+					size--;
+				}
+				sv.override_font (Pango.FontDescription.from_string ("Monospace %d".printf (size)));
+				return true;
+			}
+			return false;
 		}
 
 		void on_open_file (Editor editor) {
@@ -792,7 +809,7 @@ namespace Vanubi {
 			// view
 			view = new EditorView ();
 			var system_size = view.style.font_desc.get_size () / Pango.SCALE;
-			view.modify_font (Pango.FontDescription.from_string ("Monospace %d".printf (system_size)));
+			view.override_font (Pango.FontDescription.from_string ("Monospace %d".printf (system_size)));
 			view.wrap_mode = WrapMode.CHAR;
 			view.set_data ("editor", (Editor*)this);
                         
