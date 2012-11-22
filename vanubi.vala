@@ -20,6 +20,7 @@ namespace Vanubi {
 	}
 
 	public static void focus_editor (Editor editor) {
+		editor.view.grab_focus ();
 		Idle.add (() => { editor.view.grab_focus (); return false; });
 	}
 
@@ -965,6 +966,7 @@ namespace Vanubi {
 			add (entry);
 			show_all ();
 
+			entry.grab_focus ();
 			Idle.add (() => { entry.grab_focus (); return false; });
 		}
 
