@@ -30,6 +30,54 @@ namespace Vanubi {
 		sigid = widget.draw.connect (() => { widget.grab_focus (); widget.disconnect (sigid); return false; });
 	}
 
+	public class Configuration {
+		KeyFile backend;
+		File file;
+		Cancellable saving_cancellable;
+		string saving_data;
+
+		public Configuration () {
+			var home = Environment.get_home_dir ();
+			var filename = Path.build_filename (home, ".vanubi");
+			backend = new KeyFile ();
+			file = File.new_for_path (filename);
+			if (file.query_exists ()) {
+				backend.load_from_file (filename, KeyFileFlags.NONE);
+			}
+		}
+
+		public int get_integer (string group, string key, int default) {
+			if (backend.has_group (group) && backend.has_key (group, key)) {
+				return backend.get_integer (group, key);
+			}
+			return default;
+		}
+
+		public void set_font_size (int size) {
+			backend.set_integer ("Editor", "font_size", size);
+			save.begin ();
+		}
+
+		public int get_font_size (int default) {
+			// the default value here depends on the widget
+			return get_integer ("Editor", "font_size", default);
+		}
+
+		public async void save () {
+			/* We save the file asynchronously (including the backup),
+			   so that the user does not experience any UI lag. */
+			var saving_data = backend.to_data ();
+			if (saving_cancellable != null && !saving_cancellable.is_cancelled ()) {
+				// Cancel any previous save() operation 
+				saving_cancellable.cancel ();
+			}
+			saving_cancellable = new Cancellable ();
+			try {
+				yield file.replace_contents_async (saving_data.data, null, true, FileCreateFlags.PRIVATE, saving_cancellable, null);
+			} catch (IOError.CANCELLED e) { }
+		}
+	}
+
 	public class Manager : Grid {
 		class KeyNode {
 			public string command;
@@ -64,7 +112,11 @@ namespace Vanubi {
 		[Signal (detailed = true)]
 		public signal void execute_command (Editor editor, string command);
 
+		public Configuration conf;
+
 		public Manager () {
+			conf = new Configuration ();
+
 			orientation = Orientation.VERTICAL;
 			current_key = key_root;
 
@@ -313,6 +365,8 @@ namespace Vanubi {
 				}
 			}
 			var ed = new Editor (file);
+			var system_size = ed.view.style.font_desc.get_size () / Pango.SCALE;
+			ed.view.override_font (Pango.FontDescription.from_string ("Monospace %d".printf (conf.get_font_size (system_size))));
 			ed.view.key_press_event.connect (on_key_press_event);
 			ed.view.scroll_event.connect (on_scroll_event);
 			if (editors.length > 0) {
@@ -401,6 +455,7 @@ namespace Vanubi {
 					size--;
 				}
 				sv.override_font (Pango.FontDescription.from_string ("Monospace %d".printf (size)));
+				conf.set_font_size (size);
 				return true;
 			}
 			return false;
@@ -808,8 +863,6 @@ namespace Vanubi {
 
 			// view
 			view = new EditorView ();
-			var system_size = view.style.font_desc.get_size () / Pango.SCALE;
-			view.override_font (Pango.FontDescription.from_string ("Monospace %d".printf (system_size)));
 			view.wrap_mode = WrapMode.CHAR;
 			view.set_data ("editor", (Editor*)this);
                         
