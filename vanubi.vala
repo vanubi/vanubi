@@ -918,7 +918,7 @@ namespace Vanubi {
 
 		void on_modified_changed () {
 			var buf = view.buffer;
-			file_status.set_label (buf.get_modified () ? "*" : "");
+			file_status.set_label (buf.get_modified () ? "modified" : "");
 		}
 	}
 
