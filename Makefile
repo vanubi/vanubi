@@ -14,7 +14,9 @@ all: vanubi
 	$(VALAC) -C -g $(VALAPKGS) $+
 	touch .valastamp
 
-%.o: %.c .valastamp
+$(COBJS): .valastamp ;
+
+%.o: %.c
 	$(CC) `pkg-config $(PKGS) --cflags` $(CFLAGS) -ggdb -fPIC -c -o $@ $<
 
 vanubi: $(OBJS)
@@ -24,6 +26,7 @@ clean:
 	rm -f $(OBJS)
 	rm -f $(COBJS)
 	rm -f vanubi
+	rm -f .valastamp
 
 run: vanubi
 	./vanubi
