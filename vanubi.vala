@@ -751,7 +751,7 @@ namespace Vanubi {
 			get_style_context().remove_class ("caret");
 			buffer.remove_tag (caret_text_tag, start_iter, end_iter);
 
-			return true;
+			return false;
 		}
 	}
 
