@@ -20,8 +20,9 @@
 * Semantic support for languages similar to eclipse but much less invasive
 * Integrate with libinfinity for real-time collaborative editing
 
-== TOOLS
+= TOOLS
 * GDB
 * Hexdump
 * GPG (opening encrypted files)
 * Pastebin (entire file or selection)
+* Patch support 
