@@ -20,5 +20,7 @@ TAB              Indent current line
 F9               Run compile command
 C-c C-c          Comment a region [not implemented yet!]
 C-x C-x          Exec shell command [not implemented yet!]
+C-n              Go to next line
+C-p              Go to previous line
 C-e              Go to the end of line [not implemented yet]
 C-a              Go to the head of line [not implemented yet] [XXX: already used from GtkSourceView]
