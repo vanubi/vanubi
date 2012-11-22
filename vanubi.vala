@@ -704,6 +704,7 @@ namespace Vanubi {
 		construct {
 			buffer = new SourceBuffer (null);
 			buffer.mark_set.connect (update_caret_position);
+			buffer.changed.connect (update_caret_position);
 			caret_text_tag = buffer.create_tag ("caret_text", foreground: "black");
 			((SourceBuffer) buffer).highlight_matching_brackets = true;
 		}
