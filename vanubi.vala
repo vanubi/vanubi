@@ -695,25 +695,13 @@ namespace Vanubi {
 		}
 	}
 
-	public class CustomSourceView : SourceView {
+	public class EditorView : SourceView {
 		TextTag caret_text_tag;
 
 		construct {
 			buffer = new SourceBuffer (null);
 			caret_text_tag = buffer.create_tag ("caret_text", foreground: "black");
 			((SourceBuffer) buffer).highlight_matching_brackets = true;
-			var provider = new CssProvider ();
-			provider.load_from_data ("GtkTextView {\n"+
-									 "-GtkWidget-cursor-aspect-ratio: 0.1;\n"+
-									 "-GtkWidget-cursor-color: rgba(0,0,0,0);\n"+
-									 "}\n"+
-									 "GtkTextView.caret:selected {\n"+
-									 "color: black;\n"+
-									 "background-color: white;\n"+
-									 "}\n"
-									 , -1);
-			var style = get_style_context ();
-			style.add_provider (provider, STYLE_PROVIDER_PRIORITY_USER);
 		}
 
 		public override bool draw (Cairo.Context cr) {
@@ -786,7 +774,7 @@ namespace Vanubi {
 			editor_style.set_search_path({"./styles/"}); /* TODO: use ~/.vanubi/styles/ */
 
 			// view
-			view = new CustomSourceView ();
+			view = new EditorView ();
 			var system_size = view.style.font_desc.get_size () / Pango.SCALE;
 			view.modify_font (Pango.FontDescription.from_string ("Monospace %d".printf (system_size)));
 			view.wrap_mode = WrapMode.CHAR;
@@ -805,7 +793,7 @@ namespace Vanubi {
 			add (sw);
 
 			// lower information bar
-			Grid info = new Grid ();
+			var info = new EditorInfoBar ();
 			info.expand = false;
 			info.orientation = Orientation.HORIZONTAL;
 			add (info);
@@ -931,6 +919,16 @@ namespace Vanubi {
 		}
 	}
 
+	public class Grid : Gtk.Grid {
+		public override bool draw (Cairo.Context cr) {
+			Allocation alloc;
+			get_allocation (out alloc);
+			get_style_context().render_background (cr, 0, 0, alloc.width, alloc.height);
+			base.draw (cr);
+			return false;
+		}
+	}
+
 	public class Bar : Grid {
 		protected Entry entry;
 
@@ -964,6 +962,9 @@ namespace Vanubi {
 			}
 			return false;
 		}
+	}
+
+	class EditorInfoBar : Grid {
 	}
 
 	class CompletionBar : Bar {
@@ -1216,6 +1217,10 @@ namespace Vanubi {
 
 int main (string[] args) {
 	Gtk.init (ref args);
+
+	var provider = new CssProvider ();
+	provider.load_from_path ("./vanubi.css");
+	StyleContext.add_provider_for_screen (Gdk.Screen.get_default(), provider, STYLE_PROVIDER_PRIORITY_USER);
 
 	var win = new Window ();
 	win.title = "Vanubi";

@@ -1,0 +1,12 @@
+VanubiEditorView {
+    -GtkWidget-cursor-aspect-ratio: 0.1;
+    -GtkWidget-cursor-color: rgba(0,0,0,0);
+}
+VanubiEditorView.caret:selected {
+    color: black;
+    background-color: white;
+}
+VanubiEditorInfoBar.focused {
+    background-color: black;
+    color: white;
+}
