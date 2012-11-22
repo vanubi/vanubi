@@ -23,4 +23,5 @@
 == TOOLS
 * GDB
 * Hexdump
-* GPG
+* GPG (opening encrypted files)
+* Pastebin (entire file or selection)
