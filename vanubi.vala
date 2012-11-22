@@ -20,9 +20,14 @@ namespace Vanubi {
 	}
 
 	public static void focus_editor (Editor editor) {
-		editor.view.grab_focus ();
-		editor.view.map.connect (() => { editor.view.grab_focus (); });
-		Idle.add (() => { editor.view.grab_focus (); return false; });
+		focus_widget (editor.view);
+	}
+
+	public static void focus_widget (Widget widget) {
+		widget.grab_focus ();
+		// using idles is too slow
+		ulong sigid = 0;
+		sigid = widget.draw.connect (() => { widget.grab_focus (); widget.disconnect (sigid); return false; });
 	}
 
 	public class Manager : Grid {
@@ -255,8 +260,8 @@ namespace Vanubi {
 					var buf = (SourceBuffer) ed.view.buffer;
 					buf.begin_not_undoable_action ();
 					buf.set_text ((string) content, -1);
-					buf.end_not_undoable_action ();
 					buf.set_modified (false);
+					buf.end_not_undoable_action ();
 					TextIter start;
 					buf.get_start_iter (out start);
 					buf.place_cursor (start);
@@ -964,9 +969,7 @@ namespace Vanubi {
 			add (entry);
 			show_all ();
 
-			entry.grab_focus ();
-			entry.map.connect (() => { entry.grab_focus (); });
-			Idle.add (() => { entry.grab_focus (); return false; });
+			focus_widget (entry);
 		}
 
 		protected virtual void on_activate () {
