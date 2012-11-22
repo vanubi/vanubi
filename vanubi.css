@@ -10,3 +10,10 @@ VanubiEditorInfoBar.focused {
     background-color: black;
     color: white;
 }
+VanubiEditorInfoBar.focused GtkLabel {
+    color: white;
+}
+
+.filename {
+    font-weight: bold;
+}

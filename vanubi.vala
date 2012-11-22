@@ -796,9 +796,12 @@ namespace Vanubi {
 			var info = new EditorInfoBar ();
 			info.expand = false;
 			info.orientation = Orientation.HORIZONTAL;
+			//info.get_style_context().add_class("focused");
 			add (info);
+
 			var file_label = new Label (get_editor_name ());
 			file_label.margin_left = 20;
+			file_label.get_style_context().add_class("filename");
 			info.add (file_label);
 
 			file_count = new Label ("(0, 0)");
