@@ -697,7 +697,7 @@ namespace Vanubi {
 
 	public class EditorView : SourceView {
 		TextTag caret_text_tag;
-		TextIter? caret_iter = null;
+		TextMark caret_mark = null;
 
 		construct {
 			buffer = new SourceBuffer (null);
@@ -709,18 +709,24 @@ namespace Vanubi {
 		public void on_mark_set (TextIter location, TextMark mark) {
 			if (mark == buffer.get_insert ()) {
 				// cursor changed
-				if (caret_iter != null) {
+				if (caret_mark != null) {
 					// remove previous tag
-					var caret_end = caret_iter;
-					caret_end.forward_char ();
-					buffer.remove_tag (caret_text_tag, caret_iter, caret_end);
+					TextIter start;
+					buffer.get_iter_at_mark (out start, caret_mark);
+					var end = start;
+					end.forward_char ();
+					buffer.remove_tag (caret_text_tag, start, end);
 				}
 
-				buffer.get_iter_at_mark (out caret_iter, buffer.get_insert ());
-				var caret_end = caret_iter;
-				caret_end.forward_char ();
+				if (caret_mark == null) {
+					caret_mark = buffer.create_mark (null, location, true);
+				} else {
+					buffer.move_mark (caret_mark, location);
+				}
+				var end = location;
+				end.forward_char ();
 				// change the color of the text
-				buffer.apply_tag (caret_text_tag, caret_iter, caret_end);
+				buffer.apply_tag (caret_text_tag, location, end);
 			}
 		}
 
