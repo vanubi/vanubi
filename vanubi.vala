@@ -21,6 +21,7 @@ namespace Vanubi {
 
 	public static void focus_editor (Editor editor) {
 		editor.view.grab_focus ();
+		editor.view.map.connect (() => { editor.view.grab_focus (); });
 		Idle.add (() => { editor.view.grab_focus (); return false; });
 	}
 
@@ -698,36 +699,30 @@ namespace Vanubi {
 
 	public class EditorView : SourceView {
 		TextTag caret_text_tag;
-		TextMark caret_mark = null;
+		int caret_offset = 0;
 
 		construct {
 			buffer = new SourceBuffer (null);
-			buffer.mark_set.connect (on_mark_set);
+			buffer.mark_set.connect (update_caret_position);
 			caret_text_tag = buffer.create_tag ("caret_text", foreground: "black");
 			((SourceBuffer) buffer).highlight_matching_brackets = true;
 		}
 
-		public void on_mark_set (TextIter location, TextMark mark) {
-			if (mark == buffer.get_insert ()) {
-				// cursor changed
-				if (caret_mark != null) {
-					// remove previous tag
-					TextIter start;
-					buffer.get_iter_at_mark (out start, caret_mark);
-					var end = start;
-					end.forward_char ();
-					buffer.remove_tag (caret_text_tag, start, end);
-				}
+		void update_caret_position () {
+			// remove previous tag
+			TextIter start;
+			buffer.get_iter_at_offset (out start, caret_offset);
+			var end = start;
+			if (end.forward_char ()) {
+				buffer.remove_tag (caret_text_tag, start, end);
+			}
 
-				if (caret_mark == null) {
-					caret_mark = buffer.create_mark (null, location, true);
-				} else {
-					buffer.move_mark (caret_mark, location);
-				}
-				var end = location;
-				end.forward_char ();
+			buffer.get_iter_at_mark (out start, buffer.get_insert ());
+			caret_offset = start.get_offset ();
+			end = start;
+			if (end.forward_char ()) {
 				// change the color of the text
-				buffer.apply_tag (caret_text_tag, location, end);
+				buffer.apply_tag (caret_text_tag, start, end);
 			}
 		}
 
@@ -967,6 +962,7 @@ namespace Vanubi {
 			show_all ();
 
 			entry.grab_focus ();
+			entry.map.connect (() => { entry.grab_focus (); });
 			Idle.add (() => { entry.grab_focus (); return false; });
 		}
 
@@ -1163,8 +1159,8 @@ namespace Vanubi {
 
 	public class SearchBar : Bar {
 		weak Editor editor;
-		TextIter original_insert;
-		TextIter original_bound;
+		int original_insert;
+		int original_bound;
 
 		public SearchBar (Editor editor, string initial) {
 			this.editor = editor;
@@ -1172,8 +1168,11 @@ namespace Vanubi {
 			entry.changed.connect (on_changed);
 
 			var buf = editor.view.buffer;
-			buf.get_iter_at_mark (out original_insert, buf.get_insert ());
-			buf.get_iter_at_mark (out original_bound, buf.get_insert ());
+			TextIter insert, bound;
+			buf.get_iter_at_mark (out insert, buf.get_insert ());
+			buf.get_iter_at_mark (out bound, buf.get_insert ());
+			original_insert = insert.get_offset ();
+			original_bound = bound.get_offset ();
 		}
 
 		void on_changed () {
@@ -1212,7 +1211,11 @@ namespace Vanubi {
 		protected override bool on_key_press_event (Gdk.EventKey e) {
 			if (e.keyval == Gdk.Key.Escape || (e.keyval == Gdk.Key.g && Gdk.ModifierType.CONTROL_MASK in e.state)) {
 				// abort
-				editor.view.buffer.select_range (original_insert, original_bound);
+				TextIter insert, bound;
+				var buf = editor.view.buffer;
+				buf.get_iter_at_offset (out insert, original_insert);
+				buf.get_iter_at_offset (out bound, original_bound);
+				editor.view.buffer.select_range (insert, bound);
 				editor.view.scroll_to_mark (editor.view.buffer.get_insert (), 0, false, 0.5, 0.5);
 				aborted ();
 				return true;
