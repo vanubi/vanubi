@@ -851,6 +851,7 @@ namespace Vanubi {
 				iter.forward_char ();
 			}
 
+			buf.begin_user_action ();
 			buf.delete (ref start, ref iter);
 			var tab_width = view.tab_width;
 			buf.insert (ref start, string.nfill(indent/tab_width, '\t')+string.nfill(indent-(indent/tab_width)*tab_width, ' '), -1);
@@ -858,6 +859,7 @@ namespace Vanubi {
 			// reset cursor, textbuffer bug?
 			buf.get_iter_at_mark (out iter, buf.get_insert ());
 			buf.place_cursor (iter);
+			buf.end_user_action ();
 		}
 
 		public int get_line_indentation (int line) {
