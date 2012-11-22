@@ -697,11 +697,31 @@ namespace Vanubi {
 
 	public class EditorView : SourceView {
 		TextTag caret_text_tag;
+		TextIter? caret_iter = null;
 
 		construct {
 			buffer = new SourceBuffer (null);
+			buffer.mark_set.connect (on_mark_set);
 			caret_text_tag = buffer.create_tag ("caret_text", foreground: "black");
 			((SourceBuffer) buffer).highlight_matching_brackets = true;
+		}
+
+		public void on_mark_set (TextIter location, TextMark mark) {
+			if (mark == buffer.get_insert ()) {
+				// cursor changed
+				if (caret_iter != null) {
+					// remove previous tag
+					var caret_end = caret_iter;
+					caret_end.forward_char ();
+					buffer.remove_tag (caret_text_tag, caret_iter, caret_end);
+				}
+
+				buffer.get_iter_at_mark (out caret_iter, buffer.get_insert ());
+				var caret_end = caret_iter;
+				caret_end.forward_char ();
+				// change the color of the text
+				buffer.apply_tag (caret_text_tag, caret_iter, caret_end);
+			}
 		}
 
 		public override bool draw (Cairo.Context cr) {
@@ -730,26 +750,14 @@ namespace Vanubi {
 			cr.rectangle (x, y, width+1, height);
 			cr.fill ();
 
-			// get the iter of the caret
-			TextIter start_iter;
-			buffer.get_iter_at_mark (out start_iter, buffer.get_insert ());
-			TextIter end_iter = start_iter;
-			end_iter.forward_char ();
-			/* change the color of the text
-			   TODO: make it more efficient, we can avoid applying/removing the tag
-			   if the caret does not move */
-			buffer.apply_tag (caret_text_tag, start_iter, end_iter);
 			// make any selection be transparent
 			get_style_context().add_class ("caret");
-
 			// now redraw the code clipped to the new caret, exluding the old caret
 			cr.rectangle (x+1, y, width-1, height); // don't render the original cursor
 			cr.clip ();
 			base.draw (cr);
-
 			// revert
 			get_style_context().remove_class ("caret");
-			buffer.remove_tag (caret_text_tag, start_iter, end_iter);
 
 			return false;
 		}
