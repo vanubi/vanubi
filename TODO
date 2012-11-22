@@ -21,8 +21,4 @@
 * Integrate with libinfinity for real-time collaborative editing
 
 = TOOLS
-* GDB
-* Hexdump
-* GPG (opening encrypted files)
-* Pastebin (entire file or selection)
-* Patch support 
+* GDB, Hexdump, GPG, Patch/Diff, Git, Git-bz, Pastebin
