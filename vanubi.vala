@@ -1292,13 +1292,18 @@ namespace Vanubi {
 			// inefficient naive implementation
 			var buf = editor.view.buffer;
 			var p = entry.get_text ();
+			var insensitive = p.down () == p;
 			while (!iter.is_end ()) {
 				var subiter = iter;
 				int i = 0;
 				unichar c;
 				bool found = true;
 				while (p.get_next_char (ref i, out c)) {
-					if (subiter.get_char () != c) {
+					var c2 = subiter.get_char ();
+					if (insensitive) {
+						c2 = c2.tolower ();
+					}
+					if (c != c2) {
 						found = false;
 						break;
 					}
