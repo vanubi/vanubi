@@ -148,6 +148,9 @@ namespace Vanubi {
 			bind_command ({ Key (Gdk.Key.Tab, 0) }, "tab");
 			execute_command["tab"].connect (on_tab);
 
+			bind_command ({ Key (Gdk.Key.x, Gdk.ModifierType.CONTROL_MASK) }, "cut");
+			execute_command["cut"].connect (on_cut);
+
 			bind_command ({
 					Key (Gdk.Key.x, Gdk.ModifierType.CONTROL_MASK),
 						Key (Gdk.Key.b, 0)},
@@ -416,17 +419,25 @@ namespace Vanubi {
 				return false;
 			}
 
+			var old_key = current_key;
 			current_key = current_key.get_child (Key (keyval, modifiers), false);
 			if (current_key == null) {
 				// no match
-				current_key = key_root;
+				if (old_key != null && old_key.command != null) {
+					unowned string command = old_key.command;
+					current_key = key_root;
+					abort (editor);
+					execute_command[command] (editor, command);
+				} else {
+					current_key = key_root;
+				}
 				return false;
 			}
 
 			if (current_key.has_children ()) {
 				if (current_key.command != null) {
 					// wait for further keys
-					Timeout.add (300, () => {
+					key_timeout = Timeout.add (300, () => {
 							key_timeout = 0;
 							unowned string command = current_key.command;
 							current_key = key_root;
@@ -551,6 +562,10 @@ namespace Vanubi {
 
 		void on_quit () {
 			Gtk.main_quit ();
+		}
+
+		void on_cut (Editor ed) {
+			ed.view.cut_clipboard ();
 		}
 
 		void on_tab (Editor ed) {
