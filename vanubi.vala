@@ -895,27 +895,36 @@ namespace Vanubi {
 			add (sw);
 
 			// lower information bar
-			var info = new EditorInfoBar ();
-			info.expand = false;
-			info.orientation = Orientation.HORIZONTAL;
-			//info.get_style_context().add_class("focused");
-			add (info);
+			var infobar = new EditorInfoBar ();
+			infobar.expand = false;
+			infobar.orientation = Orientation.HORIZONTAL;
+			add (infobar);
 
 			var file_label = new Label (get_editor_name ());
 			file_label.margin_left = 20;
 			file_label.get_style_context().add_class("filename");
-			info.add (file_label);
+			infobar.add (file_label);
 
 			file_count = new Label ("(0, 0)");
 			file_count.margin_left = 20;
-			info.add (file_count);
+			infobar.add (file_count);
 
 			file_status = new Label ("");
 			file_status.margin_left = 20;
-			info.add (file_status);
+			infobar.add (file_status);
 
 			view.notify["buffer"].connect_after (on_buffer_changed);
 			on_buffer_changed ();
+
+			view.focus_in_event.connect(() => { 
+					infobar.get_style_context().remove_class("nonfocused");
+					return false;
+				});
+
+			view.focus_out_event.connect(() => { 
+					infobar.get_style_context().add_class("nonfocused");
+					return false;
+				});
 		}
 
 		public string get_editor_name () {
