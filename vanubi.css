@@ -8,7 +8,6 @@ VanubiEditorView.caret:selected {
 }
 VanubiEditorInfoBar.nonfocused {
     background-color: #2f2f2f;
-    color: #a2a3a4;
 }
 VanubiEditorInfoBar.nonfocused GtkLabel {
     color: #a2a3a4;

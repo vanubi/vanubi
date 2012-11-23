@@ -898,6 +898,8 @@ namespace Vanubi {
 			var infobar = new EditorInfoBar ();
 			infobar.expand = false;
 			infobar.orientation = Orientation.HORIZONTAL;
+			// initially not focused
+			infobar.get_style_context().add_class ("nonfocused"); 
 			add (infobar);
 
 			var file_label = new Label (get_editor_name ());
@@ -917,12 +919,14 @@ namespace Vanubi {
 			on_buffer_changed ();
 
 			view.focus_in_event.connect(() => { 
-					infobar.get_style_context().remove_class("nonfocused");
+					infobar.get_style_context().remove_class ("nonfocused");
+					StyleContext.reset_widgets (Gdk.Screen.get_default ());
 					return false;
 				});
 
 			view.focus_out_event.connect(() => { 
-					infobar.get_style_context().add_class("nonfocused");
+					infobar.get_style_context().add_class ("nonfocused");
+					StyleContext.reset_widgets (Gdk.Screen.get_default ());
 					return false;
 				});
 		}
