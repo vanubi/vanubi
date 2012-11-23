@@ -55,7 +55,6 @@ namespace Vanubi {
 
 		public void set_font_size (int size) {
 			backend.set_integer ("Editor", "font_size", size);
-			save.begin ();
 		}
 
 		public int get_font_size (int default) {
@@ -467,6 +466,7 @@ namespace Vanubi {
 				}
 				sv.override_font (Pango.FontDescription.from_string ("Monospace %d".printf (size)));
 				conf.set_font_size (size);
+				conf.save.begin ();
 				return true;
 			}
 			return false;
