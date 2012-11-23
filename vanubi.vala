@@ -920,13 +920,13 @@ namespace Vanubi {
 
 			view.focus_in_event.connect(() => { 
 					infobar.get_style_context().remove_class ("nonfocused");
-					StyleContext.reset_widgets (Gdk.Screen.get_default ());
+					infobar.reset_style ();
 					return false;
 				});
 
 			view.focus_out_event.connect(() => { 
 					infobar.get_style_context().add_class ("nonfocused");
-					StyleContext.reset_widgets (Gdk.Screen.get_default ());
+					infobar.reset_style ();
 					return false;
 				});
 		}
