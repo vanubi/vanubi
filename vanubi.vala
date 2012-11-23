@@ -729,11 +729,12 @@ namespace Vanubi {
 		void on_search_forward (Editor editor) {
 			var bar = new SearchBar (editor, last_search_string);
 			bar.activate.connect ((s) => {
-					last_search_string = s;
-				});
+				abort (editor);
+				last_search_string = s;
+			});
 			bar.aborted.connect (() => {
-					abort (editor);
-				});
+				abort (editor);
+			});
 			add_overlay (bar);
 			bar.show ();
 		}
@@ -1331,10 +1332,6 @@ namespace Vanubi {
 				buf.get_iter_at_mark (out iter, buf.get_insert ());
 				iter.forward_char ();
 				search (iter);
-				return true;
-			} else if (e.keyval == 65293) { // enter
-				// abort
-				aborted ();
 				return true;
 			}
 			return base.on_key_press_event (e);
