@@ -1,6 +1,5 @@
 = BUGS
 * Improve indentation support for vala and c
-* Improve edited buffer flag in the minibar
 * Make caret bg/fg color configurable for different styles
 
 = TODO
