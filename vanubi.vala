@@ -180,18 +180,17 @@ namespace Vanubi {
 				"join");
 			execute_command["join"].connect (on_join);
 
-			bind_command ({
-					Key (Gdk.Key.n, Gdk.ModifierType.CONTROL_MASK)},
-				"forward-line");
+			bind_command ({ Key (Gdk.Key.n, Gdk.ModifierType.CONTROL_MASK) }, "forward-line");
 			execute_command["forward-line"].connect (on_forward_backward_line);
 
-			bind_command ({
-					Key (Gdk.Key.p, Gdk.ModifierType.CONTROL_MASK)},
-				"backward-line");
+			bind_command ({	Key (Gdk.Key.p, Gdk.ModifierType.CONTROL_MASK) }, "backward-line");
 			execute_command["backward-line"].connect (on_forward_backward_line);
 
 			bind_command ({ Key (Gdk.Key.s, Gdk.ModifierType.CONTROL_MASK) }, "search-forward");
 			execute_command["search-forward"].connect (on_search_forward);
+
+			bind_command ({ Key (Gdk.Key.k, Gdk.ModifierType.CONTROL_MASK) }, "kill-line");
+			execute_command["kill-line"].connect (on_kill_line);
 
 			bind_command ({ Key (Gdk.Key.F9, 0) }, "compile");
 			execute_command["compile"].connect (on_compile);
@@ -566,6 +565,23 @@ namespace Vanubi {
 
 		void on_cut (Editor ed) {
 			ed.view.cut_clipboard ();
+		}
+
+		void on_kill_line (Editor ed) {
+			var buf = ed.view.buffer;
+
+			TextIter start;
+			buf.get_iter_at_mark (out start, buf.get_insert ());
+			TextIter end = start;
+			var start_line = start.get_line ();
+			end.forward_to_line_end ();
+			var end_line = end.get_line ();
+			if (start_line != end_line) {
+				end.set_line_offset (0);
+			}
+			buf.begin_user_action ();
+			buf.delete (ref start, ref end);
+			buf.end_user_action ();
 		}
 
 		void on_tab (Editor ed) {
