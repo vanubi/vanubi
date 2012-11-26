@@ -824,17 +824,15 @@ namespace Vanubi {
 			TextIter start;
 			buffer.get_iter_at_offset (out start, caret_offset);
 			var end = start;
-			if (end.forward_char ()) {
-				buffer.remove_tag (caret_text_tag, start, end);
-			}
+			end.forward_char ();
+			buffer.remove_tag (caret_text_tag, start, end);
 
 			buffer.get_iter_at_mark (out start, buffer.get_insert ());
 			caret_offset = start.get_offset ();
 			end = start;
-			if (end.forward_char ()) {
-				// change the color of the text
-				buffer.apply_tag (caret_text_tag, start, end);
-			}
+			end.forward_char ();
+			// change the color of the text
+			buffer.apply_tag (caret_text_tag, start, end);
 		}
 
 		public override bool draw (Cairo.Context cr) {
