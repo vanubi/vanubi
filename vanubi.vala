@@ -1045,8 +1045,7 @@ namespace Vanubi {
 			Allocation alloc;
 			get_allocation (out alloc);
 			get_style_context().render_background (cr, 0, 0, alloc.width, alloc.height);
-			base.draw (cr);
-			return false;
+			return base.draw (cr);
 		}
 	}
 
@@ -1267,6 +1266,7 @@ namespace Vanubi {
 		weak Editor editor;
 		int original_insert;
 		int original_bound;
+		Label at_end_label;
 
 		public SearchBar (Editor editor, string initial) {
 			this.editor = editor;
@@ -1313,10 +1313,13 @@ namespace Vanubi {
 					// found
 					buf.select_range (iter, subiter);
 					editor.view.scroll_to_mark (buf.get_insert (), 0, true, 0.5, 0.5);
-					break;
+					return;
 				}
 				iter.forward_char ();
 			}
+			at_end_label = new Label ("No matches. C-s again to search from the top.");
+			attach_next_to (at_end_label, entry, PositionType.TOP, 1, 1);
+			show_all ();
 		}
 
 		protected override bool on_key_press_event (Gdk.EventKey e) {
@@ -1334,8 +1337,15 @@ namespace Vanubi {
 				// step
 				var buf = editor.view.buffer;
 				TextIter iter;
-				buf.get_iter_at_mark (out iter, buf.get_insert ());
-				iter.forward_char ();
+				if (at_end_label != null) {
+					// restart search
+					buf.get_start_iter (out iter);
+					at_end_label.destroy ();
+					at_end_label = null;
+				} else {
+					buf.get_iter_at_mark (out iter, buf.get_insert ());
+					iter.forward_char ();
+				}
 				search (iter);
 				return true;
 			}
