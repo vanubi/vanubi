@@ -23,11 +23,23 @@ namespace Vanubi {
 		focus_widget (editor.view);
 	}
 
+	Widget current_focus_widget = null;
+	ulong current_focus_sig = 0;
+
 	public static void focus_widget (Widget widget) {
 		widget.grab_focus ();
 		// using idles is too slow
-		ulong sigid = 0;
-		sigid = widget.draw.connect (() => { widget.grab_focus (); widget.disconnect (sigid); return false; });
+		if (current_focus_sig != 0) {
+			// abort previous focus
+			current_focus_widget.disconnect (current_focus_sig);
+		}
+		current_focus_widget = widget;
+		current_focus_sig = widget.draw.connect (() => {
+			widget.grab_focus ();
+			widget.disconnect (current_focus_sig);
+			current_focus_sig = 0;
+			return false;
+		});
 	}
 
 	public class Configuration {
