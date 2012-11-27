@@ -1,8 +1,6 @@
-= BUGS
+= TODO
 * Improve indentation support for vala and c
 * Make caret bg/fg color configurable for different styles
-
-= TODO
 * Mimic emacs minibar for matching files and buffers
 * Pressing HOME should move the cursor to the first word in the line, not to column 0.
   Pressing HOME twice will move the cursor to column 0.
