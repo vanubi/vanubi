@@ -893,13 +893,15 @@ namespace Vanubi {
 			cr.fill ();
 
 			// make any selection be transparent
-			get_style_context().add_class ("caret");
+			var ctx = get_style_context();
+			ctx.save ();
+			ctx.add_class ("caret");
 			// now redraw the code clipped to the new caret, exluding the old caret
 			cr.rectangle (x+1, y, width-1, height); // don't render the original cursor
 			cr.clip ();
 			base.draw (cr);
 			// revert
-			get_style_context().remove_class ("caret");
+			ctx.restore ();
 
 			return false;
 		}
@@ -966,13 +968,13 @@ namespace Vanubi {
 
 			view.focus_in_event.connect(() => { 
 					infobar.get_style_context().remove_class ("nonfocused");
-					infobar.reset_style ();
+					infobar.reset_style (); // GTK+ 3.4 bug, solved in 3.6
 					return false;
 				});
 
 			view.focus_out_event.connect(() => { 
 					infobar.get_style_context().add_class ("nonfocused");
-					infobar.reset_style ();
+					infobar.reset_style (); // GTK+ 3.4 bug, solved in 3.6
 					return false;
 				});
 		}
