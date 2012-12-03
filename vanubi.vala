@@ -204,6 +204,9 @@ namespace Vanubi {
 
 			bind_command ({ Key (Gdk.Key.space, Gdk.ModifierType.CONTROL_MASK) }, "select-all");
 			execute_command["select-all"].connect (on_select_all);
+
+			bind_command ({ Key (Gdk.Key.e, Gdk.ModifierType.CONTROL_MASK) }, "end-line");
+			execute_command["end-line"].connect (on_end_line);
 			
 			bind_command ({ Key (Gdk.Key.F9, 0) }, "compile");
 			execute_command["compile"].connect (on_compile);
@@ -597,6 +600,10 @@ namespace Vanubi {
 
 		void on_select_all (Editor ed) {
 			ed.view.select_all(true);
+		}
+
+		void on_end_line(Editor ed) {
+			ed.view.move_cursor (MovementStep.DISPLAY_LINE_ENDS, 1, false);
 		}
 
 		void on_kill_line (Editor ed) {
