@@ -38,29 +38,6 @@ namespace Vanubi {
 		}
 	}
 
-	public static void focus_editor (Editor editor) {
-		focus_widget (editor.view);
-	}
-
-	Widget current_focus_widget = null;
-	ulong current_focus_sig = 0;
-
-	public static void focus_widget (Widget widget) {
-		widget.grab_focus ();
-		// using idles is too slow
-		if (current_focus_sig != 0) {
-			// abort previous focus
-			current_focus_widget.disconnect (current_focus_sig);
-		}
-		current_focus_widget = widget;
-		current_focus_sig = widget.draw.connect (() => {
-			widget.grab_focus ();
-			widget.disconnect (current_focus_sig);
-			current_focus_sig = 0;
-			return false;
-		});
-	}
-
 	public class Configuration {
 		KeyFile backend;
 		File file;
@@ -231,7 +208,7 @@ namespace Vanubi {
 			// setup empty buffer
 			unowned Editor ed = get_available_editor (null);
 			add (ed);
-			focus_editor (ed);
+			ed.grab_focus ();
 		}
 
 		public void add_overlay (Widget widget, bool paned = false) {
@@ -318,7 +295,7 @@ namespace Vanubi {
 				}
 				unowned Editor ed = get_available_editor (f);
 				replace_widget (editor, ed);
-				focus_editor (ed);
+				ed.grab_focus ();
 				return;
 			}
 
@@ -326,7 +303,7 @@ namespace Vanubi {
 			if (!file.query_exists ()) {
 				unowned Editor ed = get_available_editor (file);
 				replace_widget (editor, ed);
-				focus_editor (ed);
+				ed.grab_focus ();
 				return;
 			}
 
@@ -352,7 +329,7 @@ namespace Vanubi {
 					buf.get_start_iter (out start);
 					buf.place_cursor (start);
 					replace_widget (editor, ed);
-					focus_editor (ed);
+					ed.grab_focus ();
 				});
 		}
 
@@ -367,7 +344,7 @@ namespace Vanubi {
 			parent.remove (this);
 			pparent.remove (parent);
 			pparent.add (this);
-			focus_editor (editor);
+			editor.grab_focus ();
 			self = null;
 		}
 
@@ -526,6 +503,7 @@ namespace Vanubi {
 			bar.aborted.connect (() => { abort (editor); });
 			add_overlay (bar);
 			bar.show ();
+			bar.grab_focus ();
 		}
 
 		void on_save_file (Editor editor) {
@@ -556,7 +534,7 @@ namespace Vanubi {
 			}
 			unowned Editor ed = get_available_editor (next_file);
 			replace_widget (editor, ed);
-			focus_editor (ed);
+			ed.grab_focus ();
 			foreach (unowned Editor old_ed in editors.data) {
 				((Container) old_ed.get_parent ()).remove (old_ed);
 			}
@@ -595,13 +573,14 @@ namespace Vanubi {
 					bar.aborted.connect (() => { abort (editor); });
 					add_overlay (bar);
 					bar.show ();
+					bar.grab_focus ();
 				} else {
 					kill_buffer (editor, editors, next_file);
 				}
 			} else {
 				unowned Editor ed = get_available_editor (next_file);
 				replace_widget (editor, ed);
-				focus_editor (ed);
+				ed.grab_focus ();
 			}
 		}
 
@@ -723,11 +702,12 @@ namespace Vanubi {
 					}
 					unowned Editor ed = get_available_editor (file);
 					replace_widget (editor, ed);
-					focus_editor (ed);
+					ed.grab_focus ();
 				});
 			bar.aborted.connect (() => { abort (editor); });
 			add_overlay (bar);
 			bar.show ();
+			bar.grab_focus ();
 		}
 
 		void on_split (Editor editor, string command) {
@@ -746,7 +726,7 @@ namespace Vanubi {
 
 			// pack the old editor
 			paned.pack1 (editor, true, false);
-			focus_editor (editor);
+			editor.grab_focus ();
 
 			// get an editor for the same field
 			var ed = get_available_editor (editor.file);
@@ -773,7 +753,7 @@ namespace Vanubi {
 			paned.remove (editor); // avoid detach
 			detach_editors (parent);
 			replace_widget (parent, editor);
-			focus_editor (editor);
+			editor.grab_focus ();
 		}
 
 		void on_join (Editor editor) {
@@ -785,7 +765,7 @@ namespace Vanubi {
 			paned.remove (editor);
 			detach_editors (paned);
 			replace_widget (paned, editor);
-			focus_editor (editor);
+			editor.grab_focus ();
 		}
 
 		void on_search_forward (Editor editor) {
@@ -799,6 +779,7 @@ namespace Vanubi {
 			});
 			add_overlay (bar);
 			bar.show ();
+			bar.grab_focus ();
 		}
 
 		void on_compile (Editor editor) {
@@ -815,6 +796,7 @@ namespace Vanubi {
 				});
 			add_overlay (bar);
 			bar.show ();
+			bar.grab_focus ();
 		}
 
 		void on_forward_backward_line (Editor ed, string command) {

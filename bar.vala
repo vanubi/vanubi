@@ -47,8 +47,10 @@ namespace Vanubi {
 			entry.key_press_event.connect (on_key_press_event);
 			add (entry);
 			show_all ();
+		}
 
-			focus_widget (entry);
+		public override void grab_focus () {
+			entry.grab_focus ();
 		}
 
 		protected virtual void on_activate () {

@@ -162,6 +162,10 @@ namespace Vanubi {
 				});
 		}
 
+		public override void grab_focus () {
+			view.grab_focus ();
+		}
+
 		public string get_editor_name () {
 			if (file == null) {
 				return "*scratch*";
