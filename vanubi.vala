@@ -207,6 +207,10 @@ namespace Vanubi {
 
 			bind_command ({ Key (Gdk.Key.e, Gdk.ModifierType.CONTROL_MASK) }, "end-line");
 			execute_command["end-line"].connect (on_end_line);
+
+			bind_command ({ Key (Gdk.Key.a, Gdk.ModifierType.CONTROL_MASK) }, "start-line");
+			bind_command ({ Key (Gdk.Key.Home, 0) }, "start-line");
+			execute_command["start-line"].connect (on_start_line);
 			
 			bind_command ({ Key (Gdk.Key.F9, 0) }, "compile");
 			execute_command["compile"].connect (on_compile);
@@ -600,6 +604,20 @@ namespace Vanubi {
 
 		void on_select_all (Editor ed) {
 			ed.view.select_all(true);
+		}
+
+		void on_start_line(Editor ed) {
+			/* Put the cursor at the start of the line */
+			ed.view.move_cursor (MovementStep.DISPLAY_LINE_ENDS, -1, false);
+
+			var buf = ed.view.buffer;
+			TextIter start;
+			buf.get_iter_at_mark (out start, buf.get_insert ());
+
+			while (start.get_char().isspace()) {
+				start.forward_char();
+				ed.view.move_cursor (MovementStep.VISUAL_POSITIONS, 1, false);
+			}
 		}
 
 		void on_end_line(Editor ed) {
