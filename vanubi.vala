@@ -129,7 +129,9 @@ namespace Vanubi {
 			}
 		}
 
+		/* List of files opened. Work on unique File instances. */
 		HashTable<File, File> files = new HashTable<File, File> (File.hash, File.equal);
+		/* List of buffers for *scratch* */
 		GenericArray<Editor> scratch_editors = new GenericArray<Editor> ();
 
 		KeyNode key_root = new KeyNode ();
@@ -375,36 +377,48 @@ namespace Vanubi {
 		void unset_loading () {
 		}
 
+		/* Returns an Editor for the given file */
 		unowned Editor get_available_editor (File? file) {
+			// list of editors for the file
 			unowned GenericArray<Editor> editors;
 			if (file == null) {
+				// file == null means *scratch*
 				editors = scratch_editors;
 			} else {
+				// map to the unique file instance
 				var f = files[file];
 				if (f == null) {
+					// this is a new file
 					files[file] = file;
 					var etors = new GenericArray<Editor> ();
 					editors = etors;
+					// store editors in the File itself
 					file.set_data ("editors", (owned) etors);
 				} else {
+					// get the editors of the file
 					editors = file.get_data ("editors");
 				}
 			}
 
+			// first find an editor that is not visible, so we can reuse it
 			foreach (unowned Editor ed in editors.data) {
 				if (!ed.visible) {
 					return ed;
 				}
 			}
+			// no editor reusable, so create one
 			var ed = new Editor (file);
+			// set the font according to the user/system configuration
 			var system_size = ed.view.style.font_desc.get_size () / Pango.SCALE;
 			ed.view.override_font (Pango.FontDescription.from_string ("Monospace %d".printf (conf.get_font_size (system_size))));
 			ed.view.key_press_event.connect (on_key_press_event);
 			ed.view.scroll_event.connect (on_scroll_event);
 			if (editors.length > 0) {
-				// share buffer
+				// share TextBuffer with an existing editor for this file,
+				// so that they display the same content
 				ed.view.buffer = editors[0].view.buffer;
 			} else if (file != null) {
+				// if it's not *scratch*, guess the content-type to set the syntax highlight
 				bool uncertain;
 				var content_type = ContentType.guess (file.get_path (), null, out uncertain);
 				if (uncertain) {
@@ -413,6 +427,7 @@ namespace Vanubi {
 				var lang = SourceLanguageManager.get_default().guess_language (file.get_path (), content_type);
 				((SourceBuffer) ed.view.buffer).set_language (lang);
 			}
+			// let the Manager own the reference to the editor
 			unowned Editor ret = ed;
 			editors.add ((owned) ed);
 			return ret;
