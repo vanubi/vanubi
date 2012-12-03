@@ -54,12 +54,6 @@ namespace Vanubi {
 			entry.move_cursor (MovementStep.BUFFER_ENDS, 1, false);
 		}
 
-		protected virtual bool on_focus_in_event (Gdk.EventFocus e) {
-			entry.select_region(0, 0);
-			entry.set_position(-1);
-			return true;
-		}
-
 		protected virtual void on_activate () {
 			activate (entry.get_text ());
 		}
