@@ -153,6 +153,7 @@ namespace Vanubi {
 		public FileBar (File? base_file) {
 			base (true);
 			base_directory = get_base_directory (base_file);
+			entry.set_text(base_directory);
 		}
 
 		protected override async string[]? complete (string pattern, out string? common_choice, Cancellable cancellable) {
@@ -164,6 +165,7 @@ namespace Vanubi {
 		}
 
 		protected override string get_pattern_from_choice (string original_pattern, string choice) {
+
 			string absolute_pattern = absolutize_path (base_directory, original_pattern);
 			int choice_seps = count (choice, '/');
 			int pattern_seps = count (absolute_pattern, '/');
