@@ -22,8 +22,8 @@ C-x C-x          Exec shell command [not implemented yet!]
 C-n              Go to next line
 C-p              Go to previous line
 C-k              Kill line
-C-e              Go to the end of line [not implemented yet]
-C-a              Go to the head of line [not implemented yet] [XXX: already used from GtkSourceView]
+C-e              Go to the end of line
+C-a              Go to the head of line
 C-space          Select all text
 
 -- Mouse Bindings --
