@@ -211,11 +211,6 @@ namespace Vanubi {
 			bind_command ({ Key (Gdk.Key.a, Gdk.ModifierType.CONTROL_MASK) }, "start-line");
 			bind_command ({ Key (Gdk.Key.Home, 0) }, "start-line");
 			execute_command["start-line"].connect (on_start_line);
-
-			bind_command ({ Key (Gdk.Key.a, Gdk.ModifierType.CONTROL_MASK), 
-				Key (Gdk.Key.a, Gdk.ModifierType.CONTROL_MASK) }, "head-line");
-			bind_command ({ Key (Gdk.Key.Home, 0), Key (Gdk.Key.Home, 0) }, "head-line");
-			execute_command["head-line"].connect (on_head_line);
 			
 			bind_command ({ Key (Gdk.Key.F9, 0) }, "compile");
 			execute_command["compile"].connect (on_compile);
@@ -610,24 +605,27 @@ namespace Vanubi {
 		void on_select_all (Editor ed) {
 			ed.view.select_all(true);
 		}
-		
-		void on_head_line(Editor ed) {
-			/* Put the cursor at the head of line */
-			ed.view.move_cursor (MovementStep.DISPLAY_LINE_ENDS, -1, false);
-		}
 
 		void on_start_line(Editor ed) {
-			/* Put the cursor at the head of line */
-			ed.view.move_cursor (MovementStep.DISPLAY_LINE_ENDS, -1, false);
-
+			bool forward = false;
 			var buf = ed.view.buffer;
 			TextIter start;
 			buf.get_iter_at_mark (out start, buf.get_insert ());
 
-			/* Find the fist char */
-			while (start.get_char().isspace()) {
-				start.forward_char();
-				ed.view.move_cursor (MovementStep.VISUAL_POSITIONS, 1, false);
+			while (!start.starts_line()) {
+				start.backward_char();
+				ed.view.move_cursor (MovementStep.VISUAL_POSITIONS, -1, false);
+
+				if (!forward && !start.get_char().isspace()) {
+					forward = true;
+				}
+			}
+
+			if (forward) {
+				while (start.get_char().isspace()) {
+					start.forward_char();
+					ed.view.move_cursor (MovementStep.VISUAL_POSITIONS, 1, false);
+				}
 			}
 		}
 
