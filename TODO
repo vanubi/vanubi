@@ -2,7 +2,6 @@
 * Improve indentation support for vala and c
 * Make caret bg/fg color configurable for different styles
 * Mimic emacs minibar for matching files and buffers
-* Pressing HOME twice will move the cursor to column 0.
 * Code fold / Comment fold
 
 = IDEAS
