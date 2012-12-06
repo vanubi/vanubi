@@ -212,6 +212,12 @@ namespace Vanubi {
 			bind_command ({ Key (Gdk.Key.Home, 0) }, "start-line");
 			execute_command["start-line"].connect (on_start_line);
 			
+			bind_command ({ Key (Gdk.Key.Down, Gdk.ModifierType.CONTROL_MASK) }, "down-arrow");
+			execute_command["down-arrow"].connect (on_down_arrow);
+
+			bind_command ({ Key (Gdk.Key.Up, Gdk.ModifierType.CONTROL_MASK) }, "up-arrow");
+			execute_command["up-arrow"].connect (on_up_arrow);
+
 			bind_command ({ Key (Gdk.Key.F9, 0) }, "compile");
 			execute_command["compile"].connect (on_compile);
 
@@ -604,6 +610,58 @@ namespace Vanubi {
 
 		void on_select_all (Editor ed) {
 			ed.view.select_all(true);
+		}
+
+		void on_down_arrow(Editor ed) {
+			var buf = ed.view.buffer;
+			string line = null;
+			TextIter start;
+
+			buf.get_iter_at_mark (out start, buf.get_insert ());
+
+			do {
+				if (!start.forward_line()) {
+					break;
+				}
+
+				TextIter end = start;
+				var start_line = start.get_line ();
+				end.forward_to_line_end ();
+				var end_line = end.get_line ();
+				if (start_line != end_line) {
+					end.set_line_offset (0);
+				}
+				
+				line = start.get_text(end);
+				ed.view.move_cursor (MovementStep.DISPLAY_LINES, 1, false);
+
+			} while (line.strip() != "");
+		}
+
+		void on_up_arrow(Editor ed) {
+			var buf = ed.view.buffer;
+			string line = null;
+			TextIter start;
+
+			buf.get_iter_at_mark (out start, buf.get_insert ());
+
+			do {
+				if (!start.backward_line()) {
+					break;
+				}
+
+				TextIter end = start;
+				var start_line = start.get_line ();
+				end.forward_to_line_end ();
+				var end_line = end.get_line ();
+				if (start_line != end_line) {
+					end.set_line_offset (0);
+				}
+				
+				line = start.get_text(end);
+				ed.view.move_cursor (MovementStep.DISPLAY_LINES, -1, false);
+
+			} while (line.strip() != "");
 		}
 
 		void on_start_line(Editor ed) {
