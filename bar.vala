@@ -51,7 +51,6 @@ namespace Vanubi {
 
 		public override void grab_focus () {
 			entry.grab_focus ();
-			entry.move_cursor (MovementStep.BUFFER_ENDS, 1, false);
 		}
 
 		protected virtual void on_activate () {
@@ -89,6 +88,11 @@ namespace Vanubi {
 			if (current_completion != null) {
 				current_completion.cancel ();
 			}
+		}
+
+		public override void grab_focus () {
+			base.grab_focus ();
+			entry.move_cursor (MovementStep.BUFFER_ENDS, 1, false);
 		}
 
 		protected virtual async string[]? complete (string pattern, out string? common_choice, Cancellable cancellable) {
