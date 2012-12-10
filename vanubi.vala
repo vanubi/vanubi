@@ -445,7 +445,7 @@ namespace Vanubi {
 			if (key_timeout != 0) {
 				Source.remove (key_timeout);
 			}
-			modifiers &= Gdk.ModifierType.CONTROL_MASK;
+			modifiers &= Gdk.ModifierType.SHIFT_MASK | Gdk.ModifierType.CONTROL_MASK;
 			if (keyval == Gdk.Key.Escape || (keyval == Gdk.Key.g && modifiers == Gdk.ModifierType.CONTROL_MASK)) {
 				// abort
 				abort (editor);
