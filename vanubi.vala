@@ -933,6 +933,7 @@ int main (string[] args) {
 	win.title = "Vanubi";
 	win.delete_event.connect (() => { Gtk.main_quit (); return false; });
 	win.set_default_size (800, 400);
+	win.icon = new Gdk.Pixbuf.from_file("./data/icon.jpg");
 
 	win.add (new Vanubi.Manager ());
 
