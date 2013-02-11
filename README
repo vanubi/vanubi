@@ -25,6 +25,8 @@ C-k              Kill line
 C-e              Go to the end of line
 C-a              Go to the head of line
 C-space          Select all text
+C-l              Iterate the editors on the right
+C-j              Iterate the editors on the left
 
 -- Mouse Bindings --
 

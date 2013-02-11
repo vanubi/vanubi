@@ -178,6 +178,14 @@ namespace Vanubi {
 				"split-add-down");
 			execute_command["split-add-down"].connect (on_split);
 
+			bind_command ({ 
+				Key (Gdk.Key.l, Gdk.ModifierType.CONTROL_MASK) }, "next-editor");
+			execute_command["next-editor"].connect (on_next_editor);
+
+			bind_command ({ 
+				Key (Gdk.Key.j, Gdk.ModifierType.CONTROL_MASK) }, "prev-editor");
+			execute_command["prev-editor"].connect (on_prev_editor);
+
 			bind_command ({
 					Key (Gdk.Key.x, Gdk.ModifierType.CONTROL_MASK),
 						Key (Gdk.Key.@1, 0)},
@@ -824,6 +832,121 @@ namespace Vanubi {
 			// pack the new editor
 			paned.pack2 (ed, true, false);
 			paned.show_all ();
+		}
+
+		static void find_editor(Widget node, bool dir_up, bool dir_left, bool forward)
+		{
+			if (node is Paned) {
+
+				var p = (Paned) node;
+
+				if (dir_up) {
+					if (dir_left) {
+
+						if (forward) {
+							/* Goto right node */
+							find_editor((Widget)p.get_child2(), false, false, forward);
+						} else {
+							/* Goto the parent */
+							
+							var parent = p.get_parent() as Paned;
+							
+							if (parent == null) {
+								/* Reached the root node! */
+								return;
+							} else {
+								
+								var lchild = parent.get_child1() as Paned;
+								
+								if (lchild != null && lchild == p) { /* Left child */
+									find_editor((Widget)parent, true, true, forward);
+								} else { /* Right child */
+									find_editor((Widget)parent, true, false, forward);
+								}
+							}
+						}
+
+					} else { /* Right */
+
+						if (forward) {
+							/* Goto the parent */
+							
+							var parent = p.get_parent() as Paned;
+							
+							if (parent == null) {
+								/* Reached the root node! */
+								return;
+							} else {
+								
+								var lchild = parent.get_child1() as Paned;
+								
+								if (lchild != null && lchild == p) { /* Left child */
+									find_editor((Widget)parent, true, true, forward);
+								} else { /* Right child */
+									find_editor((Widget)parent, true, false, forward);
+								}
+							}
+						} else { /* Backward */
+							
+							/* Goto left node */
+							find_editor((Widget)p.get_child1(), false, true, forward);
+						}
+					}
+				} else { /* Down */
+					
+					if (forward) {
+						/* Goto left node */
+						find_editor((Widget)p.get_child1(), false, true, forward);
+					} else {
+						/* Goto right node */
+						find_editor((Widget)p.get_child2(), false, false, forward);
+					}
+				}
+
+			} else if (node is Editor) {
+
+				var e = (Editor)node;
+
+				if (!dir_up) {
+					/* Focus the editor */
+					e.grab_focus();
+				}
+			}
+		}
+
+		void on_next_editor(Editor ed)
+		{
+			var paned = ed.get_parent() as Paned;
+
+			if (paned == null) { 
+				/* The curr editor is the root node! */
+				return;
+			}
+
+			var lchild = paned.get_child1() as Editor;
+
+			if (lchild != null && ed == lchild) { /* Left child */
+				find_editor((Widget)paned, true, true, true);
+			} else { /* Right child */
+				find_editor((Widget)paned, true, false, true);
+			}
+		}
+		
+		void on_prev_editor(Editor ed) {
+			var paned = ed.get_parent() as Paned;
+
+			if (paned == null) {
+				/* The curr editor is the root node! */
+				return;
+			}
+
+			var lchild = paned.get_child1() as Editor;
+
+			if (lchild != null && ed == lchild) { /* Left child */
+				find_editor((Widget)paned, true, true, false);
+			} else { /* Right child */
+				find_editor((Widget)paned, true, false, false);
+			}
 		}
 
 		void on_join_all (Editor editor) {
