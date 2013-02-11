@@ -109,7 +109,8 @@ namespace Vanubi {
 			editor_style.set_search_path({"./styles/"}); /* TODO: use ~/.vanubi/styles/ */
 
 			// view
-			view = new EditorView ();
+			/* view = new EditorView (); */
+			view = new SourceView();
 			view.wrap_mode = WrapMode.CHAR;
 			view.set_data ("editor", (Editor*)this);
                         
