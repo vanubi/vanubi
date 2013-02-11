@@ -134,6 +134,7 @@ namespace Vanubi {
 			add (infobar);
 
 			var file_label = new Label (get_editor_name ());
+			file_label.set_ellipsize(Pango.EllipsizeMode.MIDDLE);
 			file_label.margin_left = 20;
 			file_label.get_style_context().add_class("filename");
 			infobar.add (file_label);
@@ -170,7 +171,7 @@ namespace Vanubi {
 			if (file == null) {
 				return "*scratch*";
 			} else {
-				return file.get_basename ();
+				return file.get_path();
 			}
 		}
 
