@@ -154,8 +154,14 @@ namespace Vanubi {
 				"quit");
 			execute_command["quit"].connect (on_quit);
 
-			bind_command ({ Key (Gdk.Key.Tab, 0) }, "tab");
-			execute_command["tab"].connect (on_tab);
+			bind_command ({ Key (Gdk.Key.Tab, 0) }, "indent");
+			execute_command["indent"].connect (on_indent);
+
+			bind_command ({ Key (Gdk.Key.Return, 0) }, "return");
+			execute_command["return"].connect (on_return);
+
+			bind_command ({ Key ('}', Gdk.ModifierType.SHIFT_MASK) }, "close-curly-brace");
+			execute_command["close-curly-brace"].connect (on_close_curly_brace);
 
 			bind_command ({ Key (Gdk.Key.x, Gdk.ModifierType.CONTROL_MASK) }, "cut");
 			execute_command["cut"].connect (on_cut);
@@ -459,10 +465,6 @@ namespace Vanubi {
 				abort (editor);
 				return true;
 			}
-			if (modifiers == 0 && keyval < 255 && current_key == key_root) {
-				// normal key, avoid a table lookup
-				return false;
-			}
 
 			var old_key = current_key;
 			current_key = current_key.get_child (Key (keyval, modifiers), false);
@@ -704,7 +706,19 @@ namespace Vanubi {
 			buf.end_user_action ();
 		}
 
-		void on_tab (Editor ed) {
+		void on_return (Editor ed) {
+			var buf = ed.view.buffer;
+			buf.insert_at_cursor ("\n", -1);
+			execute_command["indent"] (ed, "indent");
+		}
+
+		void on_close_curly_brace (Editor ed) {
+			var buf = ed.view.buffer;
+			buf.insert_at_cursor ("}", -1);
+			execute_command["indent"] (ed, "indent");
+		}
+
+		void on_indent (Editor ed) {
 			var buf = ed.view.buffer;
 
 			TextIter insert_iter;

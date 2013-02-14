@@ -26,13 +26,16 @@ namespace Vanubi {
 
 		construct {
 			buffer = new SourceBuffer (null);
+#if 0
 			buffer.mark_set.connect (update_caret_position);
 			buffer.changed.connect (update_caret_position);
 			caret_text_tag = buffer.create_tag ("caret_text", foreground: "black");
 			((SourceBuffer) buffer).highlight_matching_brackets = true;
 			get_settings().gtk_cursor_blink = false;
+#endif
 		}
 
+#if 0
 		void update_caret_position () {
 			// remove previous tag
 			TextIter start;
@@ -88,10 +91,11 @@ namespace Vanubi {
 
 			return false;
 		}
+#endif
 	}
 
 	public class Editor : Grid {
-		public File file { get; private set; }
+		public unowned File file { get; private set; }
 		public SourceView view { get; private set; }
 		public SourceStyleSchemeManager editor_style { get; private set; }
 		ScrolledWindow sw;
@@ -109,8 +113,7 @@ namespace Vanubi {
 			editor_style.set_search_path({"./styles/"}); /* TODO: use ~/.vanubi/styles/ */
 
 			// view
-			/* view = new EditorView (); */
-			view = new SourceView();
+			view = new EditorView ();
 			view.wrap_mode = WrapMode.CHAR;
 			view.set_data ("editor", (Editor*)this);
                         
