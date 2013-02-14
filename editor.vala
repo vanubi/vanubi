@@ -95,7 +95,7 @@ namespace Vanubi {
 	}
 
 	public class Editor : Grid {
-		public unowned File file { get; private set; }
+		public File file { get; private set; }
 		public SourceView view { get; private set; }
 		public SourceStyleSchemeManager editor_style { get; private set; }
 		ScrolledWindow sw;
