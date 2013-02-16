@@ -26,17 +26,17 @@ namespace Vanubi {
 
 		construct {
 			buffer = new SourceBuffer (null);
-#if 0
 			buffer.mark_set.connect (update_caret_position);
 			buffer.changed.connect (update_caret_position);
+#if 0
 			caret_text_tag = buffer.create_tag ("caret_text", foreground: "black");
 			((SourceBuffer) buffer).highlight_matching_brackets = true;
 			get_settings().gtk_cursor_blink = false;
 #endif
 		}
 
-#if 0
 		void update_caret_position () {
+#if 0
 			// remove previous tag
 			TextIter start;
 			buffer.get_iter_at_offset (out start, caret_offset);
@@ -50,8 +50,10 @@ namespace Vanubi {
 			end.forward_char ();
 			// change the color of the text
 			buffer.apply_tag (caret_text_tag, start, end);
+#endif
 		}
 
+#if 0
 		public override bool draw (Cairo.Context cr) {
 			var buffer = this.buffer;
 			TextIter it;

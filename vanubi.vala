@@ -1030,32 +1030,6 @@ namespace Vanubi {
 				ed.view.move_cursor (MovementStep.DISPLAY_LINES, -1, false);
 			}
 		}
-
-		class SwitchBufferBar : CompletionBar {
-			string[] choices;
-
-			public SwitchBufferBar (string[] choices) {
-				base (false);
-				this.choices = choices;
-			}
-
-			protected override async string[]? complete (string pattern, out string? common_choice, Cancellable cancellable) {
-				var worker = new MatchWorker (cancellable);
-				worker.set_pattern (pattern);
-				foreach (unowned string choice in choices) {
-					worker.enqueue (choice);
-				}
-				try {
-					return yield worker.get_result (out common_choice);
-				} catch (Error e) {
-					message (e.message);
-					common_choice = null;
-					return null;
-				} finally {
-					worker.terminate ();
-				}
-			}
-		}
 	}
 }
 
