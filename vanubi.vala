@@ -186,11 +186,11 @@ namespace Vanubi {
 
 			bind_command ({ 
 				Key (Gdk.Key.l, Gdk.ModifierType.CONTROL_MASK) }, "next-editor");
-			execute_command["next-editor"].connect (on_next_editor);
+			execute_command["next-editor"].connect (on_switch_editor);
 
 			bind_command ({ 
 				Key (Gdk.Key.j, Gdk.ModifierType.CONTROL_MASK) }, "prev-editor");
-			execute_command["prev-editor"].connect (on_prev_editor);
+			execute_command["prev-editor"].connect (on_switch_editor);
 
 			bind_command ({
 					Key (Gdk.Key.x, Gdk.ModifierType.CONTROL_MASK),
@@ -928,9 +928,10 @@ namespace Vanubi {
 			}
 		}
 
-		void on_next_editor(Editor ed)
+		void on_switch_editor(Editor ed, string command)
 		{
 			var paned = ed.get_parent() as Paned;
+			bool fwd = (command == "next-editor") ? true : false;
 
 			if (paned == null) { 
 				/* The curr editor is the root node! */
@@ -940,26 +941,9 @@ namespace Vanubi {
 			var lchild = paned.get_child1() as Editor;
 
 			if (lchild != null && ed == lchild) { /* Left child */
-				find_editor((Widget)paned, true, true, true);
+				find_editor((Widget)paned, true, true, fwd);
 			} else { /* Right child */
-				find_editor((Widget)paned, true, false, true);
-			}
-		}
-		
-		void on_prev_editor(Editor ed) {
-			var paned = ed.get_parent() as Paned;
-
-			if (paned == null) {
-				/* The curr editor is the root node! */
-				return;
-			}
-
-			var lchild = paned.get_child1() as Editor;
-
-			if (lchild != null && ed == lchild) { /* Left child */
-				find_editor((Widget)paned, true, true, false);
-			} else { /* Right child */
-				find_editor((Widget)paned, true, false, false);
+				find_editor((Widget)paned, true, false, fwd);
 			}
 		}
 
