@@ -15,3 +15,12 @@ VanubiEditorInfoBar.nonfocused GtkLabel {
 .filename {
 	font-weight: bold;
 }
+VanubiBar {
+    background: black;
+}
+VanubiBar GtkEntry {
+	color: white;
+	border: none;
+	background: black;
+	padding: 1px 2px 1px 2px;
+}
