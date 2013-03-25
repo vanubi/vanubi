@@ -979,12 +979,12 @@ namespace Vanubi {
 		void on_search_forward (Editor editor) {
 			var bar = new SearchBar (editor, last_search_string);
 			bar.activate.connect (() => {
-				abort (editor);
 				last_search_string = bar.text;
+				abort (editor);
 			});
 			bar.aborted.connect (() => {
-				abort (editor);
 				last_search_string = bar.text;
+				abort (editor);
 			});
 			add_overlay (bar);
 			bar.show ();
