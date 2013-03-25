@@ -165,15 +165,14 @@ namespace Vanubi {
 		}
 
 		protected override string get_pattern_from_choice (string original_pattern, string choice) {
-
 			string absolute_pattern = absolutize_path (base_directory, original_pattern);
 			int choice_seps = count (choice, '/');
 			int pattern_seps = count (absolute_pattern, '/');
 			if (choice[choice.length-1] == '/') {
 				choice_seps--;
-			}
-			if (absolute_pattern[absolute_pattern.length-1] == '/') {
-				pattern_seps--;
+				if (absolute_pattern[absolute_pattern.length-1] == '/') {
+					pattern_seps--;
+				}
 			}
 			int keep_seps = pattern_seps - choice_seps;
 
@@ -182,6 +181,7 @@ namespace Vanubi {
 				idx = absolute_pattern.index_of_char ('/', idx);
 				idx++;
 			}
+
 			string new_absolute_pattern = absolute_pattern.substring (0, idx)+choice;
 			string res;
 			if (original_pattern[0] == '/') {
