@@ -34,6 +34,7 @@ namespace Vanubi {
 
 		public new signal void activate (string s);
 		public signal void aborted ();
+		public string text { get { return entry.get_text(); } }
 
 		public Bar (string? initial = null) {
 			expand = false;

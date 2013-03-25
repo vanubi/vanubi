@@ -1,5 +1,5 @@
 /*
- *  Copyright © 2011-2012 Luca Bruno
+ *  Copyright © 2011-2013 Luca Bruno
  *
  *  This file is part of Vanubi.
  *
@@ -978,12 +978,13 @@ namespace Vanubi {
 
 		void on_search_forward (Editor editor) {
 			var bar = new SearchBar (editor, last_search_string);
-			bar.activate.connect ((s) => {
+			bar.activate.connect (() => {
 				abort (editor);
-				last_search_string = s;
+				last_search_string = bar.text;
 			});
 			bar.aborted.connect (() => {
 				abort (editor);
+				last_search_string = bar.text;
 			});
 			add_overlay (bar);
 			bar.show ();

@@ -1,6 +1,7 @@
 #!/usr/bin/env runhaskell
 import Development.Shake
 import Development.Shake.FilePath
+import Development.Shake.Sys
 import Control.Applicative hiding ((*>))
 
 cc = "cc"
@@ -18,16 +19,16 @@ main = shake shakeOptions $ do
   "vanubi" *> \out -> do
     need cobjects
     pkgconfigflags <- pkgConfig $ ["--libs"] ++ packages
-    system' cc $ ["-fPIC", "-o", out] ++ pkgconfigflags ++ cobjects
+    sys cc "-fPIC -o" [out] pkgconfigflags cobjects
   cobjects **> \out -> do
     let cfile = replaceExtension out ".c"
     need [cfile]
     pkgconfigflags <- pkgConfig $ ["--cflags"] ++ packages
-    system' cc $ ["-ggdb", "-fPIC", "-c", "-o", out, cfile] ++ pkgconfigflags
+    sys cc "-ggdb -fPIC -c -o" [out, cfile] pkgconfigflags
   csources *>> \_ -> do
     let valapkgflags = prependEach "--pkg" packages
     need sources
-    system' valac $ ["-C", "-g"] ++ valapkgflags ++ sources
+    sys valac "-C -g" valapkgflags sources
     
 -- utilities
 prependEach x = foldr (\y a -> x:y:a) []
