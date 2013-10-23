@@ -253,13 +253,20 @@ namespace Vanubi {
 	}
 
 	public class SearchBar : Bar {
+		public enum Mode {
+			FORWARD,
+			BACKWARD
+		}
+		
 		weak Editor editor;
 		int original_insert;
 		int original_bound;
 		Label at_end_label;
+		Mode mode;
 
-		public SearchBar (Editor editor, string initial) {
+		public SearchBar (Editor editor, string initial, Mode mode) {
 			this.editor = editor;
+			this.mode = mode;
 			entry.set_text (initial);
 			entry.changed.connect (on_changed);
 
@@ -283,7 +290,7 @@ namespace Vanubi {
 			var buf = editor.view.buffer;
 			var p = entry.get_text ();
 			var insensitive = p.down () == p;
-			while (!iter.is_end ()) {
+			while ((mode == Mode.FORWARD && !iter.is_end ()) || (mode == Mode.BACKWARD && !iter.is_start ())) {
 				var subiter = iter;
 				int i = 0;
 				unichar c;
@@ -305,9 +312,17 @@ namespace Vanubi {
 					editor.view.scroll_to_mark (buf.get_insert (), 0, true, 0.5, 0.5);
 					return;
 				}
-				iter.forward_char ();
+				if (mode == Mode.FORWARD) {
+					iter.forward_char ();
+				} else {
+					iter.backward_char ();
+				}
 			}
-			at_end_label = new Label ("No matches. C-s again to search from the top.");
+			if (mode == Mode.FORWARD) {
+				at_end_label = new Label ("No matches. C-s again to search from the top.");
+			} else {
+				at_end_label = new Label ("No matches. C-r again to search from the bottom.");
+			}
 			attach_next_to (at_end_label, entry, PositionType.TOP, 1, 1);
 			show_all ();
 		}
@@ -323,18 +338,27 @@ namespace Vanubi {
 				editor.view.scroll_to_mark (editor.view.buffer.get_insert (), 0, false, 0.5, 0.5);
 				aborted ();
 				return true;
-			} else if (e.keyval == Gdk.Key.s && Gdk.ModifierType.CONTROL_MASK in e.state) {
+			} else if ((e.keyval == Gdk.Key.s || e.keyval == Gdk.Key.r) && Gdk.ModifierType.CONTROL_MASK in e.state) {
 				// step
+				mode = e.keyval == Gdk.Key.s ? Mode.FORWARD : Mode.BACKWARD;
 				var buf = editor.view.buffer;
 				TextIter iter;
 				if (at_end_label != null) {
 					// restart search
-					buf.get_start_iter (out iter);
+					if (mode == Mode.FORWARD) {
+						buf.get_start_iter (out iter);
+					} else {
+						buf.get_end_iter (out iter);
+					}
 					at_end_label.destroy ();
 					at_end_label = null;
 				} else {
 					buf.get_iter_at_mark (out iter, buf.get_insert ());
-					iter.forward_char ();
+					if (mode == Mode.FORWARD) {
+						iter.forward_char ();
+					} else {
+						iter.backward_char ();
+					}
 				}
 				search (iter);
 				return true;

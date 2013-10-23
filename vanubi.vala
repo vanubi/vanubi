@@ -213,6 +213,9 @@ namespace Vanubi {
 			bind_command ({ Key (Gdk.Key.s, Gdk.ModifierType.CONTROL_MASK) }, "search-forward");
 			execute_command["search-forward"].connect (on_search_forward);
 
+			bind_command ({ Key (Gdk.Key.r, Gdk.ModifierType.CONTROL_MASK) }, "search-backward");
+			execute_command["search-backward"].connect (on_search_backward);
+
 			bind_command ({ Key (Gdk.Key.k, Gdk.ModifierType.CONTROL_MASK) }, "kill-line");
 			execute_command["kill-line"].connect (on_kill_line);
 
@@ -977,7 +980,7 @@ namespace Vanubi {
 		}
 
 		void on_search_forward (Editor editor) {
-			var bar = new SearchBar (editor, last_search_string);
+			var bar = new SearchBar (editor, last_search_string, SearchBar.Mode.FORWARD);
 			bar.activate.connect (() => {
 				last_search_string = bar.text;
 				abort (editor);
@@ -990,6 +993,22 @@ namespace Vanubi {
 			bar.show ();
 			bar.grab_focus ();
 		}
+		
+		void on_search_backward (Editor editor) {
+			var bar = new SearchBar (editor, last_search_string, SearchBar.Mode.BACKWARD);
+			bar.activate.connect (() => {
+				last_search_string = bar.text;
+				abort (editor);
+			});
+			bar.aborted.connect (() => {
+				last_search_string = bar.text;
+				abort (editor);
+			});
+			add_overlay (bar);
+			bar.show ();
+			bar.grab_focus ();
+		}
+
 
 		void on_compile (Editor editor) {
 			var bar = new Bar (last_command_string);

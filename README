@@ -27,6 +27,8 @@ C-a              Go to the head of line
 C-space          Select all text
 C-l              Iterate the editors on the right
 C-j              Iterate the editors on the left
+C-s              Search forward
+C-r              Search backward
 Alt+down         Swap current row with the row below
 Alt+up           Swap current row with the row above
 
