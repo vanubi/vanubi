@@ -121,6 +121,8 @@ namespace Vanubi {
 		[Signal (detailed = true)]
 		public signal void execute_command (Editor editor, string command);
 
+		public signal void quit ();
+
 		public Configuration conf;
 
 		public Manager () {
@@ -315,10 +317,29 @@ namespace Vanubi {
 			}
 		}
 
-		public void open_file (Editor editor, string filename) {
+		public Editor get_first_visible_editor () {
+			// start from scratch_editors
+			foreach (unowned Editor ed in scratch_editors.data) {
+				if (ed.visible) {
+					return ed;
+				}
+			}
+
+			foreach (unowned File file in files.get_keys ()) {
+				unowned GenericArray<Editor> editors = file.get_data ("editors");
+				foreach (unowned Editor ed in editors.data) {
+					if (ed.visible) {
+						return ed;
+					}
+				}
+			}
+
+			assert_not_reached ();
+		}
+
+		public void open_file (Editor editor, File file) {
 			set_loading ();
 
-			var file = File.new_for_path (filename);
 			// first search already opened files
 			var f = files[file];
 			if (f != null) {
@@ -527,7 +548,7 @@ namespace Vanubi {
 			var bar = new FileBar (editor.file);
 			bar.activate.connect ((f) => {
 					abort (editor);
-					open_file (editor, f);
+					open_file (editor, File.new_for_path (f));
 				});
 			bar.aborted.connect (() => { abort (editor); });
 			add_overlay (bar);
@@ -614,7 +635,7 @@ namespace Vanubi {
 		}
 
 		void on_quit () {
-			Gtk.main_quit ();
+			quit ();
 		}
 
 		void on_cut (Editor ed) {
@@ -1035,25 +1056,51 @@ namespace Vanubi {
 			}
 		}
 	}
-}
 
-int main (string[] args) {
-	Gtk.init (ref args);
+	public class Application : Gtk.Application {
+		public Application () {
+			Object(application_id: "org.vanubi", flags: ApplicationFlags.HANDLES_OPEN);
+		}
 
-	var provider = new CssProvider ();
-	provider.load_from_path ("./vanubi.css");
-	StyleContext.add_provider_for_screen (Gdk.Screen.get_default(), provider, STYLE_PROVIDER_PRIORITY_USER);
+		Window new_window () {
+			var provider = new CssProvider ();
+			provider.load_from_path ("./vanubi.css");
+			StyleContext.add_provider_for_screen (Gdk.Screen.get_default(), provider, STYLE_PROVIDER_PRIORITY_USER);
 
-	var win = new Window ();
-	win.title = "Vanubi";
-	win.delete_event.connect (() => { Gtk.main_quit (); return false; });
-	win.set_default_size (800, 400);
-	win.icon = new Gdk.Pixbuf.from_file("./data/vanubi.png");
+			var manager = new Vanubi.Manager ();
 
-	win.add (new Vanubi.Manager ());
+			var win = new ApplicationWindow (this);
+			win.title = "Vanubi";
+			win.delete_event.connect (() => { manager.execute_command (null, "quit"); return false; });
+			win.set_default_size (800, 400);
+			win.icon = new Gdk.Pixbuf.from_file("./data/vanubi.png");
 
-	win.show_all ();
-	Gtk.main ();
+			manager.quit.connect (() => { remove_window (win); win.destroy (); });
+			win.add (manager);
 
-	return 0;
+			win.show_all ();
+			add_window (win);
+
+			return win;
+		}
+
+		public override void open (File[] files, string hint) {
+			var win = get_active_window ();
+			if (win == null) {
+				win = new_window ();
+			}
+			var manager = (Manager) win.get_child ();
+			manager.open_file (manager.get_first_visible_editor (), files[0]);
+			win.present ();
+		}
+
+		protected override void activate () {
+			new_window ();
+		}
+	}
+
+	public static int main (string[] args) {
+		var app = new Application ();
+		return app.run (args);
+	}
 }
