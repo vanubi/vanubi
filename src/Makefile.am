@@ -5,7 +5,7 @@ AM_CPPFLAGS = \
 	$(VANUBI_CFLAGS) \
 	$(NULL)
 
-BUILT_SOURCES = vanubi.vala.stamp
+BUILT_SOURCES = .vanubi.vala.stamp
 
 bin_PROGRAMS = \
 	vanubi \
@@ -22,11 +22,11 @@ vanubi_VALASOURCES = \
 	$(NULL)
 
 vanubi_SOURCES = \
-	vanubi.vala.stamp \
+	.vanubi.vala.stamp \
 	$(vanubi_VALASOURCES:.vala=.c) \
 	$(NULL)
 
-vanubi.vala.stamp: $(vanubi_VALASOURCES)
+.vanubi.vala.stamp: $(vanubi_VALASOURCES)
 	$(VALA_V)$(VALAC) $(VANUBI_VALAFLAGS) -C $^
 	@touch $@
 
@@ -34,7 +34,7 @@ vanubi_LDADD = \
 	$(VANUBI_LIBS) \
 	$(NULL)
 
-EXTRA_DIST = $(vanubi_VALASOURCES) vanubi.vala.stamp
+EXTRA_DIST = $(vanubi_VALASOURCES)
 
 MAINTAINERCLEANFILES = \
 	$(vanubi_VALASOURCES:.vala=.c) \

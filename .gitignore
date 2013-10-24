@@ -27,7 +27,7 @@ missing
 src/.deps/
 src/Makefile
 src/Makefile.in
-src/vanubi.vala.stamp
+src/.vanubi.vala.stamp
 src/vanubi
 stamp-h1
 vanubi-0.0.1.tar.gz
