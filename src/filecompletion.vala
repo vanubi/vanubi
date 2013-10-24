@@ -113,6 +113,7 @@ namespace Vanubi {
 		var common_prefixes = new string[comps.length];
 		try {
 			result = yield file_complete_pattern (worker, file, 1, comps, common_prefixes, cancellable);
+		} catch (IOError.CANCELLED e) {
 		} catch (Error e) {
 			message (e.message);
 			return null;

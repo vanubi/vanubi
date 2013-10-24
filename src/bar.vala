@@ -149,6 +149,7 @@ namespace Vanubi {
 							attach_next_to (completion_box, entry, PositionType.TOP, 1, 1);
 							show_all ();
 						}
+					} catch (IOError.CANCELLED e) {
 					} catch (Error e) {
 						message (e.message);
 					}
@@ -383,6 +384,8 @@ namespace Vanubi {
 			}
 			try {
 				return yield worker.get_result (out common_choice);
+			} catch (IOError.CANCELLED e) {
+				return null;
 			} catch (Error e) {
 				message (e.message);
 				common_choice = null;
