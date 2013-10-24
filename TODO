@@ -1,7 +1,4 @@
 = TODO
-* Fix Shift+Ctrl+down/up to select whole blocks
-* Reorder switch buffer based on last used buffers
-* Remember history of last opened files for a smart C-x f
 * Improve indentation support for vala and c
 * Try the gtksourceview search API
 * Make caret bg/fg color configurable for different styles
