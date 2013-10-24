@@ -1,6 +1,7 @@
 *.o
 *.c
 *~
+.deps
 INSTALL
 Makefile
 Makefile.in
@@ -32,3 +33,8 @@ src/vanubi
 stamp-h1
 vanubi-0.0.1.tar.gz
 vanubi-0.0.1/
+tests/*.log
+tests/*.stamp
+tests/*.trs
+tests/dummy
+test-driver

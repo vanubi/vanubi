@@ -1,6 +1,6 @@
 ACLOCAL_AMFLAGS = -I m4
 
-SUBDIRS = src
+SUBDIRS = src tests
 
 dist-hook: gen-ChangeLog
 	echo $(VERSION) > $(distdir)/.tarball-version

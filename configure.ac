@@ -96,6 +96,7 @@ AC_SUBST(VANUBI_LIBS)
 AC_CONFIG_FILES([
         Makefile
 	src/Makefile
+	tests/Makefile
 ])
 
 AC_OUTPUT
@@ -109,7 +110,4 @@ echo " • Prefix: ${prefix}"
 echo ""
 echo " • Debug level: ${enable_debug}"
 echo " • Compiler flags: ${CFLAGS}"
-echo ""
-echo " • Enable test suite: ${enable_modular_tests}"
-echo " • Install tests: ${enable_installed_tests}"
 echo ""
