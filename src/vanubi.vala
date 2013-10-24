@@ -1064,7 +1064,7 @@ namespace Vanubi {
 
 		Window new_window () {
 			var provider = new CssProvider ();
-			provider.load_from_path ("./vanubi.css");
+			provider.load_from_path ("./data/vanubi.css");
 			StyleContext.add_provider_for_screen (Gdk.Screen.get_default(), provider, STYLE_PROVIDER_PRIORITY_USER);
 
 			var manager = new Vanubi.Manager ();
