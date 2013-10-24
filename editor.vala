@@ -101,7 +101,6 @@ namespace Vanubi {
 		public SourceView view { get; private set; }
 		public SourceStyleSchemeManager editor_style { get; private set; }
 		ScrolledWindow sw;
-		TextTag in_string_tag = null;
 		Label file_count;
 		Label file_status;
 
@@ -181,9 +180,18 @@ namespace Vanubi {
 			}
 		}
 
-		public bool is_in_string (TextIter iter) {
-			var tags = iter.get_tags ();
-			return in_string_tag != null && tags != null && tags.data.foreground_gdk.equal (in_string_tag.foreground_gdk);
+		/**
+		 * Returns true if the iter is neither a string nor a comment
+		 */
+		public bool is_in_code (TextIter iter) {
+			var buf = (SourceBuffer) view.buffer;
+			var classes = buf.get_context_classes_at_iter (iter);
+			foreach (var cls in classes) {
+				if (cls == "comment" || cls == "string") {
+					return false;
+				}
+			}
+			return true;
 		}
 
 		public void set_line_indentation (int line, int indent) {
@@ -234,25 +242,8 @@ namespace Vanubi {
 			var buf = (SourceBuffer) view.buffer;
 			buf.mark_set.connect (on_file_count);
 			buf.changed.connect (on_file_count);
-			buf.notify["language"].connect (on_language_changed);
 			buf.modified_changed.connect (on_modified_changed);
 			on_file_count ();
-		}
-
-		void on_language_changed () {
-			var buf = (SourceBuffer) view.buffer;
-			// HACK: sourceview doesn't set the style in the tags :-(
-			buf.set_text ("\"foo\"", -1);
-			TextIter start, end;
-			buf.get_start_iter (out start);
-			buf.get_end_iter (out end);
-			buf.ensure_highlight (start, end);
-			start.forward_char ();
-			var tags = start.get_tags ();
-			if (tags != null) {
-				in_string_tag = tags.data;
-			}
-			buf.set_text ("", 0);
 		}
 
 		void on_file_count () {

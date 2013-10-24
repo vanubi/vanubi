@@ -785,9 +785,9 @@ namespace Vanubi {
 				bool first_nonspace = true;
 				while (!iter.ends_line () && !iter.is_end ()) {
 					var c = iter.get_char ();
-					if (c == '{' && !ed.is_in_string (iter)) {
+					if (c == '{' && ed.is_in_code (iter)) {
 						new_indent += tab_width;
-					} else if (c == '}' && !first_nonspace && !ed.is_in_string (iter)) {
+					} else if (c == '}' && !first_nonspace && ed.is_in_code (iter)) {
 						new_indent -= tab_width;
 					}
 					iter.forward_char ();
@@ -801,7 +801,7 @@ namespace Vanubi {
 				while (!iter.ends_line () && !iter.is_end ()) {
 					unichar c = iter.get_char ();
 					if (!c.isspace ()) {
-						if (c == '}' && !ed.is_in_string (iter)) {
+						if (c == '}' && ed.is_in_code (iter)) {
 							new_indent -= tab_width;
 						}
 						break;
