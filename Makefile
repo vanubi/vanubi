@@ -2,7 +2,7 @@ VALAC=valac
 CC=cc
 PKGCONFIG=pkg-config
 PKGS=vte-2.90 gtk+-3.0 gtksourceview-3.0 glib-2.0 gobject-2.0
-SRCS=vanubi.vala bar.vala editor.vala matching.vala filecompletion.vala shell.vala
+SRCS=vanubi.vala bar.vala editor.vala matching.vala filecompletion.vala search.vala shell.vala
 
 COBJS=$(patsubst %.vala,%.c,$(SRCS))
 OBJS=$(patsubst %.c,%.o,$(COBJS))
