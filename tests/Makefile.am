@@ -13,7 +13,9 @@ AM_VALAFLAGS = \
 	$(NULL)
 
 test_programs = \
-	match			\
+	testmatch	\
+	testsearch	\
 	$(NULL)
 
-match_SOURCES = match.vala
+testmatch_SOURCES = testmatch.vala
+testsearch_SOURCES = testsearch.vala

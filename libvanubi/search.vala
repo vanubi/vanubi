@@ -18,9 +18,34 @@
  */
 
 namespace Vanubi {
+	public abstract class SearchDocument {
+		public abstract uint hash ();
+		public abstract bool equal (SearchDocument o);
+	}
+
+	/* Documents with a unique name */
+	public class NamedSearchDocument : SearchDocument {
+		public string name { get; private set; }
+
+		public NamedSearchDocument (string name) {
+			this.name = name;
+		}
+
+		public override uint hash () {
+			return name.hash ();
+		}
+		
+		public override bool equal (SearchDocument other) {
+			if (other == null) {
+				return false;
+			}
+			return name == ((StringSearchDocument) other).name;
+		}
+	}
+
 	public class SearchResultItem<D> {
-		public D doc;
-		public int score;
+		public D doc { get; private set; }
+		public int score { get; private set; }
 		
 		public SearchResultItem (D doc, int score) {
 			this.doc = doc;
@@ -29,14 +54,17 @@ namespace Vanubi {
 	}
 
 	public interface SearchIndex<D> {
-		public abstract string name { get; }
 		public abstract void index_document (D doc);
 		public abstract List<SearchResultItem<D>> search (string query);
 	}
 
-	public class StringSearchDocument {
-		public string name;
+	public class StringSearchDocument : NamedSearchDocument {
 		public string[] fields;
+
+		public StringSearchDocument (string name, owned string[] fields) {
+			base (name);
+			this.fields = (owned) fields;
+		}
 
 		public void index (StringSearchIndex idx) {
 			idx.add_occurrence (name, this);
@@ -48,33 +76,21 @@ namespace Vanubi {
 			}
 		}
 		
-		public uint hash () {
-			return str_hash (name);
-		}
-		
-		public bool equal (StringSearchDocument other) {
-			return name == other.name;
-		}
 	}
 
 	public class StringSearchIndex : SearchIndex<StringSearchDocument> {
-		public string name {
-			get { return this._name; }
-		}
-		
-		private string _name;
-
-		HashTable<string, HashTable<StringSearchDocument, StringSearchDocument>> index = new HashTable<string, HashTable<StringSearchDocument, StringSearchDocument>> (str_hash, str_equal);
-		HashTable<string, string> synonyms = new HashTable<string, string> (str_hash, str_equal);
-
-		public StringSearchIndex (string name) {
-			this._name = name;
-		}
+		HashTable<string, HashTable<SearchDocument, SearchDocument>> index = new HashTable<string, HashTable<SearchDocument, SearchDocument>> (str_hash, str_equal);
+		public HashTable<string, string> synonyms = new HashTable<string, string> (str_hash, str_equal);
 
 		public void add_occurrence (string word, StringSearchDocument doc) {
+			// TODO: stemming
+			unowned string syn = synonyms[word];
+			if (syn != null) {
+				word = syn;
+			}
 			var table = index[word];
 			if (table == null) {
-				table = new HashTable<StringSearchDocument, StringSearchDocument> (StringSearchDocument.hash, StringSearchDocument.equal);
+				table = new HashTable<SearchDocument, SearchDocument> (SearchDocument.hash, SearchDocument.equal);
 				index[word] = table;
 			}
 			table[doc] = doc;
@@ -84,20 +100,25 @@ namespace Vanubi {
 			doc.index (this);
 		}
 		
-		public List<SearchResultItem<StringSearchDocument>> search (string query) {
-			// TODO: sort by score, distinct
-			var result = new List<unowned SearchResultItem<unowned StringSearchDocument>>();
+		public List<SearchResultItem<SearchDocument>> search (string query) {
+			// TODO: sort by score, distinct, stemming
+			var hashed = new HashTable<SearchDocument, SearchResultItem> (SearchDocument.hash, SearchDocument.equal);
+			var result = new List<SearchResultItem<SearchDocument>>();
 			string[] words = query.split (" ");
 			foreach (unowned string word in words) {
+				unowned string syn = synonyms[word];
+				if (syn != null) {
+					word = syn;
+				}
 				var table = index[word];
 				if (table != null) {
 					var keys = table.get_keys ();
 					foreach (var doc in keys) {
-						result.append (new SearchResultItem<StringSearchDocument> (doc, 0));
+						hashed[doc] = new SearchResultItem<SearchDocument> (doc, 0);
 					}
 				}
 			}
-			return result;
+			return hashed.get_values ();
 		}
 	}
 }
