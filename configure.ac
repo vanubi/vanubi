@@ -16,9 +16,9 @@ AC_INIT([vanubi],
 
 AC_CONFIG_HEADER([config.h])
 AC_CONFIG_MACRO_DIR([m4])
-AM_MAINTAINER_MODE([enable])
 
 AM_INIT_AUTOMAKE([1.11 foreign])
+AM_MAINTAINER_MODE([enable])
 
 AM_SILENT_RULES([yes])
 AM_PATH_GLIB_2_0
@@ -26,6 +26,9 @@ AM_PROG_CC_C_O
 AC_PROG_INSTALL
 AC_PROG_LIBTOOL
 AM_PROG_VALAC(0.20.0)
+
+PACKAGE_SUFFIX=-0.1
+AC_SUBST(PACKAGE_SUFFIX)
 
 LT_PREREQ([2.2.6])
 LT_INIT([disable-static])
@@ -49,6 +52,7 @@ dnl === Dependencies ==========================================================
 GLIB_PREFIX="`$PKG_CONFIG --variable=prefix glib-2.0`"
 AC_SUBST(GLIB_PREFIX)
 
+VALA_CHECK_MODULES(LIBVANUBI, [gio-2.0])
 VALA_CHECK_MODULES(VANUBI, [gtk+-3.0 gtksourceview-3.0 vte-2.90])
 
 AM_CONDITIONAL(ENABLE_GLIB_TEST, [test "x$enable_glibtest" = "xyes"])
@@ -90,13 +94,17 @@ dnl === Test suite ============================================================
 
 GLIB_TESTS
 
+AC_SUBST(LIBVANUBI_CFLAGS)
+AC_SUBST(LIBVANUBI_LIBS)
+
 AC_SUBST(VANUBI_CFLAGS)
 AC_SUBST(VANUBI_LIBS)
 
 AC_CONFIG_FILES([
-        Makefile
-	src/Makefile
-	tests/Makefile
+		 Makefile
+		 gui/Makefile
+		 libvanubi/Makefile
+		 tests/Makefile
 ])
 
 AC_OUTPUT

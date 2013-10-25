@@ -17,8 +17,6 @@
  *  along with Vanubi.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-using Gtk;
-
 namespace Vanubi {
 	public class SearchResultItem<D> {
 		public D doc;

@@ -2,6 +2,7 @@ NULL =
 
 AM_CPPFLAGS = \
 	-I$(top_srcdir) \
+	-I$(top_srcdir)/libvanubi \
 	$(VANUBI_CFLAGS) \
 	$(NULL)
 
@@ -15,8 +16,6 @@ vanubi_VALASOURCES = \
 	bar.vala \
 	editor.vala \
 	filecompletion.vala \
-	matching.vala \
-	search.vala \
 	shell.vala \
 	vanubi.vala \
 	$(NULL)
@@ -27,10 +26,11 @@ vanubi_SOURCES = \
 	$(NULL)
 
 .vanubi.vala.stamp: $(vanubi_VALASOURCES)
-	$(VALA_V)$(VALAC) $(VANUBI_VALAFLAGS) -C $^
+	$(VALA_V)$(VALAC) $(VANUBI_VALAFLAGS) -C --pkg vanubi --vapidir $(top_srcdir)/libvanubi $^
 	@touch $@
 
 vanubi_LDADD = \
+	../libvanubi/libvanubi@PACKAGE_SUFFIX@.la \
 	$(VANUBI_LIBS) \
 	$(NULL)
 

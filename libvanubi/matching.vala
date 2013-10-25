@@ -1,5 +1,5 @@
 /*
- *  Copyright © 2011-2012 Luca Bruno
+ *  Copyright © 2011-2013 Luca Bruno
  *
  *  This file is part of Vanubi.
  *
@@ -44,7 +44,7 @@ namespace Vanubi {
 		return rank;
 	}
 
-	class MatchWorker {
+	public class MatchWorker {
 		AsyncQueue<string?> queue = new AsyncQueue<string?> ();
 		SourceFunc resume;
 		string[] matches;
