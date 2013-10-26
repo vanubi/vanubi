@@ -794,53 +794,50 @@ namespace Vanubi {
 			if (prev_line < 0) {
 				ed.set_line_indentation (line, 0);
 			} else {
-				var old_indent = ed.get_line_indentation (prev_line);
-				var new_indent = old_indent;
 				var tab_width = (int) ed.view.tab_width;
 
 				// opened/closed braces
 				TextIter iter;
 				buf.get_iter_at_line (out iter, prev_line);
-				bool first_nonspace = true;
-				int last_paren_pos = 0;
-				bool enable_paren_indent = false;
-				while (!iter.ends_line () && !iter.is_end ()) {
+				var first_nonspace = true;
+				var old_indent = ed.get_line_indentation (prev_line);
+				var new_indent = old_indent;
+				while (!iter.ends_line ()) {
 					var c = iter.get_char ();
+					unichar? la = null;
+					iter.forward_char ();
+					if (!iter.ends_line ()) {
+						la = iter.get_char (); // look ahead
+					}
+					iter.backward_char ();
+
 					if ((c == '{' || c == '[' || c == '(') && ed.is_in_code (iter)) {
-						new_indent += tab_width;
-						last_paren_pos = iter.get_line_offset () + 1;
-						enable_paren_indent = false;
+						if (la != null && !la.isspace ()) {
+							new_indent = ed.get_effective_line_offset (iter) + 1;
+						} else {
+							new_indent += tab_width;
+						}
 					} else if ((c == '}' || c == ']' || c == ')') && !first_nonspace && ed.is_in_code (iter)) {
 						new_indent -= tab_width;
-					} else if (!c.isspace ()) {
-						// must not be a brace
-						enable_paren_indent = true;
 					}
 
 					if (!c.isspace ()) {
-						// might be a brace
 						first_nonspace = false;
 					}
-
 					iter.forward_char ();
 				}
 
-				if (last_paren_pos > 0 && enable_paren_indent) {
-					// ignore everything
-					new_indent = last_paren_pos;
-				} else {
-					// unindent
-					buf.get_iter_at_line (out iter, line);
-					while (!iter.ends_line () && !iter.is_end ()) {
-						unichar c = iter.get_char ();
-						if (!c.isspace ()) {
-							if ((c == '}' || c == ']' || c == ')') && ed.is_in_code (iter)) {
-								new_indent -= tab_width;
-							}
-							break;
+				// unindent
+				buf.get_iter_at_line (out iter, line);
+				while (!iter.ends_line ()) {
+					unichar c = iter.get_char ();
+					if (!c.isspace ()) {
+						if ((c == '}' || c == ']' || c == ')') && ed.is_in_code (iter)) {
+							new_indent -= tab_width;
 						}
-						iter.forward_char ();
+						break;
 					}
+					iter.forward_char ();
 				}
 
 				ed.set_line_indentation (line, new_indent);

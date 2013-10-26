@@ -209,6 +209,7 @@ namespace Vanubi {
 			buf.begin_user_action ();
 			buf.delete (ref start, ref iter);
 			var tab_width = view.tab_width;
+			// mixed tab + spaces, TODO: handle SourceView.insert_spaces_instead_of_tabs
 			buf.insert (ref start, string.nfill(indent/tab_width, '\t')+string.nfill(indent-(indent/tab_width)*tab_width, ' '), -1);
 
 			// reset cursor, textbuffer bug?
@@ -225,7 +226,7 @@ namespace Vanubi {
 			var buf = view.buffer;
 			buf.get_iter_at_line (out iter, line);
 
-			while (iter.get_char().isspace () && !iter.ends_line () && !iter.is_end ()) {
+			while (iter.get_char().isspace () && !iter.ends_line ()) {
 				if (iter.get_char() == '\t') {
 					indent += tab_width;
 				} else {
@@ -234,6 +235,27 @@ namespace Vanubi {
 				iter.forward_char ();
 			}
 			return (int) indent;
+		}
+
+		/**
+		 * Considers tabs as tab-width spaces.
+		 */
+		public int get_effective_line_offset (TextIter iter) {
+			uint off = 0;
+			while (true) {
+				message("%d %c", iter.get_line_offset (), (char) iter.get_char ());
+				if (iter.get_char() == '\t') {
+					message("asd");
+					off += view.tab_width;
+				} else {
+					off++;
+				}
+				if (iter.starts_line ()) {
+					break;
+				}
+				iter.backward_char ();
+			}
+			return (int) off - 1; // -1 because we refer to the start of the character
 		}
 
 		/* events */
