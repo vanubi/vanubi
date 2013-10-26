@@ -41,5 +41,7 @@ vanubi-0.0.1/
 tests/*.log
 tests/*.stamp
 tests/*.trs
-tests/dummy
+tests/testfiles
+tests/testmatch
+tests/testsearch
 test-driver

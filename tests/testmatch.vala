@@ -22,6 +22,10 @@ void test_similar () {
 	assert (pattern_match ("ab", "abcd") < pattern_match ("ac", "abcd"));
 }
 
+void test_count () {
+	assert (count ("foobar", 'o') == 2);
+}
+
 int main (string[] args) {
 	Test.init (ref args);
 
@@ -29,6 +33,7 @@ int main (string[] args) {
 	Test.add_func ("/match/long", test_long);
 	Test.add_func ("/match/substring", test_substring);
 	Test.add_func ("/match/similar", test_similar);
+	Test.add_func ("/match/count", test_count);
 
 	return Test.run ();
 }

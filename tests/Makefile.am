@@ -13,9 +13,11 @@ AM_VALAFLAGS = \
 	$(NULL)
 
 test_programs = \
+	testfiles	\
 	testmatch	\
 	testsearch	\
 	$(NULL)
 
+testfiles_SOURCES = testfiles.vala
 testmatch_SOURCES = testmatch.vala
 testsearch_SOURCES = testsearch.vala

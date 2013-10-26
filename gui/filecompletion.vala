@@ -36,7 +36,7 @@ namespace Vanubi {
 		}
 
 		protected override string get_pattern_from_choice (string original_pattern, string choice) {
-			string absolute_pattern = absolutize_path (base_directory, original_pattern);
+			string absolute_pattern = absolute_path (base_directory, original_pattern);
 			int choice_seps = count (choice, '/');
 			int pattern_seps = count (absolute_pattern, '/');
 			if (choice[choice.length-1] == '/') {

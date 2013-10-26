@@ -69,7 +69,7 @@ namespace Vanubi {
 		return result;
 	}
 
-	public string absolutize_path (string base_directory, string path) {
+	public string absolute_path (string base_directory, string path) {
 		string res = base_directory+path;
 		int abs = res.last_index_of ("//");
 		int home = res.last_index_of ("~/");
@@ -87,7 +87,7 @@ namespace Vanubi {
 
 	public async string[]? file_complete (string base_directory, string pattern_path, out string? common_choice, Cancellable cancellable) throws Error {
 		common_choice = null;
-		var pattern = absolutize_path (base_directory, pattern_path);
+		var pattern = absolute_path (base_directory, pattern_path);
 		string[] comps = pattern.split ("/");
 		if (comps.length == 0) {
 			return null;
