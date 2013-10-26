@@ -243,9 +243,7 @@ namespace Vanubi {
 		public int get_effective_line_offset (TextIter iter) {
 			uint off = 0;
 			while (true) {
-				message("%d %c", iter.get_line_offset (), (char) iter.get_char ());
 				if (iter.get_char() == '\t') {
-					message("asd");
 					off += view.tab_width;
 				} else {
 					off++;
