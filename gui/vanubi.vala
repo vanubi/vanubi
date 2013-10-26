@@ -165,6 +165,12 @@ namespace Vanubi {
 			bind_command ({ Key ('}', Gdk.ModifierType.SHIFT_MASK) }, "close-curly-brace");
 			execute_command["close-curly-brace"].connect (on_close_curly_brace);
 
+			bind_command ({ Key (']', Gdk.ModifierType.SHIFT_MASK) }, "close-square-brace");
+			execute_command["close-square-brace"].connect (on_close_square_brace);
+
+			bind_command ({ Key (')', Gdk.ModifierType.SHIFT_MASK) }, "close-paren");
+			execute_command["close-paren"].connect (on_close_paren);
+
 			bind_command ({ Key (Gdk.Key.x, Gdk.ModifierType.CONTROL_MASK) }, "cut");
 			execute_command["cut"].connect (on_cut);
 
@@ -742,6 +748,18 @@ namespace Vanubi {
 			execute_command["indent"] (ed, "indent");
 		}
 
+		void on_close_square_brace (Editor ed) {
+			var buf = ed.view.buffer;
+			buf.insert_at_cursor ("]", -1);
+			execute_command["indent"] (ed, "indent");
+		}
+
+		void on_close_paren (Editor ed) {
+			var buf = ed.view.buffer;
+			buf.insert_at_cursor (")", -1);
+			execute_command["indent"] (ed, "indent");
+		}
+
 		void on_indent (Editor ed) {
 			var buf = ed.view.buffer;
 
@@ -776,37 +794,53 @@ namespace Vanubi {
 			if (prev_line < 0) {
 				ed.set_line_indentation (line, 0);
 			} else {
-				int new_indent = ed.get_line_indentation (prev_line);
+				var old_indent = ed.get_line_indentation (prev_line);
+				var new_indent = old_indent;
 				var tab_width = (int) ed.view.tab_width;
 
 				// opened/closed braces
 				TextIter iter;
 				buf.get_iter_at_line (out iter, prev_line);
 				bool first_nonspace = true;
+				int last_paren_pos = 0;
+				bool enable_paren_indent = false;
 				while (!iter.ends_line () && !iter.is_end ()) {
 					var c = iter.get_char ();
-					if (c == '{' && ed.is_in_code (iter)) {
+					if ((c == '{' || c == '[' || c == '(') && ed.is_in_code (iter)) {
 						new_indent += tab_width;
-					} else if (c == '}' && !first_nonspace && ed.is_in_code (iter)) {
+						last_paren_pos = iter.get_line_offset () + 1;
+						enable_paren_indent = false;
+					} else if ((c == '}' || c == ']' || c == ')') && !first_nonspace && ed.is_in_code (iter)) {
 						new_indent -= tab_width;
+					} else if (!c.isspace ()) {
+						// must not be a brace
+						enable_paren_indent = true;
 					}
-					iter.forward_char ();
+
 					if (!c.isspace ()) {
+						// might be a brace
 						first_nonspace = false;
 					}
+
+					iter.forward_char ();
 				}
 
-				// unindent
-				buf.get_iter_at_line (out iter, line);
-				while (!iter.ends_line () && !iter.is_end ()) {
-					unichar c = iter.get_char ();
-					if (!c.isspace ()) {
-						if (c == '}' && ed.is_in_code (iter)) {
-							new_indent -= tab_width;
+				if (last_paren_pos > 0 && enable_paren_indent) {
+					// ignore everything
+					new_indent = last_paren_pos;
+				} else {
+					// unindent
+					buf.get_iter_at_line (out iter, line);
+					while (!iter.ends_line () && !iter.is_end ()) {
+						unichar c = iter.get_char ();
+						if (!c.isspace ()) {
+							if ((c == '}' || c == ']' || c == ')') && ed.is_in_code (iter)) {
+								new_indent -= tab_width;
+							}
+							break;
 						}
-						break;
+						iter.forward_char ();
 					}
-					iter.forward_char ();
 				}
 
 				ed.set_line_indentation (line, new_indent);
