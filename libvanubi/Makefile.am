@@ -10,8 +10,9 @@ BUILT_SOURCES = .libvanubi.vala.stamp
 lib_LTLIBRARIES = libvanubi@PACKAGE_SUFFIX@.la
 
 libvanubi_la_VALASOURCES = \
-	matching.vala \
-	search.vala \
+	files.vala	\
+	matching.vala 	\
+	search.vala 	\
 	$(NULL)
 
 libvanubi@PACKAGE_SUFFIX@_la_SOURCES = \

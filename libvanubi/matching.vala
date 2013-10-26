@@ -44,6 +44,20 @@ namespace Vanubi {
 		return rank;
 	}
 
+	public int count (string haystack, unichar c) {
+		int cnt = 0;
+		int idx = 0;
+		while (true) {
+			idx = haystack.index_of_char (c, idx);
+			if (idx < 0) {
+				break;
+			}
+			cnt++;
+			idx++;
+		}
+		return cnt;
+	}
+
 	public class MatchWorker {
 		AsyncQueue<string?> queue = new AsyncQueue<string?> ();
 		SourceFunc resume;

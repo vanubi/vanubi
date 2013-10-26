@@ -103,7 +103,6 @@ namespace Vanubi {
 		public List<SearchResultItem<SearchDocument>> search (string query) {
 			// TODO: sort by score, distinct, stemming
 			var hashed = new HashTable<SearchDocument, SearchResultItem> (SearchDocument.hash, SearchDocument.equal);
-			var result = new List<SearchResultItem<SearchDocument>>();
 			string[] words = query.split (" ");
 			foreach (unowned string word in words) {
 				unowned string syn = synonyms[word];
