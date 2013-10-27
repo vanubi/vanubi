@@ -11,6 +11,7 @@ lib_LTLIBRARIES = libvanubi@PACKAGE_SUFFIX@.la
 
 libvanubi_la_VALASOURCES = \
 	files.vala	\
+	indent.vala	\
 	matching.vala 	\
 	search.vala 	\
 	$(NULL)
