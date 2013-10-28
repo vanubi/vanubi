@@ -194,6 +194,16 @@ namespace Vanubi {
 			return true;
 		}
 
+		public string get_line_text (int line) {
+			TextIter line_start;
+			var buf = view.buffer;
+			buf.get_iter_at_line (out line_start, line);
+			TextIter line_end = line_start;
+			line_end.forward_to_line_end ();
+			string text = buf.get_text (line_start, line_end, false);
+			return text;
+		}
+
 		public void set_line_indentation (int line, int indent) {
 			indent = int.max (indent, 0);
 
