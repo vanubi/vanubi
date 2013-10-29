@@ -762,6 +762,30 @@ namespace Vanubi {
 			execute_command["indent"] (ed, "indent");
 		}
 
+		int first_non_empty_prev_line (Editor ed, int line) {
+			// find first non-blank prev line, excluding line
+			int prev_line = line-1;
+			var buf = ed.view.buffer;
+			while (prev_line >= 0) {
+				TextIter line_start;
+				buf.get_iter_at_line (out line_start, prev_line);
+				TextIter line_end = line_start;
+				line_end.forward_to_line_end ();
+				if (line_start.get_line () != line_end.get_line ()) {
+					// empty line
+					prev_line--;
+					continue;
+				}
+				string text = ed.get_line_text (prev_line);
+				if (text.strip()[0] == '\0') {
+					prev_line--;
+				} else {
+					break;
+				}
+			}
+			return prev_line;
+		}			
+
 		void on_indent (Editor ed) {
 			var buf = ed.view.buffer;
 
@@ -773,92 +797,88 @@ namespace Vanubi {
 				return;
 			}
 
-			// find first non-blank prev line
-			int prev_line = line-1;
-			while (prev_line >= 0) {
-				TextIter line_start;
-				buf.get_iter_at_line (out line_start, prev_line);
-				TextIter line_end = line_start;
-				line_end.forward_to_line_end ();
-				if (line_start.get_line () != line_end.get_line ()) {
-					// empty line
-					prev_line--;
-					continue;
-				}
-				string text = buf.get_text (line_start, line_end, false);
-				if (text.strip()[0] == '\0') {
-					prev_line--;
-				} else {
-					break;
-				}
+			int new_indent = 0;
+			var tab_width = (int) ed.view.tab_width;
+
+			var text = ed.get_line_text (line);
+			if (text.strip() == "done" || text.strip() == "fi") {
+				new_indent = ed.get_line_indentation (line) - tab_width;
+				ed.set_line_indentation (line, new_indent);
+				return;
 			}
+
+			int prev_line = first_non_empty_prev_line (ed, line);
 
 			if (prev_line < 0) {
 				ed.set_line_indentation (line, 0);
-			} else {
-				var tab_width = (int) ed.view.tab_width;
-				var prev_text = ed.get_line_text (prev_line);
-				var text = ed.get_line_text (line);
-				var old_indent = ed.get_line_indentation (prev_line);
-				var new_indent = old_indent;
+				return;
+			}
 
-				// get text after last ;
-				var prev_semicomma = prev_text.last_index_of (";");
-				string text_after_semicomma = null;
-				if (prev_semicomma >= 0) {
+			int prev_indent = ed.get_line_indentation (prev_line);
+			
+			var prev_text = ed.get_line_text (prev_line);
+			var prev_semicomma = prev_text.last_index_of (";");
+			string text_after_semicomma = null;
+			if (prev_semicomma >= 0) {
 					text_after_semicomma = prev_text.substring (prev_semicomma+1).strip ();
-				}
-
-				if (text.strip() == "done" || text.strip() == "fi") {
-					new_indent -= tab_width;
-				} else if (text_after_semicomma == "do" || text_after_semicomma == "then") {
-					new_indent += tab_width;
-				} else {
-					// opened/closed braces
-					TextIter iter;
-					buf.get_iter_at_line (out iter, prev_line);
-					var first_nonspace = true;
-					while (!iter.ends_line ()) {
-						var c = iter.get_char ();
-						unichar? la = null;
-						iter.forward_char ();
-						if (!iter.ends_line ()) {
-							la = iter.get_char (); // look ahead
-						}
-						iter.backward_char ();
-
-						if ((c == '{' || c == '[' || c == '(') && ed.is_in_code (iter)) {
-							if (la != null && !la.isspace ()) {
-								new_indent = ed.get_effective_line_offset (iter) + 1;
-							} else {
-								new_indent += tab_width;
-							}
-						} else if ((c == '}' || c == ']' || c == ')') && !first_nonspace && ed.is_in_code (iter)) {
-							new_indent -= tab_width;
-						}
-
-						if (!c.isspace ()) {
-							first_nonspace = false;
-						}
-						iter.forward_char ();
-					}
-
-					// unindent
-					buf.get_iter_at_line (out iter, line);
-					while (!iter.ends_line ()) {
-						unichar c = iter.get_char ();
-						if (!c.isspace ()) {
-							if ((c == '}' || c == ']' || c == ')') && ed.is_in_code (iter)) {
-								new_indent -= tab_width;
-							}
-							break;
-						}
-						iter.forward_char ();
-					}
-				}
-
+			}
+			if (text_after_semicomma == "do" || text_after_semicomma == "then") {
+				new_indent = prev_indent + tab_width;
 				ed.set_line_indentation (line, new_indent);
 			}
+
+			// count unclosed parens
+			int unclosed = 0;
+			TextIter iter;
+			buf.get_iter_at_line (out iter, prev_line);
+			var first_nonspace = true;
+			var last_isparen = false;
+			new_indent = prev_indent;
+			while (!iter.ends_line ()) {
+				var c = iter.get_char ();
+				unichar? la = null;
+				iter.forward_char ();
+				if (!iter.ends_line ()) {
+					la = iter.get_char (); // look ahead
+				}
+				iter.backward_char ();
+				if ((c == '{' || c == '[' || c == '(') && ed.is_in_code (iter)) {
+					if (la != null && !la.isspace ()) {
+						new_indent = ed.get_effective_line_offset (iter) + 1;
+						last_isparen = false;
+					} else {
+						last_isparen = true;
+					}
+					unclosed++;
+				} else if ((c == '}' || c == ']' || c == ')') && !first_nonspace && ed.is_in_code (iter)) {
+					unclosed--;
+				}
+
+				if (!c.isspace ()) {
+					first_nonspace = false;
+				}
+				iter.forward_char ();
+			}
+			if (unclosed == 0) {
+				new_indent = prev_indent;
+			} else if (last_isparen || unclosed < 0) {
+				new_indent = prev_indent + unclosed * tab_width;
+			}
+
+			// unindent, TODO: use indentation of the opened paren
+			buf.get_iter_at_line (out iter, line);
+			while (!iter.ends_line ()) {
+				unichar c = iter.get_char ();
+				if (!c.isspace ()) {
+					if ((c == '}' || c == ']' || c == ')') && ed.is_in_code (iter)) {
+						new_indent -= tab_width;
+					}
+					break;
+				}
+				iter.forward_char ();
+			}
+
+			ed.set_line_indentation (line, new_indent);
 		}
 
 		void on_switch_buffer (Editor editor) {
