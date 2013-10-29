@@ -825,6 +825,7 @@ namespace Vanubi {
 			if (text_after_semicomma == "do" || text_after_semicomma == "then") {
 				new_indent = prev_indent + tab_width;
 				ed.set_line_indentation (line, new_indent);
+				return;
 			}
 
 			// count unclosed parens
