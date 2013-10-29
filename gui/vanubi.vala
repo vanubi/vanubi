@@ -738,8 +738,10 @@ namespace Vanubi {
 
 		void on_return (Editor ed) {
 			var buf = ed.view.buffer;
+			buf.begin_user_action ();		
 			buf.insert_at_cursor ("\n", -1);
 			execute_command["indent"] (ed, "indent");
+			buf.end_user_action ();
 		}
 
 		void on_close_curly_brace (Editor ed) {
