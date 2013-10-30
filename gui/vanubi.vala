@@ -863,20 +863,63 @@ namespace Vanubi {
 			if (unclosed == 0) {
 				new_indent = prev_indent;
 			} else if (last_isparen || unclosed < 0) {
+				// FIXME: for unclosed < 0 this might be wrong
 				new_indent = prev_indent + unclosed * tab_width;
 			}
 
+			int closed = 0;
+			first_nonspace = true;
 			// unindent, TODO: use indentation of the opened paren
 			buf.get_iter_at_line (out iter, line);
 			while (!iter.ends_line ()) {
 				unichar c = iter.get_char ();
 				if (!c.isspace ()) {
 					if ((c == '}' || c == ']' || c == ')') && ed.is_in_code (iter)) {
-						new_indent -= tab_width;
+						if (!first_nonspace) {
+							// don't unindent
+							closed = 0;
+							break;
+						}
+						closed++;
 					}
-					break;
+					first_nonspace = false;
 				}
 				iter.forward_char ();
+			}
+			if (closed > 0) {
+				// we have to find the unclosed paren backwards
+				bool found = false;
+				prev_line = line;
+				while (!found) {
+					prev_line = first_non_empty_prev_line (ed, prev_line);
+					if (prev_line < 0) {
+						// TODO: blink error, closing an unopened paren
+						new_indent = 0;
+						break;
+					}
+					buf.get_iter_at_line (out iter, prev_line);
+					iter.forward_to_line_end ();
+					do {
+						var c = iter.get_char ();
+						if ((c == '}' || c == ']' || c == ')') && ed.is_in_code (iter)) {
+							closed++;
+						} else if ((c == '{' || c == '[' || c == '(') && ed.is_in_code (iter)) {
+							closed--;
+						}
+						if (closed == 0) {
+							// opened paren found!
+							iter.forward_char ();
+							if (iter.ends_line ()) {
+								new_indent = ed.get_line_indentation (prev_line);
+							} else {
+								new_indent = ed.get_effective_line_offset (iter);
+							}
+							found = true;
+							break;
+						}
+						iter.backward_char ();
+					} while (!iter.starts_line ());
+				}
 			}
 
 			ed.set_line_indentation (line, new_indent);
