@@ -33,10 +33,10 @@ void test_synonyms () {
 	var result = idx.search ("syn");
 	assert (result.length () == 0);
 
-	idx.synonyms["foo"] = "syn";
+	idx.synonyms["syn"] = "foo";
 
 	result = idx.search ("syn");
-	assert (result.length () == 0);
+	assert (result.length () == 2);
 }
 
 int main (string[] args) {
