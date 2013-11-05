@@ -18,14 +18,22 @@
  */
 
 namespace Vanubi {
+	public enum IndentMode {
+		TABS,
+		SPACES
+	}
+
 	public abstract class Buffer {
 		public virtual int tab_width { get; set; }
+		public virtual IndentMode indent_mode { get; set; default = IndentMode.TABS; }
 		public abstract int length { get; }
 		public abstract BufferIter line_start (int line);
 		public abstract BufferIter line_end (int line);
 		public abstract void begin_undo_action ();
 		public abstract void end_undo_action ();
-		
+		public abstract void insert (BufferIter iter, string text);
+		public abstract void delete (BufferIter start, BufferIter end);
+
 		public virtual bool empty_line (int line) {
 			var it = line_start (line);
 			return it.line_text.strip()[0] == '\0';
@@ -41,10 +49,10 @@ namespace Vanubi {
 			}
 
 			begin_undo_action ();
+			@delete (start, iter);
 			var tab_width = tab_width;
-			var text = iter.line_text.substring (iter.line_offset);
-			var fill = string.nfill(indent/tab_width, '\t')+string.nfill(indent-(indent/tab_width)*tab_width, ' ');
-			iter.line_text = fill+text;
+			// mixed tab + spaces, TODO: handle indent_mode
+			insert (start, string.nfill(indent/tab_width, '\t')+string.nfill(indent-(indent/tab_width)*tab_width, ' '));
 			end_undo_action ();
 		}
 
@@ -78,7 +86,7 @@ namespace Vanubi {
 		public abstract bool is_in_code { get; }
 		public abstract int line_offset { get; }
 		public abstract int line { get; }
-		public abstract string line_text { owned get; owned set; }
+		public abstract string line_text { owned get; }
 		public abstract bool eol { get; }
 		public abstract unichar char { get; }
 		public abstract BufferIter copy ();
@@ -88,37 +96,56 @@ namespace Vanubi {
 		public abstract void indent (BufferIter iter);
 	}
 
-	public abstract class StringBuffer : Buffer {
+	/*****************
+	 * STRING BUFFER
+	 *****************/
+
+	public class StringBuffer : Buffer {
 		internal string[] lines;
 		internal int timestamp;
+		int _length;
 
-		public BufferIter line_start (int line) {
+		public override int length { get { return _length; } }
+
+		public override BufferIter line_start (int line) {
 			return new StringBufferIter (this, line, 0);
 		}
 
-		public BufferIter line_end (int line) {
+		public override BufferIter line_end (int line) {
 			unowned string l = lines[line];
 			return new StringBufferIter (this, line, l.length-1);
 		}
 
-		public string get_line (int line) {
-			return lines[line];
+		// only on a single line
+		public override void insert (BufferIter iter, string text) requires (iter.valid && text.index_of ("\n") < 0) {
+			unowned string l = lines[iter.line];
+			lines[iter.line] = l.substring(0, iter.line_offset) + text + l.substring (iter.line_offset);
+			// update the iter
+			var siter = (StringBufferIter) iter;
+			siter._line_offset += text.length;
+			siter.timestamp = ++timestamp;
 		}
 
-		public void set_line (int line, string text) {
-			lines[line] = text;
-			timestamp++;
+		// only on a single line
+		public override void delete (BufferIter start, BufferIter end) requires (start.valid && end.valid && start.line == end.line) {
+			unowned string l = lines[start.line];
+			lines[start.line] = l.substring(0, start.line_offset) + l.substring (end.line_offset);
+			// update the iter
+			var sstart = (StringBufferIter) start;
+			var send = (StringBufferIter) end;
+			send._line_offset = sstart.line_offset;
+			sstart.timestamp = send.timestamp = ++timestamp;
 		}
 
-		public void begin_undo_action () { }
-		public void end_undo_action () { }
+		public override void begin_undo_action () { }
+		public override void end_undo_action () { }
 	}
 
 	/* ASCII string buffer iter */
 	public class StringBufferIter : BufferIter {
 		internal int _line;
 		internal int _line_offset;
-		int timestamp;
+		internal int timestamp;
 		StringBuffer buf;
 
 		public StringBufferIter (StringBuffer buffer, int line, int line_offset) {
@@ -183,11 +210,6 @@ namespace Vanubi {
 		public override string line_text {
 			owned get {
 				return buf.lines[_line];
-			}
-
-			owned set {
-				buf.lines[_line] = (owned) value;
-				buf.timestamp++;
 			}
 		}
 
