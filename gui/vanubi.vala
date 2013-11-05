@@ -42,7 +42,6 @@ namespace Vanubi {
 		KeyFile backend;
 		File file;
 		Cancellable saving_cancellable;
-		string saving_data;
 
 		public Configuration () {
 			var home = Environment.get_home_dir ();
@@ -50,15 +49,23 @@ namespace Vanubi {
 			backend = new KeyFile ();
 			file = File.new_for_path (filename);
 			if (file.query_exists ()) {
-				backend.load_from_file (filename, KeyFileFlags.NONE);
+				try {
+					backend.load_from_file (filename, KeyFileFlags.NONE);
+				} catch (Error e) {
+					warning ("Could not load vanubi configuration: %s", e.message);
+				}
 			}
 		}
 
 		public int get_integer (string group, string key, int default) {
-			if (backend.has_group (group) && backend.has_key (group, key)) {
-				return backend.get_integer (group, key);
+			try {
+				if (backend.has_group (group) && backend.has_key (group, key)) {
+					return backend.get_integer (group, key);
+				}
+				return default;
+			} catch (Error e) {
+				return default;
 			}
-			return default;
 		}
 
 		public void set_font_size (int size) {
@@ -81,7 +88,11 @@ namespace Vanubi {
 			saving_cancellable = new Cancellable ();
 			try {
 				yield file.replace_contents_async (saving_data.data, null, true, FileCreateFlags.PRIVATE, saving_cancellable, null);
-			} catch (IOError.CANCELLED e) { }
+			} catch (IOError.CANCELLED e) {
+			} catch (Error e) {
+				// TODO: display error message
+				warning ("Could not save file: %s", e.message);
+			}
 		}
 	}
 
@@ -368,7 +379,7 @@ namespace Vanubi {
 			}
 
 			// existing file, read it
-			file.load_contents_async (null, (s,r) => {
+			file.load_contents_async.begin (null, (s,r) => {
 					uint8[] content;
 					try {
 						file.load_contents_async.end (r, out content, null);
@@ -1176,16 +1187,24 @@ namespace Vanubi {
 
 		Window new_window () {
 			var provider = new CssProvider ();
-			provider.load_from_path ("./data/vanubi.css");
+			try {
+				provider.load_from_path ("./data/vanubi.css");
+			} catch (Error e) {
+				warning ("Could not load vanubi css: %s", e.message);
+			}
 			StyleContext.add_provider_for_screen (Gdk.Screen.get_default(), provider, STYLE_PROVIDER_PRIORITY_USER);
 
 			var manager = new Vanubi.Manager ();
 
 			var win = new ApplicationWindow (this);
 			win.title = "Vanubi";
-			win.delete_event.connect (() => { manager.execute_command (null, "quit"); return false; });
+			win.delete_event.connect (() => { manager.execute_command (manager.get_first_visible_editor (), "quit"); return false; });
 			win.set_default_size (800, 400);
-			win.icon = new Gdk.Pixbuf.from_file("./data/vanubi.png");
+			try {
+				win.icon = new Gdk.Pixbuf.from_file("./data/vanubi.png");
+			} catch (Error e) {
+				warning ("Could not load vanubi icon: %s", e.message);
+			}
 
 			manager.quit.connect (() => { remove_window (win); win.destroy (); });
 			win.add (manager);

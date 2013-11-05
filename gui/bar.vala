@@ -136,7 +136,7 @@ namespace Vanubi {
 				current_completion.cancel ();
 			}
 			var cancellable = current_completion = new Cancellable ();
-			complete (entry.get_text (), cancellable, (s,r) => {
+			complete.begin (entry.get_text (), cancellable, (s,r) => {
 					try {
 						var result = complete.end (r, out common_choice);
 						cancellable.set_error_if_cancelled ();

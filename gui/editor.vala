@@ -21,8 +21,10 @@ using Gtk;
 
 namespace Vanubi {
 	public class EditorView : SourceView {
+#if 0
 		TextTag caret_text_tag;
 		int caret_offset = 0;
+#endif
 
 		construct {
 			buffer = new SourceBuffer (null);
