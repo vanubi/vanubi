@@ -105,6 +105,25 @@ namespace Vanubi {
 		internal int timestamp;
 		int _length;
 
+		public StringBuffer (owned string[] lines) {
+			this.lines = (owned) lines;
+		}
+
+		public StringBuffer.from_text (string text) {
+			var lines = text.split ("\n");
+			foreach (unowned string line in lines) {
+				this.lines += line+"\n";
+			}
+			unowned string last = this.lines[this.lines.length-1];
+			last.data[last.length-1] = '\0';
+		}
+
+		public string text {
+			owned get {
+				return string.joinv ("", lines);
+			}
+		}
+
 		public override int length { get { return _length; } }
 
 		public override BufferIter line_start (int line) {
@@ -189,7 +208,6 @@ namespace Vanubi {
 
 		public override bool is_in_code {
 			get {
-				
 				// assume no strings and no comments for the tests
 				return true;
 			}
@@ -197,31 +215,36 @@ namespace Vanubi {
 
 		public override int line_offset {
 			get {
+				warn_if_fail (valid);
 				return _line_offset;
 			}
 		}
 
 		public override int line {
 			get {
+				warn_if_fail (valid);
 				return _line;
 			}
 		}
 
 		public override string line_text {
 			owned get {
+				warn_if_fail (valid);
 				return buf.lines[_line];
 			}
 		}
 
 		public override bool eol {
 			get {
+				warn_if_fail (valid);
 				unowned string l = buf.lines[line];
-				return line_offset == l.length-1;
+				return line_offset >= l.length-1;
 			}
 		}
 
 		public override unichar char {
 			get {
+				warn_if_fail (valid);
 				unowned string l = buf.lines[line];
 				return l[line_offset];
 			}

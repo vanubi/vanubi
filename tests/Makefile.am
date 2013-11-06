@@ -14,10 +14,12 @@ AM_VALAFLAGS = \
 
 test_programs = \
 	testfiles	\
+	testindent	\
 	testmatch	\
 	testsearch	\
 	$(NULL)
 
 testfiles_SOURCES = testfiles.vala
+testindent_SOURCES = testindent.vala
 testmatch_SOURCES = testmatch.vala
 testsearch_SOURCES = testsearch.vala
