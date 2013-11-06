@@ -24,7 +24,7 @@ namespace Vanubi {
 	}
 
 	public abstract class Buffer {
-		public virtual int tab_width { get; set; }
+		public virtual int tab_width { get; set; default = 4; }
 		public virtual IndentMode indent_mode { get; set; default = IndentMode.TABS; }
 		public abstract int length { get; }
 		public abstract BufferIter line_start (int line);
