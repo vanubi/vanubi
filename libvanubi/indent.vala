@@ -33,10 +33,10 @@ namespace Vanubi {
 		public abstract void end_undo_action ();
 		public abstract void insert (BufferIter iter, string text);
 		public abstract void delete (BufferIter start, BufferIter end);
+		public abstract string line_text (int line);
 
 		public virtual bool empty_line (int line) {
-			var it = line_start (line);
-			return it.line_text.strip()[0] == '\0';
+			return line_text(line).strip()[0] == '\0';
 		}
 
 		public virtual void set_indent (int line, int indent) {
@@ -86,10 +86,24 @@ namespace Vanubi {
 		public abstract bool is_in_code { get; }
 		public abstract int line_offset { get; }
 		public abstract int line { get; }
-		public abstract string line_text { owned get; }
 		public abstract bool eol { get; }
 		public abstract unichar char { get; }
 		public abstract BufferIter copy ();
+
+		public virtual int effective_line_offset {
+			get {
+				var iter = copy ();
+				var off = 0;
+				while (iter.line_offset > 0) {
+					if (iter.char == '\t') {
+						off += buffer.tab_width;
+					} else {
+						off++;
+					}
+				}
+				return off;
+			}
+		}
 	}
 
 	public interface Indent {
@@ -122,6 +136,10 @@ namespace Vanubi {
 			owned get {
 				return string.joinv ("", lines);
 			}
+		}
+
+		public override string line_text (int line) {
+			return lines[line];
 		}
 
 		public override int length { get { return _length; } }
@@ -227,13 +245,6 @@ namespace Vanubi {
 			}
 		}
 
-		public override string line_text {
-			owned get {
-				warn_if_fail (valid);
-				return buf.lines[_line];
-			}
-		}
-
 		public override bool eol {
 			get {
 				warn_if_fail (valid);
@@ -264,68 +275,143 @@ namespace Vanubi {
 			this.buf = buf;
 		}
 
+		int first_non_empty_prev_line (int line) {
+			// find first non-blank prev line, excluding line
+			int prev_line = line-1;
+			while (!buf.empty_line (prev_line--));
+			return prev_line;
+		}
+
 		public void indent (int line) {
 			if (line == 0) {
 				buf.set_indent (line, 0);
 				return;
 			}
 
-			// find first non-blank prev line
-			int prev_line = line-1;
-			while (buf.empty_line (prev_line)) {
-				prev_line--;
+			var new_indent = 0;
+			var tab_width = buf.tab_width;
+
+			var text = buf.line_text(line);
+			if (text.strip() == "done" || text.strip() == "fi") {
+				new_indent = buf.get_indent (line) - tab_width;
+				buf.set_indent (line, new_indent);
+				return;
 			}
+
+			var prev_line = first_non_empty_prev_line (line);
 
 			if (prev_line < 0) {
 				buf.set_indent (line, 0);
-			} else {
-				var tab_width = buf.tab_width;
+				return;
+			}
 
-				// opened/closed braces
-				var iter = buf.line_start (prev_line);
-				var first_nonspace = true;
-				var old_indent = buf.get_indent (prev_line);
-				var new_indent = old_indent;
-				while (!iter.eol) {
-					var c = iter.char;
-					unichar? la = null;
-					iter.forward_char ();
-					if (!iter.eol) {
-						la = iter.char; // look ahead
-					}
-					iter.backward_char ();
+			var prev_indent = buf.get_indent (prev_line);
+			
+			var prev_text = buf.line_text(prev_line);
+			var prev_semicomma = prev_text.last_index_of (";");
+			string text_after_semicomma = null;
+			if (prev_semicomma >= 0) {
+					text_after_semicomma = prev_text.substring (prev_semicomma+1).strip ();
+			}
+			if (text_after_semicomma == "do" || text_after_semicomma == "then") {
+				new_indent = prev_indent + tab_width;
+				buf.set_indent (line, new_indent);
+				return;
+			}
 
-					if ((c == '{' || c == '[' || c == '(') && iter.is_in_code) {
-						if (la != null && !la.isspace ()) {
-							new_indent = iter.line_offset + 1;
-						} else {
-							new_indent += tab_width;
-						}
-					} else if ((c == '}' || c == ']' || c == ')') && !first_nonspace && iter.is_in_code) {
-						new_indent -= tab_width;
+			// count unclosed parens
+			int unclosed = 0;
+			var iter = buf.line_start (prev_line);
+			var first_nonspace = true;
+			var last_isparen = false;
+			new_indent = prev_indent;
+			while (!iter.eol) {
+				var c = iter.char;
+				unichar? la = null;
+				iter.forward_char ();
+				if (!iter.eol) {
+					la = iter.char; // look ahead
+				}
+				iter.backward_char ();
+				if ((c == '{' || c == '[' || c == '(') && iter.is_in_code) {
+					if (la != null && !la.isspace ()) {
+						new_indent = iter.effective_line_offset + 1;
+						last_isparen = false;
+					} else {
+						last_isparen = true;
 					}
-					
-					if (!c.isspace ()) {
-						first_nonspace = false;
-					}
-					iter.forward_char ();
+					unclosed++;
+				} else if ((c == '}' || c == ']' || c == ')') && !first_nonspace && iter.is_in_code) {
+					unclosed--;
 				}
 
-				// unindent
-				iter = buf.line_start (line);
-				while (!iter.eol) {
-					unichar c = iter.char;
-					if (!c.isspace ()) {
-						if ((c == '}' || c == ']' || c == ')') && iter.is_in_code) {
-							new_indent -= tab_width;
+				if (!c.isspace ()) {
+					first_nonspace = false;
+				}
+				iter.forward_char ();
+			}
+			if (unclosed == 0) {
+				new_indent = prev_indent;
+			} else if (last_isparen || unclosed < 0) {
+				// FIXME: for unclosed < 0 this might be wrong
+				new_indent = prev_indent + unclosed * tab_width;
+			}
+
+			int closed = 0;
+			first_nonspace = true;
+			// unindent, TODO: use indentation of the opened paren
+			iter = buf.line_start (line);
+			while (!iter.eol) {
+				unichar c = iter.char;
+				if (!c.isspace ()) {
+					if ((c == '}' || c == ']' || c == ')') && iter.is_in_code) {
+						if (!first_nonspace) {
+							// don't unindent
+							closed = 0;
+							break;
 						}
+						closed++;
+					}
+					first_nonspace = false;
+				}
+				iter.forward_char ();
+			}
+			if (closed > 0) {
+				// we have to find the unclosed paren backwards
+				bool found = false;
+				prev_line = line;
+				while (!found) {
+					prev_line = first_non_empty_prev_line (prev_line);
+					if (prev_line < 0) {
+						// TODO: blink error, closing an unopened paren
+						new_indent = 0;
 						break;
 					}
-					iter.forward_char ();
+					iter = buf.line_end (prev_line);
+					do {
+						var c = iter.char;
+						if ((c == '}' || c == ']' || c == ')') && iter.is_in_code) {
+							closed++;
+						} else if ((c == '{' || c == '[' || c == '(') && iter.is_in_code) {
+							closed--;
+						}
+						if (closed == 0) {
+							// opened paren found!
+							iter.forward_char ();
+							if (iter.eol) {
+								new_indent = buf.get_indent (prev_line);
+							} else {
+								new_indent = iter.effective_line_offset;
+							}
+							found = true;
+							break;
+						}
+						iter.backward_char ();
+					} while (iter.line_offset > 0);
 				}
-
-				buf.set_indent (line, new_indent);
 			}
+
+			buf.set_indent (line, new_indent);
 		}
 	}
 }
