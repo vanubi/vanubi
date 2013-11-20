@@ -59,7 +59,6 @@ namespace Vanubi {
 		public virtual int get_indent (int line) {
 			var tab_width = tab_width;
 			int indent = 0;
-
 			var iter = line_start (line);
 			while (iter.char.isspace () && !iter.eol) {
 				if (iter.char == '\t') {
@@ -94,12 +93,13 @@ namespace Vanubi {
 			get {
 				var iter = copy ();
 				var off = 0;
-				while (iter.line_offset > 0) {
+				while (iter.line_offset >= 0 && iter.line == line) {
 					if (iter.char == '\t') {
 						off += buffer.tab_width;
 					} else {
 						off++;
 					}
+					iter.backward_char ();
 				}
 				return off;
 			}
@@ -268,7 +268,7 @@ namespace Vanubi {
 		}
 	}
 
-	public class Indent_C {
+	public class Indent_C : Indent {
 		Buffer buf;
 
 		public Indent_C (Buffer buf) {
@@ -277,12 +277,12 @@ namespace Vanubi {
 
 		int first_non_empty_prev_line (int line) {
 			// find first non-blank prev line, excluding line
-			int prev_line = line-1;
-			while (!buf.empty_line (prev_line--));
-			return prev_line;
+			while (buf.empty_line (--line));
+			return line;
 		}
 
-		public void indent (int line) {
+		public void indent (BufferIter indent_iter) {
+			var line = indent_iter.line;
 			if (line == 0) {
 				buf.set_indent (line, 0);
 				return;
@@ -299,7 +299,6 @@ namespace Vanubi {
 			}
 
 			var prev_line = first_non_empty_prev_line (line);
-
 			if (prev_line < 0) {
 				buf.set_indent (line, 0);
 				return;
@@ -335,7 +334,7 @@ namespace Vanubi {
 				iter.backward_char ();
 				if ((c == '{' || c == '[' || c == '(') && iter.is_in_code) {
 					if (la != null && !la.isspace ()) {
-						new_indent = iter.effective_line_offset + 1;
+						new_indent = iter.effective_line_offset;
 						last_isparen = false;
 					} else {
 						last_isparen = true;

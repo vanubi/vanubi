@@ -7,6 +7,7 @@ using Vanubi;
 unowned string text = "
 foo (
 	bar (
+
 ";
 
 StringBuffer setup () {
@@ -74,11 +75,31 @@ void test_insert_delete () {
 	assert (buffer.get_indent (1) == 4);
 }
 
+void test_lang_c () {
+	var buffer = setup ();
+	var iter = buffer.line_start (3);
+	var indenter = new Indent_C (buffer);
+	indenter.indent (iter);
+	assert (buffer.get_indent (3) == buffer.tab_width*2);
+
+	buffer = new StringBuffer.from_text ("
+foo (
+	bar (foo
+
+");
+	iter = buffer.line_start (3);
+	indenter = new Indent_C (buffer);
+	indenter.indent (iter);
+	assert (buffer.get_indent (3) == 9);
+	
+}
+
 int main (string[] args) {
 	Test.init (ref args);
 
 	Test.add_func ("/indent/simple", test_simple);
 	Test.add_func ("/indent/insert_delete", test_insert_delete);
+	Test.add_func ("/indent/lang_c", test_lang_c);
 
 	return Test.run ();
 }
