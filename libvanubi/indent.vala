@@ -277,7 +277,7 @@ namespace Vanubi {
 
 		int first_non_empty_prev_line (int line) {
 			// find first non-blank prev line, excluding line
-			while (buf.empty_line (--line));
+			while (--line >= 0 && buf.empty_line (line));
 			return line;
 		}
 
@@ -318,7 +318,7 @@ namespace Vanubi {
 				return;
 			}
 
-			// count unclosed parens
+			// count unclosed parens, also find the right line to be used as base indentation
 			int unclosed = 0;
 			var iter = buf.line_start (prev_line);
 			var first_nonspace = true;
@@ -341,7 +341,9 @@ namespace Vanubi {
 					}
 					unclosed++;
 				} else if ((c == '}' || c == ']' || c == ')') && !first_nonspace && iter.is_in_code) {
-					unclosed--;
+					if (unclosed > 0) {
+						unclosed--;
+					}
 				}
 
 				if (!c.isspace ()) {
@@ -352,13 +354,30 @@ namespace Vanubi {
 			if (unclosed == 0) {
 				new_indent = prev_indent;
 			} else if (last_isparen || unclosed < 0) {
+				// find the first line for which the first paren is not closed
+				bool found = false;
+				while (!found && prev_line >= 0) {
+					iter = buf.line_start (prev_line);
+					while (!iter.eol) {
+						var c = iter.char;
+						if ((c == '{' || c == '[' || c == '(') && iter.is_in_code) {
+							prev_indent = buf.get_indent (prev_line);
+							found = true;
+							break;
+						} else if ((c == '}' || c == ']' || c == ')') && iter.is_in_code) {
+							break;
+						}
+						iter.forward_char ();
+					}
+					prev_line = first_non_empty_prev_line (prev_line);
+				}
 				// FIXME: for unclosed < 0 this might be wrong
 				new_indent = prev_indent + unclosed * tab_width;
 			}
 
+			// unindent, TODO: use indentation of the opened paren
 			int closed = 0;
 			first_nonspace = true;
-			// unindent, TODO: use indentation of the opened paren
 			iter = buf.line_start (line);
 			while (!iter.eol) {
 				unichar c = iter.char;

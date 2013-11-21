@@ -91,6 +91,16 @@ foo (
 	indenter = new Indent_C (buffer);
 	indenter.indent (iter);
 	assert (buffer.get_indent (3) == 9);
+
+	buffer = new StringBuffer.from_text ("
+foo (param1,
+	 param2) {
+
+");
+	iter = buffer.line_start (3);
+	indenter = new Indent_C (buffer);
+	indenter.indent (iter);
+	assert (buffer.get_indent (3) == 4);
 	
 }
 
