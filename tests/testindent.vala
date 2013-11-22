@@ -34,7 +34,6 @@ void test_insert_delete () {
 	// set indent to 8 (2 tabs)
 	var iter = buffer.line_start (1);
 	buffer.set_indent (1, 8);
-	assert (!iter.valid);
 
 	iter = buffer.line_start (1);
 	assert (iter.char == '\t');
@@ -46,7 +45,6 @@ void test_insert_delete () {
 
 	// set indent to 4 (1 tab)
 	buffer.set_indent (1, 4);
-	assert (!iter.valid);
 
 	iter = buffer.line_start (1);
 	assert (iter.char == '\t');
@@ -59,7 +57,6 @@ void test_insert_delete () {
 	var iter2 = iter.copy ();
 	buffer.delete (iter, iter2);
 	assert (buffer.get_indent (1) == 4);
-	assert (iter2.valid);
 
 	// delete 1 char
 	iter2.forward_char ();
@@ -70,7 +67,6 @@ void test_insert_delete () {
 
 	// insert
 	buffer.insert (iter, "\t");
-	assert (!iter2.valid);
 	assert (iter.line_offset == 1);
 	assert (buffer.get_indent (1) == 4);
 }

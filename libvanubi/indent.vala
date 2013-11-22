@@ -26,7 +26,6 @@ namespace Vanubi {
 	public abstract class Buffer {
 		public virtual int tab_width { get; set; default = 4; }
 		public virtual IndentMode indent_mode { get; set; default = IndentMode.TABS; }
-		public abstract int length { get; }
 		public abstract BufferIter line_start (int line);
 		public abstract BufferIter line_end (int line);
 		public abstract void begin_undo_action ();
@@ -74,7 +73,6 @@ namespace Vanubi {
 
 	public abstract class BufferIter : Object {
 		public unowned Buffer buffer { get; set; }
-		public abstract bool valid { get; }
 
 		public BufferIter (Buffer buffer) {
 			this.buffer = buffer;
@@ -117,7 +115,6 @@ namespace Vanubi {
 	public class StringBuffer : Buffer {
 		internal string[] lines;
 		internal int timestamp;
-		int _length;
 
 		public StringBuffer (owned string[] lines) {
 			this.lines = (owned) lines;
@@ -142,8 +139,6 @@ namespace Vanubi {
 			return lines[line];
 		}
 
-		public override int length { get { return _length; } }
-
 		public override BufferIter line_start (int line) {
 			return new StringBufferIter (this, line, 0);
 		}
@@ -154,7 +149,7 @@ namespace Vanubi {
 		}
 
 		// only on a single line
-		public override void insert (BufferIter iter, string text) requires (iter.valid && text.index_of ("\n") < 0) {
+		public override void insert (BufferIter iter, string text) requires (((StringBufferIter) iter).valid && text.index_of ("\n") < 0) {
 			unowned string l = lines[iter.line];
 			lines[iter.line] = l.substring(0, iter.line_offset) + text + l.substring (iter.line_offset);
 			// update the iter
@@ -164,7 +159,7 @@ namespace Vanubi {
 		}
 
 		// only on a single line
-		public override void delete (BufferIter start, BufferIter end) requires (start.valid && end.valid && start.line == end.line) {
+		public override void delete (BufferIter start, BufferIter end) requires (((StringBufferIter)start).valid && ((StringBufferIter)end).valid && start.line == end.line) {
 			unowned string l = lines[start.line];
 			lines[start.line] = l.substring(0, start.line_offset) + l.substring (end.line_offset);
 			// update the iter
@@ -193,7 +188,7 @@ namespace Vanubi {
 			timestamp = buf.timestamp;
 		}
 
-		public override bool valid {
+		public bool valid {
 			get {
 				return timestamp == buf.timestamp;
 			}
