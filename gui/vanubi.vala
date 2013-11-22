@@ -802,7 +802,7 @@ namespace Vanubi {
 			var buf = ed.view.buffer;
 			buf.get_iter_at_mark (out insert_iter, buf.get_insert ());
 
-			var vbuf = new UI.Buffer (buf);
+			var vbuf = new UI.Buffer ((SourceView) ed.view);
 			var indent_c = new Indent_C (vbuf);
 			indent_c.indent (new UI.BufferIter (vbuf, insert_iter));
 		}

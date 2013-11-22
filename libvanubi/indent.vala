@@ -24,7 +24,7 @@ namespace Vanubi {
 	}
 
 	public abstract class Buffer {
-		public virtual int tab_width { get; set; default = 4; }
+		public abstract int tab_width { get; set; }
 		public virtual IndentMode indent_mode { get; set; default = IndentMode.TABS; }
 		public abstract BufferIter line_start (int line);
 		public abstract BufferIter line_end (int line);
@@ -137,6 +137,8 @@ namespace Vanubi {
 				return string.joinv ("", lines);
 			}
 		}
+
+		public override int tab_width { get; set; default = 4; }
 
 		public override string line_text (int line) {
 			return lines[line];
@@ -369,7 +371,7 @@ namespace Vanubi {
 				}
 				iter.forward_char ();
 			}
-			message("%d %d %d", (int)last_isparen, unclosed, new_indent);
+
 			if (unclosed == 0) {
 				new_indent = prev_indent;
 			} else if (last_isparen || unclosed < 0) {

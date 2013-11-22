@@ -23,15 +23,30 @@ namespace Vanubi.UI {
 	 *****************/
 
 	public class Buffer : Vanubi.Buffer {
-		Gtk.TextBuffer buf;
+		Gtk.SourceView view;
 
-		public Buffer (Gtk.TextBuffer buf) {
-			this.buf = buf;
+		public Buffer (Gtk.SourceView view) {
+			this.view = view;
 		}
 
 		public string text {
 			owned get {
 				return buf.text;
+			}
+		}
+
+		public Gtk.TextBuffer buf {
+			get {
+				return view.buffer;
+			}
+		}
+
+		public override int tab_width {
+			get {
+				return (int) view.tab_width;
+			}
+			set {
+				view.tab_width = value;
 			}
 		}
 
