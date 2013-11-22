@@ -91,14 +91,17 @@ namespace Vanubi {
 			get {
 				var iter = copy ();
 				var off = 0;
-				while (iter.line_offset >= 0 && iter.line == line) {
+				do {
 					if (iter.char == '\t') {
 						off += buffer.tab_width;
 					} else {
 						off++;
 					}
+					if (iter.line_offset == 0) {
+						break;
+					}
 					iter.backward_char ();
-				}
+				} while (true);
 				return off;
 			}
 		}
@@ -276,6 +279,26 @@ namespace Vanubi {
 			return line;
 		}
 
+		int indent_of_line_opening_paren (int line) {
+			// find line that is semantically opening the paren
+			bool found = false;
+			while (!found && line >= 0) {
+				var iter = buf.line_start (line);
+				while (!iter.eol) {
+					var c = iter.char;
+					if ((c == '{' || c == '[' || c == '(') && iter.is_in_code) {
+						return buf.get_indent (line);
+					} else if ((c == '}' || c == ']' || c == ')') && iter.is_in_code) {
+						break;
+					}
+					iter.forward_char ();
+				}
+				line = first_non_empty_prev_line (line);
+			}
+			return 0;
+		}
+
+
 		public void indent (BufferIter indent_iter) {
 			var line = indent_iter.line;
 			if (line == 0) {
@@ -346,27 +369,11 @@ namespace Vanubi {
 				}
 				iter.forward_char ();
 			}
+			message("%d %d %d", (int)last_isparen, unclosed, new_indent);
 			if (unclosed == 0) {
 				new_indent = prev_indent;
 			} else if (last_isparen || unclosed < 0) {
-				// find the first line for which the first paren is not closed
-				bool found = false;
-				while (!found && prev_line >= 0) {
-					iter = buf.line_start (prev_line);
-					while (!iter.eol) {
-						var c = iter.char;
-						if ((c == '{' || c == '[' || c == '(') && iter.is_in_code) {
-							prev_indent = buf.get_indent (prev_line);
-							found = true;
-							break;
-						} else if ((c == '}' || c == ']' || c == ')') && iter.is_in_code) {
-							break;
-						}
-						iter.forward_char ();
-					}
-					prev_line = first_non_empty_prev_line (prev_line);
-				}
-				// FIXME: for unclosed < 0 this might be wrong
+				prev_indent = indent_of_line_opening_paren (prev_line);
 				new_indent = prev_indent + unclosed * tab_width;
 			}
 
@@ -412,7 +419,7 @@ namespace Vanubi {
 							// opened paren found!
 							iter.forward_char ();
 							if (iter.eol) {
-								new_indent = buf.get_indent (prev_line);
+								new_indent = indent_of_line_opening_paren (prev_line);
 							} else {
 								new_indent = iter.effective_line_offset;
 							}

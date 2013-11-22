@@ -27,6 +27,7 @@ namespace Vanubi {
 #endif
 
 		construct {
+			tab_width = 4;
 			buffer = new SourceBuffer (null);
 			buffer.mark_set.connect (update_caret_position);
 			buffer.changed.connect (update_caret_position);

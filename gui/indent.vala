@@ -38,31 +38,32 @@ namespace Vanubi.UI {
 		public override string line_text (int line) {
 			Gtk.TextIter start;
 			buf.get_iter_at_line (out start, line);
+			var end = start;
 			start.forward_to_line_end ();
-			return buf.get_text (start, end);
+			return buf.get_text (start, end, false);
 		}
 
-		public override BufferIter line_start (int line) {
+		public override Vanubi.BufferIter line_start (int line) {
 			Gtk.TextIter iter;
 			buf.get_iter_at_line (out iter, line);		
-			return new GUIBufferIter (iter);
+			return new BufferIter (this, iter);
 		}
 
-		public override BufferIter line_end (int line) {
+		public override Vanubi.BufferIter line_end (int line) {
 			Gtk.TextIter iter;
 			buf.get_iter_at_line (out iter, line);		
 			iter.forward_to_line_end ();
-			return new StringBufferIter (iter);
+			return new BufferIter (this, iter);
 		}
 
 		// only on a single line
-		public override void insert (BufferIter iter, string text) {
-			buf.insert (iter.iter, text, -1);
+		public override void insert (Vanubi.BufferIter iter, string text) {
+			buf.insert (ref ((BufferIter) iter).iter, text, -1);
 		}
 
 		// only on a single line
-		public override void delete (BufferIter start, BufferIter end) {
-			buf.delete (start.iter, end.iter);
+		public override void delete (Vanubi.BufferIter start, Vanubi.BufferIter end) {
+			buf.delete (ref ((BufferIter) start).iter, ref ((BufferIter) end).iter);
 		}
 
 		public override void begin_undo_action () {
@@ -75,9 +76,10 @@ namespace Vanubi.UI {
 	}
 
 	public class BufferIter : Vanubi.BufferIter {
-		Gtk.TextIter iter;
+		internal Gtk.TextIter iter;
 
-		public BufferIter (Gtk.TextIter iter) {
+		public BufferIter (Vanubi.Buffer buf, Gtk.TextIter iter) {
+			base (buf);
 			this.iter = iter;
 		}
 
@@ -91,7 +93,7 @@ namespace Vanubi.UI {
 
 		public override bool is_in_code {
 			get {
-				var buf = (SourceBuffer) iter.get_buffer ();
+				var buf = (Gtk.SourceBuffer) iter.get_buffer ();
 				var classes = buf.get_context_classes_at_iter (iter);
 				foreach (var cls in classes) {
 					if (cls == "comment" || cls == "string") {
@@ -126,8 +128,8 @@ namespace Vanubi.UI {
 			}
 		}
 
-		public override BufferIter copy () {
-			var it = new BufferIter (iter);
+		public override Vanubi.BufferIter copy () {
+			var it = new BufferIter (buffer, iter);
 			return it;
 		}
 	}
