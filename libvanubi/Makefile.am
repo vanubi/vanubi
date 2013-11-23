@@ -13,6 +13,7 @@ libvanubi_la_VALASOURCES = \
 	config.vala \
 	files.vala	\
 	indent.vala	\
+	keys.vala \
 	matching.vala 	\
 	search.vala 	\
 	$(NULL)

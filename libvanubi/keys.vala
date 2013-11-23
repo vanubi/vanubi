@@ -1,0 +1,134 @@
+/*
+ *  Copyright © 2011-2013 Luca Bruno
+ *
+ *  This file is part of Vanubi.
+ *
+ *  Vanubi is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  Vanubi is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with Vanubi.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+namespace Vanubi {
+
+	public struct Key {
+		uint keyval;
+		uint modifiers;
+
+		public Key (uint keyval, uint modifiers) {
+			this.keyval = keyval;
+			this.modifiers = modifiers;
+		}
+
+		public uint hash () {
+			return keyval | (modifiers << 16);
+		}
+
+		public bool equal (Key? other) {
+			return keyval == other.keyval && modifiers == other.modifiers;
+		}
+	}
+
+	// Tree of keys for handling keybinding combos
+	class KeyNode {
+		public string command;
+		Key key;
+		HashTable<Key?, KeyNode> children = new HashTable<Key?, KeyNode> (Key.hash, Key.equal);
+
+		public KeyNode get_child (Key key, bool create) {
+			KeyNode child = children.get (key);
+			if (create && child == null) {
+				child = new KeyNode ();
+				child.key = key;
+				children[key] = child;
+			}
+			return child;
+		}
+
+		public bool has_children () {
+			return children.size() > 0;
+		}
+	}
+
+	public delegate void KeyDelegate<G> (G subject, string command);
+
+	public class KeyManager<G> {
+		KeyNode key_root = new KeyNode ();
+		KeyNode current_key;
+		uint key_timeout = 0;
+		KeyDelegate<G> deleg = null;
+
+		public int timeout { get; set; default = 300; }
+
+		public KeyManager (owned KeyDelegate<G> deleg) {
+			this.deleg = (owned) deleg;
+			current_key = key_root;
+		}
+
+		public void reset () {
+			if (key_timeout != 0) {
+				Source.remove (key_timeout);
+				key_timeout = 0;
+			}
+			current_key = key_root;
+		}
+
+		public void bind_command (Key[] keyseq, string cmd) {
+			KeyNode cur = key_root;
+			foreach (var key in keyseq) {
+				cur = cur.get_child (key, true);
+			}
+			cur.command = cmd;
+		}
+
+		public bool key_press (G subject, Key pressed) {
+			if (key_timeout != 0) {
+				Source.remove (key_timeout);
+				key_timeout = 0;
+			}
+
+			var old_key = current_key;
+			current_key = current_key.get_child (pressed, false);
+			if (current_key == null) {
+				// no match
+				var handled = false;
+				current_key = key_root;
+				if (old_key != null && old_key.command != null) {
+					deleg (subject, old_key.command);
+					handled = true;
+					if (old_key != key_root) {
+						// this might be a new command, retry from root
+						key_press (subject, pressed);
+					}
+				}
+				return handled;
+			}
+
+			if (current_key.has_children ()) {
+				if (current_key.command != null) {
+					// wait for further keys
+					key_timeout = Timeout.add (300, () => {
+							key_timeout = 0;
+							unowned string command = current_key.command;
+							current_key = key_root;
+							deleg (subject, command);
+							return false;
+						});
+				}
+			} else {
+				unowned string command = current_key.command;
+				current_key = key_root;
+				deleg (subject, command);
+			}
+			return true;
+		}
+	}
+}

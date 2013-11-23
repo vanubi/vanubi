@@ -20,54 +20,14 @@
 using Gtk;
 
 namespace Vanubi {
-	public struct Key {
-		uint keyval;
-		Gdk.ModifierType modifiers;
-
-		public Key (uint keyval, Gdk.ModifierType modifiers) {
-			this.keyval = keyval;
-			this.modifiers = modifiers;
-		}
-
-		public uint hash () {
-			return keyval | (modifiers << 16);
-		}
-
-		public bool equal (Key? other) {
-			return keyval == other.keyval && modifiers == other.modifiers;
-		}
-	}
-
 	public class Manager : Grid {
-		class KeyNode {
-			public string command;
-			Key key;
-			HashTable<Key?, KeyNode> children = new HashTable<Key?, KeyNode> (Key.hash, Key.equal);
-
-			public KeyNode get_child (Key key, bool create) {
-				KeyNode child = children.get (key);
-				if (create && child == null) {
-					child = new KeyNode ();
-					child.key = key;
-					children[key] = child;
-				}
-				return child;
-			}
-
-			public bool has_children () {
-				return children.size() > 0;
-			}
-		}
 
 		/* List of files opened. Work on unique File instances. */
 		HashTable<File, File> files = new HashTable<File, File> (File.hash, File.equal);
 		/* List of buffers for *scratch* */
 		GenericArray<Editor> scratch_editors = new GenericArray<Editor> ();
 
-		KeyNode key_root = new KeyNode ();
-		KeyNode current_key;
-		uint key_timeout = 0;
-
+		KeyManager<Editor> keymanager;
 		string last_search_string = "";
 		string last_command_string = "make";
 
@@ -82,7 +42,7 @@ namespace Vanubi {
 			conf = new Configuration ();
 
 			orientation = Orientation.VERTICAL;
-			current_key = key_root;
+			keymanager = new KeyManager<Editor> (on_command);
 
 			// setup commands
 			bind_command ({
@@ -205,6 +165,11 @@ namespace Vanubi {
 			ed.grab_focus ();
 		}
 
+		public void on_command (Editor ed, string command) {
+			abort (ed);
+			execute_command[command] (ed, command);
+		}
+
 		public void add_overlay (Widget widget, bool paned = false) {
 			var self = this; // keep alive
 			var parent = (Container) get_parent ();
@@ -227,11 +192,7 @@ namespace Vanubi {
 		}
 
 		public void bind_command (Key[] keyseq, string cmd) {
-			KeyNode cur = key_root;
-			foreach (var key in keyseq) {
-				cur = cur.get_child (key, true);
-			}
-			cur.command = cmd;
+			keymanager.bind_command (keyseq, cmd);
 		}
 
 		public void replace_widget (owned Widget old, Widget r) {
@@ -347,7 +308,7 @@ namespace Vanubi {
 		}
 
 		public void abort (Editor editor) {
-			current_key = key_root;
+			keymanager.reset ();
 			var self = this; // keep alive
 			var parent = (Container) get_parent ();
 			var pparent = (Container) parent.get_parent ();
@@ -438,10 +399,6 @@ namespace Vanubi {
 			Editor editor = sv.get_data ("editor");
 			var keyval = e.keyval;
 			var modifiers = e.state;
-
-			if (key_timeout != 0) {
-				Source.remove (key_timeout);
-			}
 			modifiers &= Gdk.ModifierType.SHIFT_MASK | Gdk.ModifierType.CONTROL_MASK;
 			if (keyval == Gdk.Key.Escape || (keyval == Gdk.Key.g && modifiers == Gdk.ModifierType.CONTROL_MASK)) {
 				// abort
@@ -449,40 +406,7 @@ namespace Vanubi {
 				return true;
 			}
 
-			var old_key = current_key;
-			current_key = current_key.get_child (Key (keyval, modifiers), false);
-			if (current_key == null) {
-				// no match
-				if (old_key != null && old_key.command != null) {
-					unowned string command = old_key.command;
-					current_key = key_root;
-					abort (editor);
-					execute_command[command] (editor, command);
-				} else {
-					current_key = key_root;
-				}
-				return false;
-			}
-
-			if (current_key.has_children ()) {
-				if (current_key.command != null) {
-					// wait for further keys
-					key_timeout = Timeout.add (300, () => {
-							key_timeout = 0;
-							unowned string command = current_key.command;
-							current_key = key_root;
-							abort (editor);
-							execute_command[command] (editor, command);
-							return false;
-						});
-				}
-			} else {
-				unowned string command = current_key.command;
-				current_key = key_root;
-				abort (editor);
-				execute_command[command] (editor, command);
-			}
-			return true;
+			return keymanager.key_press (editor, Key (keyval, modifiers));
 		}
 
 		bool on_scroll_event (Widget w, Gdk.EventScroll ev) {
