@@ -10,6 +10,7 @@ BUILT_SOURCES = .libvanubi.vala.stamp
 lib_LTLIBRARIES = libvanubi@PACKAGE_SUFFIX@.la
 
 libvanubi_la_VALASOURCES = \
+	config.vala \
 	files.vala	\
 	indent.vala	\
 	matching.vala 	\
