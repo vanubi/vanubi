@@ -43,11 +43,11 @@ namespace Vanubi {
 		}
 	}
 
-	public class SearchResultItem<D> {
-		public D doc { get; private set; }
+	public class SearchResultItem {
+		public SearchDocument doc { get; private set; }
 		public int score { get; private set; }
 		
-		public SearchResultItem (D doc, int score) {
+		public SearchResultItem (SearchDocument doc, int score) {
 			this.doc = doc;
 			this.score = score;
 		}
@@ -69,7 +69,9 @@ namespace Vanubi {
 		public void index (StringSearchIndex idx) {
 			idx.add_occurrence (name, this);
 			foreach (unowned string field in fields) {
-				string[] words = field.split (" ");
+				// stop words, stemming
+				var cleaned = field.down().replace(",", "").replace(" a ", "").replace(" the ", "").replace(" for ", "");
+				string[] words = cleaned.split (" ");
 				foreach (unowned string word in words) {
 					idx.add_occurrence (word, this);
 				}
@@ -100,7 +102,7 @@ namespace Vanubi {
 			doc.index (this);
 		}
 		
-		public List<SearchResultItem<SearchDocument>> search (string query) {
+		public List<SearchResultItem> search (string query) {
 			// TODO: sort by score, distinct, stemming
 			var hashed = new HashTable<SearchDocument, SearchResultItem> (SearchDocument.hash, SearchDocument.equal);
 			string[] words = query.split (" ");
@@ -111,13 +113,18 @@ namespace Vanubi {
 				}
 				var table = index[word];
 				if (table != null) {
-					var keys = table.get_keys ();
-					foreach (var doc in keys) {
-						hashed[doc] = new SearchResultItem<SearchDocument> (doc, 0);
+					foreach (var doc in table.get_values ()) {
+						hashed[doc] = new SearchResultItem (doc, 0);
+						assert (hashed[doc].doc == doc);
+						assert (hashed[doc].doc != null);
 					}
 				}
 			}
-			return hashed.get_values ();
+			var list = new List<SearchResultItem> ();
+			foreach (var doc in hashed.get_values ()) {
+				list.append (doc);
+			}
+			return list;
 		}
 	}
 }

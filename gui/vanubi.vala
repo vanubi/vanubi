@@ -37,18 +37,29 @@ namespace Vanubi {
 		public signal void quit ();
 
 		public Configuration conf;
+		public StringSearchIndex index;
 
 		public Manager () {
 			conf = new Configuration ();
-
 			orientation = Orientation.VERTICAL;
 			keymanager = new KeyManager<Editor> (on_command);
 
+			// setup search index synonyms
+			index = new StringSearchIndex ();
+			index.synonyms["exit"] = "quit";
+
 			// setup commands
+			bind_command ({
+					Key (Gdk.Key.h, Gdk.ModifierType.CONTROL_MASK)},
+				"help");
+			index_command ("help", "Search and execute commands, and configure the editor", "configuration");
+			execute_command["help"].connect (on_help);
+
 			bind_command ({
 					Key (Gdk.Key.x, Gdk.ModifierType.CONTROL_MASK),
 						Key (Gdk.Key.f, Gdk.ModifierType.CONTROL_MASK) },
 				"open-file");
+			index_command ("open-file", "Open file for reading, or for creating a new file", "open create read file filename");
 			execute_command["open-file"].connect (on_open_file);
 
 			bind_command ({
@@ -189,6 +200,12 @@ namespace Vanubi {
 				grid.show ();
 			}
 			self = null;
+		}
+
+		public void index_command (string command, string description, string keywords) {
+			var doc = new StringSearchDocument (command, {description, keywords});
+			index.index_document (doc);
+			
 		}
 
 		public void bind_command (Key[] keyseq, string cmd) {
@@ -425,6 +442,18 @@ namespace Vanubi {
 				return true;
 			}
 			return false;
+		}
+
+		void on_help (Editor editor) {
+			var bar = new HelpBar (index);
+			bar.activate.connect ((cmd) => {
+					abort (editor);
+					execute_command[cmd] (editor, cmd);
+				});
+			bar.aborted.connect (() => { abort (editor); });
+			add_overlay (bar);
+			bar.show ();
+			bar.grab_focus ();
 		}
 
 		void on_open_file (Editor editor) {

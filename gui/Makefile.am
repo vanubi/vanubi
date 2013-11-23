@@ -16,6 +16,7 @@ vanubi_VALASOURCES = \
 	bar.vala \
 	editor.vala \
 	filecompletion.vala \
+	helpbar.vala \
 	indent.vala \
 	shell.vala \
 	vanubi.vala \
