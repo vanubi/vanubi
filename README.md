@@ -35,6 +35,7 @@ Key Bindings
 |C-r           |   Search backward  
 |Alt+down       |  Swap current row with the row below  
 |Alt+up          | Swap current row with the row above    
+|C-h|			   Search commands and configure the editor
   
 Mouse Bindings
 ----------------

@@ -47,40 +47,47 @@ namespace Vanubi {
 			// setup search index synonyms
 			index = new StringSearchIndex ();
 			index.synonyms["exit"] = "quit";
+			index.synonyms["kill"] = "close";
+			index.synonyms["buffer"] = "file";
+			index.synonyms["editor"] = "file";
+			index.synonyms["switch"] = "change";
 
 			// setup commands
 			bind_command ({
 					Key (Gdk.Key.h, Gdk.ModifierType.CONTROL_MASK)},
 				"help");
-			index_command ("help", "Search and execute commands, and configure the editor", "configuration");
 			execute_command["help"].connect (on_help);
 
 			bind_command ({
 					Key (Gdk.Key.x, Gdk.ModifierType.CONTROL_MASK),
 						Key (Gdk.Key.f, Gdk.ModifierType.CONTROL_MASK) },
 				"open-file");
-			index_command ("open-file", "Open file for reading, or for creating a new file", "open create read file filename");
+			index_command ("open-file", "Open file for reading in the current buffer, or for creating a new file", "create");
 			execute_command["open-file"].connect (on_open_file);
 
 			bind_command ({
 					Key (Gdk.Key.x, Gdk.ModifierType.CONTROL_MASK),
 						Key (Gdk.Key.s, Gdk.ModifierType.CONTROL_MASK) },
 				"save-file");
+			index_command ("save-file", "Save or create the file of the current buffer");
 			execute_command["save-file"].connect (on_save_file);
 
 			bind_command ({
 					Key (Gdk.Key.x, Gdk.ModifierType.CONTROL_MASK),
 						Key (Gdk.Key.k, 0)},
 				"kill-buffer");
+			index_command ("kill-buffer", "Kill the current buffer");
 			execute_command["kill-buffer"].connect (on_kill_buffer);
 
 			bind_command ({
 					Key (Gdk.Key.x, Gdk.ModifierType.CONTROL_MASK),
 						Key (Gdk.Key.c, Gdk.ModifierType.CONTROL_MASK) },
 				"quit");
+			index_command ("quit", "Quit vanubi", "close");
 			execute_command["quit"].connect (on_quit);
 
 			bind_command ({ Key (Gdk.Key.Tab, 0) }, "indent");
+			index_command ("indent", "Indent the current line");
 			execute_command["indent"].connect (on_indent);
 
 			bind_command ({ Key (Gdk.Key.Return, 0) }, "return");
@@ -96,44 +103,52 @@ namespace Vanubi {
 			execute_command["close-paren"].connect (on_close_paren);
 
 			bind_command ({ Key (Gdk.Key.x, Gdk.ModifierType.CONTROL_MASK) }, "cut");
+			index_command ("cut", "Cut text to clipboard");
 			execute_command["cut"].connect (on_cut);
 
 			bind_command ({
 					Key (Gdk.Key.x, Gdk.ModifierType.CONTROL_MASK),
 						Key (Gdk.Key.b, 0)},
 				"switch-buffer");
+			index_command ("switch-buffer", "Switch current buffer with another buffer");
 			execute_command["switch-buffer"].connect (on_switch_buffer);
 
 			bind_command ({
 					Key (Gdk.Key.x, Gdk.ModifierType.CONTROL_MASK),
 						Key (Gdk.Key.@3, 0)},
 				"split-add-right");
+			index_command ("split-add-right", "Split buffer on left and right buffers");
 			execute_command["split-add-right"].connect (on_split);
 
 			bind_command ({
 					Key (Gdk.Key.x, Gdk.ModifierType.CONTROL_MASK),
 						Key (Gdk.Key.@2, 0)},
 				"split-add-down");
+			index_command ("split-add-down", "Split buffer on top and down buffers");
 			execute_command["split-add-down"].connect (on_split);
 
 			bind_command ({ 
 				Key (Gdk.Key.l, Gdk.ModifierType.CONTROL_MASK) }, "next-editor");
+			index_command ("next-editor", "Move to the next buffer", "cycle");
 			execute_command["next-editor"].connect (on_switch_editor);
 
 			bind_command ({ 
 				Key (Gdk.Key.j, Gdk.ModifierType.CONTROL_MASK) }, "prev-editor");
+			index_command ("prev-editor", "Move to the previous buffer", "cycle");
 			execute_command["prev-editor"].connect (on_switch_editor);
 
 			bind_command ({
 					Key (Gdk.Key.x, Gdk.ModifierType.CONTROL_MASK),
 						Key (Gdk.Key.@1, 0)},
 				"join-all");
+			index_command ("join-all", "Collapse all the buffers into one", "join");
 			execute_command["join-all"].connect (on_join_all);
 
 			bind_command ({
 					Key (Gdk.Key.x, Gdk.ModifierType.CONTROL_MASK),
 						Key (Gdk.Key.@1, Gdk.ModifierType.CONTROL_MASK)},
 				"join");
+			index_command ("join", "Collapse two buffers into one", "join");
 			execute_command["join"].connect (on_join);
 
 			bind_command ({ Key (Gdk.Key.n, Gdk.ModifierType.CONTROL_MASK) }, "forward-line");
@@ -143,15 +158,18 @@ namespace Vanubi {
 			execute_command["backward-line"].connect (on_forward_backward_line);
 
 			bind_command ({ Key (Gdk.Key.s, Gdk.ModifierType.CONTROL_MASK) }, "search-forward");
+			index_command ("search-forward", "Search text forward incrementally", "incremental");
 			execute_command["search-forward"].connect (on_search_forward);
 
 			bind_command ({ Key (Gdk.Key.r, Gdk.ModifierType.CONTROL_MASK) }, "search-backward");
+			index_command ("search-backward", "Search text backward incrementally", "incremental");
 			execute_command["search-backward"].connect (on_search_backward);
 
 			bind_command ({ Key (Gdk.Key.k, Gdk.ModifierType.CONTROL_MASK) }, "kill-line");
 			execute_command["kill-line"].connect (on_kill_line);
 
 			bind_command ({ Key (Gdk.Key.space, Gdk.ModifierType.CONTROL_MASK) }, "select-all");
+			index_command ("select-all", "Select all the text");
 			execute_command["select-all"].connect (on_select_all);
 
 			bind_command ({ Key (Gdk.Key.e, Gdk.ModifierType.CONTROL_MASK) }, "end-line");
@@ -168,6 +186,7 @@ namespace Vanubi {
 			execute_command["move-block-up"].connect (on_move_block);
 
 			bind_command ({ Key (Gdk.Key.F9, 0) }, "compile");
+			index_command ("compile", "Compile code", "build");
 			execute_command["compile"].connect (on_compile);
 
 			// setup empty buffer
@@ -202,10 +221,15 @@ namespace Vanubi {
 			self = null;
 		}
 
-		public void index_command (string command, string description, string keywords) {
-			var doc = new StringSearchDocument (command, {description, keywords});
+		// TODO: show keybinding for this command
+		public void index_command (string command, string description, string? keywords = null) {
+			StringSearchDocument doc;
+			if (keywords != null) {
+				doc = new StringSearchDocument (command, {description, keywords});
+			} else {
+				doc = new StringSearchDocument (command, {description});
+			}
 			index.index_document (doc);
-			
 		}
 
 		public void bind_command (Key[] keyseq, string cmd) {
