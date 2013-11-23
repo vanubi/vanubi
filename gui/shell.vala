@@ -34,14 +34,15 @@ namespace Vanubi {
 			}
 			try {
 				string[] argv;
-				Shell.parse_argv (command, out argv);
+				Shell.parse_argv (shell, out argv);
 				var workdir = get_base_directory (base_file);
 				term.fork_command_full (PtyFlags.DEFAULT, workdir, argv, null, SpawnFlags.SEARCH_PATH, null, null);
+				term.feed_child(command + "\n", command.length + 1);
 			} catch (Error e) {
 				message (e.message);
 			}
 			add (term);
 			show_all ();
-		}		
+		}
 	}
 }
