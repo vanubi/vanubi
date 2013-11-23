@@ -54,7 +54,10 @@ namespace Vanubi.UI {
 			Gtk.TextIter start;
 			buf.get_iter_at_line (out start, line);
 			var end = start;
-			start.forward_to_line_end ();
+			end.forward_to_line_end ();
+			if (line != end.get_line ()) {
+				return "";
+			}
 			return buf.get_text (start, end, false);
 		}
 
