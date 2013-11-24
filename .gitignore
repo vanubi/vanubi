@@ -44,4 +44,5 @@ tests/*.trs
 tests/testfiles
 tests/testmatch
 tests/testsearch
+tests/testindent
 test-driver

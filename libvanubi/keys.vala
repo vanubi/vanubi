@@ -39,9 +39,9 @@ namespace Vanubi {
 
 	// Tree of keys for handling keybinding combos
 	class KeyNode {
-		public string command;
-		Key key;
-		HashTable<Key?, KeyNode> children = new HashTable<Key?, KeyNode> (Key.hash, Key.equal);
+		internal string command;
+		internal Key key;
+		internal HashTable<Key?, KeyNode> children = new HashTable<Key?, KeyNode> (Key.hash, Key.equal);
 
 		public KeyNode get_child (Key key, bool create) {
 			KeyNode child = children.get (key);
@@ -87,6 +87,36 @@ namespace Vanubi {
 				cur = cur.get_child (key, true);
 			}
 			cur.command = cmd;
+		}
+
+		bool get_binding_helper (GenericArray<Key?> res, KeyNode node, string command) {
+			if (node.command == command) {
+				res.add (node.key);
+				return true;
+			}
+			foreach (var child in node.children.get_values ()) {
+				if (get_binding_helper (res, child, command)) {
+					if (node != key_root) {
+						res.add (node.key);
+					}
+					return true;
+				}
+			}
+			return false;
+		}
+
+		public Key?[] get_binding (string command) {
+			var arr = new GenericArray<Key?> ();
+			get_binding_helper (arr, key_root, command);
+			var res = (owned) arr.data;
+			arr.data.length = 0; // bug that has been recently fixed in vala
+			// reverse array
+			for (int i=0; i <= (res.length-1)/2; i++) {
+				var tmp = res[i];
+				res[i] = res[res.length-1-i];
+				res[res.length-1-i] = tmp;
+			}
+			return res;
 		}
 
 		public bool key_press (G subject, Key pressed) {

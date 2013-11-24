@@ -21,13 +21,13 @@ using Gtk;
 
 namespace Vanubi {
 	class HelpBar : EntryBar {
-		StringSearchIndex index;
+		unowned Manager manager;
 		CompletionBox completion_box;
 
-		public HelpBar (StringSearchIndex index) {
-			this.index = index;
+		public HelpBar (Manager manager) {
+			this.manager = manager;
 			entry.changed.connect (on_changed);
-			completion_box = new CompletionBox ();
+			completion_box = new CompletionBox (manager);
 			attach_next_to (completion_box, entry, PositionType.TOP, 1, 1);
 			show_all ();
 		}
@@ -38,7 +38,7 @@ namespace Vanubi {
 		}
 
 		void search (string query) {
-			var result = index.search (query);
+			var result = manager.index.search (query);
 			completion_box.set_docs (result);
 		}
 
@@ -62,9 +62,11 @@ namespace Vanubi {
 		class CompletionBox : Grid {
 			ListStore store;
 			public TreeView view;
+			unowned Manager manager;
 
-			public CompletionBox () {
-				store = new ListStore (2, typeof (string), typeof (string));
+			public CompletionBox (Manager manager) {
+				this.manager = manager;
+				store = new ListStore (3, typeof (string), typeof (string), typeof (string));
 				view = new TreeView.with_model (store);			
 				view.headers_visible = false;
 				var sel = view.get_selection ();
@@ -72,7 +74,8 @@ namespace Vanubi {
 
 				Gtk.CellRendererText cell = new Gtk.CellRendererText ();
 				view.insert_column_with_attributes (-1, "Name", cell, "text", 0);
-				view.insert_column_with_attributes (-1, "Description", cell, "text", 1);
+				view.insert_column_with_attributes (-1, "Key", cell, "text", 1);
+				view.insert_column_with_attributes (-1, "Description", cell, "text", 2);
 
 				var sw = new ScrolledWindow (null, null);
 				sw.expand = true;
@@ -80,13 +83,40 @@ namespace Vanubi {
 				add (sw);
 			}
 
+			public string key_to_string (Key key) {
+				var res = "";
+				if (Gdk.ModifierType.CONTROL_MASK in (Gdk.ModifierType) key.modifiers) {
+					res = "C-";
+				}
+				if (Gdk.ModifierType.SHIFT_MASK in (Gdk.ModifierType) key.modifiers) {
+					res += "S-";
+				}
+				res += Gdk.keyval_name (key.keyval);
+				return res;
+			}
+
+			public string keys_to_string (Key?[] keys) {
+				var res = new StringBuilder ();
+				foreach (var key in keys) {
+					res.append (key_to_string (key));
+					res.append (" ");
+				}
+				res.truncate (res.len - 1);
+				return (string) res.data;
+			}
+
 			public void set_docs (List<SearchResultItem> items) {
 				store.clear ();
 				Gtk.TreeIter iter;
 				foreach (var item in items) {
 					var doc = (StringSearchDocument) item.doc;
+					var keys = manager.keymanager.get_binding (doc.name);
+					string keystring = "";
+					if (keys != null) {
+						keystring = keys_to_string (keys);
+					}
 					store.append (out iter);
-					store.set (iter, 0, doc.name, 1, doc.fields[0]);
+					store.set (iter, 0, doc.name, 1, keystring, 2, doc.fields[0]);
 				}
 				// select first item
 				if (store.get_iter_first (out iter)) {

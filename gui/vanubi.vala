@@ -27,7 +27,7 @@ namespace Vanubi {
 		/* List of buffers for *scratch* */
 		GenericArray<Editor> scratch_editors = new GenericArray<Editor> ();
 
-		KeyManager<Editor> keymanager;
+		internal KeyManager<Editor> keymanager;
 		string last_search_string = "";
 
 		[Signal (detailed = true)]
@@ -165,6 +165,7 @@ namespace Vanubi {
 			execute_command["search-backward"].connect (on_search_backward);
 
 			bind_command ({ Key (Gdk.Key.k, Gdk.ModifierType.CONTROL_MASK) }, "kill-line");
+			index_command ("kill-line", "Delete the current line");
 			execute_command["kill-line"].connect (on_kill_line);
 
 			bind_command ({ Key (Gdk.Key.space, Gdk.ModifierType.CONTROL_MASK) }, "select-all");
@@ -468,7 +469,7 @@ namespace Vanubi {
 		}
 
 		void on_help (Editor editor) {
-			var bar = new HelpBar (index);
+			var bar = new HelpBar (this);
 			bar.activate.connect ((cmd) => {
 					abort (editor);
 					execute_command[cmd] (editor, cmd);
