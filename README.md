@@ -22,6 +22,7 @@ Key Bindings
 
 | Combo | Action |
 | ------------- |-------------|
+|C-h|			   Most important: search for commands and configure the editor
 |C-x C-c|          Quit vanubi  
 |C-g     |         Abort  
 |ESC      |        Abort  
@@ -49,7 +50,6 @@ Key Bindings
 |C-r           |   Search backward  
 |Alt+down       |  Swap current row with the row below  
 |Alt+up          | Swap current row with the row above    
-|C-h|			   Search commands and configure the editor
   
 Mouse Bindings
 ----------------
