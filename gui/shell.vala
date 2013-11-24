@@ -49,10 +49,22 @@ namespace Vanubi {
 				var workdir = get_base_directory (base_file);
 				term.fork_command_full (PtyFlags.DEFAULT, workdir, argv, null, SpawnFlags.SEARCH_PATH, null, null);
 				term.feed_child ("make -k", -1);
+				mouse_match("""^\S+\.vala:\d+\.\d+-\d+\.\d+:\serror:.+""");
+				mouse_match("""^\S+\.vala:\d+\.\d+-\d+\.\d+:\swarning:.+""");
 			} catch (Error e) {
 				warning (e.message);
 			}
 			return term;
+		}
+
+		private void mouse_match (string str) {
+			try {
+				var regex = new Regex (str);
+				int id = term.match_add_gregex (regex, 0);
+				term.match_set_cursor_type (id, Gdk.CursorType.HAND2);
+			} catch (RegexError e) {
+				warning (e.message);
+			}
 		}
 
 		public override void grab_focus () {
