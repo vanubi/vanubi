@@ -9,6 +9,8 @@ Ideas
  - Implement what you really use, not what you don't use
  - Implement what you expect, not what other editors do
  - Implement what you really need, not what you think you need
+ - Monolithic, no plugins, things must just work and be consistent
+ - Must be complete, yet fast to open a single file for editing
  - File/directory-based settings, not project-based
  - Intelligent defaults based on the current opened file context
  - Easy to use contextual help... we can't remember all the keybindings
