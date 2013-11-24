@@ -30,13 +30,24 @@ namespace Vanubi {
 	}
 	
 	public class Bar : Grid {
+		public signal void aborted ();
+
+		protected virtual bool on_key_press_event (Gdk.EventKey e) {
+			if (e.keyval == Gdk.Key.Escape || (e.keyval == Gdk.Key.g && Gdk.ModifierType.CONTROL_MASK in e.state)) {
+				aborted ();
+				return true;
+			}
+			return false;
+		}
+	}
+
+	public class EntryBar : Bar {
 		protected Entry entry;
 
 		public new signal void activate (string s);
-		public signal void aborted ();
 		public string text { get { return entry.get_text(); } }
 
-		public Bar (string? initial = null) {
+		public EntryBar (string? initial = null) {
 			expand = false;
 			entry = new Entry ();
 			if (initial != null) {
@@ -57,20 +68,12 @@ namespace Vanubi {
 		protected virtual void on_activate () {
 			activate (entry.get_text ());
 		}
-
-		protected virtual bool on_key_press_event (Gdk.EventKey e) {
-			if (e.keyval == Gdk.Key.Escape || (e.keyval == Gdk.Key.g && Gdk.ModifierType.CONTROL_MASK in e.state)) {
-				aborted ();
-				return true;
-			}
-			return false;
-		}
 	}
 
 	class EditorInfoBar : Grid {
 	}
 
-	class CompletionBar : Bar {
+	class CompletionBar : EntryBar {
 		string original_pattern;
 		string? common_choice;
 		CompletionBox completion_box;
@@ -253,7 +256,7 @@ namespace Vanubi {
 		}
 	}
 
-	public class SearchBar : Bar {
+	public class SearchBar : EntryBar {
 		public enum Mode {
 			FORWARD,
 			BACKWARD

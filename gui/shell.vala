@@ -21,13 +21,24 @@ using Vte;
 using Gtk;
 
 namespace Vanubi {
-	public class ShellBar : Grid {
+	public class ShellBar : Bar {
 		Terminal term;
 
-		public ShellBar (string command, File? base_file) {
+		public ShellBar (File? base_file) {
 			expand = true;
-			term = new Terminal ();
+			term = base_file.get_data ("shell");
+			if (term == null) {
+				term = create_new_term (base_file);
+				base_file.set_data ("shell", term);
+			}
 			term.expand = true;
+			term.key_press_event.connect (on_key_press_event);
+			add (term);
+			show_all ();
+		}
+
+		Terminal create_new_term (File? base_file) {
+			var term = new Terminal ();
 			var shell = Vte.get_user_shell ();
 			if (shell == null) {
 				shell = "/bin/sh";
@@ -37,12 +48,15 @@ namespace Vanubi {
 				Shell.parse_argv (shell, out argv);
 				var workdir = get_base_directory (base_file);
 				term.fork_command_full (PtyFlags.DEFAULT, workdir, argv, null, SpawnFlags.SEARCH_PATH, null, null);
-				term.feed_child(command + "\n", command.length + 1);
+				term.feed_child ("make -k", -1);
 			} catch (Error e) {
-				message (e.message);
+				warning (e.message);
 			}
-			add (term);
-			show_all ();
+			return term;
+		}
+
+		public override void grab_focus () {
+			term.grab_focus ();
 		}
 	}
 }

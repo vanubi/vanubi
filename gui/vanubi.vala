@@ -29,7 +29,6 @@ namespace Vanubi {
 
 		KeyManager<Editor> keymanager;
 		string last_search_string = "";
-		string last_command_string = "make";
 
 		[Signal (detailed = true)]
 		public signal void execute_command (Editor editor, string command);
@@ -551,7 +550,7 @@ namespace Vanubi {
 			if (!other_visible) {
 				// trash the data
 				if (editor.view.buffer.get_modified ()) {
-					var bar = new Bar ("Your changes will be lost. Confirm?");
+					var bar = new EntryBar ("Your changes will be lost. Confirm?");
 					bar.activate.connect (() => {
 							abort (editor);
 							kill_buffer (editor, editors, next_file);
@@ -691,30 +690,6 @@ namespace Vanubi {
 			buf.insert_at_cursor (")", -1);
 			execute_command["indent"] (ed, "indent");
 		}
-
-		int first_non_empty_prev_line (Editor ed, int line) {
-			// find first non-blank prev line, excluding line
-			int prev_line = line-1;
-			var buf = ed.view.buffer;
-			while (prev_line >= 0) {
-				TextIter line_start;
-				buf.get_iter_at_line (out line_start, prev_line);
-				TextIter line_end = line_start;
-				line_end.forward_to_line_end ();
-				if (line_start.get_line () != line_end.get_line ()) {
-					// empty line
-					prev_line--;
-					continue;
-				}
-				string text = ed.get_line_text (prev_line);
-				if (text.strip()[0] == '\0') {
-					prev_line--;
-				} else {
-					break;
-				}
-			}
-			return prev_line;
-		}			
 
 		void on_indent (Editor ed) {
 			TextIter insert_iter;
@@ -945,18 +920,11 @@ namespace Vanubi {
 
 
 		void on_compile (Editor editor) {
-			var bar = new Bar (last_command_string);
-			bar.activate.connect ((s) => {
-					abort (editor);
-					last_command_string = s;
-					var shell = new ShellBar (s, editor.file);
-					add_overlay (shell, true);
-					shell.show ();
-				});
+			var bar = new ShellBar (editor.file);
 			bar.aborted.connect (() => {
 					abort (editor);
 				});
-			add_overlay (bar);
+			add_overlay (bar, true);
 			bar.show ();
 			bar.grab_focus ();
 		}

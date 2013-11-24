@@ -20,7 +20,7 @@
 using Gtk;
 
 namespace Vanubi {
-	class HelpBar : Bar {
+	class HelpBar : EntryBar {
 		StringSearchIndex index;
 		CompletionBox completion_box;
 
@@ -54,7 +54,7 @@ namespace Vanubi {
 				completion_box.view.grab_focus ();
 				var res = completion_box.view.key_press_event (e);
 				entry.grab_focus ();
-				return true;
+				return res;
 			}
 			return base.on_key_press_event (e);
 		}
