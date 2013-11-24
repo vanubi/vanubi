@@ -3,6 +3,18 @@ Vanubi Programming Editor
 
 "All editors suck. This one just sucks less." -mutt, circa 1995
 
+Ideas
+-----
+ - Simple, complete, keyboard based, intelligent, unobtrusive, well integrated
+ - Implement what you really use, not what you don't use
+ - Implement what you expect, not what other editors do
+ - Implement what you really need, not what you think you need
+ - File/directory-based settings, not project-based
+ - Intelligent defaults based on the current opened file context
+ - Easy to use contextual help... we can't remember all the keybindings
+ - Semantic support for languages similar to eclipse but much less invasive, and faster
+ - Integrate with libinfinity for real-time collaborative editing
+
 Key Bindings
 -------------
 
@@ -43,3 +55,13 @@ Mouse Bindings
 | Combo | Action |
 | ----- | ------ |
 |C-scroll  |       Increase/decrease the font size
+
+TODO
+----
+ - Improve indentation support for vala and c
+ - Improve opening and saving file
+ - Try the gtksourceview search API
+ - Make caret bg/fg color configurable for different styles
+ - Mimic emacs minibar for matching files and buffers
+ - Code fold / Comment fold
+ - Support GDB, Hexdump, GPG, Patch/Diff, Git, Git-bz, Pastebin
