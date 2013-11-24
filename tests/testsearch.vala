@@ -17,25 +17,26 @@ void setup () {
 void test_simple () {
 	setup ();
 
-	var result = idx.search ("bar baz");
+	var result = idx.search ("bar baz", false);
+	message("%u", result.length ());
 	assert (result.length () == 1);
 
-	result = idx.search ("test qux");
+	result = idx.search ("test qux", false);
 	assert (result.length () == 1);
 
-	result = idx.search ("test foo bar");
-	assert (result.length () == 2);
+	result = idx.search ("test foo bar", false);
+	assert (result.length () == 0);
 }
 
 void test_synonyms () {
 	setup ();
 
-	var result = idx.search ("syn");
+	var result = idx.search ("syn", false);
 	assert (result.length () == 0);
 
 	idx.synonyms["syn"] = "foo";
 
-	result = idx.search ("syn");
+	result = idx.search ("syn", false);
 	assert (result.length () == 2);
 }
 

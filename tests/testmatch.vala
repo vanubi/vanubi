@@ -5,7 +5,12 @@
 
 using Vanubi;
 
+void test_nomatch () {
+	assert (pattern_match ("foo", "bar") < 0);
+}
+
 void test_simple () {
+	assert (pattern_match ("bar", "bar") == 0);
 	assert (pattern_match ("foo", "foobar") < pattern_match ("fo", "foobar"));
 }
 
@@ -20,6 +25,7 @@ void test_substring () {
 
 void test_similar () {
 	assert (pattern_match ("ab", "abcd") < pattern_match ("ac", "abcd"));
+	assert (pattern_match ("op", "open") < pattern_match ("op", "compile"));
 }
 
 void test_count () {
@@ -29,6 +35,7 @@ void test_count () {
 int main (string[] args) {
 	Test.init (ref args);
 
+	Test.add_func ("/match/nomatch", test_nomatch);
 	Test.add_func ("/match/simple", test_simple);
 	Test.add_func ("/match/long", test_long);
 	Test.add_func ("/match/substring", test_substring);

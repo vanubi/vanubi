@@ -38,7 +38,7 @@ namespace Vanubi {
 		}
 
 		void search (string query) {
-			var result = manager.index.search (query);
+			var result = manager.index.search (query, true);
 			completion_box.set_docs (result);
 		}
 

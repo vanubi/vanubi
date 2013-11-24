@@ -18,7 +18,7 @@
  */
 
 namespace Vanubi {
-	// returns a ranking, lower is better (0 = perfect match)
+	// returns a ranking, lower is better, 0 for perfect match, -1 for no match
 	public int pattern_match (string pattern, string haystack) {
 		int rank = 0;
 		int n = pattern.length;
