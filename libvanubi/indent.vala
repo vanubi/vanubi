@@ -40,6 +40,10 @@ namespace Vanubi {
 
 		public virtual void set_indent (int line, int indent) {
 			indent = int.max (indent, 0);
+			if (get_indent (line) == indent) {
+				// avoid adding unfriendly undo actions
+				return;
+			}
 
 			var start = line_start (line);
 			var iter = start.copy ();
@@ -198,7 +202,7 @@ namespace Vanubi {
 				return timestamp == buf.timestamp;
 			}
 		}
-
+		
 		public override void forward_char () requires (valid) {
 			if (eol) {
 				if (_line >= buf.lines.length-1) {
