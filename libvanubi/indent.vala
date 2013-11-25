@@ -302,6 +302,10 @@ namespace Vanubi {
 
 
 		public void indent (BufferIter indent_iter) {
+			if (!indent_iter.is_in_code) {
+				return;
+			}
+			
 			var line = indent_iter.line;
 			if (line == 0) {
 				buf.set_indent (line, 0);
