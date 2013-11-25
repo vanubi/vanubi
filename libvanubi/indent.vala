@@ -401,7 +401,8 @@ namespace Vanubi {
 			// indent
 			var unclosed = count_unclosed (prev_line);
 			if (unclosed == 0) {
-				new_indent = prev_indent;
+				var paren_iter = unclosed_paren (prev_line, 0);
+				new_indent = buf.get_indent (paren_iter.line);
 			} else if (unclosed > 0) {
 				var paren_iter = unclosed_paren (prev_line, unclosed);
 				if (!paren_iter.eol) {
