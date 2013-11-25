@@ -15,6 +15,18 @@ StringBuffer setup () {
 	return buffer;
 }
 
+bool help_test_c (string buf, int line, int indent) {
+	var buffer = new StringBuffer.from_text (buf);
+	var iter = buffer.line_start (line);
+	var indenter = new Indent_C (buffer);
+	indenter.indent (iter);
+	var res = buffer.get_indent (line) == indent;
+	if (!res) {
+		message("Got indent %d instead of %d", buffer.get_indent (line), indent);
+	}
+	return res;
+}
+
 void test_simple () {
 	var buffer = setup ();
 	assert (buffer.text == text);
@@ -108,16 +120,14 @@ foo (param1,
 	indenter.indent (iter);
 	assert (buffer.get_indent (3) == 0);
 	
-	buffer = new StringBuffer.from_text ("
+	assert (help_test_c("
 try {
-    foo;
-} catch (exception) {
+    {
+        foo;
+    }
+} catch {
 
-");
-	iter = buffer.line_start (4);
-	indenter = new Indent_C (buffer);
-	indenter.indent (iter);
-	assert (buffer.get_indent (4) == 4);
+", 6, 4));
 }
 
 int main (string[] args) {
