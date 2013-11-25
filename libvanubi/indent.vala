@@ -28,8 +28,6 @@ namespace Vanubi {
 		public virtual IndentMode indent_mode { get; set; default = IndentMode.TABS; }
 		public abstract BufferIter line_start (int line);
 		public abstract BufferIter line_end (int line);
-		public abstract void begin_undo_action ();
-		public abstract void end_undo_action ();
 		public abstract void insert (BufferIter iter, string text);
 		public abstract void delete (BufferIter start, BufferIter end);
 		public abstract string line_text (int line);
@@ -51,12 +49,10 @@ namespace Vanubi {
 				iter.forward_char ();
 			}
 
-			begin_undo_action ();
 			@delete (start, iter);
 			var tab_width = tab_width;
 			// mixed tab + spaces, TODO: handle indent_mode
 			insert (start, string.nfill(indent/tab_width, '\t')+string.nfill(indent-(indent/tab_width)*tab_width, ' '));
-			end_undo_action ();
 		}
 
 		public virtual int get_indent (int line) {
@@ -181,9 +177,6 @@ namespace Vanubi {
 			send._line_offset = sstart.line_offset;
 			sstart.timestamp = send.timestamp = ++timestamp;
 		}
-
-		public override void begin_undo_action () { }
-		public override void end_undo_action () { }
 	}
 
 	/* ASCII string buffer iter */
