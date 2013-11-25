@@ -73,5 +73,13 @@ namespace Vanubi {
 		public override void grab_focus () {
 			term.grab_focus ();
 		}
+		
+		protected override bool on_key_press_event (Gdk.EventKey e) {
+			if ((e.keyval == Gdk.Key.g && Gdk.ModifierType.CONTROL_MASK in e.state)) {
+				aborted ();
+				return true;
+			}
+			return false;
+		}
 	}
 }
