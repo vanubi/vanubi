@@ -186,7 +186,7 @@ namespace Vanubi {
 			execute_command["move-block-up"].connect (on_move_block);
 
 			bind_command ({ Key (Gdk.Key.F9, 0) }, "compile");
-			index_command ("compile", "Compile code", "build");
+			index_command ("compile", "Compile code", "build shell");
 			execute_command["compile"].connect (on_compile);
 
 			// setup empty buffer
