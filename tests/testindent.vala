@@ -107,6 +107,17 @@ foo (param1,
 	indenter = new Indent_C (buffer);
 	indenter.indent (iter);
 	assert (buffer.get_indent (3) == 0);
+	
+	buffer = new StringBuffer.from_text ("
+try {
+    foo;
+} catch (exception) {
+
+");
+	iter = buffer.line_start (4);
+	indenter = new Indent_C (buffer);
+	indenter.indent (iter);
+	assert (buffer.get_indent (4) == 4);
 }
 
 int main (string[] args) {

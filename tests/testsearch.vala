@@ -18,7 +18,6 @@ void test_simple () {
 	setup ();
 
 	var result = idx.search ("bar baz", false);
-	message("%u", result.length ());
 	assert (result.length () == 1);
 
 	result = idx.search ("test qux", false);
