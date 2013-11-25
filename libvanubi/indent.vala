@@ -319,10 +319,8 @@ namespace Vanubi {
 		// returns the iter for the opened paren for which there's a given unbalance
 		BufferIter unclosed_paren (int line, int unbalance) {
 			// find line that is semantically opening the paren
-			bool found = false;
 			int balance = 0;
 			var iter = buf.line_start (line);
-			var first_paren = true;
 			var paren_iter = iter;
 			while (true) {
 				var c = iter.char;

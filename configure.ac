@@ -54,6 +54,7 @@ AC_SUBST(GLIB_PREFIX)
 
 VALA_CHECK_MODULES(LIBVANUBI, [gio-2.0])
 VALA_CHECK_MODULES(VANUBI, [gtk+-3.0 gtksourceview-3.0 vte-2.90])
+VALA_CHECK_PACKAGES([posix], [VANUBI_VALAFLAGS="$VANUBI_VALAFLAGS --pkg posix"])
 
 AM_CONDITIONAL(ENABLE_GLIB_TEST, [test "x$enable_glibtest" = "xyes"])
 

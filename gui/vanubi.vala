@@ -402,7 +402,7 @@ namespace Vanubi {
 			var ed = new Editor (file);
 			// set the font according to the user/system configuration
 			var system_size = ed.view.style.font_desc.get_size () / Pango.SCALE;
-			ed.view.override_font (Pango.FontDescription.from_string ("Monospace %d".printf (conf.get_font_size (system_size))));
+			ed.view.override_font (Pango.FontDescription.from_string ("Monospace %d".printf (conf.get_editor_int ("font_size", system_size))));
 			ed.view.key_press_event.connect (on_key_press_event);
 			ed.view.scroll_event.connect (on_scroll_event);
 			if (editors.length > 0) {
@@ -461,7 +461,7 @@ namespace Vanubi {
 					size--;
 				}
 				sv.override_font (Pango.FontDescription.from_string ("Monospace %d".printf (size)));
-				conf.set_font_size (size);
+				conf.set_editor_int ("font_size", size);
 				conf.save.begin ();
 				return true;
 			}
@@ -921,7 +921,7 @@ namespace Vanubi {
 
 
 		void on_compile (Editor editor) {
-			var bar = new ShellBar (editor.file);
+			var bar = new ShellBar (conf, editor.file);
 			bar.aborted.connect (() => {
 					abort (editor);
 				});

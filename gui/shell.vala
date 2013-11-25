@@ -23,16 +23,32 @@ using Gtk;
 namespace Vanubi {
 	public class ShellBar : Bar {
 		Terminal term;
+		Configuration config;
 
-		public ShellBar (File? base_file) {
+		public ShellBar (Configuration config, File? base_file) {
+			this.config = config;
 			expand = true;
 			term = base_file.get_data ("shell");
 			if (term == null) {
 				term = create_new_term (base_file);
 				base_file.set_data ("shell", term);
 			}
+			Pid pid = term.get_data ("pid");
 			term.expand = true;
 			term.key_press_event.connect (on_key_press_event);
+			if (base_file != null) {
+				term.commit.connect (() => {
+						var buf = new char[1024];
+						var olddir = config.get_file_string (base_file, "shell_cwd", get_base_directory (base_file));
+						if (Posix.readlink (@"/proc/$(pid)/cwd", buf) > 0) {
+							var curdir = (string) buf;
+							if (olddir != curdir) {
+								config.set_file_string (base_file, "shell_cwd", curdir);
+								config.save.begin ();
+							}
+						}
+					});
+			}
 			add (term);
 			show_all ();
 		}
@@ -46,8 +62,11 @@ namespace Vanubi {
 			try {
 				string[] argv;
 				Shell.parse_argv (shell, out argv);
-				var workdir = get_base_directory (base_file);
-				term.fork_command_full (PtyFlags.DEFAULT, workdir, argv, null, SpawnFlags.SEARCH_PATH, null, null);
+				var workdir = config.get_file_string (base_file, "shell_cwd", get_base_directory (base_file));
+
+				Pid pid;
+				term.fork_command_full (PtyFlags.DEFAULT, workdir, argv, null, SpawnFlags.SEARCH_PATH, null, out pid);
+				term.set_data ("pid", pid);
 				term.feed_child ("make -k", -1);
 
 				mouse_match (term, """^.+error:""");
