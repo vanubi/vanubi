@@ -14,6 +14,7 @@ bin_PROGRAMS = \
 
 vanubi_VALASOURCES = \
 	bar.vala \
+	completionbar.vala \
 	editor.vala \
 	filecompletion.vala \
 	helpbar.vala \
