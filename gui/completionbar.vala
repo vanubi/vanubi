@@ -147,61 +147,56 @@ namespace Vanubi {
 		public class CompletionBox : Grid {
 			string[] choices;
 			int index = 0;
+			Label label;
+			int n_render = 100; // too few means not all space is exploited, too many means more things to negotiate size with
 
-			public CompletionBox (string[] choices) {
+			public CompletionBox (owned string[] choices) {
 				orientation = Orientation.HORIZONTAL;
-				column_spacing = 10;
-				this.choices = choices;
-				for (int i=0; i < 5 && i < choices.length; i++) {
-					if (i > 0) {
-						add (new Separator (Orientation.VERTICAL));
-					}
-					var l = new Label (choices[i]);
-					l.ellipsize = Pango.EllipsizeMode.MIDDLE;
-					add (l);
-				}
+				this.choices = (owned) choices;
+				label = new Label (null);
+				label.wrap = true;
+				label.wrap_mode = Pango.WrapMode.WORD;
+				label.ellipsize = Pango.EllipsizeMode.END;
+				#if GTK_3_10
+				label.set_lines (2);
+				#endif
+				label.justify = Justification.LEFT;
+				update ();
+				add (label);
 				show_all ();
 			}
 
+			public void update () {
+				if (choices.length == 0) {
+					label.set_markup ("<i>No matches</i>");
+				} else {
+					var n = int.min (n_render, choices.length);
+					var s = new StringBuilder ();
+					for (int i=index,j=0; j < n; j++, i = (i+1)%choices.length) {
+						if (i > 0) {
+							s.append ("   ");
+						}
+						s.append (choices[i]);
+					}
+					label.set_text (s.str);
+				}
+			}
+				
 			public void next () {
-				if (index < choices.length-1) {
-					remove (get_child_at (index*2, 0));
-					remove (get_child_at (index*2+1, 0));
-					index++;
-					if (index+4 < choices.length) {
-						add (new Separator (Orientation.VERTICAL));
-						var l = new Label (choices[index+4]);
-						l.ellipsize = Pango.EllipsizeMode.MIDDLE;
-						add (l);
-						show_all ();
-					}
-				}
+				index = (index+1)%choices.length;
+				update ();
 			}
-
+			
 			public void back () {
-				if (index > 0) {
-					var c1 = get_child_at ((index+4)*2, 0);
-					var c2 = get_child_at ((index+4)*2-1, 0);
-					if (c1 != null) {
-						remove (c1);
-					}
-					if (c2 != null) {
-						remove (c2);
-					}
-					index--;
-					attach (new Separator (Orientation.VERTICAL), index*2+1, 0, 1, 1);
-					var l = new Label (choices[index]);
-					l.ellipsize = Pango.EllipsizeMode.MIDDLE;
-					attach (l, index*2, 0, 1, 1);
-					show_all ();
-				}
+				index = index == 0 ? choices.length-1 : index-1;
+				update ();
 			}
-
+			
 			public unowned string? get_choice () {
 				if (choices.length == 0) {
 					return null;
 				}
-				return ((Label) get_child_at (index*2, 0)).get_label ();
+				return choices[index];
 			}
 
 			public unowned string[] get_choices () {
