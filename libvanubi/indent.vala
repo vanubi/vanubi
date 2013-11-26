@@ -59,7 +59,7 @@ namespace Vanubi {
 			var tab_width = tab_width;
 			int indent = 0;
 			var iter = line_start (line);
-			while (iter.char.isspace () && !iter.eol) {
+			while (!iter.eol && iter.char.isspace ()) {
 				if (iter.char == '\t') {
 					indent += tab_width;
 				} else {
@@ -349,10 +349,6 @@ namespace Vanubi {
 		}
 
 		public void indent (BufferIter indent_iter) {
-			if (!indent_iter.is_in_code) {
-				return;
-			}
-			
 			var line = indent_iter.line;
 			if (line == 0) {
 				buf.set_indent (line, 0);
