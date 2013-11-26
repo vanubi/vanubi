@@ -48,6 +48,7 @@ Key Bindings
 |C-j         |     Iterate the editors on the left  
 |C-s          |    Search forward  
 |C-r           |   Search backward  
+|C-d|              Delete the char next to the cursor
 |Alt+down       |  Swap current row with the row below  
 |Alt+up          | Swap current row with the row above    
   

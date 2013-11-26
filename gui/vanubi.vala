@@ -85,6 +85,10 @@ namespace Vanubi {
 			index_command ("quit", "Quit vanubi", "close");
 			execute_command["quit"].connect (on_quit);
 
+			bind_command ({ Key (Gdk.Key.d, Gdk.ModifierType.CONTROL_MASK) }, "delete-char-forward");
+			index_command ("delete-char-forward", "Delete the char next to the cursor");
+			execute_command["delete-char-forward"].connect (on_delete_char_forward);
+
 			bind_command ({ Key (Gdk.Key.Tab, 0) }, "indent");
 			index_command ("indent", "Indent the current line");
 			execute_command["indent"].connect (on_indent);
@@ -692,6 +696,16 @@ namespace Vanubi {
 			execute_command["indent"] (ed, "indent");
 		}
 
+		void on_delete_char_forward (Editor ed) {
+			TextIter insert_iter;
+			var buf = (SourceBuffer) ed.view.buffer;
+			buf.get_iter_at_mark (out insert_iter, buf.get_insert ());
+			
+			var next_iter = insert_iter;
+			next_iter.forward_char ();
+			buf.delete (ref insert_iter, ref next_iter);
+		}
+		
 		void on_indent (Editor ed) {
 			TextIter insert_iter;
 			var buf = (SourceBuffer) ed.view.buffer;
