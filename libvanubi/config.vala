@@ -31,12 +31,21 @@ namespace Vanubi {
 			if (file.query_exists ()) {
 				try {
 					backend.load_from_file (filename, KeyFileFlags.NONE);
+					check_config ();
 				} catch (Error e) {
 					warning ("Could not load vanubi configuration: %s", e.message);
 				}
 			}
 		}
 
+		public void check_config () {
+			var version = get_global_int ("config_version", 0);
+			migrate (version);
+		}
+		
+		public void migrate (int from_version) {
+		}
+		
 		public int get_group_int (string group, string key, int default) {
 			try {
 				if (backend.has_group (group) && backend.has_key (group, key)) {
@@ -51,17 +60,8 @@ namespace Vanubi {
 		public void set_group_int (string group, string key, int size) {
 			backend.set_integer (group, key, size);
 		}
-		
-		public int get_editor_int (string key, int default = 0) {
-			return get_group_int ("Editor", key, default);
-		}
-		
-		public void set_editor_int (string key, int value) {
-			set_group_int ("Editor", key, value);
-		}
 
-		public string? get_file_string (File? file, string key, string? default = null) {
-			var group = file != null ? file.get_uri () : "*scratch*";
+		public string? get_group_string (string group, string key, string? default = null) {
 			try {
 				if (backend.has_group (group) && backend.has_key (group, key)) {
 					return backend.get_string (group, key);
@@ -70,6 +70,34 @@ namespace Vanubi {
 			} catch (Error e) {
 				return default;
 			}
+		}
+
+		public void set_group_string (string group, string key, string value) {
+			backend.set_string (group, key, value);
+		}
+
+		/* Global */
+		public int get_global_int (string key, int default = 0) {
+			return get_group_int ("Global", key, default);
+		}
+		
+		public void set_global_int (string key, int value) {
+			set_group_int ("Global", key, value);
+		}
+
+		/* Editor */
+		public int get_editor_int (string key, int default = 0) {
+			return get_group_int ("Editor", key, default);
+		}
+		
+		public void set_editor_int (string key, int value) {
+			set_group_int ("Editor", key, value);
+		}
+
+		/* File */
+		public string? get_file_string (File? file, string key, string? default = null) {
+			var group = file != null ? file.get_uri () : "*scratch*";
+			return get_group_string (group, key, default);
 		}
 		
 		public void set_file_string (File? file, string key, string value) {
