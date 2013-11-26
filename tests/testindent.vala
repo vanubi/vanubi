@@ -128,6 +128,13 @@ try {
 } catch {
 
 ", 6, 4));
+
+	assert (help_test_c("
+foo (
+	bar(
+	));
+
+", 4, 0));
 }
 
 int main (string[] args) {

@@ -186,7 +186,7 @@ namespace Vanubi {
 			execute_command["move-block-up"].connect (on_move_block);
 
 			bind_command ({ Key (Gdk.Key.F9, 0) }, "compile");
-			index_command ("compile", "Compile code", "build");
+			index_command ("compile", "Compile code", "build shell");
 			execute_command["compile"].connect (on_compile);
 
 			// setup empty buffer
@@ -402,7 +402,7 @@ namespace Vanubi {
 			var ed = new Editor (file);
 			// set the font according to the user/system configuration
 			var system_size = ed.view.style.font_desc.get_size () / Pango.SCALE;
-			ed.view.override_font (Pango.FontDescription.from_string ("Monospace %d".printf (conf.get_font_size (system_size))));
+			ed.view.override_font (Pango.FontDescription.from_string ("Monospace %d".printf (conf.get_editor_int ("font_size", system_size))));
 			ed.view.key_press_event.connect (on_key_press_event);
 			ed.view.scroll_event.connect (on_scroll_event);
 			if (editors.length > 0) {
@@ -461,7 +461,7 @@ namespace Vanubi {
 					size--;
 				}
 				sv.override_font (Pango.FontDescription.from_string ("Monospace %d".printf (size)));
-				conf.set_font_size (size);
+				conf.set_editor_int ("font_size", size);
 				conf.save.begin ();
 				return true;
 			}
@@ -921,7 +921,7 @@ namespace Vanubi {
 
 
 		void on_compile (Editor editor) {
-			var bar = new ShellBar (editor.file);
+			var bar = new ShellBar (conf, editor.file);
 			bar.aborted.connect (() => {
 					abort (editor);
 				});
@@ -945,6 +945,7 @@ namespace Vanubi {
 		}
 
 		Window new_window () {
+			var is_main_window = get_active_window () == null;
 			var provider = new CssProvider ();
 			
 			var slm = SourceLanguageManager.get_default();
@@ -965,6 +966,28 @@ namespace Vanubi {
 			win.title = "Vanubi";
 			win.delete_event.connect (() => { manager.execute_command (manager.get_first_visible_editor (), "quit"); return false; });
 			win.set_default_size (800, 400);
+			if (is_main_window) {
+				// store/restore geometry of main window
+				win.move (manager.conf.get_global_int ("window_x"),
+						  manager.conf.get_global_int ("window_y"));
+				win.set_default_size (manager.conf.get_global_int ("window_width"),
+									  manager.conf.get_global_int ("window_height"));
+				win.check_resize.connect (() => {
+						int w, h;
+						win.get_size (out w, out h);
+						manager.conf.set_global_int ("window_width", w);
+						manager.conf.set_global_int ("window_height", h);
+						manager.conf.save.begin ();
+				});
+				win.configure_event.connect (() => {
+						int x, y;
+						win.get_position (out x, out y);
+						manager.conf.set_global_int ("window_x", x);
+						manager.conf.set_global_int ("window_y", y);
+						manager.conf.save.begin ();
+						return false;
+				});
+			} 
 			try {
 				win.icon = new Gdk.Pixbuf.from_file("./data/vanubi.png");
 			} catch (Error e) {

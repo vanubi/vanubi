@@ -84,11 +84,24 @@ namespace Vanubi.UI {
 			buf.delete (ref ((BufferIter) start).iter, ref ((BufferIter) end).iter);
 		}
 
-		public override void begin_undo_action () {
+		public override void set_indent (int line, int indent) {
+			indent = int.max (indent, 0);
+			var cur_indent = get_indent (line);
+			if (cur_indent == indent) {
+				// avoid adding unfriendly undo actions, however move the cursor
+				Gtk.TextIter insert_iter;
+				buf.get_iter_at_mark (out insert_iter, buf.get_insert ());
+				if (insert_iter.get_line_offset () < indent) {
+					var viter = new BufferIter (this, insert_iter);
+					while (viter.effective_line_offset <= indent) {
+						viter.forward_char ();
+					}
+					buf.place_cursor (viter.iter);
+				}
+				return;
+			}
 			buf.begin_user_action ();
-		}
-
-		public override void end_undo_action () {
+			base.set_indent (line, indent);
 			buf.end_user_action ();
 		}
 	}

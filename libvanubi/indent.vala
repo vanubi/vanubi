@@ -28,8 +28,6 @@ namespace Vanubi {
 		public virtual IndentMode indent_mode { get; set; default = IndentMode.TABS; }
 		public abstract BufferIter line_start (int line);
 		public abstract BufferIter line_end (int line);
-		public abstract void begin_undo_action ();
-		public abstract void end_undo_action ();
 		public abstract void insert (BufferIter iter, string text);
 		public abstract void delete (BufferIter start, BufferIter end);
 		public abstract string line_text (int line);
@@ -51,19 +49,17 @@ namespace Vanubi {
 				iter.forward_char ();
 			}
 
-			begin_undo_action ();
 			@delete (start, iter);
 			var tab_width = tab_width;
 			// mixed tab + spaces, TODO: handle indent_mode
 			insert (start, string.nfill(indent/tab_width, '\t')+string.nfill(indent-(indent/tab_width)*tab_width, ' '));
-			end_undo_action ();
 		}
 
 		public virtual int get_indent (int line) {
 			var tab_width = tab_width;
 			int indent = 0;
 			var iter = line_start (line);
-			while (iter.char.isspace () && !iter.eol) {
+			while (!iter.eol && iter.char.isspace ()) {
 				if (iter.char == '\t') {
 					indent += tab_width;
 				} else {
@@ -181,9 +177,6 @@ namespace Vanubi {
 			send._line_offset = sstart.line_offset;
 			sstart.timestamp = send.timestamp = ++timestamp;
 		}
-
-		public override void begin_undo_action () { }
-		public override void end_undo_action () { }
 	}
 
 	/* ASCII string buffer iter */
@@ -326,10 +319,8 @@ namespace Vanubi {
 		// returns the iter for the opened paren for which there's a given unbalance
 		BufferIter unclosed_paren (int line, int unbalance) {
 			// find line that is semantically opening the paren
-			bool found = false;
 			int balance = 0;
 			var iter = buf.line_start (line);
-			var first_paren = true;
 			var paren_iter = iter;
 			while (true) {
 				var c = iter.char;
@@ -358,10 +349,6 @@ namespace Vanubi {
 		}
 
 		public void indent (BufferIter indent_iter) {
-			if (!indent_iter.is_in_code) {
-				return;
-			}
-			
 			var line = indent_iter.line;
 			if (line == 0) {
 				buf.set_indent (line, 0);
@@ -401,7 +388,8 @@ namespace Vanubi {
 			// indent
 			var unclosed = count_unclosed (prev_line);
 			if (unclosed == 0) {
-				new_indent = prev_indent;
+				var paren_iter = unclosed_paren (prev_line, 0);
+				new_indent = buf.get_indent (paren_iter.line);
 			} else if (unclosed > 0) {
 				var paren_iter = unclosed_paren (prev_line, unclosed);
 				if (!paren_iter.eol) {
