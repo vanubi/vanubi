@@ -946,6 +946,12 @@ namespace Vanubi {
 
 		Window new_window () {
 			var provider = new CssProvider ();
+			
+			var slm = SourceLanguageManager.get_default();
+			var search_path = slm.get_search_path();
+			search_path += "./data/languages/";	     
+			slm.set_search_path (search_path);
+			
 			try {
 				provider.load_from_path ("./data/vanubi.css");
 			} catch (Error e) {
