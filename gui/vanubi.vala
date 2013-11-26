@@ -701,7 +701,8 @@ namespace Vanubi {
 			var viter = new UI.BufferIter (vbuf, insert_iter);
 			
 			Indent indent_engine;
-			switch (buf.language.name) {
+			var langname = buf.language != null ? buf.language.name : "";
+			switch (langname) {
 				case "Assembly (Intel)":
 				case "i386 Assembly":
 					indent_engine = new Indent_Asm (vbuf);
