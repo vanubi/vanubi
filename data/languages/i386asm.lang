@@ -1,0 +1,382 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE language SYSTEM "language.dtd">
+<language _name="i386 Assembly" version="1.0" _section="Sources" globs="*.S" mimetypes="text/x-asm;text/x-assembler">
+	
+	<escape-char>\</escape-char>
+
+	<line-comment _name = "Line Comment" style= "Comment">
+		<start-regex>#|@</start-regex>
+	</line-comment>
+
+	<block-comment _name = "Block Comment" style = "Comment">
+		<start-regex>/\*</start-regex>
+        	<end-regex>\*/</end-regex>
+	</block-comment>
+
+	<pattern-item _name = "Operators" style = "Keyword">
+		<regex>[-.,:\+\*\/\(\)\{\}\[]|]</regex>
+	</pattern-item>
+
+	<pattern-item _name = "ImOperand" style = "Keyword">
+		<regex>\$[A-Za-z0-9_\-\+]*</regex>
+	</pattern-item>
+<!--
+	<pattern-item _name = "Label" style = "Preprocessor">
+		<regex>^[A-Za-z_][A-Za-z_0-9]*\:</regex>
+	</pattern-item>
+-->
+	<string _name = "String" style = "String" end-at-line-end = "TRUE">
+		<start-regex>&quot;</start-regex>
+		<end-regex>&quot;</end-regex>
+	</string>
+
+	<keyword-list _name = "Registers" style = "Data Type" case-sensitive="FALSE"
+		match-empty-string-at-beginning = "FALSE"
+		match-empty-string-at-end = "TRUE"
+		beginning-regex = "%">
+		
+		<!-- intel 386 -->
+		
+		<keyword>eax</keyword>
+		<keyword>ebx</keyword>
+		<keyword>ecx</keyword>
+		<keyword>edx</keyword>		
+		<keyword>esi</keyword>
+		<keyword>edi</keyword>		
+		<keyword>esp</keyword>
+		<keyword>ebp</keyword>
+
+		<keyword>ax</keyword>
+		<keyword>bx</keyword>
+		<keyword>cx</keyword>
+		<keyword>dx</keyword>
+		<keyword>di</keyword>
+		<keyword>si</keyword>
+		<keyword>bp</keyword>
+		<keyword>sp</keyword>
+
+		<keyword>al</keyword>
+		<keyword>ah</keyword>
+		<keyword>bh</keyword>
+		<keyword>bl</keyword>
+		<keyword>ch</keyword>
+		<keyword>cl</keyword>
+		<keyword>dh</keyword>
+		<keyword>dl</keyword>
+
+		<keyword>cs</keyword>
+		<keyword>ds</keyword>
+		<keyword>ss</keyword>
+		<keyword>es</keyword>
+		<keyword>fs</keyword>
+		<keyword>gs</keyword>
+		
+		<keyword>cr0</keyword>
+		<keyword>cr2</keyword>
+		<keyword>cr3</keyword>
+		
+		<keyword>db0</keyword>
+		<keyword>db1</keyword>
+		<keyword>db2</keyword>
+		<keyword>db3</keyword>
+		<keyword>db6</keyword>
+		<keyword>db7</keyword>
+		
+		<keyword>tr6</keyword>
+		<keyword>tr7</keyword>
+		
+		<keyword>st</keyword>
+		<keyword>st(0)</keyword>
+		<keyword>st(1)</keyword>
+		<keyword>st(2)</keyword>
+		<keyword>st(3)</keyword>
+		<keyword>st(4)</keyword>
+		<keyword>st(5)</keyword>
+		<keyword>st(6)</keyword>
+		<keyword>st(7)</keyword>
+		
+		<keyword>mm0</keyword>
+		<keyword>mm1</keyword>
+		<keyword>mm2</keyword>
+		<keyword>mm3</keyword>
+		<keyword>mm4</keyword>
+		<keyword>mm5</keyword>
+		<keyword>mm6</keyword>
+		<keyword>mm7</keyword>
+		
+		<keyword>xmm0</keyword>
+		<keyword>xmm1</keyword>
+		<keyword>xmm2</keyword>
+		<keyword>xmm3</keyword>
+		<keyword>xmm4</keyword>
+		<keyword>xmm5</keyword>
+		<keyword>xmm6</keyword>
+		<keyword>xmm7</keyword>
+	</keyword-list>
+<!--
+		<end-regex>"[bwl]"</end-regex>
+-->
+	<keyword-list _name = "InstData" style = "Keyword" case-sensitive="TRUE"
+		end-regex = "[bwl]">
+		<keyword>adc</keyword>
+		<keyword>add</keyword>
+		<keyword>and</keyword>
+		<keyword>bsf</keyword>
+		<keyword>bsr</keyword>
+		<keyword>bt</keyword>
+		<keyword>btc</keyword>
+		<keyword>btr</keyword>
+		<keyword>bts</keyword>
+		<keyword>cmp</keyword>
+		<keyword>cmps</keyword>
+		<keyword>dec</keyword>
+		<keyword>div</keyword>
+		<keyword>idiv</keyword>
+		<keyword>imul</keyword>
+		<keyword>in</keyword>
+		<keyword>inc</keyword>
+		<keyword>ins</keyword>
+		<keyword>lods</keyword>
+		<keyword>mov</keyword>
+		<keyword>movs</keyword>
+		<keyword>mul</keyword>
+		<keyword>neg</keyword>
+		<keyword>not</keyword>
+		<keyword>or</keyword>
+		<keyword>out</keyword>
+		<keyword>outs</keyword>
+		<keyword>pop</keyword>
+		<keyword>push</keyword>
+		<keyword>rcl</keyword>
+		<keyword>rcr</keyword>
+		<keyword>rol</keyword>
+		<keyword>ror</keyword>
+		<keyword>sal</keyword>
+		<keyword>sar</keyword>
+		<keyword>shl</keyword>
+		<keyword>shr</keyword>
+		<keyword>sbb</keyword>
+		<keyword>scas</keyword>
+		<keyword>stos</keyword>
+		<keyword>sub</keyword>
+		<keyword>test</keyword>
+		<keyword>xchg</keyword>
+		<keyword>xor</keyword>
+	</keyword-list>
+
+	<keyword-list _name = "Instructions" style = "Keyword" case-sensitive="TRUE">
+		<keyword>aaa</keyword>
+		<keyword>aad</keyword>
+		<keyword>aam</keyword>
+		<keyword>aas</keyword>
+		<keyword>arpl</keyword>
+		<keyword>bound</keyword>
+		<keyword>call</keyword>
+		<keyword>cbw</keyword>
+		<keyword>cwde</keyword>
+		<keyword>clc</keyword>
+		<keyword>cld</keyword>
+		<keyword>cli</keyword>
+		<keyword>clts</keyword>
+		<keyword>cmc</keyword>
+		<keyword>cwd</keyword>
+		<keyword>cdq</keyword>
+		<keyword>daa</keyword>
+		<keyword>das</keyword>
+		<keyword>enter</keyword>
+		<keyword>hlt</keyword>
+		<keyword>int</keyword>
+		<keyword>into</keyword>
+		<keyword>iret</keyword>
+		<keyword>iretd</keyword>
+		<keyword>ja</keyword>
+		<keyword>jae</keyword>
+		<keyword>jb</keyword>
+		<keyword>jbe</keyword>
+		<keyword>jc</keyword>
+		<keyword>jcxz</keyword>
+		<keyword>jecxz</keyword>
+		<keyword>je</keyword>
+		<keyword>jz</keyword>
+		<keyword>jg</keyword>
+		<keyword>jge</keyword>
+		<keyword>jl</keyword>
+		<keyword>jle</keyword>
+		<keyword>jna</keyword>
+		<keyword>jnae</keyword>
+		<keyword>jnb</keyword>
+		<keyword>jnbe</keyword>
+		<keyword>jnc</keyword>
+		<keyword>jne</keyword>
+		<keyword>jng</keyword>
+		<keyword>jnge</keyword>
+		<keyword>jnl</keyword>
+		<keyword>jnle</keyword>
+		<keyword>jno</keyword>
+		<keyword>jnp</keyword>
+		<keyword>jns</keyword>
+		<keyword>jnz</keyword>
+		<keyword>jo</keyword>
+		<keyword>jp</keyword>
+		<keyword>jpe</keyword>
+		<keyword>jpo</keyword>
+		<keyword>js</keyword>
+		<keyword>jz</keyword>
+		<keyword>ja</keyword>
+		<keyword>jae</keyword>
+		<keyword>jb</keyword>
+		<keyword>jbe</keyword>
+		<keyword>jc</keyword>
+		<keyword>je</keyword>
+		<keyword>jz</keyword>
+		<keyword>jg</keyword>
+		<keyword>jge</keyword>
+		<keyword>jl</keyword>
+		<keyword>jle</keyword>
+		<keyword>jna</keyword>
+		<keyword>jnae</keyword>
+		<keyword>jnb</keyword>
+		<keyword>jnbe</keyword>
+		<keyword>jnc</keyword>
+		<keyword>jne</keyword>
+		<keyword>jng</keyword>
+		<keyword>jnge</keyword>
+		<keyword>jnl</keyword>
+		<keyword>jnle</keyword>
+		<keyword>jno</keyword>
+		<keyword>jnp</keyword>
+		<keyword>jns</keyword>
+		<keyword>jnz</keyword>
+		<keyword>jo</keyword>
+		<keyword>jp</keyword>
+		<keyword>jpe</keyword>
+		<keyword>jpo</keyword>
+		<keyword>js</keyword>
+		<keyword>jz</keyword>
+		<keyword>jmp</keyword>
+		<keyword>lahf</keyword>
+		<keyword>lar</keyword>
+		<keyword>lea</keyword>
+		<keyword>leave</keyword>
+		<keyword>lgdt</keyword>
+		<keyword>lidt</keyword>
+		<keyword>lgs</keyword>
+		<keyword>lss</keyword>
+		<keyword>lds</keyword>
+		<keyword>les</keyword>
+		<keyword>lfs</keyword>
+		<keyword>lldt</keyword>
+		<keyword>lmsw</keyword>
+		<keyword>lock</keyword>
+		<keyword>loop</keyword>
+		<keyword>loopl</keyword>
+		<keyword>loope</keyword>
+		<keyword>loopel</keyword>
+		<keyword>loopnz</keyword>
+		<keyword>loopnzl</keyword>
+		<keyword>loopne</keyword>
+		<keyword>loopnel</keyword>
+		<keyword>loopz</keyword>
+		<keyword>loopzl</keyword>
+		<keyword>lsl</keyword>
+		<keyword>ltr</keyword>
+		<keyword>movsx</keyword>
+		<keyword>movzx</keyword>
+		<keyword>nop</keyword>
+		<keyword>popa</keyword>
+		<keyword>popad</keyword>
+		<keyword>popf</keyword>
+		<keyword>popfd</keyword>
+		<keyword>pusha</keyword>
+		<keyword>pushad</keyword>
+		<keyword>pushf</keyword>
+		<keyword>pushfd</keyword>
+		<keyword>rep</keyword>
+		<keyword>repe</keyword>
+		<keyword>repz</keyword>
+		<keyword>repne</keyword>
+		<keyword>repnz</keyword>
+		<keyword>ret</keyword>
+		<keyword>sahf</keyword>
+		<keyword>seta</keyword>
+		<keyword>setae</keyword>
+		<keyword>setb</keyword>
+		<keyword>setbe</keyword>
+		<keyword>setc</keyword>
+		<keyword>sete</keyword>
+		<keyword>setg</keyword>
+		<keyword>setge</keyword>
+		<keyword>setl</keyword>
+		<keyword>setle</keyword>
+		<keyword>setna</keyword>
+		<keyword>setnae</keyword>
+		<keyword>setnb</keyword>
+		<keyword>setnbe</keyword>
+		<keyword>setnc</keyword>
+		<keyword>setne</keyword>
+		<keyword>setng</keyword>
+		<keyword>setnge</keyword>
+		<keyword>setnl</keyword>
+		<keyword>setnle</keyword>
+		<keyword>setno</keyword>
+		<keyword>setnp</keyword>
+		<keyword>setns</keyword>
+		<keyword>setnz</keyword>
+		<keyword>seto</keyword>
+		<keyword>setp</keyword>
+		<keyword>setpe</keyword>
+		<keyword>setpo</keyword>
+		<keyword>sets</keyword>
+		<keyword>setz</keyword>
+		<keyword>sgdt</keyword>
+		<keyword>sidt</keyword>
+		<keyword>shld</keyword>
+		<keyword>shrd</keyword>
+		<keyword>sldt</keyword>
+		<keyword>smsw</keyword>
+		<keyword>stc</keyword>
+		<keyword>std</keyword>
+		<keyword>sti</keyword>
+		<keyword>str</keyword>
+		<keyword>verr</keyword>
+		<keyword>verw</keyword>
+		<keyword>wait</keyword>
+		<keyword>xlat</keyword>
+		<keyword>xlatb</keyword>
+	</keyword-list>
+
+	<keyword-list _name = "Preprocessor Definitions" style = "Preprocessor" case-sensitive="TRUE">
+		<start-regex>"\."</start-regex>
+		<keyword>section</keyword>
+		<keyword>data</keyword>
+		<keyword>text</keyword>
+		<keyword>globl</keyword>
+		<keyword>global</keyword>
+		<keyword>byte</keyword>
+		<keyword>word</keyword>
+		<keyword>long</keyword>
+		<keyword>quad</keyword>
+		<keyword>ascii</keyword>
+		<keyword>asciz</keyword>
+		<keyword>fill</keyword>
+		<keyword>macro</keyword>
+		<keyword>endm</keyword>
+	</keyword-list>
+    
+    <pattern-item _name = "Character Constant" style = "String">
+		<regex>&apos;([^\]|\\(.?))</regex>
+	</pattern-item>
+
+	<pattern-item _name = "Decimal" style = "Decimal">
+		<regex>\b([1-9][0-9]*|0)([Uu]([Ll]|LL|ll)?|([Ll]|LL|ll)[Uu]?)?\b</regex>
+	</pattern-item>
+
+	<pattern-item _name = "Floating Point Number" style = "Floating Point">
+		<regex>\b([0-9]+[Ee][-]?[0-9]+|([0-9]*\.[0-9]+|[0-9]+\.)([Ee][-]?[0-9]+)?)[fFlL]?</regex>
+	</pattern-item>
+
+	<pattern-item _name = "Hex Number" style = "Base-N Integer">
+		<regex>\b0[xX][0-9a-fA-F]+([Uu]([Ll]|LL|ll)?|([Ll]|LL|ll)[Uu]?)?\b</regex>
+	</pattern-item>
+
+</language>
