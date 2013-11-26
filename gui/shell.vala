@@ -29,9 +29,11 @@ namespace Vanubi {
 			this.config = config;
 			expand = true;
 			term = base_file.get_data ("shell");
+			var is_new = false;
 			if (term == null) {
+				is_new = true;
 				term = create_new_term (base_file);
-				base_file.set_data ("shell", term);
+				base_file.set_data ("shell", term.ref ());
 			}
 			Pid pid = term.get_data ("pid");
 			term.expand = true;
@@ -48,11 +50,15 @@ namespace Vanubi {
 							}
 						}
 					});
+			}		
+			if (!is_new) {
+				term.feed_child ("\033[B\033[A", -1);
 			}
+
 			add (term);
 			show_all ();
 		}
-
+		
 		Terminal create_new_term (File? base_file) {
 			var term = new Terminal ();
 			var shell = Vte.get_user_shell ();
@@ -67,7 +73,7 @@ namespace Vanubi {
 				Pid pid;
 				term.fork_command_full (PtyFlags.DEFAULT, workdir, argv, null, SpawnFlags.SEARCH_PATH, null, out pid);
 				term.set_data ("pid", pid);
-				term.feed_child ("\033[A", -1);
+				term.feed_child ("make -k", -1);
 
 				mouse_match (term, """^.+error:""");
 				mouse_match (term, """^.+warning:""");
