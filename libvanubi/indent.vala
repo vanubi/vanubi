@@ -111,7 +111,7 @@ namespace Vanubi {
 		}
 	}
 
-	public interface Indent {
+	public abstract class Indent {
 		public abstract void indent (BufferIter iter);
 	}
 
@@ -348,7 +348,7 @@ namespace Vanubi {
 			}
 		}
 
-		public void indent (BufferIter indent_iter) {
+		public override void indent (BufferIter indent_iter) {
 			var line = indent_iter.line;
 			if (line == 0) {
 				buf.set_indent (line, 0);
@@ -409,6 +409,27 @@ namespace Vanubi {
 				var paren_iter = unclosed_paren (line, 0);
 				new_indent = buf.get_indent (paren_iter.line);
 				// TODO: fix for nested objects ala javascript/php or C structs
+			}
+
+			buf.set_indent (line, new_indent);
+		}
+	}
+
+	public class Indent_Asm : Indent {
+		Buffer buf;
+
+		public Indent_Asm (Buffer buf) {
+			this.buf = buf;
+		}
+
+		public override void indent (BufferIter indent_iter) {
+			var line = indent_iter.line;
+			
+			// indent everything to tab_width except for labels
+			var new_indent = buf.tab_width;
+			var text = buf.line_text(line);
+			if (text.strip().has_suffix (":")) {
+				new_indent = 0;
 			}
 
 			buf.set_indent (line, new_indent);

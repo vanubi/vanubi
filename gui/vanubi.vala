@@ -694,12 +694,24 @@ namespace Vanubi {
 
 		void on_indent (Editor ed) {
 			TextIter insert_iter;
-			var buf = ed.view.buffer;
+			var buf = (SourceBuffer) ed.view.buffer;
 			buf.get_iter_at_mark (out insert_iter, buf.get_insert ());
-
+			
 			var vbuf = new UI.Buffer ((SourceView) ed.view);
-			var indent_c = new Indent_C (vbuf);
-			indent_c.indent (new UI.BufferIter (vbuf, insert_iter));
+			var viter = new UI.BufferIter (vbuf, insert_iter);
+			
+			Indent indent_engine;
+			switch (buf.language.name) {
+				case "Assembly (Intel)":
+				case "i386 Assembly":
+					indent_engine = new Indent_Asm (vbuf);
+					break;
+				default:
+					indent_engine = new Indent_C (vbuf);
+					break;
+			}
+			
+			indent_engine.indent (viter);
 		}
 
 		void on_switch_buffer (Editor editor) {
