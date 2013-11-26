@@ -117,8 +117,12 @@ namespace Vanubi {
 
 		void set_common_pattern () {
 			if (common_choice != null) {
-				entry.set_text (get_pattern_from_choice (original_pattern, common_choice));
+				var new_pattern = get_pattern_from_choice (original_pattern, common_choice);
+				entry.set_text (new_pattern);
 				entry.move_cursor (MovementStep.BUFFER_ENDS, 1, false);
+				if (new_pattern == original_pattern) {
+					entry.get_style_context().add_class ("error");
+				}				
 			}
 		}
 
@@ -132,6 +136,7 @@ namespace Vanubi {
 		}
 
 		void on_changed () {
+			entry.get_style_context().remove_class ("error");
 			changed = true;
 			original_pattern = entry.get_text ();
 			common_choice = null;
@@ -184,6 +189,8 @@ namespace Vanubi {
 							set_common_pattern ();
 						}
 					}
+				} else {
+					entry.get_style_context().add_class ("error");
 				}
 				return true;
 			}
