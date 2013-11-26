@@ -78,9 +78,9 @@ namespace Vanubi {
 		string? common_choice;
 		CompletionBox completion_box;
 		Cancellable current_completion;
-		int64 last_tab_time = 0;
 		bool navigated = false;
 		bool allow_new_value;
+		bool changed = true;
 
 		public CompletionBar (bool allow_new_value) {
 			this.allow_new_value = allow_new_value;
@@ -132,6 +132,7 @@ namespace Vanubi {
 		}
 
 		void on_changed () {
+			changed = true;
 			original_pattern = entry.get_text ();
 			common_choice = null;
 			navigated = false;
@@ -176,13 +177,12 @@ namespace Vanubi {
 					if (navigated || completion_box.get_choices().length == 1) {
 						set_choice ();
 					} else {
-						int64 time = get_monotonic_time ();
-						if (time - last_tab_time < 300000) {
+						if (!changed) {
 							set_choice ();
 						} else {
+							changed = false;
 							set_common_pattern ();
 						}
-						last_tab_time = time;
 					}
 				}
 				return true;
