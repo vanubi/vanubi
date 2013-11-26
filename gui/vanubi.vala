@@ -978,12 +978,13 @@ namespace Vanubi {
 			win.title = "Vanubi";
 			win.delete_event.connect (() => { manager.execute_command (manager.get_first_visible_editor (), "quit"); return false; });
 			win.set_default_size (800, 400);
+			// restore geometry like one of the main window
+			win.move (manager.conf.get_global_int ("window_x"),
+					  manager.conf.get_global_int ("window_y"));
+			win.set_default_size (manager.conf.get_global_int ("window_width"),
+								  manager.conf.get_global_int ("window_height"));
 			if (is_main_window) {
-				// store/restore geometry of main window
-				win.move (manager.conf.get_global_int ("window_x"),
-						  manager.conf.get_global_int ("window_y"));
-				win.set_default_size (manager.conf.get_global_int ("window_width"),
-									  manager.conf.get_global_int ("window_height"));
+				// store geometry only from main window
 				win.check_resize.connect (() => {
 						int w, h;
 						win.get_size (out w, out h);
