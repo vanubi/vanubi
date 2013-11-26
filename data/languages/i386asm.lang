@@ -36,6 +36,23 @@
 		beginning-regex = "%">
 		
 		<!-- intel 386 -->
+
+		<keyword>rax</keyword>
+		<keyword>rbx</keyword>
+		<keyword>rcx</keyword>
+		<keyword>rdx</keyword>
+		<keyword>rdi</keyword>
+		<keyword>rsi</keyword>
+		<keyword>rsp</keyword>
+		<keyword>rip</keyword>
+		<keyword>r8</keyword>
+		<keyword>r9</keyword>
+		<keyword>r10</keyword>
+		<keyword>r11</keyword>
+		<keyword>r12</keyword>
+		<keyword>r13</keyword>
+		<keyword>r14</keyword>
+		<keyword>r15</keyword>
 		
 		<keyword>eax</keyword>
 		<keyword>ebx</keyword>
