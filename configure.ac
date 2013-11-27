@@ -53,9 +53,11 @@ GLIB_PREFIX="`$PKG_CONFIG --variable=prefix glib-2.0`"
 AC_SUBST(GLIB_PREFIX)
 
 VALA_CHECK_MODULES(LIBVANUBI, [gio-2.0])
-VALA_CHECK_MODULES(VANUBI, [gtk+-3.0 >= 3.10 gtksourceview-3.0 vte-2.90],
-				   [VANUBI_VALAFLAGS="$VANUBI_VALAFLAGS -D GTK_3_10"],
-				   [VALA_CHECK_MODULES(VANUBI, [gtk+-3.0 gtksourceview-3.0 vte-2.90])])
+VALA_CHECK_MODULES(VANUBI, [gtk+-3.0 gtksourceview-3.0 vte-2.90])
+dnl We ignore GTK_3_10_*
+PKG_CHECK_MODULES(GTK_3_10, [gtk+-3.0 >= 3.10],
+				  [VANUBI_VALAFLAGS="$VANUBI_VALAFLAGS -D GTK_3_10"],
+				  [echo '*** Recommended version of gtk+-3.0 is at least 3.10'])
 VALA_CHECK_PACKAGES([posix], [VANUBI_VALAFLAGS="$VANUBI_VALAFLAGS --pkg posix"])
 
 AM_CONDITIONAL(ENABLE_GLIB_TEST, [test "x$enable_glibtest" = "xyes"])
