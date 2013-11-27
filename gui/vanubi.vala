@@ -445,6 +445,10 @@ namespace Vanubi {
 			var keyval = e.keyval;
 			var modifiers = e.state;
 			modifiers &= Gdk.ModifierType.SHIFT_MASK | Gdk.ModifierType.CONTROL_MASK;
+			if (!(Gdk.ModifierType.CONTROL_MASK in modifiers)) {
+				// do not allow only shift as modifier
+				modifiers &= ~Gdk.ModifierType.SHIFT_MASK;
+			}
 			if (keyval == Gdk.Key.Escape || (keyval == Gdk.Key.g && modifiers == Gdk.ModifierType.CONTROL_MASK)) {
 				// abort
 				abort (editor);
