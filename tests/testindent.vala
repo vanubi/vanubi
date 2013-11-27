@@ -15,8 +15,7 @@ StringBuffer setup () {
 	return buffer;
 }
 
-bool help_test_c (string buf, int line, int indent) {
-	var buffer = new StringBuffer.from_text (buf);
+bool assert_indent (Buffer buffer, int line, int indent) {
 	var iter = buffer.line_start (line);
 	var indenter = new Indent_C (buffer);
 	indenter.indent (iter);
@@ -84,57 +83,65 @@ void test_insert_delete () {
 }
 
 void test_lang_c () {
-	var buffer = setup ();
-	var iter = buffer.line_start (3);
-	var indenter = new Indent_C (buffer);
-	indenter.indent (iter);
-	assert (buffer.get_indent (3) == buffer.tab_width*2);
+	var buffer = new StringBuffer.from_text ("
+foo {
+    bar (foo
+         baz);
+} test;
 
-	buffer = new StringBuffer.from_text ("
-foo (
-	bar (foo
+single ')' {
+inner ')';
+next
+}
 
-");
-	iter = buffer.line_start (3);
-	indenter = new Indent_C (buffer);
-	indenter.indent (iter);
-	assert (buffer.get_indent (3) == 9);
+multi (param1,
+param2) {
+body
+}
 
-	buffer = new StringBuffer.from_text ("
-foo (param1,
-	 param2) {
-
-");
-	iter = buffer.line_start (3);
-	indenter = new Indent_C (buffer);
-	indenter.indent (iter);
-	assert (buffer.get_indent (3) == 4);
-
-	buffer = new StringBuffer.from_text ("
-foo (param1,
-	 param2) {
-                      }
-");
-	iter = buffer.line_start (3);
-	indenter = new Indent_C (buffer);
-	indenter.indent (iter);
-	assert (buffer.get_indent (3) == 0);
-	
-	assert (help_test_c("
 try {
-    {
-        foo;
-    }
+{
+foo;
+}
 } catch {
+inside
+}
 
-", 6, 4));
+double (
+close(
+));
 
-	assert (help_test_c("
-foo (
-	bar(
-	));
-
-", 4, 0));
+toplevel
+");
+	var w = buffer.tab_width;
+	assert_indent (buffer, 0, 0);
+	assert_indent (buffer, 1, 0);
+	assert_indent (buffer, 2, w);
+	assert_indent (buffer, 3, w*2+1);
+	assert_indent (buffer, 4, 0);
+	
+	assert_indent (buffer, 6, 0);
+	assert_indent (buffer, 7, w);
+	assert_indent (buffer, 8, w);
+	assert_indent (buffer, 9, 0);
+	
+	assert_indent (buffer, 11, 0);
+	assert_indent (buffer, 12, 7);
+	assert_indent (buffer, 13, 7);
+	assert_indent (buffer, 14, w);
+	assert_indent (buffer, 15, 0);
+	
+	assert_indent (buffer, 17, 0);
+	assert_indent (buffer, 18, w);
+	assert_indent (buffer, 19, w*2);
+	assert_indent (buffer, 20, w);
+	assert_indent (buffer, 21, 0);
+	assert_indent (buffer, 22, w);
+	assert_indent (buffer, 23, 0);
+	
+	assert_indent (buffer, 25, 0);
+	assert_indent (buffer, 26, w);
+	assert_indent (buffer, 27, 0);
 }
 
 int main (string[] args) {

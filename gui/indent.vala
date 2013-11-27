@@ -131,15 +131,6 @@ namespace Vanubi.UI {
 						return false;
 					}
 				}
-				var cp = copy ();
-				cp.backward_char ();
-				if (cp.char == '\'') {
-					cp = copy ();
-					cp.forward_char ();
-					if (cp.char == '\'') {
-						return false;
-					}
-				}
 				return true;
 			}
 		}

@@ -276,6 +276,32 @@ namespace Vanubi {
 			this.buf = buf;
 		}
 
+		bool is_char (BufferIter iter) {
+			if (!iter.is_in_code) {
+				return false;
+			}
+			var cp = iter.copy ();
+			cp.backward_char ();
+			if (cp.char == '\'') {
+				cp = iter.copy ();
+				cp.forward_char ();
+				if (cp.char == '\'') {
+					return false;
+				}
+			}
+			return true;
+		}
+		
+		bool is_open_paren (BufferIter iter) {
+			var c = iter.char;
+			return (c == '{' || c == '[' || c == '(') && iter.is_in_code && !is_char (iter);
+		}
+		
+		bool is_close_paren (BufferIter iter) {
+			var c = iter.char;
+			return (c == '}' || c == ']' || c == ')') && iter.is_in_code && !is_char (iter);
+		}
+		
 		int first_non_empty_prev_line (int line) {
 			// find first non-blank prev line, excluding line
 			while (--line >= 0 && buf.empty_line (line));
@@ -288,7 +314,7 @@ namespace Vanubi {
 			var iter = buf.line_start (line);
 			while (!iter.eol) {
 				var c = iter.char;
-				if ((c == '}' || c == ']' || c == ')') && iter.is_in_code) {
+				if (is_close_paren (iter)) {
 					closed++;
 				} else if (!c.isspace ()) {
 					break;
@@ -304,9 +330,9 @@ namespace Vanubi {
 			var iter = buf.line_start (line);
 			while (!iter.eol) {
 				var c = iter.char;
-				if ((c == '{' || c == '[' || c == '(') && iter.is_in_code) {
+				if (is_open_paren (iter)) {
 					unclosed++;
-				} else if ((c == '}' || c == ']' || c == ')') && iter.is_in_code) {
+				} else if (is_close_paren (iter)) {
 					if (unclosed > 0) {
 						unclosed--;
 					}
@@ -324,12 +350,12 @@ namespace Vanubi {
 			var paren_iter = iter;
 			while (true) {
 				var c = iter.char;
-				if ((c == '{' || c == '[' || c == '(') && iter.is_in_code) {
+				if (is_open_paren (iter)) {
 					balance++;
 					if (balance == unbalance) {
 						paren_iter = iter.copy ();
 					}
-				} else if ((c == '}' || c == ']' || c == ')') && iter.is_in_code) {
+				} else if (is_close_paren (iter)) {
 					balance--;
 				}
 				if (iter.eol) {
