@@ -144,12 +144,34 @@ toplevel
 	assert_indent (buffer, 27, 0);
 }
 
+void test_lang_asm () {
+	var buffer = new StringBuffer.from_text ("
+section .text
+label1:
+mov eax, ebx
+xor eax, eax
+label2:
+enter
+ret
+");
+	var w = buffer.tab_width;
+	assert_indent (buffer, 0, 0);
+	assert_indent (buffer, 1, w);
+	assert_indent (buffer, 2, 0);
+	assert_indent (buffer, 3, w);
+	assert_indent (buffer, 4, w);
+	assert_indent (buffer, 5, 0);
+	assert_indent (buffer, 6, w);
+	assert_indent (buffer, 7, w);
+}
+	
 int main (string[] args) {
 	Test.init (ref args);
 
 	Test.add_func ("/indent/simple", test_simple);
 	Test.add_func ("/indent/insert_delete", test_insert_delete);
 	Test.add_func ("/indent/lang_c", test_lang_c);
+	Test.add_func ("/indent/lang_asm", test_lang_asm);
 
 	return Test.run ();
 }

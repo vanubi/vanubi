@@ -286,10 +286,10 @@ namespace Vanubi {
 				cp = iter.copy ();
 				cp.forward_char ();
 				if (cp.char == '\'') {
-					return false;
+					return true;
 				}
 			}
-			return true;
+			return false;
 		}
 		
 		bool is_open_paren (BufferIter iter) {
