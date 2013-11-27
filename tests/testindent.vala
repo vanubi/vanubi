@@ -111,6 +111,14 @@ double (
 close(
 ));
 
+switch(foo) {
+case bar:
+test
+break;
+default:
+break;
+}
+
 toplevel
 ");
 	var w = buffer.tab_width;
@@ -142,6 +150,14 @@ toplevel
 	assert_indent (buffer, 25, 0);
 	assert_indent (buffer, 26, w);
 	assert_indent (buffer, 27, 0);
+	
+	assert_indent (buffer, 29, 0);
+	assert_indent (buffer, 30, 0);
+	assert_indent (buffer, 31, w);
+	assert_indent (buffer, 32, w);
+	assert_indent (buffer, 33, 0);
+	assert_indent (buffer, 34, w);
+	assert_indent (buffer, 35, 0);		
 }
 
 void test_lang_asm () {

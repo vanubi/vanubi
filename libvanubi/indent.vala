@@ -384,8 +384,15 @@ namespace Vanubi {
 			var new_indent = 0;
 			var tab_width = buf.tab_width;
 			
-			var text = buf.line_text(line);
-			if (text.strip() == "done" || text.strip() == "fi") {
+			var text = buf.line_text(line).strip ();
+			if (text == "done" || text == "fi") {
+				new_indent = buf.get_indent (line) - tab_width;
+				buf.set_indent (line, new_indent);
+				return;
+			}
+			
+			// label or case statement
+			if (text.has_suffix (":")) {
 				new_indent = buf.get_indent (line) - tab_width;
 				buf.set_indent (line, new_indent);
 				return;
@@ -406,6 +413,13 @@ namespace Vanubi {
 				text_after_semicomma = prev_text.substring (prev_semicomma+1).strip ();
 			}
 			if (text_after_semicomma == "do" || text_after_semicomma == "then") {
+				new_indent = prev_indent + tab_width;
+				buf.set_indent (line, new_indent);
+				return;
+			}
+			
+			// prev label or case statement
+			if (prev_text.strip().has_suffix (":")) {
 				new_indent = prev_indent + tab_width;
 				buf.set_indent (line, new_indent);
 				return;
