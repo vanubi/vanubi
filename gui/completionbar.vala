@@ -173,10 +173,8 @@ namespace Vanubi {
 					var n = int.min (n_render, choices.length);
 					var s = new StringBuilder ();
 					for (int i=index,j=0; j < n; j++, i = (i+1)%choices.length) {
-						if (i > 0) {
-							s.append ("   ");
-						}
 						s.append (choices[i]);
+						s.append ("   ");
 					}
 					label.set_text (s.str);
 				}
