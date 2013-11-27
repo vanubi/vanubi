@@ -159,7 +159,6 @@ namespace Vanubi {
 				label.wrap_mode = Pango.WrapMode.WORD;
 				label.set_lines (2);
 				#endif
-				label.expand = true;
 				label.ellipsize = Pango.EllipsizeMode.END;
 				label.justify = Justification.LEFT;
 				update ();
