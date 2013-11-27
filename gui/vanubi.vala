@@ -94,6 +94,7 @@ namespace Vanubi {
 			execute_command["indent"].connect (on_indent);
 
 			bind_command ({ Key (Gdk.Key.Return, 0) }, "return");
+			bind_command ({ Key (Gdk.Key.Return, Gdk.ModifierType.SHIFT_MASK) }, "return");
 			execute_command["return"].connect (on_return);
 
 			bind_command ({ Key ('}', Gdk.ModifierType.SHIFT_MASK) }, "close-curly-brace");
@@ -445,10 +446,6 @@ namespace Vanubi {
 			var keyval = e.keyval;
 			var modifiers = e.state;
 			modifiers &= Gdk.ModifierType.SHIFT_MASK | Gdk.ModifierType.CONTROL_MASK;
-			if (!(Gdk.ModifierType.CONTROL_MASK in modifiers)) {
-				// do not allow only shift as modifier
-				modifiers &= ~Gdk.ModifierType.SHIFT_MASK;
-			}
 			if (keyval == Gdk.Key.Escape || (keyval == Gdk.Key.g && modifiers == Gdk.ModifierType.CONTROL_MASK)) {
 				// abort
 				abort (editor);
