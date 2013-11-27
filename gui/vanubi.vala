@@ -674,6 +674,7 @@ namespace Vanubi {
 		void on_return (Editor ed) {
 			var buf = ed.view.buffer;
 			buf.begin_user_action ();		
+			buf.delete_selection (true, true);
 			buf.insert_at_cursor ("\n", -1);
 			ed.view.scroll_mark_onscreen (buf.get_insert ());
 			execute_command["indent"] (ed, "indent");
@@ -682,20 +683,32 @@ namespace Vanubi {
 
 		void on_close_curly_brace (Editor ed) {
 			var buf = ed.view.buffer;
+			buf.begin_user_action ();		
+			buf.delete_selection (true, true);
 			buf.insert_at_cursor ("}", -1);
+			ed.view.scroll_mark_onscreen (buf.get_insert ());
 			execute_command["indent"] (ed, "indent");
+			buf.end_user_action ();
 		}
 
 		void on_close_square_brace (Editor ed) {
 			var buf = ed.view.buffer;
+			buf.begin_user_action ();		
+			buf.delete_selection (true, true);
 			buf.insert_at_cursor ("]", -1);
+			ed.view.scroll_mark_onscreen (buf.get_insert ());
 			execute_command["indent"] (ed, "indent");
+			buf.end_user_action ();
 		}
 
 		void on_close_paren (Editor ed) {
 			var buf = ed.view.buffer;
+			buf.begin_user_action ();		
+			buf.delete_selection (true, true);
 			buf.insert_at_cursor (")", -1);
+			ed.view.scroll_mark_onscreen (buf.get_insert ());
 			execute_command["indent"] (ed, "indent");
+			buf.end_user_action ();
 		}
 
 		void on_delete_char_forward (Editor ed) {
