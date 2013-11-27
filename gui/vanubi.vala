@@ -194,6 +194,11 @@ namespace Vanubi {
 			index_command ("compile", "Compile code", "build shell");
 			execute_command["compile"].connect (on_compile);
 
+			bind_command ({ Key (Gdk.Key.y, Gdk.ModifierType.CONTROL_MASK) }, "redo");
+			index_command ("redo", "Redo action");
+			execute_command["redo"].connect (on_redo);
+
+			
 			// setup empty buffer
 			unowned Editor ed = get_available_editor (null);
 			add (ed);
@@ -972,6 +977,10 @@ namespace Vanubi {
 			bar.grab_focus ();
 		}
 
+		void on_redo (Editor editor) {
+			editor.view.redo ();
+		}
+		
 		void on_forward_backward_line (Editor ed, string command) {
 			if (command == "forward-line") {
 				ed.view.move_cursor (MovementStep.DISPLAY_LINES, 1, false);
