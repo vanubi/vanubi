@@ -19,9 +19,9 @@ vanubi_VALASOURCES = \
 	filebar.vala \
 	helpbar.vala \
 	indent.vala \
+	main.vala \
 	searchbar.vala \
 	shellbar.vala \
-	vanubi.vala \
 	$(NULL)
 
 vanubi_SOURCES = \

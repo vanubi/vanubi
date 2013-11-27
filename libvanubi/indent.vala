@@ -329,7 +329,6 @@ namespace Vanubi {
 			var unclosed = 0;
 			var iter = buf.line_start (line);
 			while (!iter.eol) {
-				var c = iter.char;
 				if (is_open_paren (iter)) {
 					unclosed++;
 				} else if (is_close_paren (iter)) {
@@ -349,7 +348,6 @@ namespace Vanubi {
 			var iter = buf.line_start (line);
 			var paren_iter = iter;
 			while (true) {
-				var c = iter.char;
 				if (is_open_paren (iter)) {
 					balance++;
 					if (balance == unbalance) {
