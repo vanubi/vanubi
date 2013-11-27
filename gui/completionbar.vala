@@ -154,12 +154,12 @@ namespace Vanubi {
 				orientation = Orientation.HORIZONTAL;
 				this.choices = (owned) choices;
 				label = new Label (null);
+				#if GTK_3_10
 				label.wrap = true;
 				label.wrap_mode = Pango.WrapMode.WORD;
-				label.ellipsize = Pango.EllipsizeMode.END;
-				#if GTK_3_10
 				label.set_lines (2);
 				#endif
+				label.ellipsize = Pango.EllipsizeMode.END;
 				label.justify = Justification.LEFT;
 				update ();
 				add (label);
