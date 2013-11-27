@@ -1,5 +1,5 @@
 /*
- *  Copyright © 2011-2012 Luca Bruno
+ *  Copyright © 2011-2013 Luca Bruno
  *
  *  This file is part of Vanubi.
  *
@@ -39,11 +39,9 @@ namespace Vanubi {
 			string absolute_pattern = absolute_path (base_directory, original_pattern);
 			int choice_seps = count (choice, '/');
 			int pattern_seps = count (absolute_pattern, '/');
-			if (choice[choice.length-1] == '/') {
+			if (choice[0] != '/' && choice[choice.length-1] == '/') {
+				// relative
 				choice_seps--;
-				if (absolute_pattern[absolute_pattern.length-1] == '/') {
-					pattern_seps--;
-				}
 			}
 			int keep_seps = pattern_seps - choice_seps;
 
@@ -79,6 +77,7 @@ namespace Vanubi {
 				relative += new_absolute_pattern.substring (last_sep+1);
 				res = (owned) relative;
 			}
+
 			if (res[res.length-1] != '/' && File.new_for_path (res).query_file_type (FileQueryInfoFlags.NONE) == FileType.DIRECTORY) {
 				return res + "/";
 			} else {

@@ -48,6 +48,10 @@ namespace Vanubi {
 		}
 
 		string[] matches = yield worker.get_result (out common_prefixes[index]);
+		unowned string cp = common_prefixes[index];
+		if (cp != null && cp[cp.length-1] == '/') {
+			cp.data[cp.length-1] = '\0';
+		}
 		cancellable.set_error_if_cancelled ();
 		if (index >= pattern.length-1) {
 			return matches;
@@ -108,7 +112,7 @@ namespace Vanubi {
 		}
 		cancellable.set_error_if_cancelled ();
 
-		common_choice = "";
+		common_choice = "/";
 		for (int i=1; i < comps.length; i++) {
 			if (common_prefixes[i] != null) {
 				common_choice += common_prefixes[i]+"/";

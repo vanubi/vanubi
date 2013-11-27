@@ -73,7 +73,7 @@ namespace Vanubi {
 				Pid pid;
 				term.fork_command_full (PtyFlags.DEFAULT, workdir, argv, null, SpawnFlags.SEARCH_PATH, null, out pid);
 				term.set_data ("pid", pid);
-				term.feed_child ("make -k", -1);
+				term.feed_child ("make", -1);
 
 				mouse_match (term, """^.+error:""");
 				mouse_match (term, """^.+warning:""");
