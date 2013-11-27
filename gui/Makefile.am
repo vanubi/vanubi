@@ -19,6 +19,7 @@ vanubi_VALASOURCES = \
 	filecompletion.vala \
 	helpbar.vala \
 	indent.vala \
+	searchbar.vala \
 	shell.vala \
 	vanubi.vala \
 	$(NULL)

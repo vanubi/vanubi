@@ -675,6 +675,7 @@ namespace Vanubi {
 			var buf = ed.view.buffer;
 			buf.begin_user_action ();		
 			buf.insert_at_cursor ("\n", -1);
+			ed.view.scroll_mark_onscreen (buf.get_insert ());
 			execute_command["indent"] (ed, "indent");
 			buf.end_user_action ();
 		}
