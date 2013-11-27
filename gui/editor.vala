@@ -114,7 +114,7 @@ namespace Vanubi {
 
 			/* Style */
 			editor_style = new SourceStyleSchemeManager();
-			editor_style.set_search_path({"./styles/"}); /* TODO: use ~/.vanubi/styles/ */
+			editor_style.set_search_path({"./data/styles/"}); /* TODO: use ~/.vanubi/styles/ */
 
 			// view
 			view = new EditorView ();
