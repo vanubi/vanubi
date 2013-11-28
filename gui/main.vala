@@ -198,13 +198,16 @@ namespace Vanubi {
 			index_command ("redo", "Redo action");
 			execute_command["redo"].connect (on_redo);
 
+			index_command ("set-tab-width", "Set tab width");
+			execute_command["set-tab-width"].connect (on_set_tab_width);
+
 			
 			// setup empty buffer
 			unowned Editor ed = get_available_editor (null);
 			add (ed);
 			ed.grab_focus ();
 		}
-
+		
 		public void on_command (Editor ed, string command) {
 			abort (ed);
 			execute_command[command] (ed, command);
@@ -578,6 +581,20 @@ namespace Vanubi {
 				replace_widget (editor, ed);
 				ed.grab_focus ();
 			}
+		}
+
+		void on_set_tab_width (Editor editor) {
+			var val = conf.get_editor_int("tab_width", 4);
+			var bar = new EntryBar (val.to_string());
+			bar.activate.connect ((text) => {
+					abort (editor);
+					conf.set_editor_int("tab_width", int.parse(text));
+					conf.save();
+			});
+			bar.aborted.connect (() => { abort (editor); });
+			add_overlay (bar);
+			bar.show ();
+			bar.grab_focus ();
 		}
 
 		void on_quit () {
