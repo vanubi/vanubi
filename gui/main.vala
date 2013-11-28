@@ -201,6 +201,8 @@ namespace Vanubi {
 			index_command ("set-tab-width", "Tab width expressed in number of spaces, also used for indentation");
 			execute_command["set-tab-width"].connect (on_set_tab_width);
 
+			index_command ("set-shell-scrollback", "Maximum number of scrollback lines used by the terminal");
+			execute_command["set-shell-scrollback"].connect (on_set_shell_scrollback);
 			
 			// setup empty buffer
 			unowned Editor ed = get_available_editor (null);
@@ -597,6 +599,20 @@ namespace Vanubi {
 			bar.grab_focus ();
 		}
 
+		void on_set_shell_scrollback (Editor editor) {
+			var val = conf.get_global_int ("shell_scrollback", 65535);
+			var bar = new EntryBar (val.to_string());
+			bar.activate.connect ((text) => {
+					abort (editor);
+					conf.set_global_int("shell_scrollback", int.parse(text));
+					conf.save();
+			});
+			bar.aborted.connect (() => { abort (editor); });
+			add_overlay (bar);
+			bar.show ();
+			bar.grab_focus ();
+		}
+		
 		void on_quit () {
 			quit ();
 		}

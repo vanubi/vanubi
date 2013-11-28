@@ -61,6 +61,7 @@ namespace Vanubi {
 		
 		Terminal create_new_term (File? base_file) {
 			var term = new Terminal ();
+			term.scrollback_lines = config.get_global_int ("shell_scrollback", 65535);
 			var shell = Vte.get_user_shell ();
 			if (shell == null) {
 				shell = "/bin/sh";
