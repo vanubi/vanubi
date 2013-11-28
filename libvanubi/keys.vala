@@ -108,6 +108,9 @@ namespace Vanubi {
 		public Key?[] get_binding (string command) {
 			var arr = new GenericArray<Key?> ();
 			get_binding_helper (arr, key_root, command);
+			if (arr.data.length == 0) {
+				return null;
+			}
 			var res = (owned) arr.data;
 			arr.data.length = 0; // bug that has been recently fixed in vala
 			// reverse array
