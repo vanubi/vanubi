@@ -105,7 +105,7 @@ namespace Vanubi {
 			return false;
 		}
 
-		public Key?[] get_binding (string command) {
+		public Key?[]? get_binding (string command) {
 			var arr = new GenericArray<Key?> ();
 			get_binding_helper (arr, key_root, command);
 			if (arr.data.length == 0) {

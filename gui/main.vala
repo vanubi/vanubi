@@ -198,7 +198,7 @@ namespace Vanubi {
 			index_command ("redo", "Redo action");
 			execute_command["redo"].connect (on_redo);
 
-			index_command ("set-tab-width", "Set tab width");
+			index_command ("set-tab-width", "Tab width expressed in number of spaces, also used for indentation");
 			execute_command["set-tab-width"].connect (on_set_tab_width);
 
 			
