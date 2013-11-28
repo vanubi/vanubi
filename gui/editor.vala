@@ -100,6 +100,7 @@ namespace Vanubi {
 	}
 
 	public class Editor : Grid {
+		Configuration conf;
 		public File file { get; private set; }
 		public SourceView view { get; private set; }
 		public SourceStyleSchemeManager editor_style { get; private set; }
@@ -107,8 +108,9 @@ namespace Vanubi {
 		Label file_count;
 		Label file_status;
 
-		public Editor (File? file) {
+		public Editor (Configuration conf, File? file) {
 			this.file = file;
+			this.conf = conf;
 			orientation = Orientation.VERTICAL;
 			expand = true;
 
@@ -120,7 +122,8 @@ namespace Vanubi {
 			view = new EditorView ();
 			view.wrap_mode = WrapMode.CHAR;
 			view.set_data ("editor", (Editor*)this);
-                        
+			view.tab_width = conf.get_editor_int("tab_width", 4);
+
 			/* TODO: read the style from the config file */
 			SourceStyleScheme st = editor_style.get_scheme("zen");
 			if (st != null) { /* Use default if not found */

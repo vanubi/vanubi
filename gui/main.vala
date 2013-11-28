@@ -409,7 +409,7 @@ namespace Vanubi {
 				}
 			}
 			// no editor reusable, so create one
-			var ed = new Editor (file);
+			var ed = new Editor (conf, file);
 			// set the font according to the user/system configuration
 			var system_size = ed.view.style.font_desc.get_size () / Pango.SCALE;
 			ed.view.override_font (Pango.FontDescription.from_string ("Monospace %d".printf (conf.get_editor_int ("font_size", system_size))));
