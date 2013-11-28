@@ -382,20 +382,6 @@ namespace Vanubi {
 			var new_indent = 0;
 			var tab_width = buf.tab_width;
 			
-			var text = buf.line_text(line).strip ();
-			if (text == "done" || text == "fi") {
-				new_indent = buf.get_indent (line) - tab_width;
-				buf.set_indent (line, new_indent);
-				return;
-			}
-			
-			// label or case statement
-			if (text.has_suffix (":")) {
-				new_indent = buf.get_indent (line) - tab_width;
-				buf.set_indent (line, new_indent);
-				return;
-			}
-
 			var prev_line = first_non_empty_prev_line (line);
 			if (prev_line < 0) {
 				buf.set_indent (line, 0);
@@ -416,13 +402,6 @@ namespace Vanubi {
 				return;
 			}
 			
-			// prev label or case statement
-			if (prev_text.strip().has_suffix (":")) {
-				new_indent = prev_indent + tab_width;
-				buf.set_indent (line, new_indent);
-				return;
-			}
-
 			// indent
 			var unclosed = count_unclosed (prev_line);
 			if (unclosed == 0) {
@@ -447,6 +426,23 @@ namespace Vanubi {
 				var paren_iter = unclosed_paren (line, 0);
 				new_indent = buf.get_indent (paren_iter.line);
 				// TODO: fix for nested objects ala javascript/php or C structs
+			}
+
+			// done, fi in bash
+			// TODO: move to Indent_Shell
+			var text = buf.line_text(line).strip ();
+			if (text == "done" || text == "fi") {
+				new_indent -= tab_width;
+			}
+			
+			// prev label or case statement
+			if (prev_text.strip().has_suffix (":")) {
+				new_indent += tab_width;
+			}
+
+			// label or case statement on this line
+			if (text.has_suffix (":")) {
+				new_indent -= tab_width;
 			}
 
 			buf.set_indent (line, new_indent);
