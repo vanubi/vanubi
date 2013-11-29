@@ -84,7 +84,7 @@ namespace Vanubi {
 		protected override async string[]? complete (string pattern, Cancellable cancellable) {
 			Annotated<string>[] a = null;
 			foreach (unowned string c in choices) {
-				a += Annotated<string?> (c, null);
+				a += new Annotated<string?> (c, null);
 			}
 			try {
 				a = yield run_in_thread<Annotated<string>[]> ((c) => { return pattern_match_many<string> (pattern, a, c); }, cancellable);

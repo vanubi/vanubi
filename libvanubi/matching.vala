@@ -59,9 +59,9 @@ namespace Vanubi {
 	}
 
 	/* An object annotated with a string */
-	public struct Annotated<G> {
-		string str;
-		G? obj;
+	public class Annotated<G> {
+		public string str;
+		public G? obj;
 
 		public Annotated (owned string str, G? obj) {
 			this.obj = obj;
@@ -70,36 +70,36 @@ namespace Vanubi {
 	}
 
 	/* Object match with score */
-	public struct Match<G> {
-		G? obj;
-		int score;
+	public class Match<G> {
+		public G obj;
+		internal int score;
 
-		public Match (G? obj, int score) {
+		public Match (G obj, int score) {
 			this.obj = obj;
 			this.score = score;
 		}
 	}
 
-	public int match_compare_func (Match* a, Match* b) {
-		return b->score - a->score;
+	public int match_compare_func (Match** a, Match** b) {
+		return (*a)->score - (*b)->score;
 	}
 
 	/* Matches a pattern against objects, and returns a ranking of the objects that match */
 	public Annotated<G>[] pattern_match_many<G> (string pattern, Annotated<G>[] objects, Cancellable cancellable) throws Error {
 		Match<Annotated<G>?>[] matches = null;
-		foreach (unowned Annotated<G> object in objects) {
+		foreach (var object in objects) {
 			cancellable.set_error_if_cancelled ();
 			var score = pattern_match (pattern, object.str);
 			if (score >= 0) {
-				matches += Match<Annotated<G>?> (object, score);
+				matches += new Match<Annotated<G>?> ((owned) object, score);
 			}
 		}
 		qsort_with_data<Match> (matches, sizeof (Match), (CompareDataFunc<Match>) match_compare_func);
 		cancellable.set_error_if_cancelled ();
 
 		Annotated<G>[] result = null;
-		foreach (unowned Match<Annotated<G>?> match in matches) {
-			result += match.obj;
+		foreach (var match in matches) {
+			result += (owned) match.obj;
 		}
 		return result;
 	}

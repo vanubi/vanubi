@@ -35,7 +35,7 @@ namespace Vanubi {
 				if (info == null) {
 					break;
 				}
-				a += Annotated<File> (info.get_name (), file.get_child (info.get_name ()));
+				a += new Annotated<File> (info.get_name (), file.get_child (info.get_name ()));
 			}
 			cancellable.set_error_if_cancelled ();
 			a = pattern_match_many<File> (pattern[index], a, cancellable);
@@ -53,7 +53,7 @@ namespace Vanubi {
 			return;
 		}
 
-		// compute next index
+		// recurse into next subdirectory
 		while (index < pattern.length-1 && pattern[++index] == null);
 		foreach (var match in matches) {
 			file_complete_pattern (match, index, pattern, result, cancellable);
@@ -147,7 +147,7 @@ namespace Vanubi {
 	}
 	
 	/* The given pattern must be absolute */
-	public File[]? file_complete (string pattern, Cancellable cancellable) throws Error requires (pattern[0] == '/') {
+	public GenericArray<File>? file_complete (string pattern, Cancellable cancellable) throws Error requires (pattern[0] == '/') {
 		string[] comps = pattern.split ("/");
 		if (comps.length == 0) {
 			return null;
@@ -156,9 +156,7 @@ namespace Vanubi {
 		File file = File.new_for_path ("/");
 		var result = new GenericArray<File> ();
 		file_complete_pattern (file, 1, comps, result, cancellable);
-		var data = (owned) result.data;
-		result.data.length = 0; // vala bug recently fixed
-		return data;
+		return result;
 	}
 
 	public string get_base_directory (File? base_file) {

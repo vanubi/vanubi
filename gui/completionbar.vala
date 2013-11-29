@@ -48,7 +48,7 @@ namespace Vanubi {
 			}
 		}
 
-		protected virtual async string[]? complete (string pattern, Cancellable cancellable) {
+		protected virtual async Annotated<File>[]? complete (string pattern, Cancellable cancellable) {
 			return null;
 		}
 
@@ -57,7 +57,8 @@ namespace Vanubi {
 		}
 
 		void set_choice () {
-			entry.set_text (get_pattern_from_choice (original_pattern, completion_box.get_choice ()));
+			Annotated<File> choice = completion_box.get_choice ();
+			entry.set_text (get_pattern_from_choice (original_pattern, choice.obj.get_path ()));
 			entry.move_cursor (MovementStep.BUFFER_ENDS, 1, false);
 		}
 
@@ -73,11 +74,11 @@ namespace Vanubi {
 		}
 
 		protected override void on_activate () {
-			unowned string choice = completion_box.get_choice ();
+			unowned Annotated<File> choice = completion_box.get_choice ();
 			if (allow_new_value || choice == null) {
 				activate (entry.get_text ());
 			} else {
-				activate (choice);
+				activate (choice.obj.get_path ());
 			}
 		}
 
@@ -144,12 +145,12 @@ namespace Vanubi {
 		}
 
 		public class CompletionBox : Grid {
-			string[] choices;
+			Annotated[] choices;
 			int index = 0;
 			Label label;
 			int n_render = 100; // too few means not all space is exploited, too many means more things to negotiate size with
 
-			public CompletionBox (owned string[] choices) {
+			public CompletionBox (owned Annotated[] choices) {
 				orientation = Orientation.HORIZONTAL;
 				this.choices = (owned) choices;
 				label = new Label (null);
@@ -172,7 +173,7 @@ namespace Vanubi {
 					var n = int.min (n_render, choices.length);
 					var s = new StringBuilder ();
 					for (int i=index,j=0; j < n; j++, i = (i+1)%choices.length) {
-						s.append (choices[i]);
+						s.append (choices[i].str);
 						s.append ("   ");
 					}
 					label.set_text (s.str);
@@ -189,14 +190,14 @@ namespace Vanubi {
 				update ();
 			}
 			
-			public unowned string? get_choice () {
+			public unowned Annotated? get_choice () {
 				if (choices.length == 0) {
 					return null;
 				}
 				return choices[index];
 			}
 
-			public unowned string[] get_choices () {
+			public unowned Annotated[] get_choices () {
 				return choices;
 			}
 		}

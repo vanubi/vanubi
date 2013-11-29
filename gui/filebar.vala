@@ -29,10 +29,10 @@ namespace Vanubi {
 
 		protected override async Annotated<File>[]? complete (string pattern, Cancellable cancellable) {
 			try {
-				var files = yield run_in_thread<File[]> ((c) => { return file_complete (pattern, c); }, cancellable);
+				var files = yield run_in_thread<GenericArray<File>> ((c) => { return file_complete (pattern, c); }, cancellable);
 				Annotated<File>[] res = null;
-				foreach (var file in files) {
-					res += Annotated<File> (file.get_path (), file);
+				for (var i=0; i < files.length; i++) {
+					res += new Annotated<File> (files[i].get_path (), files[i]);
 				}
 				return res;
 			} catch (Error e) {
