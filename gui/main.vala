@@ -591,7 +591,7 @@ namespace Vanubi {
 			bar.activate.connect ((text) => {
 					abort (editor);
 					conf.set_editor_int("tab_width", int.parse(text));
-					conf.save();
+					conf.save.begin ();
 			});
 			bar.aborted.connect (() => { abort (editor); });
 			add_overlay (bar);
@@ -605,7 +605,7 @@ namespace Vanubi {
 			bar.activate.connect ((text) => {
 					abort (editor);
 					conf.set_global_int("shell_scrollback", int.parse(text));
-					conf.save();
+					conf.save.begin ();
 			});
 			bar.aborted.connect (() => { abort (editor); });
 			add_overlay (bar);

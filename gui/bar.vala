@@ -81,23 +81,22 @@ namespace Vanubi {
 			this.choices = choices;
 		}
 
-		protected override async string[]? complete (string pattern, out string? common_choice, Cancellable cancellable) {
-			var worker = new MatchWorker (cancellable);
-			worker.set_pattern (pattern);
-			foreach (unowned string choice in choices) {
-				worker.enqueue (choice);
+		protected override async string[]? complete (string pattern, Cancellable cancellable) {
+			Annotated<string>[] a = null;
+			foreach (unowned string c in choices) {
+				a += Annotated<string?> (c, null);
 			}
 			try {
-				return yield worker.get_result (out common_choice);
-			} catch (IOError.CANCELLED e) {
-				return null;
+				a = yield run_in_thread<Annotated<string>[]> ((c) => { return pattern_match_many<string> (pattern, a, c); }, cancellable);
 			} catch (Error e) {
 				message (e.message);
-				common_choice = null;
 				return null;
-			} finally {
-				worker.terminate ();
 			}
+			string[] res = null;
+			foreach (unowned Annotated an in a) {
+				res += an.str;
+			}
+			return res;
 		}
 	}
 }

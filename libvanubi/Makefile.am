@@ -16,6 +16,7 @@ libvanubi_la_VALASOURCES = \
 	keys.vala \
 	matching.vala 	\
 	search.vala 	\
+	util.vala		\
 	$(NULL)
 
 libvanubi@PACKAGE_SUFFIX@_la_SOURCES = \

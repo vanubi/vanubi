@@ -48,8 +48,7 @@ namespace Vanubi {
 			}
 		}
 
-		protected virtual async string[]? complete (string pattern, out string? common_choice, Cancellable cancellable) {
-			common_choice = null;
+		protected virtual async string[]? complete (string pattern, Cancellable cancellable) {
 			return null;
 		}
 
@@ -94,7 +93,7 @@ namespace Vanubi {
 			var cancellable = current_completion = new Cancellable ();
 			complete.begin (entry.get_text (), cancellable, (s,r) => {
 					try {
-						var result = complete.end (r, out common_choice);
+						var result = complete.end (r);
 						cancellable.set_error_if_cancelled ();
 						cancellable = null;
 						if (completion_box != null) {

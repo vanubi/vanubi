@@ -27,9 +27,14 @@ namespace Vanubi {
 			entry.set_text(base_directory);
 		}
 
-		protected override async string[]? complete (string pattern, out string? common_choice, Cancellable cancellable) {
+		protected override async Annotated<File>[]? complete (string pattern, Cancellable cancellable) {
 			try {
-				return yield file_complete (base_directory, pattern, out common_choice, cancellable);
+				var files = yield run_in_thread<File[]> ((c) => { return file_complete (pattern, c); }, cancellable);
+				Annotated<File>[] res = null;
+				foreach (var file in files) {
+					res += Annotated<File> (file.get_path (), file);
+				}
+				return res;
 			} catch (Error e) {
 				return null;
 			}
