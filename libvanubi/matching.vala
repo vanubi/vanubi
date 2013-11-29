@@ -103,4 +103,15 @@ namespace Vanubi {
 		}
 		return result;
 	}
+
+	public void compute_common_prefix (string str, ref string prefix) {
+		var sl = str.length;
+		var pl = prefix.length;
+		for (var i=0; i < int.min(sl,pl); i++) {
+			if (str[i] != prefix[i]) {
+				prefix = str.substring (0, i-1);
+				break;
+			}
+		}
+	}
 }

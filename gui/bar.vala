@@ -81,7 +81,7 @@ namespace Vanubi {
 			this.choices = choices;
 		}
 
-		protected override async string[]? complete (string pattern, Cancellable cancellable) {
+		protected override async string[]? complete (string pattern, out string common_choice, Cancellable cancellable) {
 			Annotated<string>[] a = null;
 			foreach (unowned string c in choices) {
 				a += new Annotated<string?> (c, null);

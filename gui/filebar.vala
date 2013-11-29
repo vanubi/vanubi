@@ -27,7 +27,7 @@ namespace Vanubi {
 			entry.set_text(base_directory);
 		}
 
-		protected override async Annotated<File>[]? complete (string pattern, Cancellable cancellable) {
+		protected override async Annotated<File>[]? complete (string pattern, out string common_choice, Cancellable cancellable) {
 			try {
 				var absolute_pattern = absolute_path (base_directory, pattern);
 				var files = yield run_in_thread<GenericArray<File>> ((c) => { return file_complete (absolute_pattern, c); }, cancellable);
@@ -46,11 +46,17 @@ namespace Vanubi {
 						}
 					}
 				}
-				var common_prefix = string.joinv ("/", common_comps).length+1;
+				var common_comp_index = string.joinv ("/", common_comps).length+1;
 				Annotated<File>[] res = null;
 				// only display the uncommon part of the files
 				for (var i=0; i < files.length; i++) {
-					res += new Annotated<File> (files[i].get_path().substring(common_prefix), files[i]);
+					res += new Annotated<File> (files[i].get_path().substring(common_comp_index), files[i]);
+				}
+
+				// common choice
+				common_choice = files[0].get_path ();
+				for (var i=1; i < files.length; i++) {
+					compute_common_prefix (files[i].get_path(), ref common_choice);
 				}
 				return res;
 			} catch (Error e) {
@@ -58,14 +64,11 @@ namespace Vanubi {
 			}
 		}
 
+		// choice must be an absolute path
 		protected override string get_pattern_from_choice (string original_pattern, string choice) {
 			string absolute_pattern = absolute_path (base_directory, original_pattern);
 			int choice_seps = count (choice, '/');
 			int pattern_seps = count (absolute_pattern, '/');
-			if (choice[0] != '/' && choice[choice.length-1] == '/') {
-				// relative
-				choice_seps--;
-			}
 			int keep_seps = pattern_seps - choice_seps;
 
 			int idx = 0;
