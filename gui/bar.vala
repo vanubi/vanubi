@@ -81,21 +81,27 @@ namespace Vanubi {
 			this.choices = choices;
 		}
 
-		protected override async string[]? complete (string pattern, out string common_choice, Cancellable cancellable) {
-			Annotated<string>[] a = null;
+		protected override async Annotated<string>[]? complete (string pattern, out string common_choice, Cancellable cancellable) {
+			var a = new GenericArray<Annotated<string>>();
 			foreach (unowned string c in choices) {
-				a += new Annotated<string?> (c, null);
+				a.add (new Annotated<string?> (c, null));
 			}
 			try {
-				a = yield run_in_thread<Annotated<string>[]> ((c) => { return pattern_match_many<string> (pattern, a, c); }, cancellable);
+				a = yield run_in_thread<GenericArray<Annotated<string>>> ((c) => { return pattern_match_many<string> (pattern, a.data, c); }, cancellable);
 			} catch (Error e) {
 				message (e.message);
 				return null;
 			}
-			string[] res = null;
-			foreach (unowned Annotated an in a) {
-				res += an.str;
+
+			if (a.length > 0) {
+				common_choice = a[0].str;
+				for (var i=1; i < a.length; i++) {
+					compute_common_prefix (a[i].str, ref common_choice);
+				}
 			}
+
+			var res = (owned)a.data;
+			a.data.length = 0; // recent vala bug fix
 			return res;
 		}
 	}

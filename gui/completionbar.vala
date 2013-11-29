@@ -78,6 +78,7 @@ namespace Vanubi {
 			if (allow_new_value || choice == null) {
 				activate (entry.get_text ());
 			} else {
+				// FIXME: should not be here
 				activate (choice.obj.get_path ());
 			}
 		}

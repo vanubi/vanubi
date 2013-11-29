@@ -36,6 +36,8 @@ namespace Vanubi {
 				}
 				// compute common prefix
 				string[] common_comps = files[0].get_path().split("/");
+				common_comps[common_comps.length-1] = null;
+				common_comps.length--;
 				for (var i=1; i < files.length; i++) {
 					var comps = files[i].get_path().split("/");
 					for (var j=0; j < int.min(common_comps.length, comps.length); j++) {
