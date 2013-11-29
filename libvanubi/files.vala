@@ -89,6 +89,75 @@ namespace Vanubi {
 		return res;
 	}
 
+	struct ShortComp {
+		string comp;
+		int files;
+	}
+	
+	void short_path_helper (Node<ShortComp?> node, GenericArray<string> res) {
+		unowned ShortComp? shortcomp = node.data;
+		if (shortcomp != null && shortcomp.files == 1) {
+			// build path up to root
+			var path = "";
+			unowned Node<ShortComp?> cur = node;
+			while (cur != null && cur.data != null) {
+				unowned ShortComp? curshortcomp = cur.data;
+				path += curshortcomp.comp+"/";
+				cur = cur.parent;
+			}
+			path.data[path.length-1] = '\0'; // remove trailing slash
+			res.add (path);
+			return;
+		}
+
+		unowned Node<ShortComp?> child = node.children;
+		while (child != null) {
+			short_path_helper (child, res);
+			child = child.next;
+		}
+	}
+	
+	public string[] short_paths (File[] files) {
+		// create a trie of file components
+		var root = new Node<ShortComp?> ();
+		foreach (var file in files) {
+			unowned Node<ShortComp?> cur = root;
+			var comps = file.get_path().split("/");
+			for (int i=comps.length-1; i >= 0; i--) {
+				unowned string comp = comps[i];
+				if (comp[0] == '\0') {
+					continue;
+				}
+				unowned Node<ShortComp?> child = cur.children;
+				while (child != null) {
+					unowned ShortComp? shortcomp = child.data;
+					if (shortcomp.comp == comp) {
+						shortcomp.files++;
+						cur = child;
+						break;
+					}
+					child = child.next;
+				}
+				if (child == null) {
+					ShortComp? shortcomp = ShortComp ();
+					shortcomp.comp = comp;
+					shortcomp.files = 1;
+					var newchild = new Node<ShortComp?> ((owned) shortcomp);
+					unowned Node<ShortComp?> refchild = newchild;
+					cur.append ((owned) newchild);
+					cur = refchild;
+				}
+			}
+		}
+		
+		GenericArray<string> work = new GenericArray<string> ();
+		// depth first search
+		short_path_helper (root, work);
+		var res = (owned) work.data;
+		work.data.length = 0; // vala bug
+		return res;
+	}
+	
 	public async string[]? file_complete (string base_directory, string pattern_path, out string? common_choice, Cancellable cancellable) throws Error {
 		common_choice = null;
 		var pattern = absolute_path (base_directory, pattern_path);

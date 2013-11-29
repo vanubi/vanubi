@@ -22,6 +22,7 @@ bool assert_indent (Buffer buffer, int line, int indent) {
 	var res = buffer.get_indent (line) == indent;
 	if (!res) {
 		message("Got indent %d instead of %d", buffer.get_indent (line), indent);
+		assert (buffer.get_indent (line) == indent);
 	}
 	return res;
 }
