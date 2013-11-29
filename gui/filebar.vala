@@ -29,10 +29,28 @@ namespace Vanubi {
 
 		protected override async Annotated<File>[]? complete (string pattern, Cancellable cancellable) {
 			try {
-				var files = yield run_in_thread<GenericArray<File>> ((c) => { return file_complete (pattern, c); }, cancellable);
+				var absolute_pattern = absolute_path (base_directory, pattern);
+				var files = yield run_in_thread<GenericArray<File>> ((c) => { return file_complete (absolute_pattern, c); }, cancellable);
+				if (files.length == 0) {
+					return null;
+				}
+				// compute common prefix
+				string[] common_comps = files[0].get_path().split("/");
+				for (var i=1; i < files.length; i++) {
+					var comps = files[i].get_path().split("/");
+					for (var j=0; j < int.min(common_comps.length, comps.length); j++) {
+						if (comps[j] != common_comps[j]) {
+							common_comps.length = j;
+							common_comps[j] = null;
+							break;
+						}
+					}
+				}
+				var common_prefix = string.joinv ("/", common_comps).length+1;
 				Annotated<File>[] res = null;
+				// only display the uncommon part of the files
 				for (var i=0; i < files.length; i++) {
-					res += new Annotated<File> (files[i].get_path (), files[i]);
+					res += new Annotated<File> (files[i].get_path().substring(common_prefix), files[i]);
 				}
 				return res;
 			} catch (Error e) {
