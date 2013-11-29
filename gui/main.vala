@@ -793,7 +793,7 @@ namespace Vanubi {
 					File file = null;
 					if (res != "*scratch*") {
 						foreach (unowned File f in files.get_keys ()) {
-							if (f.get_path().has_suffix (res)) {
+							if (f.get_path().has_suffix ("/"+res)) {
 								file = f;
 								break;
 							}
