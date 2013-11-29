@@ -15,16 +15,24 @@ StringBuffer setup () {
 	return buffer;
 }
 
-bool assert_indent (Buffer buffer, int line, int indent) {
+void assert_indent (Indent indenter, Buffer buffer, int line, int indent) {
 	var iter = buffer.line_start (line);
-	var indenter = new Indent_C (buffer);
 	indenter.indent (iter);
 	var res = buffer.get_indent (line) == indent;
 	if (!res) {
-		message("Got indent %d instead of %d", buffer.get_indent (line), indent);
+		message("Got indent %d instead of %d for line %d", buffer.get_indent (line), indent, line);
 		assert (buffer.get_indent (line) == indent);
 	}
-	return res;
+}
+
+void assert_indent_c (Buffer buffer, int line, int indent) {
+	var indenter = new Indent_C (buffer);
+	assert_indent (indenter, buffer, line, indent);
+}
+
+void assert_indent_asm (Buffer buffer, int line, int indent) {
+	var indenter = new Indent_Asm (buffer);
+	assert_indent (indenter, buffer, line, indent);
 }
 
 void test_simple () {
@@ -97,7 +105,8 @@ next
 
 multi (param1,
 param2) {
-body
+body1
+body2
 }
 
 try {
@@ -123,42 +132,42 @@ break;
 toplevel
 ");
 	var w = buffer.tab_width;
-	assert_indent (buffer, 0, 0);
-	assert_indent (buffer, 1, 0);
-	assert_indent (buffer, 2, w);
-	assert_indent (buffer, 3, w*2+1);
-	assert_indent (buffer, 4, 0);
+	assert_indent_c (buffer, 0, 0);
+	assert_indent_c (buffer, 1, 0);
+	assert_indent_c (buffer, 2, w);
+	assert_indent_c (buffer, 3, w*2+1);
+	assert_indent_c (buffer, 4, 0);
 	
-	assert_indent (buffer, 6, 0);
-	assert_indent (buffer, 7, w);
-	assert_indent (buffer, 8, w);
-	assert_indent (buffer, 9, 0);
+	assert_indent_c (buffer, 6, 0);
+	assert_indent_c (buffer, 7, w);
+	assert_indent_c (buffer, 8, w);
+	assert_indent_c (buffer, 9, 0);
 	
-	assert_indent (buffer, 11, 0);
-	assert_indent (buffer, 12, 7);
-	assert_indent (buffer, 13, 7);
-	assert_indent (buffer, 14, w);
-	assert_indent (buffer, 15, 0);
+	assert_indent_c (buffer, 11, 0);
+	assert_indent_c (buffer, 12, 7);
+	assert_indent_c (buffer, 13, w);
+	assert_indent_c (buffer, 14, w);
+	assert_indent_c (buffer, 15, 0);
 	
-	assert_indent (buffer, 17, 0);
-	assert_indent (buffer, 18, w);
-	assert_indent (buffer, 19, w*2);
-	assert_indent (buffer, 20, w);
-	assert_indent (buffer, 21, 0);
-	assert_indent (buffer, 22, w);
-	assert_indent (buffer, 23, 0);
+	assert_indent_c (buffer, 17, 0);
+	assert_indent_c (buffer, 18, w);
+	assert_indent_c (buffer, 19, w*2);
+	assert_indent_c (buffer, 20, w);
+	assert_indent_c (buffer, 21, 0);
+	assert_indent_c (buffer, 22, w);
+	assert_indent_c (buffer, 23, 0);
 	
-	assert_indent (buffer, 25, 0);
-	assert_indent (buffer, 26, w);
-	assert_indent (buffer, 27, 0);
+	assert_indent_c (buffer, 25, 0);
+	assert_indent_c (buffer, 26, w);
+	assert_indent_c (buffer, 27, 0);
 	
-	assert_indent (buffer, 29, 0);
-	assert_indent (buffer, 30, 0);
-	assert_indent (buffer, 31, w);
-	assert_indent (buffer, 32, w);
-	assert_indent (buffer, 33, 0);
-	assert_indent (buffer, 34, w);
-	assert_indent (buffer, 35, 0);		
+	assert_indent_c (buffer, 29, 0);
+	assert_indent_c (buffer, 30, 0);
+	assert_indent_c (buffer, 31, w);
+	assert_indent_c (buffer, 32, w);
+	assert_indent_c (buffer, 33, 0);
+	assert_indent_c (buffer, 34, w);
+	assert_indent_c (buffer, 35, 0);		
 }
 
 void test_lang_asm () {
@@ -172,14 +181,14 @@ enter
 ret
 ");
 	var w = buffer.tab_width;
-	assert_indent (buffer, 0, 0);
-	assert_indent (buffer, 1, w);
-	assert_indent (buffer, 2, 0);
-	assert_indent (buffer, 3, w);
-	assert_indent (buffer, 4, w);
-	assert_indent (buffer, 5, 0);
-	assert_indent (buffer, 6, w);
-	assert_indent (buffer, 7, w);
+	assert_indent_asm (buffer, 0, w);
+	assert_indent_asm (buffer, 1, w);
+	assert_indent_asm (buffer, 2, 0);
+	assert_indent_asm (buffer, 3, w);
+	assert_indent_asm (buffer, 4, w);
+	assert_indent_asm (buffer, 5, 0);
+	assert_indent_asm (buffer, 6, w);
+	assert_indent_asm (buffer, 7, w);
 }
 	
 int main (string[] args) {

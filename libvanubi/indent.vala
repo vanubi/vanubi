@@ -413,12 +413,12 @@ namespace Vanubi {
 					paren_iter.forward_char ();
 				}
 				paren_iter.forward_spaces ();
-				if (paren_iter.eol || paren_iter.line < prev_line) {
+				if (paren_iter.line != prev_line || paren_iter.eol || paren_iter.line > prev_line) {
 					new_indent = buf.get_indent (paren_iter.line) + unclosed * tab_width;
 				} else {
 					new_indent = paren_iter.effective_line_offset-1;
 				}
-			}
+			}		 
 		
 			// unindent
 			var closed = count_closed (line);
