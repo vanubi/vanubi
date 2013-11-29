@@ -16,13 +16,8 @@ void test_abspath () {
 	assert (absolute_path ("/foo/", "bar/") == "/foo/bar/");
 }
 
-void assert_sp (string[] orig, string[] expected) {
-	File[]? files = null;
-	foreach (unowned string o in orig) {
-		files += File.new_for_path (o);
-	}
-	
-	var shorts = short_paths (files);	
+void assert_sp (string[] files, string[] expected) {
+	var shorts = short_paths (files);
 	assert (shorts.length == expected.length);
 	foreach (unowned string s in shorts) {
 		assert (s in expected);
@@ -33,6 +28,7 @@ void test_short_paths () {
 	assert_sp ({"/foo/a", "/foo/b"}, {"a", "b"});
 	assert_sp ({"/foo/a", "/bar/a"}, {"foo/a", "bar/a"});
 	assert_sp ({"/bar/foo/a", "/baz/foo/a"}, {"bar/foo/a", "baz/foo/a"});
+	assert_sp ({"/foo/foo/a", "/foo/bar/a"}, {"foo/a", "bar/a"});
 }
 
 int main (string[] args) {

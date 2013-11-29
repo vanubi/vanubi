@@ -117,12 +117,12 @@ namespace Vanubi {
 		}
 	}
 	
-	public string[] short_paths (File[] files) {
+	public string[] short_paths (string[] files) {
 		// create a trie of file components
 		var root = new Node<ShortComp?> ();
-		foreach (var file in files) {
+		foreach (unowned string file in files) {
 			unowned Node<ShortComp?> cur = root;
-			var comps = file.get_path().split("/");
+			var comps = file.split("/");
 			for (int i=comps.length-1; i >= 0; i--) {
 				unowned string comp = comps[i];
 				if (comp[0] == '\0') {
