@@ -26,11 +26,9 @@ namespace Vanubi {
 		CompletionBox completion_box;
 		Cancellable current_completion;
 		bool navigated = false;
-		bool allow_new_value;
 		bool changed = true;
 
-		public CompletionBar (bool allow_new_value) {
-			this.allow_new_value = allow_new_value;
+		public CompletionBar () {
 			entry.changed.connect (on_changed);
 		}
 

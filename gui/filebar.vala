@@ -24,7 +24,6 @@ namespace Vanubi {
 		string base_directory;
 
 		public FileBar (File? base_file) {
-			base (true);
 			base_directory = get_base_directory (base_file);
 			entry.set_text(base_directory);
 		}

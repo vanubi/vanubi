@@ -77,7 +77,6 @@ namespace Vanubi {
 		Annotated[] choices;
 
 		public SwitchBufferBar (Annotated[] choices) {
-			base (false);
 			this.choices = choices;
 		}
 
