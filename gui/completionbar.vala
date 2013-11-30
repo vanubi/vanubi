@@ -20,8 +20,8 @@
 using Gtk;
 
 namespace Vanubi {
-	class CompletionBar : EntryBar {
-		string original_pattern;
+	class CompletionBar<G> : EntryBar {
+		protected string original_pattern;
 		string? common_choice;
 		CompletionBox completion_box;
 		Cancellable current_completion;
@@ -57,9 +57,13 @@ namespace Vanubi {
 			return choice;
 		}
 
-		void set_choice () {
-			Annotated<File> choice = completion_box.get_choice ();
-			entry.set_text (get_pattern_from_choice (original_pattern, choice.obj.get_path ()));
+		public G get_choice () {
+			return completion_box.get_choice().obj;
+		}
+		
+		protected virtual void set_choice_to_entry () {
+			Annotated choice = completion_box.get_choice ();
+			entry.set_text (choice.str);
 			entry.move_cursor (MovementStep.BUFFER_ENDS, 1, false);
 		}
 
@@ -71,16 +75,6 @@ namespace Vanubi {
 				if (new_pattern == original_pattern) {
 					entry.get_style_context().add_class ("error");
 				}				
-			}
-		}
-
-		protected override void on_activate () {
-			unowned Annotated<File> choice = completion_box.get_choice ();
-			if (allow_new_value || choice == null) {
-				activate (entry.get_text ());
-			} else {
-				// FIXME: should not be here
-				activate (choice.obj.get_path ());
 			}
 		}
 
@@ -103,7 +97,7 @@ namespace Vanubi {
 							remove (completion_box);
 						}
 						if (result != null) {
-							completion_box = new CompletionBox (result);
+							completion_box = new CompletionBox<G> (result);
 							attach_next_to (completion_box, entry, PositionType.TOP, 1, 1);
 							show_all ();
 						}
@@ -129,10 +123,10 @@ namespace Vanubi {
 			} else if (e.keyval == Gdk.Key.Tab) {
 				if (completion_box.get_choices().length > 0) {
 					if (navigated || completion_box.get_choices().length == 1) {
-						set_choice ();
+						set_choice_to_entry ();
 					} else {
 						if (!changed) {
-							set_choice ();
+							set_choice_to_entry ();
 						} else {
 							changed = false;
 							set_common_pattern ();
@@ -146,7 +140,7 @@ namespace Vanubi {
 			return false;
 		}
 
-		public class CompletionBox : Grid {
+		public class CompletionBox<G> : Grid {
 			Annotated[] choices;
 			int index = 0;
 			Label label;
@@ -192,7 +186,7 @@ namespace Vanubi {
 				update ();
 			}
 			
-			public unowned Annotated? get_choice () {
+			public unowned Annotated<G>? get_choice () {
 				if (choices.length == 0) {
 					return null;
 				}

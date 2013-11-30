@@ -444,10 +444,10 @@ namespace Vanubi {
 			return ret;
 		}
 
-		string[] get_file_names () {
-			string[] ret = {"*scratch*"};
+		File[] get_files () {
+			File[] ret = null;
 			foreach (unowned File file in files.get_keys ()) {
-				ret += file.get_path ();
+				ret += file;
 			}
 			return ret;
 		}
@@ -796,22 +796,12 @@ namespace Vanubi {
 		}
 
 		void on_switch_buffer (Editor editor) {
-			var sp = short_paths (get_file_names ());
-			var bar = new SwitchBufferBar (sp);
-			bar.activate.connect ((res) => {
+			var sp = short_paths (get_files ());
+			sp += new Annotated<File?> ("*scratch*", null);
+			var bar = new SwitchBufferBar<File> (sp);
+			bar.activate.connect (() => {
 					abort (editor);
-					if (res == "") {
-						return;
-					}
-					File file = null;
-					if (res != "*scratch*") {
-						foreach (unowned File f in files.get_keys ()) {
-							if (f.get_path().has_suffix ("/"+res)) {
-								file = f;
-								break;
-							}
-						}
-					}
+					var file = bar.get_choice();
 					if (file == editor.file) {
 						// no-op
 						return;

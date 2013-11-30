@@ -17,8 +17,10 @@
  *  along with Vanubi.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+using Gtk;
+
 namespace Vanubi {
-	class FileBar : CompletionBar {
+	class FileBar : CompletionBar<File> {
 		string base_directory;
 
 		public FileBar (File? base_file) {
@@ -82,6 +84,12 @@ namespace Vanubi {
 			return res;
 		}
 
+		protected override void set_choice_to_entry () {
+			File choice = get_choice ();
+			entry.set_text (get_pattern_from_choice (original_pattern, choice.get_path ()));
+			entry.move_cursor (MovementStep.BUFFER_ENDS, 1, false);
+		}
+		
 		// choice must be an absolute path
 		protected override string get_pattern_from_choice (string original_pattern, string choice) {
 			string absolute_pattern = absolute_path (base_directory, original_pattern);

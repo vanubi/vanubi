@@ -79,12 +79,13 @@ namespace Vanubi {
 
 	struct ShortComp {
 		string comp;
-		int files;
+		int clashes;
+		File file;
 	}
 	
-	void short_path_helper (Node<ShortComp?> node, GenericArray<string> res) {
+	void short_path_helper (Node<ShortComp?> node, GenericArray<Annotated<File>> res) {
 		unowned ShortComp? shortcomp = node.data;
-		if (shortcomp != null && shortcomp.files == 1) {
+		if (shortcomp != null && shortcomp.clashes == 0) {
 			// build path up to root
 			var path = "";
 			unowned Node<ShortComp?> cur = node;
@@ -94,7 +95,7 @@ namespace Vanubi {
 				cur = cur.parent;
 			}
 			path.data[path.length-1] = '\0'; // remove trailing slash
-			res.add (path);
+			res.add (new Annotated<File> (path, shortcomp.file));
 			return;
 		}
 
@@ -105,12 +106,12 @@ namespace Vanubi {
 		}
 	}
 	
-	public string[] short_paths (string[] files) {
+	public Annotated<File>[] short_paths (File[] files) {
 		// create a trie of file components
 		var root = new Node<ShortComp?> ();
-		foreach (unowned string file in files) {
+		foreach (unowned File file in files) {
 			unowned Node<ShortComp?> cur = root;
-			var comps = file.split("/");
+			var comps = file.get_path().split("/");
 			for (int i=comps.length-1; i >= 0; i--) {
 				unowned string comp = comps[i];
 				if (comp[0] == '\0') {
@@ -120,7 +121,7 @@ namespace Vanubi {
 				while (child != null) {
 					unowned ShortComp? shortcomp = child.data;
 					if (shortcomp.comp == comp) {
-						shortcomp.files++;
+						shortcomp.clashes++;
 						cur = child;
 						break;
 					}
@@ -129,7 +130,8 @@ namespace Vanubi {
 				if (child == null) {
 					ShortComp? shortcomp = ShortComp ();
 					shortcomp.comp = comp;
-					shortcomp.files = 1;
+					shortcomp.clashes = 0;
+					shortcomp.file = file;
 					var newchild = new Node<ShortComp?> ((owned) shortcomp);
 					unowned Node<ShortComp?> refchild = newchild;
 					cur.append ((owned) newchild);
@@ -138,7 +140,7 @@ namespace Vanubi {
 			}
 		}
 		
-		GenericArray<string> work = new GenericArray<string> ();
+		GenericArray<Annotated<File>> work = new GenericArray<Annotated<File>> ();
 		// depth first search
 		short_path_helper (root, work);
 		var res = (owned) work.data;

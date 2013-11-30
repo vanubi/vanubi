@@ -73,36 +73,33 @@ namespace Vanubi {
 	class EditorInfoBar : Grid {
 	}
 
-	class SwitchBufferBar : CompletionBar {
-		string[] choices;
+	class SwitchBufferBar<G> : CompletionBar<G> {
+		Annotated[] choices;
 
-		public SwitchBufferBar (string[] choices) {
+		public SwitchBufferBar (Annotated[] choices) {
 			base (false);
 			this.choices = choices;
 		}
 
-		protected override async Annotated<string>[]? complete (string pattern, out string common_choice, Cancellable cancellable) {
+		protected override async Annotated[]? complete (string pattern, out string common_choice, Cancellable cancellable) {
 			common_choice = pattern;
-			var a = new GenericArray<Annotated<string>>();
-			foreach (unowned string c in choices) {
-				a.add (new Annotated<string?> (c, null));
-			}
+			GenericArray<Annotated<G>> matches;
 			try {
-				a = yield run_in_thread<GenericArray<Annotated<string>>> ((c) => { return pattern_match_many<string> (pattern, a.data, c); }, cancellable);
-			} catch (Error e) {				
+				matches = yield run_in_thread ((c) => { return pattern_match_many<G> (pattern, choices, c); }, cancellable);
+			} catch (Error e) {
 				message (e.message);
 				return null;
 			}
 
-			if (a.length > 0) {
-				common_choice = a[0].str;
-				for (var i=1; i < a.length; i++) {
-					compute_common_prefix (a[i].str, ref common_choice);
+			if (matches.length > 0) {
+				common_choice = matches[0].str;
+				for (var i=1; i < matches.length; i++) {
+					compute_common_prefix (matches[i].str, ref common_choice);
 				}
 			}
 
-			var res = (owned)a.data;
-			a.data.length = 0; // recent vala bug fix
+			var res = (owned)matches.data;
+			matches.data.length = 0; // recent vala bug fix
 			return res;
 		}
 	}
