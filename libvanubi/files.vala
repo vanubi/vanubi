@@ -38,9 +38,17 @@ namespace Vanubi {
 				a += new Annotated<File> (info.get_name (), file.get_child (info.get_name ()));
 			}
 			cancellable.set_error_if_cancelled ();
-			var res = pattern_match_many<File> (pattern[index], a, cancellable);
-			for (var i=0; i < res.length; i++) {
-				matches += res[i].obj;
+			if (pattern[index] == "") {
+				// keep file order
+				foreach (var an in a) {
+					matches += an.obj;
+				}
+			} else {
+				// pattern match
+				var res = pattern_match_many<File> (pattern[index], a, cancellable);
+				foreach (var an in res.data) {
+					matches += an.obj;
+				}
 			}
 		} catch (Error e) {
 			// ignore errors due to file permissions
