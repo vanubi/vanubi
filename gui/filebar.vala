@@ -32,9 +32,11 @@ namespace Vanubi {
 				var absolute_pattern = absolute_path (base_directory, pattern);
 				var files = yield run_in_thread<GenericArray<File>> ((c) => { return file_complete (absolute_pattern, c); }, cancellable);
 				if (files.length == 0) {
+					common_choice = pattern;
 					return null;
 				}
-				// compute common prefix
+				
+				// Common base directory
 				string[] common_comps = files[0].get_path().split("/");
 				common_comps[common_comps.length-1] = null;
 				common_comps.length--;
@@ -56,10 +58,23 @@ namespace Vanubi {
 				}
 
 				// common choice
+				// 1. compute the common prefix among all files
 				common_choice = files[0].get_path ();
 				for (var i=1; i < files.length; i++) {
 					compute_common_prefix (files[i].get_path(), ref common_choice);
 				}
+				// 2. if the common prefix is shorter than the pattern, fill missing pieces with components from the pattern
+				var pat_comps = absolute_pattern.split("/");
+				var prefix_comps = common_choice.split("/");
+				for (var i=0; i < prefix_comps.length; i++) {
+					if (pat_comps[i].length > prefix_comps[i].length) {
+						prefix_comps[i] = pat_comps[i];
+					}
+				}
+				for (var i=prefix_comps.length; i < pat_comps.length; i++) {
+					prefix_comps += pat_comps[i];
+				}
+				common_choice = string.joinv ("/", prefix_comps);
 				return res;
 			} catch (Error e) {
 				return null;
