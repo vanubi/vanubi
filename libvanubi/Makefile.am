@@ -11,6 +11,7 @@ lib_LTLIBRARIES = libvanubi@PACKAGE_SUFFIX@.la
 
 libvanubi_la_VALASOURCES = \
 	config.vala \
+	filelru.vala \
 	files.vala	\
 	indent.vala	\
 	keys.vala \
