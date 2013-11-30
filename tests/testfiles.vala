@@ -20,6 +20,9 @@ void assert_sp (string[] files, string[] expected) {
 	var shorts = short_paths (files);
 	assert (shorts.length == expected.length);
 	foreach (unowned string s in shorts) {
+		if (!(s in expected)) {
+			message ("%s not in expected", s);
+		}
 		assert (s in expected);
 	}
 }

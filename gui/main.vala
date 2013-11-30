@@ -93,6 +93,10 @@ namespace Vanubi {
 			index_command ("indent", "Indent the current line");
 			execute_command["indent"].connect (on_indent);
 
+			bind_command ({ Key (Gdk.Key.Tab, Gdk.ModifierType.CONTROL_MASK) }, "tab");
+			index_command ("tab", "Insert a tab", "deindent");
+			execute_command["tab"].connect (on_tab);
+
 			bind_command ({ Key (Gdk.Key.Return, 0) }, "return");
 			bind_command ({ Key (Gdk.Key.Return, Gdk.ModifierType.SHIFT_MASK) }, "return");
 			execute_command["return"].connect (on_return);
@@ -716,6 +720,15 @@ namespace Vanubi {
 			buf.insert_at_cursor ("\n", -1);
 			ed.view.scroll_mark_onscreen (buf.get_insert ());
 			execute_command["indent"] (ed, "indent");
+			buf.end_user_action ();
+		}
+
+		void on_tab (Editor ed) {
+			var buf = ed.view.buffer;
+			buf.begin_user_action ();		
+			buf.delete_selection (true, true);
+			buf.insert_at_cursor ("\t", -1);
+			ed.view.scroll_mark_onscreen (buf.get_insert ());
 			buf.end_user_action ();
 		}
 

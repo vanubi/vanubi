@@ -82,13 +82,14 @@ namespace Vanubi {
 		}
 
 		protected override async Annotated<string>[]? complete (string pattern, out string common_choice, Cancellable cancellable) {
+			common_choice = pattern;
 			var a = new GenericArray<Annotated<string>>();
 			foreach (unowned string c in choices) {
 				a.add (new Annotated<string?> (c, null));
 			}
 			try {
 				a = yield run_in_thread<GenericArray<Annotated<string>>> ((c) => { return pattern_match_many<string> (pattern, a.data, c); }, cancellable);
-			} catch (Error e) {
+			} catch (Error e) {				
 				message (e.message);
 				return null;
 			}

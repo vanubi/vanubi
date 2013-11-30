@@ -49,6 +49,7 @@ namespace Vanubi {
 		}
 
 		protected virtual async Annotated<File>[]? complete (string pattern, out string common_choice, Cancellable cancellable) {
+			common_choice = pattern;
 			return null;
 		}
 

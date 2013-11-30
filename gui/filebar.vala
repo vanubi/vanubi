@@ -28,57 +28,58 @@ namespace Vanubi {
 		}
 
 		protected override async Annotated<File>[]? complete (string pattern, out string common_choice, Cancellable cancellable) {
+			common_choice = pattern;
+			var absolute_pattern = absolute_path (base_directory, pattern);
+			GenericArray<File> files;
 			try {
-				var absolute_pattern = absolute_path (base_directory, pattern);
-				var files = yield run_in_thread<GenericArray<File>> ((c) => { return file_complete (absolute_pattern, c); }, cancellable);
+				files = yield run_in_thread<GenericArray<File>> ((c) => { return file_complete (absolute_pattern, c); }, cancellable);
 				if (files.length == 0) {
-					common_choice = pattern;
 					return null;
 				}
-				
-				// Common base directory
-				string[] common_comps = files[0].get_path().split("/");
-				common_comps[common_comps.length-1] = null;
-				common_comps.length--;
-				for (var i=1; i < files.length; i++) {
-					var comps = files[i].get_path().split("/");
-					for (var j=0; j < int.min(common_comps.length, comps.length); j++) {
-						if (comps[j] != common_comps[j]) {
-							common_comps.length = j;
-							common_comps[j] = null;
-							break;
-						}
-					}
-				}
-				var common_comp_index = string.joinv ("/", common_comps).length+1;
-				Annotated<File>[] res = null;
-				// only display the uncommon part of the files
-				for (var i=0; i < files.length; i++) {
-					res += new Annotated<File> (files[i].get_path().substring(common_comp_index), files[i]);
-				}
-
-				// common choice
-				// 1. compute the common prefix among all files
-				common_choice = files[0].get_path ();
-				for (var i=1; i < files.length; i++) {
-					compute_common_prefix (files[i].get_path(), ref common_choice);
-				}
-				// 2. if the common prefix is shorter than the pattern, fill missing pieces with components from the pattern
-				var pat_comps = absolute_pattern.split("/");
-				var prefix_comps = common_choice.split("/");
-				for (var i=0; i < prefix_comps.length; i++) {
-					if (pat_comps[i].length > prefix_comps[i].length) {
-						prefix_comps[i] = pat_comps[i];
-					}
-				}
-				for (var i=prefix_comps.length; i < pat_comps.length; i++) {
-					prefix_comps += pat_comps[i];
-				}
-				common_choice = string.joinv ("/", prefix_comps);
-				return res;
 			} catch (Error e) {
 				return null;
 			}
+				
+			// Common base directory
+			string[] common_comps = files[0].get_path().split("/");
+			common_comps[common_comps.length-1] = null;
+			common_comps.length--;
+			for (var i=1; i < files.length; i++) {
+				var comps = files[i].get_path().split("/");
+				for (var j=0; j < int.min(common_comps.length, comps.length); j++) {
+					if (comps[j] != common_comps[j]) {
+						common_comps.length = j;
+						common_comps[j] = null;
+						break;
+					}
+				}
+			}
+			var common_comp_index = string.joinv ("/", common_comps).length+1;
+			Annotated<File>[] res = null;
+			// only display the uncommon part of the files
+			for (var i=0; i < files.length; i++) {
+				res += new Annotated<File> (files[i].get_path().substring(common_comp_index), files[i]);
+			}
+
+			// common choice
+			// 1. compute the common prefix among all files
+			common_choice = files[0].get_path ();
+			for (var i=1; i < files.length; i++) {
+				compute_common_prefix (files[i].get_path(), ref common_choice);
+			}
+			// 2. if the common prefix is shorter than the pattern, fill missing pieces with components from the pattern
+			var pat_comps = absolute_pattern.split("/");
+			var prefix_comps = common_choice.split("/");
+			for (var i=0; i < prefix_comps.length; i++) {
+				if (pat_comps[i].length > prefix_comps[i].length) {
+					prefix_comps[i] = pat_comps[i];
+				}
+			}
+			for (var i=prefix_comps.length; i < pat_comps.length; i++) {
+				prefix_comps += pat_comps[i];
+			}
+			common_choice = string.joinv ("/", prefix_comps);
+			return res;
 		}
 
 		// choice must be an absolute path
