@@ -58,8 +58,13 @@ namespace Vanubi {
 			var common_comp_index = string.joinv ("/", common_comps).length+1;
 			Annotated<File>[] res = null;
 			// only display the uncommon part of the files
-			for (var i=0; i < files.length; i++) {
-				res += new Annotated<File> (files[i].get_path().substring(common_comp_index), files[i]);
+			foreach (var file in files.data) {
+				var path = file.get_path().substring(common_comp_index);
+				if (file.query_file_type (FileQueryInfoFlags.NONE) == FileType.DIRECTORY) {
+					// append / for hinting the user that this is a directory
+					path += "/";
+				}
+				res += new Annotated<File> (path, file);
 			}
 
 			// common choice
