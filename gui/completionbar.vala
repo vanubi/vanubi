@@ -151,6 +151,7 @@ namespace Vanubi {
 				this.choices = (owned) choices;
 				label = new Label (null);
 				#if GTK_3_10
+				// FIXME: do not center the label :-(
 				label.wrap = true;
 				label.wrap_mode = Pango.WrapMode.WORD;
 				label.set_lines (2);
