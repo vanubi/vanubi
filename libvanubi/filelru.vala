@@ -32,13 +32,10 @@ namespace Vanubi {
 		public void use (File f) {
 			// bring to head
 			List<File>* link = lru.find_custom (f, filecmp);
-			if (link == null) {
-				lru.prepend (f);
-			} else {
-				lru.remove_link (link);
-				link->next = (owned) lru;
-				lru = (owned) link;
+			if (link != null) {
+				lru.delete_link (link);
 			}
+			lru.prepend (f);
 		}
 		
 		public void remove (File f) {

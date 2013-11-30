@@ -49,6 +49,10 @@ void test_lru () {
 	lru.use (File.new_for_path ("/foo"));
 	assert (lru.list().data.equal (File.new_for_path ("/foo")));
 	assert (lru.list().length() == 2);
+	
+	lru.remove (File.new_for_path ("/foo"));
+	assert (lru.list().data.equal (File.new_for_path ("/bar")));
+	assert (lru.list().length() == 1);
 }
 
 int main (string[] args) {
