@@ -99,6 +99,25 @@ namespace Vanubi {
 #endif
 	}
 
+	public class EditorContainer : EventBox {
+		public Editor editor {
+			get {
+				return (Editor) get_child ();
+			}
+			set {
+				add (value);
+			}
+		}
+		
+		public EditorContainer (Editor? ed) {
+			editor = ed;
+		}
+		
+		public override void grab_focus () {
+			editor.grab_focus ();
+		}
+	}
+	
 	public class Editor : Grid {
 		Configuration conf;
 		public File file { get; private set; }

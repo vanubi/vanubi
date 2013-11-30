@@ -40,13 +40,13 @@ void test_short_paths () {
 
 void test_lru () {
 	var lru = new FileLRU ();
-	lru.use (File.new_for_path ("/foo"));
+	lru.used (File.new_for_path ("/foo"));
 	assert (lru.list().data.equal (File.new_for_path ("/foo")));
 	
-	lru.use (File.new_for_path ("/bar"));
+	lru.used (File.new_for_path ("/bar"));
 	assert (lru.list().data.equal (File.new_for_path ("/bar")));
 	
-	lru.use (File.new_for_path ("/foo"));
+	lru.used (File.new_for_path ("/foo"));
 	assert (lru.list().data.equal (File.new_for_path ("/foo")));
 	assert (lru.list().length() == 2);
 	

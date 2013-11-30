@@ -29,7 +29,7 @@ namespace Vanubi {
 			return -1;
 		}
 		
-		public void use (File f) {
+		public void used (File f) {
 			// bring to head
 			List<File>* link = lru.find_custom (f, filecmp);
 			if (link != null) {

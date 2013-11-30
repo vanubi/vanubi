@@ -210,8 +210,9 @@ namespace Vanubi {
 			
 			// setup empty buffer
 			unowned Editor ed = get_available_editor (null);
-			add (ed);
-			ed.grab_focus ();
+			var container = new EditorContainer (ed);
+			add (container);
+			container.grab_focus ();
 		}
 		
 		public void on_command (Editor ed, string command) {
@@ -277,10 +278,10 @@ namespace Vanubi {
 				r.show_all ();
 			}
 			// HACK: SourceView bug
-			if (old is Editor) {
+			/*if (old is Editor) {
 				add (old);
 				old.hide ();
-			}
+			}*/
 		}
 
 		public void detach_editors (owned Widget w) {
@@ -820,9 +821,10 @@ namespace Vanubi {
 			// get bounding box of the editor
 			Allocation alloc;
 			editor.get_allocation (out alloc);
-			// unparent the editor
-			var parent = (Container) editor.get_parent ();
-			parent.remove (editor);
+			// unparent the editor container
+			var container = editor.get_parent ();
+			var parent = (Container) container.get_parent ();
+			parent.remove (container);
 			// create the GUI split
 			var paned = new Paned (command == "split-add-right" ? Orientation.HORIZONTAL : Orientation.VERTICAL);
 			paned.expand = true;
@@ -830,18 +832,20 @@ namespace Vanubi {
 			paned.position = command == "split-add-right" ? alloc.width/2 : alloc.height/2;
 			parent.add (paned);
 
-			// pack the old editor
-			paned.pack1 (editor, true, false);
+			// pack the old editor container
+			paned.pack1 (container, true, false);
 			editor.grab_focus ();
 
-			// get an editor for the same field
+			// get an editor for the same file
 			var ed = get_available_editor (editor.file);
-			if (ed.get_parent () != null) {
+			if (ed.get_parent() != null) {
 				// ensure the new editor is unparented
 				((Container) ed.get_parent ()).remove (ed);
 			}
-			// pack the new editor
-			paned.pack2 (ed, true, false);
+			// create a new container
+			var newcontainer = new EditorContainer (ed);
+			// pack the new editor container
+			paned.pack2 (newcontainer, true, false);
 			paned.show_all ();
 		}
 
@@ -914,20 +918,20 @@ namespace Vanubi {
 					}
 				}
 
-			} else if (node is Editor) {
+			} else if (node is EditorContainer) {
 
-				var e = (Editor)node;
+				var e = (EditorContainer)node;
 
 				if (!dir_up) {
 					/* Focus the editor */
-					e.grab_focus();
+					e.editor.grab_focus();
 				}
 			}
 		}
 
 		void on_switch_editor(Editor ed, string command)
 		{
-			var paned = ed.get_parent() as Paned;
+			var paned = ed.get_parent().get_parent() as Paned;
 			bool fwd = (command == "next-editor") ? true : false;
 
 			if (paned == null) { 
@@ -935,9 +939,9 @@ namespace Vanubi {
 				return;
 			}
 
-			var lchild = paned.get_child1() as Editor;
+			var lchild = paned.get_child1() as EditorContainer;
 
-			if (lchild != null && ed == lchild) { /* Left child */
+			if (lchild != null && ed == lchild.editor) { /* Left child */
 				find_editor((Widget)paned, true, true, fwd);
 			} else { /* Right child */
 				find_editor((Widget)paned, true, false, fwd);
@@ -945,7 +949,8 @@ namespace Vanubi {
 		}
 
 		void on_join_all (Editor editor) {
-			var paned = editor.get_parent () as Paned;
+			// parent of editor is an editor container
+			var paned = editor.get_parent().get_parent() as Paned;
 			if (paned == null) {
 				// already on front
 				return;
@@ -955,21 +960,23 @@ namespace Vanubi {
 			while (parent.get_parent() != this) {
 				parent = parent.get_parent ();
 			}
-			paned.remove (editor); // avoid detach
+			var container = editor.get_parent ();
+			paned.remove (container); // avoid detach
 			detach_editors (parent);
-			replace_widget (parent, editor);
+			replace_widget (parent, container);
 			editor.grab_focus ();
 		}
 
 		void on_join (Editor editor) {
-			var paned = (Container) editor.get_parent () as Paned;
+			var paned = editor.get_parent().get_parent() as Paned;
 			if (paned == null) {
 				// already on front
 				return;
 			}
-			paned.remove (editor);
+			var container = editor.get_parent ();
+			paned.remove (container);
 			detach_editors (paned);
-			replace_widget (paned, editor);
+			replace_widget (paned, container);
 			editor.grab_focus ();
 		}
 
