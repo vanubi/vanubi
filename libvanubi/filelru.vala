@@ -22,14 +22,21 @@ namespace Vanubi {
 	public class FileLRU {
 		List<File> lru = new List<File> ();
 		
-		static int filecmp (File f1, File f2) {
-			if (f1.equal (f2)) {
+		static int filecmp (File? f1, File? f2) {
+			if (f1 == f2) {
+				return 0;
+			}
+			if (f1 != null && f1.equal (f2)) {
 				return 0;
 			}
 			return -1;
 		}
+
+		public void append (File? f) {
+			lru.append (f);
+		}
 		
-		public void used (File f) {
+		public void used (File? f) {
 			// bring to head
 			List<File>* link = lru.find_custom (f, filecmp);
 			if (link != null) {
@@ -38,7 +45,7 @@ namespace Vanubi {
 			lru.prepend (f);
 		}
 		
-		public void remove (File f) {
+		public void remove (File? f) {
 			unowned List<File> link = lru.find_custom (f, filecmp);
 			if (link != null) {
 				lru.delete_link (link);
@@ -47,6 +54,12 @@ namespace Vanubi {
 		
 		public unowned List<File> list () {
 			return lru;
+		}
+		
+		public FileLRU copy () {
+			var res = new FileLRU ();
+			res.lru = lru.copy ();
+			return res;
 		}
 	}
 }

@@ -111,7 +111,8 @@ namespace Vanubi {
 		var root = new Node<ShortComp?> ();
 		foreach (unowned File file in files) {
 			unowned Node<ShortComp?> cur = root;
-			var comps = file.get_path().split("/");
+			var path = file != null ? file.get_path() : "*scratch*";
+			var comps = path.split("/");
 			for (int i=comps.length-1; i >= 0; i--) {
 				unowned string comp = comps[i];
 				if (comp[0] == '\0') {

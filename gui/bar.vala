@@ -81,6 +81,11 @@ namespace Vanubi {
 		}
 
 		protected override async Annotated[]? complete (string pattern, out string common_choice, Cancellable cancellable) {
+			if (pattern[0] == '\0') {
+				// needed for keeping the order of the file lru
+				return choices;
+			}
+			
 			common_choice = pattern;
 			GenericArray<Annotated<G>> matches;
 			try {

@@ -211,6 +211,7 @@ namespace Vanubi {
 			// setup empty buffer
 			unowned Editor ed = get_available_editor (null);
 			var container = new EditorContainer (ed);
+			container.lru.append (null); // *scratch*
 			add (container);
 			container.grab_focus ();
 		}
@@ -400,6 +401,25 @@ namespace Vanubi {
 				// map to the unique file instance
 				var f = files[file];
 				if (f == null) {
+					// update lru of all existing containers
+					unowned GenericArray<Editor> exeditors;
+					foreach (var exf in files.get_keys ()) {
+						exeditors = exf.get_data ("editors");
+						foreach (unowned Editor ed in exeditors.data) {
+							var container = ed.get_parent() as EditorContainer;
+							if (container != null) {
+								container.lru.append (file);
+							}
+						}
+					}
+					exeditors = scratch_editors;
+					foreach (unowned Editor ed in exeditors.data) {
+						var container = ed.get_parent() as EditorContainer;
+						if (container != null) {
+							container.lru.append (file);
+						}
+					}
+					
 					// this is a new file
 					files[file] = file;
 					var etors = new GenericArray<Editor> ();
@@ -536,6 +556,17 @@ namespace Vanubi {
 			if (editor.file == null) {
 				scratch_editors = new GenericArray<Editor> ();
 			} else {
+				// update all editors
+				foreach (var exf in files.get_keys ()) {
+					unowned GenericArray<Editor> exeditors = exf.get_data ("editors");
+					foreach (unowned Editor ed in exeditors.data) {
+						var container = ed.get_parent() as EditorContainer;
+						if (container != null) {
+							container.lru.remove (editor.file);
+						}
+					}
+				}
+
 				files.remove (editor.file);
 			}
 			unowned Editor ed = get_available_editor (next_file);
@@ -797,8 +828,7 @@ namespace Vanubi {
 		}
 
 		void on_switch_buffer (Editor editor) {
-			var sp = short_paths (get_files ());
-			sp += new Annotated<File?> ("*scratch*", null);
+			var sp = short_paths (editor.editor_container.get_files ());
 			var bar = new SwitchBufferBar<File> (sp);
 			bar.activate.connect (() => {
 					abort (editor);
@@ -844,6 +874,8 @@ namespace Vanubi {
 			}
 			// create a new container
 			var newcontainer = new EditorContainer (ed);
+			// inherit lru from existing editor
+			newcontainer.lru = editor.editor_container.lru.copy ();
 			// pack the new editor container
 			paned.pack2 (newcontainer, true, false);
 			paned.show_all ();

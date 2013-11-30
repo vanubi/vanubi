@@ -100,6 +100,8 @@ namespace Vanubi {
 	}
 
 	public class EditorContainer : EventBox {
+		public FileLRU lru = new FileLRU ();
+		
 		public Editor editor {
 			get {
 				return (Editor) get_child ();
@@ -115,6 +117,22 @@ namespace Vanubi {
 		
 		public override void grab_focus () {
 			editor.grab_focus ();
+		}
+
+		public override void remove (Widget w) {
+			if (editor != null) {
+				lru.used (editor.file);
+			}
+			base.remove (w);
+		}
+		
+		/* Get files in lru order */
+		public File[] get_files () {
+			File[] res = null;
+			foreach (var file in lru.list ()) {
+				res += file;
+			}
+			return res;
 		}
 	}
 	
@@ -205,6 +223,12 @@ namespace Vanubi {
 			}
 		}
 
+		public EditorContainer editor_container {
+			get {
+				return get_parent() as EditorContainer;
+			}
+		}
+		
 		/**
 		 * Returns true if the iter is neither a string nor a comment
 		 */
