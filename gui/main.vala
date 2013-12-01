@@ -29,6 +29,7 @@ namespace Vanubi {
 
 		internal KeyManager<Editor> keymanager;
 		string last_search_string = "";
+		string last_replace_string = "";
 
 		[Signal (detailed = true)]
 		public signal void execute_command (Editor editor, string command);
@@ -166,12 +167,20 @@ namespace Vanubi {
 			execute_command["backward-line"].connect (on_forward_backward_line);
 
 			bind_command ({ Key (Gdk.Key.s, Gdk.ModifierType.CONTROL_MASK) }, "search-forward");
-			index_command ("search-forward", "Search text forward incrementally", "incremental");
-			execute_command["search-forward"].connect (on_search_forward);
+			index_command ("search-forward", "Search text forward incrementally");
+			execute_command["search-forward"].connect (on_search_replace);
 
 			bind_command ({ Key (Gdk.Key.r, Gdk.ModifierType.CONTROL_MASK) }, "search-backward");
-			index_command ("search-backward", "Search text backward incrementally", "incremental");
-			execute_command["search-backward"].connect (on_search_backward);
+			index_command ("search-backward", "Search text backward incrementally");
+			execute_command["search-backward"].connect (on_search_replace);
+			
+			bind_command ({ Key (Gdk.Key.x, Gdk.ModifierType.CONTROL_MASK),
+							Key (Gdk.Key.r, 0) }, "replace-forward");
+			index_command ("replace-forward", "Replace text forward incrementally");
+			execute_command["replace-forward"].connect (on_search_replace);
+			
+			index_command ("replace-backward", "Replace text backward incrementally");
+			execute_command["replace-backward"].connect (on_search_replace);
 
 			bind_command ({ Key (Gdk.Key.k, Gdk.ModifierType.CONTROL_MASK) }, "kill-line");
 			index_command ("kill-line", "Delete the current line");
@@ -1012,36 +1021,32 @@ namespace Vanubi {
 			editor.grab_focus ();
 		}
 
-		void on_search_forward (Editor editor) {
-			var bar = new SearchBar (editor, last_search_string, SearchBar.Mode.FORWARD);
+		void on_search_replace (Editor editor, string command) {
+			SearchBar.Mode mode;
+			if (command == "search-forward") {
+				mode = SearchBar.Mode.SEARCH_FORWARD;
+			} else if (command == "search-backward") {
+				mode = SearchBar.Mode.SEARCH_BACKWARD;
+			} else if (command == "replace-forward") {
+				mode = SearchBar.Mode.REPLACE_FORWARD;
+			} else {
+				mode = SearchBar.Mode.REPLACE_BACKWARD;
+			}
+			var bar = new SearchBar (editor, mode, last_search_string, last_replace_string);
 			bar.activate.connect (() => {
 				last_search_string = bar.text;
+				last_replace_string = bar.replace_text;
 				abort (editor);
 			});
 			bar.aborted.connect (() => {
 				last_search_string = bar.text;
+				last_replace_string = bar.replace_text;
 				abort (editor);
 			});
 			add_overlay (bar);
 			bar.show ();
 			bar.grab_focus ();
 		}
-		
-		void on_search_backward (Editor editor) {
-			var bar = new SearchBar (editor, last_search_string, SearchBar.Mode.BACKWARD);
-			bar.activate.connect (() => {
-				last_search_string = bar.text;
-				abort (editor);
-			});
-			bar.aborted.connect (() => {
-				last_search_string = bar.text;
-				abort (editor);
-			});
-			add_overlay (bar);
-			bar.show ();
-			bar.grab_focus ();
-		}
-
 
 		void on_compile (Editor editor) {
 			var bar = new ShellBar (conf, editor.file);
