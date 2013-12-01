@@ -36,7 +36,8 @@ namespace Vanubi {
 		Entry replace_entry;
 		EventBox replace_box;
 		bool first_search = true;
-		bool started_replace = false;
+		bool is_replacing = false;
+		bool replace_complete = false;
 
 		public SearchBar (Editor editor, Mode mode, string search_initial = "", string replace_initial = "") {
 			base (search_initial);
@@ -72,7 +73,7 @@ namespace Vanubi {
 			if (mode == Mode.SEARCH_FORWARD || mode == Mode.SEARCH_BACKWARD) {
 				base.on_activate ();
 			} else {
-				started_replace = true;
+				is_replacing = true;
 				entry.hide ();
 				replace_entry.hide ();
 
@@ -156,17 +157,17 @@ namespace Vanubi {
 			
 			if (mode == Mode.REPLACE_FORWARD || mode == Mode.REPLACE_BACKWARD) {
 				var replace_label = (Label) replace_box.get_child ();
-				replace_label.set_markup ("Replaced occurrences till end of file");
-				replace_box.key_press_event.disconnect (on_key_press_event);
-				replace_box.key_press_event.connect (() => { aborted (); return true; });
+				replace_label.set_markup ("<b>Replaced occurrences till end of file</b>");
+				replace_complete = true;
 				return;
 			}
 			
 			if (mode == Mode.SEARCH_FORWARD) {
-				at_end_label = new Label ("No matches. C-s again to search from the top.");
+				at_end_label = new Label ("<b>No matches. C-s again to search from the top.</b>");
 			} else {
-				at_end_label = new Label ("No matches. C-r again to search from the bottom.");
+				at_end_label = new Label ("<b>No matches. C-r again to search from the bottom.</b>");
 			}			
+			at_end_label.use_markup = true;
 			attach_next_to (at_end_label, entry, PositionType.TOP, 1, 1);
 			show_all ();
 		}
@@ -209,31 +210,34 @@ namespace Vanubi {
 					search (iter);
 					return true;
 				}
-			} else if (started_replace && (mode == Mode.REPLACE_FORWARD || mode == Mode.REPLACE_BACKWARD)) {
-				if (e.keyval == Gdk.Key.r) {
-					// replace occurrence
-					var buf = editor.view.buffer;
-					buf.begin_user_action ();		
-					buf.delete_selection (true, true);
-					buf.insert_at_cursor (replace_text, -1);
-					TextIter iter;
-					buf.get_iter_at_mark (out iter, buf.get_insert ());
-					search (iter);
-					return true;
-				} else if (e.keyval == Gdk.Key.s) {
-					// skip occurrence
-					var buf = editor.view.buffer;
-					TextIter iter;
-					buf.get_iter_at_mark (out iter, buf.get_insert ());
-					iter.forward_char ();
-					search (iter);
-					return true;
-				} else if (e.keyval == Gdk.Key.Return) {
+			} else if (is_replacing && (mode == Mode.REPLACE_FORWARD || mode == Mode.REPLACE_BACKWARD)) {
+				if (!replace_complete) {
+					if (e.keyval == Gdk.Key.r) {
+						// replace occurrence
+						var buf = editor.view.buffer;
+						buf.begin_user_action ();		
+						buf.delete_selection (true, true);
+						buf.insert_at_cursor (replace_text, -1);
+						TextIter iter;
+						buf.get_iter_at_mark (out iter, buf.get_insert ());
+						search (iter);
+						return true;
+					} else if (e.keyval == Gdk.Key.s) {
+						// skip occurrence
+						var buf = editor.view.buffer;
+						TextIter iter;
+						buf.get_iter_at_mark (out iter, buf.get_insert ());
+						iter.forward_char ();
+						search (iter);
+						return true;
+					}
+				}
+				if (e.keyval == Gdk.Key.Return) {
 					activate (text);
 					return true;
 				}
 			}
-					
+
 			return base.on_key_press_event (e);
 		}
 	}
