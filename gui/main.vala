@@ -217,6 +217,10 @@ namespace Vanubi {
 			index_command ("set-shell-scrollback", "Maximum number of scrollback lines used by the terminal");
 			execute_command["set-shell-scrollback"].connect (on_set_shell_scrollback);
 			
+			bind_command ({ Key (Gdk.Key.j, Gdk.ModifierType.CONTROL_MASK) }, "goto-line");
+			index_command ("goto-line", "Jump to a line");
+			execute_command["goto-line"].connect (on_goto_line);
+			
 			// setup empty buffer
 			unowned Editor ed = get_available_editor (null);
 			var container = new EditorContainer (ed);
@@ -474,14 +478,6 @@ namespace Vanubi {
 			return ret;
 		}
 
-		File[] get_files () {
-			File[] ret = null;
-			foreach (unowned File file in files.get_keys ()) {
-				ret += file;
-			}
-			return ret;
-		}
-
 		/* events */
 
 		bool on_key_press_event (Widget w, Gdk.EventKey e) {
@@ -630,6 +626,24 @@ namespace Vanubi {
 			}
 		}
 
+		void on_goto_line (Editor editor) {
+			var bar = new EntryBar ();
+			bar.activate.connect ((text) => {
+					abort (editor);
+					if (text != "") {
+						var buf = editor.view.buffer;
+						TextIter iter;
+						buf.get_iter_at_line (out iter, int.parse (text));
+						buf.place_cursor (iter);
+						editor.view.scroll_to_mark (buf.get_insert (), 0, true, 0.5, 0.5);
+					}
+			});
+			bar.aborted.connect (() => { abort (editor); });
+			add_overlay (bar);
+			bar.show ();
+			bar.grab_focus ();
+		}
+		
 		void on_set_tab_width (Editor editor) {
 			var val = conf.get_editor_int("tab_width", 4);
 			var bar = new EntryBar (val.to_string());
