@@ -51,7 +51,6 @@ namespace Vanubi {
 			// setup search index synonyms
 			index = new StringSearchIndex ();
 			index.synonyms["exit"] = "quit";
-			index.synonyms["kill"] = "close";
 			index.synonyms["buffer"] = "file";
 			index.synonyms["editor"] = "file";
 			index.synonyms["switch"] = "change";
@@ -80,7 +79,7 @@ namespace Vanubi {
 					Key (Gdk.Key.x, Gdk.ModifierType.CONTROL_MASK),
 						Key (Gdk.Key.k, 0)},
 				"kill-buffer");
-			index_command ("kill-buffer", "Kill the current buffer");
+			index_command ("kill-buffer", "Close the current editor");
 			execute_command["kill-buffer"].connect (on_kill_buffer);
 
 			bind_command ({
