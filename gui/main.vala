@@ -264,7 +264,6 @@ namespace Vanubi {
 			self = null;
 		}
 
-		// TODO: show keybinding for this command
 		public void index_command (string command, string description, string? keywords = null) {
 			StringSearchDocument doc;
 			if (keywords != null) {
