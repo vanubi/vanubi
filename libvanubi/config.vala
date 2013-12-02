@@ -71,6 +71,13 @@ namespace Vanubi {
 				return default;
 			}
 		}
+		
+		public void remove_group_key (string group, string key) {
+			try {
+				backend.remove_key (group, key);
+			} catch (Error e) {
+			}
+		}
 
 		public void set_group_string (string group, string key, string value) {
 			backend.set_string (group, key, value);
@@ -103,6 +110,11 @@ namespace Vanubi {
 		public void set_file_string (File? file, string key, string value) {
 			var group = file != null ? file.get_uri () : "*scratch*";
 			backend.set_string (group, key, value);
+		}
+		
+		public void remove_file_key (File? file, string key) {
+			var group = file != null ? file.get_uri () : "*scratch*";
+			remove_group_key (group, key);
 		}
 		
 		public async void save () {

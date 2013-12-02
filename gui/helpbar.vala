@@ -21,13 +21,20 @@ using Gtk;
 
 namespace Vanubi {
 	class HelpBar : EntryBar {
+		public enum Type {
+			COMMAND,
+			LANGUAGE
+		}
+
 		unowned Manager manager;
 		CompletionBox completion_box;
+		Type type;
 
-		public HelpBar (Manager manager) {
+		public HelpBar (Manager manager, Type type) {
 			this.manager = manager;
+			this.type = type;
 			entry.changed.connect (on_changed);
-			completion_box = new CompletionBox (manager);
+			completion_box = new CompletionBox (manager, type);
 			attach_next_to (completion_box, entry, PositionType.TOP, 1, 1);
 			show_all ();
 		}
@@ -38,7 +45,12 @@ namespace Vanubi {
 		}
 
 		void search (string query) {
-			var result = manager.index.search (query, true);
+			List<SearchResultItem> result;
+			if (type == Type.COMMAND) {
+				result = manager.command_index.search (query, true);
+			} else {
+				result = manager.lang_index.search (query, true);
+			}
 			completion_box.set_docs (result);
 		}
 
@@ -63,9 +75,11 @@ namespace Vanubi {
 			ListStore store;
 			public TreeView view;
 			unowned Manager manager;
+			HelpBar.Type type;
 
-			public CompletionBox (Manager manager) {
+			public CompletionBox (Manager manager, Type type) {
 				this.manager = manager;
+				this.type = type;
 				store = new ListStore (3, typeof (string), typeof (string), typeof (string));
 				view = new TreeView.with_model (store);			
 				view.headers_visible = false;
@@ -73,9 +87,14 @@ namespace Vanubi {
 				sel.mode = SelectionMode.BROWSE;
 
 				Gtk.CellRendererText cell = new Gtk.CellRendererText ();
-				view.insert_column_with_attributes (-1, "Name", cell, "text", 0);
-				view.insert_column_with_attributes (-1, "Key", cell, "text", 1);
-				view.insert_column_with_attributes (-1, "Description", cell, "text", 2);
+				if (type == Type.COMMAND) {
+					view.insert_column_with_attributes (-1, "Name", cell, "text", 0);
+					view.insert_column_with_attributes (-1, "Key", cell, "text", 1);
+					view.insert_column_with_attributes (-1, "Description", cell, "text", 2);
+				} else {
+					view.insert_column_with_attributes (-1, "Id", cell, "text", 0);
+					view.insert_column_with_attributes (-1, "Name", cell, "text", 1);
+				}
 
 				var sw = new ScrolledWindow (null, null);
 				sw.expand = true;
@@ -109,14 +128,18 @@ namespace Vanubi {
 				store.clear ();
 				Gtk.TreeIter iter;
 				foreach (var item in items) {
-					var doc = (StringSearchDocument) item.doc;
-					var keys = manager.keymanager.get_binding (doc.name);
-					string keystring = "";
-					if (keys != null) {
-						keystring = keys_to_string (keys);
-					}
 					store.append (out iter);
-					store.set (iter, 0, doc.name, 1, keystring, 2, doc.fields[0]);
+					var doc = (StringSearchDocument) item.doc;
+					if (type == Type.COMMAND) {
+						var keys = manager.keymanager.get_binding (doc.name);
+						string keystring = "";
+						if (keys != null) {
+							keystring = keys_to_string (keys);
+						}
+						store.set (iter, 0, doc.name, 1, keystring, 2, doc.fields[0]);
+					} else {
+						store.set (iter, 0, doc.name, 1, doc.fields[0]);
+					}
 				}
 				// select first item
 				if (store.get_iter_first (out iter)) {

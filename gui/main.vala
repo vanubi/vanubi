@@ -41,19 +41,28 @@ namespace Vanubi {
 		public signal void quit ();
 
 		public Configuration conf;
-		public StringSearchIndex index;
+		public StringSearchIndex command_index;
+		public StringSearchIndex lang_index;
 
 		public Manager () {
 			conf = new Configuration ();
 			orientation = Orientation.VERTICAL;
 			keymanager = new KeyManager<Editor> (on_command);
 
+			// setup languages index
+			lang_index = new StringSearchIndex ();
+			var lang_manager = SourceLanguageManager.get_default ();
+			foreach (unowned string lang_id in lang_manager.language_ids) {
+				var lang = lang_manager.get_language (lang_id);
+				lang_index.index_document (new StringSearchDocument (lang_id, {lang.name, lang.section}));
+			}
+			
 			// setup search index synonyms
-			index = new StringSearchIndex ();
-			index.synonyms["exit"] = "quit";
-			index.synonyms["buffer"] = "file";
-			index.synonyms["editor"] = "file";
-			index.synonyms["switch"] = "change";
+			command_index = new StringSearchIndex ();
+			command_index.synonyms["exit"] = "quit";
+			command_index.synonyms["buffer"] = "file";
+			command_index.synonyms["editor"] = "file";
+			command_index.synonyms["switch"] = "change";
 
 			// setup commands
 			bind_command ({
@@ -228,6 +237,9 @@ namespace Vanubi {
 			index_command ("pipe-shell-clipboard", "Pass selected text to a shell command and copy the output to the clipboard");
 			execute_command["pipe-shell-clipboard"].connect (on_pipe_shell_clipboard);
 			
+			index_command ("set-language", "Set the highlight language for this file");
+			execute_command["set-language"].connect (on_set_language);
+			
 			// setup empty buffer
 			unowned Editor ed = get_available_editor (null);
 			var container = new EditorContainer (ed);
@@ -271,7 +283,7 @@ namespace Vanubi {
 			} else {
 				doc = new StringSearchDocument (command, {description});
 			}
-			index.index_document (doc);
+			command_index.index_document (doc);
 		}
 
 		public void bind_command (Key[] keyseq, string cmd) {
@@ -478,7 +490,13 @@ namespace Vanubi {
 				if (uncertain) {
 					content_type = null;
 				}
-				var lang = SourceLanguageManager.get_default().guess_language (file.get_path (), content_type);
+				var conf_lang_id = conf.get_file_string (file, "language");
+				SourceLanguage lang;
+				if (conf_lang_id != null) {
+					lang = SourceLanguageManager.get_default().get_language (conf_lang_id);
+				} else {
+					lang = SourceLanguageManager.get_default().guess_language (file.get_path (), content_type);
+				}
 				((SourceBuffer) ed.view.buffer).set_language (lang);
 			}
 			// let the Manager own the reference to the editor
@@ -523,7 +541,7 @@ namespace Vanubi {
 		}
 
 		void on_help (Editor editor) {
-			var bar = new HelpBar (this);
+			var bar = new HelpBar (this, HelpBar.Type.COMMAND);
 			bar.activate.connect ((cmd) => {
 					abort (editor);
 					execute_command[cmd] (editor, cmd);
@@ -533,7 +551,28 @@ namespace Vanubi {
 			bar.show ();
 			bar.grab_focus ();
 		}
-
+		
+		void on_set_language (Editor editor) {
+			var bar = new HelpBar (this, HelpBar.Type.LANGUAGE);
+			bar.activate.connect ((lang_id) => {
+					abort (editor);
+					var lang = SourceLanguageManager.get_default().get_language (lang_id);
+					if (lang != null) {
+						unowned GenericArray<Editor> editors = editor.file.get_data("editors");
+						foreach (unowned Editor ed in editors.data) {
+							((SourceBuffer) ed.view.buffer).set_language (lang);
+						}
+						conf.set_file_string (editor.file, "language", lang_id);
+					} else {
+						conf.remove_file_key (editor.file, "language");
+					}
+			});
+			bar.aborted.connect (() => { abort (editor); });
+			add_overlay (bar);
+			bar.show ();
+			bar.grab_focus ();
+		}
+		
 		void on_open_file (Editor editor) {
 			var bar = new FileBar (editor.file);
 			bar.activate.connect ((f) => {
