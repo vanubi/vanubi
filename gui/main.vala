@@ -301,10 +301,10 @@ namespace Vanubi {
 				r.show_all ();
 			}
 			// HACK: SourceView bug
-			/*if (old is Editor) {
+			if (old is Editor) {
 				add (old);
 				old.hide ();
-			}*/
+			}
 		}
 
 		public void detach_editors (owned Widget w) {
