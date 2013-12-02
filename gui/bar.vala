@@ -40,6 +40,27 @@ namespace Vanubi {
 			return false;
 		}
 	}
+	
+	public class MessageBar : Bar {
+		EventBox box;
+		
+		public MessageBar (string markup) {
+			box = new EventBox ();
+			box.set_above_child (true);
+			box.can_focus = true;
+			var label = new Label (markup);
+			label.use_markup = true;
+			box.add (label);
+
+			box.key_press_event.connect (on_key_press_event);
+			add (box);
+			show_all ();
+		}
+
+		public override void grab_focus () {
+			box.grab_focus ();
+		}
+	}
 
 	public class EntryBar : Bar {
 		protected Entry entry;

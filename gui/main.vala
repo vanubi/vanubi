@@ -30,6 +30,10 @@ namespace Vanubi {
 		internal KeyManager<Editor> keymanager;
 		string last_search_string = "";
 		string last_replace_string = "";
+		string last_pipe_command = "";
+		// Editor selection before calling a command
+		TextIter selection_start;
+		TextIter selection_end;
 
 		[Signal (detailed = true)]
 		public signal void execute_command (Editor editor, string command);
@@ -217,9 +221,13 @@ namespace Vanubi {
 			index_command ("set-shell-scrollback", "Maximum number of scrollback lines used by the terminal");
 			execute_command["set-shell-scrollback"].connect (on_set_shell_scrollback);
 			
-			bind_command ({ Key (Gdk.Key.j, Gdk.ModifierType.CONTROL_MASK) }, "goto-line");
+			bind_command ({ Key (Gdk.Key.x, Gdk.ModifierType.CONTROL_MASK),
+							Key (Gdk.Key.j, 0) }, "goto-line");
 			index_command ("goto-line", "Jump to a line");
 			execute_command["goto-line"].connect (on_goto_line);
+	
+			index_command ("pipe-shell-clipboard", "Pass selected text to a shell command and copy the output to the clipboard");
+			execute_command["pipe-shell-clipboard"].connect (on_pipe_shell_clipboard);
 			
 			// setup empty buffer
 			unowned Editor ed = get_available_editor (null);
@@ -230,6 +238,8 @@ namespace Vanubi {
 		}
 		
 		public void on_command (Editor ed, string command) {
+			var buf = ed.view.buffer;
+			buf.get_selection_bounds (out selection_start, out selection_end);
 			abort (ed);
 			execute_command[command] (ed, command);
 		}
@@ -394,6 +404,7 @@ namespace Vanubi {
 			pparent.remove (parent);
 			pparent.add (this);
 			editor.grab_focus ();
+
 			self = null;
 		}
 
@@ -562,13 +573,21 @@ namespace Vanubi {
 				scratch_editors = new GenericArray<Editor> ();
 			} else {
 				// update all editors
+				unowned GenericArray<Editor> exeditors;
 				foreach (var exf in files.get_keys ()) {
-					unowned GenericArray<Editor> exeditors = exf.get_data ("editors");
+					exeditors = exf.get_data ("editors");
 					foreach (unowned Editor ed in exeditors.data) {
 						var container = ed.get_parent() as EditorContainer;
 						if (container != null) {
 							container.lru.remove (editor.file);
 						}
+					}
+				}
+				exeditors = scratch_editors;
+				foreach (unowned Editor ed in exeditors.data) {
+					var container = ed.get_parent() as EditorContainer;
+					if (container != null) {
+						container.lru.remove (editor.file);
 					}
 				}
 
@@ -633,7 +652,7 @@ namespace Vanubi {
 					if (text != "") {
 						var buf = editor.view.buffer;
 						TextIter iter;
-						buf.get_iter_at_line (out iter, int.parse (text));
+						buf.get_iter_at_line (out iter, int.parse (text)-1);
 						buf.place_cursor (iter);
 						editor.view.scroll_to_mark (buf.get_insert (), 0, true, 0.5, 0.5);
 					}
@@ -684,6 +703,45 @@ namespace Vanubi {
 			ed.view.select_all(true);
 		}
 
+		void on_pipe_shell_clipboard (Editor ed) {
+			// get text
+			var start = selection_start;
+			var end = selection_end;
+			var buf = ed.view.buffer;
+			if (start.equal(end)) { // no selection
+				buf.get_start_iter (out start);
+				buf.get_end_iter (out end);
+			}
+			var text = buf.get_text (start, end, false);
+			
+			abort (ed);
+			
+			// prompt for shell command
+			var bar = new EntryBar (last_pipe_command);
+			bar.activate.connect ((command) => {
+					abort (ed);
+					if (text != "") {
+						last_pipe_command = command;
+						execute_command_async.begin (ed.file, last_pipe_command, text.data, null, (s,r) => {
+								// set to clipboard
+								try {
+									var output = (string) execute_command_async.end (r);
+									var clipboard = Clipboard.get (Gdk.SELECTION_CLIPBOARD);
+									clipboard.set_text (output, -1);
+									display_message (ed, "<b>Output of command has been copied to clipboard</b>");
+								} catch (Error e) {
+									display_message (ed, "<b>Error: %s".printf (e.message));
+								}
+						});
+					}
+			});
+			bar.aborted.connect (() => { abort (ed); });
+			add_overlay (bar);
+			bar.show ();
+			bar.grab_focus ();
+
+		}
+		
 		void on_move_block(Editor ed, string command) {
 			var buf = ed.view.buffer;
 			string line = null;
@@ -984,6 +1042,14 @@ namespace Vanubi {
 			}
 		}
 
+		void display_message (Editor ed, string markup) {
+			var bar = new MessageBar (markup);
+			bar.aborted.connect (() => { abort (ed); });
+			add_overlay (bar);
+			bar.show ();
+			bar.grab_focus ();
+		}			
+		
 		void on_switch_editor(Editor ed, string command)
 		{
 			var paned = ed.get_parent().get_parent() as Paned;

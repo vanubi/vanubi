@@ -41,8 +41,8 @@ namespace Vanubi {
 			List<File>* link = lru.find_custom (f, filecmp);
 			if (link != null) {
 				lru.delete_link (link);
+				lru.prepend (f);
 			}
-			lru.prepend (f);
 		}
 		
 		public void remove (File? f) {

@@ -52,7 +52,7 @@ dnl === Dependencies ==========================================================
 GLIB_PREFIX="`$PKG_CONFIG --variable=prefix glib-2.0`"
 AC_SUBST(GLIB_PREFIX)
 
-VALA_CHECK_MODULES(LIBVANUBI, [gio-2.0])
+VALA_CHECK_MODULES(LIBVANUBI, [gio-2.0 gio-unix-2.0])
 LIBVANUBI_VALAFLAGS="$LIBVANUBI_VALAFLAGS --target-glib 2.32"
 
 VALA_CHECK_MODULES(VANUBI, [gtk+-3.0 gtksourceview-3.0 vte-2.90])
