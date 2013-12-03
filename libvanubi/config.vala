@@ -133,7 +133,7 @@ namespace Vanubi {
 			var group = file != null ? file.get_uri () : "*scratch*";
 			if (file != null && !has_group_key (group, key)) {
 				// look into a similar file
-				group = cluster.get_similar_file(file, key).get_uri ();
+				group = cluster.get_similar_file(file, key, default != null).get_uri ();
 			}
 			return get_group_string (group, key, get_editor_string (key, default));
 		}

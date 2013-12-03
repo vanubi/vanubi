@@ -215,9 +215,9 @@ namespace Vanubi {
 			bind_command ({ Key (Gdk.Key.Up, Gdk.ModifierType.CONTROL_MASK) }, "move-block-up");
 			execute_command["move-block-up"].connect (on_move_block);
 
-			bind_command ({ Key (Gdk.Key.F9, 0) }, "compile");
-			index_command ("compile", "Compile code", "build shell");
-			execute_command["compile"].connect (on_compile);
+			bind_command ({ Key (Gdk.Key.F9, 0) }, "compile-shell");
+			index_command ("compile-shell", "Execute a shell for compiling the code", "build");
+			execute_command["compile-shell"].connect (on_compile_shell);
 
 			bind_command ({ Key (Gdk.Key.y, Gdk.ModifierType.CONTROL_MASK) }, "redo");
 			index_command ("redo", "Redo action");
@@ -498,13 +498,9 @@ namespace Vanubi {
 				if (uncertain) {
 					content_type = null;
 				}
-				var conf_lang_id = conf.get_file_string (file, "language");
-				SourceLanguage lang;
-				if (conf_lang_id != null) {
-					lang = SourceLanguageManager.get_default().get_language (conf_lang_id);
-				} else {
-					lang = SourceLanguageManager.get_default().guess_language (file.get_path (), content_type);
-				}
+				var default_lang = SourceLanguageManager.get_default().guess_language (file.get_path (), content_type);
+				var lang_id = conf.get_file_string (file, "language", default_lang != null ? default_lang.id : null);
+				var lang = SourceLanguageManager.get_default().get_language (lang_id);
 				((SourceBuffer) ed.view.buffer).set_language (lang);
 			}
 			// let the Manager own the reference to the editor
@@ -1171,7 +1167,7 @@ namespace Vanubi {
 			bar.grab_focus ();
 		}
 
-		void on_compile (Editor editor) {
+		void on_compile_shell (Editor editor) {
 			var bar = new ShellBar (conf, editor.file);
 			bar.aborted.connect (() => {
 					abort (editor);

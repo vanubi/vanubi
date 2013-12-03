@@ -42,7 +42,12 @@ namespace Vanubi {
 		}
 		
 		// Returns a similar file, or itself, for a given configuration key
-		public File get_similar_file (File file, string key) {
+		public File get_similar_file (File file, string key, bool has_default) {
+			if (key == "language" && has_default) {
+				// use the default language, do not look further
+				return file;
+			}
+			
 			var files = config.get_files ();
 			foreach (var other in files) {
 				if (file.get_parent().equal (other.get_parent ())) {
