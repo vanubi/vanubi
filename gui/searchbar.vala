@@ -218,6 +218,8 @@ namespace Vanubi {
 						buf.begin_user_action ();		
 						buf.delete_selection (true, true);
 						buf.insert_at_cursor (replace_text, -1);
+						buf.end_user_action ();
+						
 						TextIter iter;
 						buf.get_iter_at_mark (out iter, buf.get_insert ());
 						search (iter);
