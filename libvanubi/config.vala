@@ -22,7 +22,7 @@ namespace Vanubi {
 		KeyFile backend;
 		File file;
 		Cancellable saving_cancellable;
-		FileCluster cluster;
+		public FileCluster cluster;
 
 		public Configuration () {
 			cluster = new FileCluster (this);
@@ -117,11 +117,23 @@ namespace Vanubi {
 		}
 
 		/* File */
+		// get files except *scratch*
+		public File[] get_files () {
+			File[] res = null;
+			var groups = backend.get_groups ();
+			foreach (unowned string group in groups) {
+				if (group.has_prefix ("file://")) {
+					res += File.new_for_uri (group);
+				}
+			}
+			return res;
+		}
+		
 		public string? get_file_string (File? file, string key, string? default = null) {
 			var group = file != null ? file.get_uri () : "*scratch*";
 			if (file != null && !has_group_key (group, key)) {
 				// look into a similar file
-				group = cluster.get_similar_file(file).get_uri ();
+				group = cluster.get_similar_file(file, key).get_uri ();
 			}
 			return get_group_string (group, key, get_editor_string (key, default));
 		}

@@ -463,6 +463,7 @@ namespace Vanubi {
 					
 					// this is a new file
 					files[file] = file;
+					conf.cluster.opened_file (file);
 					var etors = new GenericArray<Editor> ();
 					editors = etors;
 					// store editors in the File itself
@@ -616,9 +617,10 @@ namespace Vanubi {
 			if (editor.file == null) {
 				scratch_editors = new GenericArray<Editor> ();
 			} else {
-				// update all editors
+				// removed file, update all editor containers
 				lru_operation ((lru) => lru.remove (editor.file));
 				files.remove (editor.file);
+				conf.cluster.closed_file (editor.file);
 			}
 			unowned Editor ed = get_available_editor (next_file);
 			replace_widget (editor, ed);

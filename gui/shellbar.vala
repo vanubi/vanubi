@@ -44,7 +44,7 @@ namespace Vanubi {
 						var olddir = config.get_file_string (base_file, "shell_cwd", get_base_directory (base_file));
 						if (Posix.readlink (@"/proc/$(pid)/cwd", buf) > 0) {
 							var curdir = (string) buf;
-							if (olddir != curdir) {
+							if (absolute_path ("", olddir) != absolute_path ("", curdir)) {
 								config.set_file_string (base_file, "shell_cwd", curdir);
 								config.save.begin ();
 							}
