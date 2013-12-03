@@ -21,12 +21,12 @@ using Gtk;
 
 namespace Vanubi {
 	public class Manager : Grid {
-
+		
 		/* List of files opened. Work on unique File instances. */
 		HashTable<File, File> files = new HashTable<File, File> (File.hash, File.equal);
 		/* List of buffers for *scratch* */
 		GenericArray<Editor> scratch_editors = new GenericArray<Editor> ();
-
+		
 		internal KeyManager<Editor> keymanager;
 		string last_search_string = "";
 		string last_replace_string = "";
@@ -925,14 +925,9 @@ namespace Vanubi {
 		}
 		
 		void on_indent (Editor ed) {
-			TextIter insert_iter;
-			var buf = (SourceBuffer) ed.view.buffer;
-			buf.get_iter_at_mark (out insert_iter, buf.get_insert ());
-			
-			var vbuf = new UI.Buffer ((SourceView) ed.view);
-			var viter = new UI.BufferIter (vbuf, insert_iter);
-			
 			Indent indent_engine;
+			var vbuf = new UI.Buffer ((SourceView) ed.view);
+			var buf = (SourceBuffer) ed.view.buffer;
 			var langname = buf.language != null ? buf.language.name : "";
 			switch (langname) {
 				case "Assembly (Intel)":
@@ -944,7 +939,14 @@ namespace Vanubi {
 					break;
 			}
 			
-			indent_engine.indent (viter);
+			var min_line = int.min (selection_start.get_line(), selection_end.get_line());
+			var max_line = int.max (selection_start.get_line(), selection_end.get_line());
+			for (var line=min_line; line <= max_line; line++) {
+				TextIter iter;
+				buf.get_iter_at_line (out iter, line);
+				var viter = new UI.BufferIter (vbuf, iter);
+				indent_engine.indent (viter);
+			}
 		}
 
 		void on_switch_buffer (Editor editor) {
