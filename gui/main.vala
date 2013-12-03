@@ -234,10 +234,10 @@ namespace Vanubi {
 			index_command ("goto-line", "Jump to a line");
 			execute_command["goto-line"].connect (on_goto_line);
 	
-			index_command ("pipe-shell-clipboard", "Pass selected text to a shell command and copy the output to the clipboard");
+			index_command ("pipe-shell-clipboard", "Pass selected or whole text to a shell command and copy the output to the clipboard");
 			execute_command["pipe-shell-clipboard"].connect (on_pipe_shell_clipboard);
 			
-			index_command ("set-language", "Set the highlight language for this file");
+			index_command ("set-language", "Set the syntax highlight for this file");
 			execute_command["set-language"].connect (on_set_language);
 			
 			// setup empty buffer
