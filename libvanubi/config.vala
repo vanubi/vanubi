@@ -108,7 +108,7 @@ namespace Vanubi {
 		/* File */
 		public string? get_file_string (File? file, string key, string? default = null) {
 			var group = file != null ? file.get_uri () : "*scratch*";
-			return get_group_string (group, key, default);
+			return get_group_string (group, key, get_editor_string (key, default));
 		}
 		
 		public void set_file_string (File? file, string key, string value) {
