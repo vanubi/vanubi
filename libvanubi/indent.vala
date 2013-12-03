@@ -423,7 +423,8 @@ namespace Vanubi {
 			// unindent
 			var closed = count_closed (line);
 			if (closed > 0) {
-				var paren_iter = unclosed_paren (line, 0);
+				unclosed = count_unclosed (line);
+				var paren_iter = unclosed_paren (line, unclosed);
 				new_indent = buf.get_indent (paren_iter.line);
 				// TODO: fix for nested objects ala javascript/php or C structs
 			}

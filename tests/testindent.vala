@@ -129,6 +129,12 @@ default:
 break;
 }
 
+if {
+if {
+} else {
+}
+}
+
 toplevel
 ");
 	var w = buffer.tab_width;
@@ -168,6 +174,12 @@ toplevel
 	assert_indent_c (buffer, 33, 0);
 	assert_indent_c (buffer, 34, w);
 	assert_indent_c (buffer, 35, 0);		
+	
+	assert_indent_c (buffer, 37, 0);
+	assert_indent_c (buffer, 38, w);
+	assert_indent_c (buffer, 39, w);
+	assert_indent_c (buffer, 40, w);
+	assert_indent_c (buffer, 41, 0);
 }
 
 void test_lang_asm () {
