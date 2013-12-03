@@ -33,7 +33,11 @@ namespace Vanubi {
 		}
 
 		public void append (File? f) {
-			lru.append (f);
+			unowned List<File> link = lru.find_custom (f, filecmp);
+			// ensure we have no duplicates
+			if (link == null) {
+				lru.append (f);
+			}
 		}
 		
 		public void used (File? f) {

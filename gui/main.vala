@@ -424,6 +424,29 @@ namespace Vanubi {
 		void unset_loading () {
 		}
 
+		delegate void FileLruOperation (FileLRU lru);
+		
+		// iterate lru of all EditorContainer and perform an operation on it
+		void lru_operation (FileLruOperation op) {
+			unowned GenericArray<Editor> exeditors;
+			foreach (var exf in files.get_keys ()) {
+				exeditors = exf.get_data ("editors");
+				foreach (unowned Editor ed in exeditors.data) {
+					var container = ed.get_parent() as EditorContainer;
+					if (container != null) {
+						op(container.lru);
+					}
+				}
+			}
+			exeditors = scratch_editors;
+			foreach (unowned Editor ed in exeditors.data) {
+				var container = ed.get_parent() as EditorContainer;
+				if (container != null) {
+					op(container.lru);
+				}
+			}
+		}
+		
 		/* Returns an Editor for the given file */
 		unowned Editor get_available_editor (File? file) {
 			// list of editors for the file
@@ -436,23 +459,7 @@ namespace Vanubi {
 				var f = files[file];
 				if (f == null) {
 					// update lru of all existing containers
-					unowned GenericArray<Editor> exeditors;
-					foreach (var exf in files.get_keys ()) {
-						exeditors = exf.get_data ("editors");
-						foreach (unowned Editor ed in exeditors.data) {
-							var container = ed.get_parent() as EditorContainer;
-							if (container != null) {
-								container.lru.append (file);
-							}
-						}
-					}
-					exeditors = scratch_editors;
-					foreach (unowned Editor ed in exeditors.data) {
-						var container = ed.get_parent() as EditorContainer;
-						if (container != null) {
-							container.lru.append (file);
-						}
-					}
+					lru_operation ((lru) => lru.append (file));
 					
 					// this is a new file
 					files[file] = file;
@@ -610,24 +617,7 @@ namespace Vanubi {
 				scratch_editors = new GenericArray<Editor> ();
 			} else {
 				// update all editors
-				unowned GenericArray<Editor> exeditors;
-				foreach (var exf in files.get_keys ()) {
-					exeditors = exf.get_data ("editors");
-					foreach (unowned Editor ed in exeditors.data) {
-						var container = ed.get_parent() as EditorContainer;
-						if (container != null) {
-							container.lru.remove (editor.file);
-						}
-					}
-				}
-				exeditors = scratch_editors;
-				foreach (unowned Editor ed in exeditors.data) {
-					var container = ed.get_parent() as EditorContainer;
-					if (container != null) {
-						container.lru.remove (editor.file);
-					}
-				}
-
+				lru_operation ((lru) => lru.remove (editor.file));
 				files.remove (editor.file);
 			}
 			unowned Editor ed = get_available_editor (next_file);
