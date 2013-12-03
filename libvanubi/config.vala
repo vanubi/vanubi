@@ -22,8 +22,11 @@ namespace Vanubi {
 		KeyFile backend;
 		File file;
 		Cancellable saving_cancellable;
+		FileCluster cluster;
 
 		public Configuration () {
+			cluster = new FileCluster (this);
+			
 			var home = Environment.get_home_dir ();
 			var filename = Path.build_filename (home, ".vanubi");
 			backend = new KeyFile ();
@@ -82,6 +85,14 @@ namespace Vanubi {
 		public void set_group_string (string group, string key, string value) {
 			backend.set_string (group, key, value);
 		}
+		
+		public bool has_group_key (string group, string key) {
+			try {
+				return backend.has_key (group, key);
+			} catch (Error e) {
+				return false;
+			}
+		}
 
 		/* Global */
 		public int get_global_int (string key, int default = 0) {
@@ -108,6 +119,10 @@ namespace Vanubi {
 		/* File */
 		public string? get_file_string (File? file, string key, string? default = null) {
 			var group = file != null ? file.get_uri () : "*scratch*";
+			if (file != null && !has_group_key (group, key)) {
+				// look into a similar file
+				group = cluster.get_similar_file(file).get_uri ();
+			}
 			return get_group_string (group, key, get_editor_string (key, default));
 		}
 		
