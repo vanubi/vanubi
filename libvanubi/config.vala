@@ -101,6 +101,10 @@ namespace Vanubi {
 			set_group_int ("Editor", key, value);
 		}
 
+		public string? get_editor_string (string key, string? default = null) {
+			return get_group_string ("Editor", key, default);
+		}
+
 		/* File */
 		public string? get_file_string (File? file, string key, string? default = null) {
 			var group = file != null ? file.get_uri () : "*scratch*";

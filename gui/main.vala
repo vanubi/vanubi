@@ -839,11 +839,25 @@ namespace Vanubi {
 					ed.view.move_cursor (MovementStep.VISUAL_POSITIONS, 1, false);
 				}
 			}
+			ed.view.scroll_mark_onscreen (buf.get_insert ());
 		}
 
 		void on_end_line(Editor ed) {
 			/* Put the cursor at the end of line */
+			var buf = ed.view.buffer;
+			TextIter initial;
+			buf.get_iter_at_mark (out initial, buf.get_insert ());
 			ed.view.move_cursor (MovementStep.DISPLAY_LINE_ENDS, 1, false);
+			TextIter current;
+			buf.get_iter_at_mark (out current, buf.get_insert ());
+			if (initial.equal (current)) {
+				// try going really to the end of the line
+				while (!current.ends_line ()) {
+					current.forward_char ();
+				}
+				buf.place_cursor (current);
+			}
+			ed.view.scroll_mark_onscreen (buf.get_insert ());
 		}
 
 		void on_kill_line (Editor ed) {

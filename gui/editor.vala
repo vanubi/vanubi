@@ -153,7 +153,7 @@ namespace Vanubi {
 
 			/* Style */
 			editor_style = new SourceStyleSchemeManager();
-			editor_style.set_search_path({"./data/styles/"}); /* TODO: use ~/.vanubi/styles/ */
+			editor_style.set_search_path({absolute_path("", "~/.vanubi/styles/"), "./data/styles/"});
 
 			// view
 			view = new EditorView ();
@@ -162,7 +162,7 @@ namespace Vanubi {
 			view.tab_width = conf.get_editor_int("tab_width", 4);
 
 			/* TODO: read the style from the config file */
-			SourceStyleScheme st = editor_style.get_scheme("zen");
+			SourceStyleScheme st = editor_style.get_scheme(conf.get_editor_string ("style", "zen"));
 			if (st != null) { /* Use default if not found */
 				((SourceBuffer)view.buffer).set_style_scheme(st);
 			}
