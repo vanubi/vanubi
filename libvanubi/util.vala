@@ -20,6 +20,18 @@
 namespace Vanubi {
 	public delegate G TaskFunc<G> (Cancellable cancellable) throws Error;
 
+	public class Location {
+		public File file;
+		public int? row;
+		public int? column;
+		
+		public Location (File file, int? row, int? column) {
+			this.file = file;
+			this.row = row;
+			this.column = column;
+		}
+	}
+	
 	public async G run_in_thread<G> (owned TaskFunc<G> func, Cancellable cancellable) throws Error {
 		SourceFunc resume = run_in_thread.callback;
 		Error err = null;

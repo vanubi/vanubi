@@ -43,7 +43,6 @@ namespace Vanubi {
 			base (search_initial);
 			this.editor = editor;
 			this.mode = mode;
-			entry.changed.connect (on_changed);
 			
 			if (mode == Mode.REPLACE_FORWARD || mode == Mode.REPLACE_BACKWARD) {
 				replace_entry = new Entry ();
@@ -108,7 +107,8 @@ namespace Vanubi {
 			}
 		}
 		
-		void on_changed () {
+		protected override void on_changed () {
+			base.on_changed ();
 			var buf = editor.view.buffer;
 			TextIter iter;
 			if (first_search) {

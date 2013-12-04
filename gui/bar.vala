@@ -66,6 +66,7 @@ namespace Vanubi {
 		protected Entry entry;
 
 		public new signal void activate (string s);
+		public signal void changed (string s);
 		public string text { get { return entry.get_text(); } }
 
 		public EntryBar (string? initial = null) {
@@ -77,6 +78,7 @@ namespace Vanubi {
 			entry.set_activates_default (true);
 			entry.expand = true;
 			entry.activate.connect (on_activate);
+			entry.changed.connect (on_changed);
 			entry.key_press_event.connect (on_key_press_event);
 			add (entry);
 			show_all ();
@@ -86,6 +88,10 @@ namespace Vanubi {
 			entry.grab_focus ();
 		}
 
+		protected virtual void on_changed () {
+			changed (entry.get_text ());
+		}
+		
 		protected virtual void on_activate () {
 			activate (entry.get_text ());
 		}

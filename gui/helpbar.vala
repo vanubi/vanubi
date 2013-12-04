@@ -33,13 +33,13 @@ namespace Vanubi {
 		public HelpBar (Manager manager, Type type) {
 			this.manager = manager;
 			this.type = type;
-			entry.changed.connect (on_changed);
 			completion_box = new CompletionBox (manager, type);
 			attach_next_to (completion_box, entry, PositionType.TOP, 1, 1);
 			show_all ();
 		}
 
-		void on_changed () {
+		protected override void on_changed () {
+			base.on_changed ();
 			var text = entry.get_text ();
 			search (text);
 		}

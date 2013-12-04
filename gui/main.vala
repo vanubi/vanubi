@@ -63,6 +63,7 @@ namespace Vanubi {
 			command_index.synonyms["buffer"] = "file";
 			command_index.synonyms["editor"] = "file";
 			command_index.synonyms["switch"] = "change";
+			command_index.synonyms["search"] = "find";
 
 			// setup commands
 			bind_command ({
@@ -242,6 +243,9 @@ namespace Vanubi {
 			
 			index_command ("reload-file", "Reopen the current file");
 			execute_command["reload-file"].connect (on_reload_file);
+			
+			index_command ("repo-grep", "Search text in repository");
+			execute_command["repo-grep"].connect (on_repo_grep);
 			
 			// setup empty buffer
 			unowned Editor ed = get_available_editor (null);
@@ -999,6 +1003,48 @@ namespace Vanubi {
 				});
 			bar.aborted.connect (() => { abort (editor); });
 			add_overlay (bar);
+			bar.show ();
+			bar.grab_focus ();
+		}
+		
+		void on_repo_grep (Editor editor) {
+			var repo_dir = conf.cluster.get_git_repo (editor.file);
+			if (repo_dir == null) {
+				display_message (editor, "<b>Not in git repository</b>");
+				return;
+			}
+			
+			var git_command = conf.get_global_string ("git_command", "git");
+			InputStream? stream = null;
+			Cancellable? cancellable = null;
+			
+			var bar = new GrepBar ();
+			bar.activate.connect (() => {
+					abort (editor);
+					//var loc = bar.location;
+			});
+			bar.changed.connect ((pat) => {
+					if (cancellable != null) {
+						cancellable.cancel ();
+					}
+					if (stream != null) {
+						try {
+							stream.close ();
+						} catch (Error e) {
+						}
+					}
+					int stdout;
+					cancellable = new Cancellable ();
+					Process.spawn_async_with_pipes (repo_dir.get_path(),
+													{git_command, "grep", "-in", pat},
+													null,
+													SpawnFlags.SEARCH_PATH,
+													null, null, null, out stdout, null);
+					stream = new UnixInputStream (stdout, true);
+					bar.stream = stream;
+			});
+			bar.aborted.connect (() => { abort (editor); });
+			add_overlay (bar, true);
 			bar.show ();
 			bar.grab_focus ();
 		}

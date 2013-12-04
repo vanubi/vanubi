@@ -95,6 +95,10 @@ namespace Vanubi {
 		}
 
 		/* Global */
+		public string get_global_string (string key, string? default = null) {
+			return get_group_string ("Global", key, default);
+		}
+		
 		public int get_global_int (string key, int default = 0) {
 			return get_group_int ("Global", key, default);
 		}

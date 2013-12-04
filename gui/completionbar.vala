@@ -26,10 +26,9 @@ namespace Vanubi {
 		CompletionBox completion_box;
 		Cancellable current_completion;
 		bool navigated = false;
-		bool changed = true;
+		bool has_changed = true;
 
 		public CompletionBar () {
-			entry.changed.connect (on_changed);
 		}
 
 		~Bar () {
@@ -76,9 +75,9 @@ namespace Vanubi {
 			}
 		}
 
-		void on_changed () {
+		protected override void on_changed () {
 			entry.get_style_context().remove_class ("error");
-			changed = true;
+			has_changed = true;
 			original_pattern = entry.get_text ();
 			common_choice = null;
 			navigated = false;
@@ -123,10 +122,10 @@ namespace Vanubi {
 					if (navigated || completion_box.get_choices().length == 1) {
 						set_choice_to_entry ();
 					} else {
-						if (!changed) {
+						if (!has_changed) {
 							set_choice_to_entry ();
 						} else {
-							changed = false;
+							has_changed = false;
 							set_common_pattern ();
 						}
 					}

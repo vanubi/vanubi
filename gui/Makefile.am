@@ -17,6 +17,7 @@ vanubi_VALASOURCES = \
 	completionbar.vala \
 	editor.vala \
 	filebar.vala \
+	grepbar.vala \
 	helpbar.vala \
 	indent.vala \
 	main.vala \
