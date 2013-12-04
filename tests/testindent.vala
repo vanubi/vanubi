@@ -35,6 +35,11 @@ void assert_indent_asm (Buffer buffer, int line, int indent) {
 	assert_indent (indenter, buffer, line, indent);
 }
 
+void assert_indent_shell (Buffer buffer, int line, int indent) {
+	var indenter = new Indent_C (buffer);
+	assert_indent (indenter, buffer, line, indent);
+}
+
 void test_simple () {
 	var buffer = setup ();
 	assert (buffer.text == text);
@@ -202,7 +207,24 @@ ret
 	assert_indent_asm (buffer, 6, w);
 	assert_indent_asm (buffer, 7, w);
 }
-	
+
+void test_lang_shell () {
+	var buffer = new StringBuffer.from_text ("
+if foo; then
+bar
+else
+baz
+fi
+");
+	var w = buffer.tab_width;
+	assert_indent_shell (buffer, 0, 0);
+	assert_indent_shell (buffer, 1, 0);
+	assert_indent_shell (buffer, 2, w);
+	assert_indent_shell (buffer, 3, 0);
+	assert_indent_shell (buffer, 4, w);
+	assert_indent_shell (buffer, 5, 0);
+}
+
 int main (string[] args) {
 	Test.init (ref args);
 
@@ -210,6 +232,7 @@ int main (string[] args) {
 	Test.add_func ("/indent/insert_delete", test_insert_delete);
 	Test.add_func ("/indent/lang_c", test_lang_c);
 	Test.add_func ("/indent/lang_asm", test_lang_asm);
+	Test.add_func ("/indent/lang_shell", test_lang_shell);
 
 	return Test.run ();
 }

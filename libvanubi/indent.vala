@@ -396,7 +396,7 @@ namespace Vanubi {
 			if (prev_semicomma >= 0) {
 				text_after_semicomma = prev_text.substring (prev_semicomma+1).strip ();
 			}
-			if (text_after_semicomma == "do" || text_after_semicomma == "then") {
+			if (text_after_semicomma == "do" || text_after_semicomma == "then" || prev_text.strip() == "else") {
 				new_indent = prev_indent + tab_width;
 				buf.set_indent (line, new_indent);
 				return;
@@ -432,7 +432,7 @@ namespace Vanubi {
 			// done, fi in bash
 			// TODO: move to Indent_Shell
 			var text = buf.line_text(line).strip ();
-			if (text == "done" || text == "fi") {
+			if (text == "done" || text == "fi" || text == "else") {
 				new_indent -= tab_width;
 			}
 			
