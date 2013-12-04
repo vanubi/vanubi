@@ -18,7 +18,7 @@
  */
 
 namespace Vanubi {
-	public delegate G TaskFunc<G> (Cancellable cancellable) throws Error;
+	public delegate G TaskFunc<G> (Cancellable? cancellable) throws Error;
 
 	public class Location {
 		public File file;
@@ -32,7 +32,7 @@ namespace Vanubi {
 		}
 	}
 	
-	public async G run_in_thread<G> (owned TaskFunc<G> func, Cancellable cancellable) throws Error {
+	public async G run_in_thread<G> (owned TaskFunc<G> func, Cancellable? cancellable) throws Error {
 		SourceFunc resume = run_in_thread.callback;
 		Error err = null;
 		G result = null;

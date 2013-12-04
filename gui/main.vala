@@ -1036,7 +1036,7 @@ namespace Vanubi {
 					int stdout;
 					cancellable = new Cancellable ();
 					Process.spawn_async_with_pipes (repo_dir.get_path(),
-													{git_command, "grep", "-in", pat},
+													{git_command, "grep", "-inI", "--color", pat},
 													null,
 													SpawnFlags.SEARCH_PATH,
 													null, null, null, out stdout, null);
@@ -1352,6 +1352,7 @@ namespace Vanubi {
 	}
 
 	public static int main (string[] args) {
+		Gdk.threads_init ();
 		var app = new Application ();
 		return app.run (args);
 	}
