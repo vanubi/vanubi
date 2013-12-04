@@ -240,6 +240,9 @@ namespace Vanubi {
 			index_command ("set-language", "Set the syntax highlight for this file");
 			execute_command["set-language"].connect (on_set_language);
 			
+			index_command ("reload-file", "Reopen the current file");
+			execute_command["reload-file"].connect (on_reload_file);
+			
 			// setup empty buffer
 			unowned Editor ed = get_available_editor (null);
 			var container = new EditorContainer (ed);
@@ -493,15 +496,7 @@ namespace Vanubi {
 				ed.view.buffer = editors[0].view.buffer;
 			} else if (file != null) {
 				// if it's not *scratch*, guess the content-type to set the syntax highlight
-				bool uncertain;
-				var content_type = ContentType.guess (file.get_path (), null, out uncertain);
-				if (uncertain) {
-					content_type = null;
-				}
-				var default_lang = SourceLanguageManager.get_default().guess_language (file.get_path (), content_type);
-				var lang_id = conf.get_file_string (file, "language", default_lang != null ? default_lang.id : null);
-				var lang = SourceLanguageManager.get_default().get_language (lang_id);
-				((SourceBuffer) ed.view.buffer).set_language (lang);
+				ed.reset_language ();
 			}
 			// let the Manager own the reference to the editor
 			unowned Editor ret = ed;
@@ -575,6 +570,36 @@ namespace Vanubi {
 			add_overlay (bar);
 			bar.show ();
 			bar.grab_focus ();
+		}
+		
+		void on_reload_file (Editor editor) {
+			if (editor.file == null) {
+				return;
+			}
+			var old_offset = selection_start.get_offset ();
+			editor.file.load_contents_async.begin (null, (s,r) => {
+					uint8[] content;
+					try {
+						editor.file.load_contents_async.end (r, out content, null);
+					} catch (Error e) {
+						message (e.message);
+						return;
+					} finally {
+						unset_loading ();
+					}
+
+					editor.reset_language ();
+					var buf = (SourceBuffer) editor.view.buffer;
+					buf.begin_not_undoable_action ();
+					buf.set_text ((string) content, -1);
+					buf.set_modified (false);
+					buf.end_not_undoable_action ();
+					TextIter iter;
+					buf.get_iter_at_offset (out iter, old_offset);
+					buf.place_cursor (iter);
+					editor.view.scroll_to_mark (buf.get_insert (), 0, true, 0.5, 0.5);
+					editor.grab_focus ();
+				});
 		}
 		
 		void on_open_file (Editor editor) {

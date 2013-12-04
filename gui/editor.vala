@@ -229,6 +229,18 @@ namespace Vanubi {
 			}
 		}
 
+		public void reset_language () {
+			bool uncertain;
+			var content_type = ContentType.guess (file.get_path (), null, out uncertain);
+			if (uncertain) {
+				content_type = null;
+			}
+			var default_lang = SourceLanguageManager.get_default().guess_language (file.get_path (), content_type);
+			var lang_id = conf.get_file_string (file, "language", default_lang != null ? default_lang.id : null);
+			var lang = SourceLanguageManager.get_default().get_language (lang_id);
+			((SourceBuffer) view.buffer).set_language (lang);
+		}
+		
 		/* events */
 
 		void on_buffer_changed () {
