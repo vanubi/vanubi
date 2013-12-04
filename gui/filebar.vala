@@ -33,7 +33,7 @@ namespace Vanubi {
 			var absolute_pattern = absolute_path (base_directory, pattern);
 			GenericArray<File> files;
 			try {
-				files = yield run_in_thread<GenericArray<File>> ((c) => { return file_complete (absolute_pattern, c); }, cancellable);
+				files = yield run_in_thread<GenericArray<File>> (() => { return file_complete (absolute_pattern, cancellable); });
 				if (files.length == 0) {
 					return null;
 				}

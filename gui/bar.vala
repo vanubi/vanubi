@@ -116,7 +116,7 @@ namespace Vanubi {
 			
 			GenericArray<Annotated<G>> matches;
 			try {
-				matches = yield run_in_thread ((c) => { return pattern_match_many<G> (pattern, choices, c); }, cancellable);
+				matches = yield run_in_thread (() => { return pattern_match_many<G> (pattern, choices, cancellable); });
 			} catch (Error e) {
 				message (e.message);
 				return null;

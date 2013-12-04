@@ -32,24 +32,46 @@ namespace Vanubi {
 		}
 	}
 	
-	public async G run_in_thread<G> (owned TaskFunc<G> func, Cancellable? cancellable) throws Error {
+	ThreadPool<ThreadWorker> thread_pool = null;
+	
+	class ThreadWorker {
+		public ThreadFunc task_func;
+		
+		public ThreadWorker (owned ThreadFunc task_func) {
+			this.task_func = (owned) task_func;
+		}
+	}
+	
+	void initialize_thread_pool () {
+		if (thread_pool != null) {
+			return;
+		}
+		thread_pool = new ThreadPool<ThreadWorker>.with_owned_data ((worker) => {
+			// Call worker.run () on thread-start
+			worker.task_func ();
+		}, 20, false);
+		ThreadPool.set_max_unused_threads (2);
+	}
+
+	public async G run_in_thread<G> (owned ThreadFunc<G> func) throws Error {
+		initialize_thread_pool ();
 		SourceFunc resume = run_in_thread.callback;
 		Error err = null;
 		G result = null;
-		new Thread<void*> (null, () => {
+
+		thread_pool.add (new ThreadWorker (() => {
 				try {
-					result = func (cancellable);
+					result = func ();
 				} catch (Error e) {
 					err = e;
 				}
 				Idle.add ((owned) resume);
 				return null;
-			});
+		}));
 		yield;
 		if (err != null) {
 			throw err;
 		}
-		cancellable.set_error_if_cancelled ();
 		return result;
 	}
 	
