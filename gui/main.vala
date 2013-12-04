@@ -251,9 +251,13 @@ namespace Vanubi {
 			container.grab_focus ();
 		}
 		
-		public void on_command (Editor ed, string command) {
+		public void update_selection (Editor ed) {
 			var buf = ed.view.buffer;
 			buf.get_selection_bounds (out selection_start, out selection_end);
+		}
+
+		public void on_command (Editor ed, string command) {
+			update_selection (ed);
 			abort (ed);
 			execute_command[command] (ed, command);
 		}
@@ -896,6 +900,7 @@ namespace Vanubi {
 			buf.delete_selection (true, true);
 			buf.insert_at_cursor ("\n", -1);
 			ed.view.scroll_mark_onscreen (buf.get_insert ());
+			update_selection (ed);
 			execute_command["indent"] (ed, "indent");
 			buf.end_user_action ();
 		}
@@ -905,6 +910,7 @@ namespace Vanubi {
 			buf.begin_user_action ();		
 			buf.delete_selection (true, true);
 			buf.insert_at_cursor ("\t", -1);
+			update_selection (ed);
 			ed.view.scroll_mark_onscreen (buf.get_insert ());
 			buf.end_user_action ();
 		}
@@ -915,6 +921,7 @@ namespace Vanubi {
 			buf.delete_selection (true, true);
 			buf.insert_at_cursor ("}", -1);
 			ed.view.scroll_mark_onscreen (buf.get_insert ());
+			update_selection (ed);
 			execute_command["indent"] (ed, "indent");
 			buf.end_user_action ();
 		}
@@ -925,6 +932,7 @@ namespace Vanubi {
 			buf.delete_selection (true, true);
 			buf.insert_at_cursor ("]", -1);
 			ed.view.scroll_mark_onscreen (buf.get_insert ());
+			update_selection (ed);
 			execute_command["indent"] (ed, "indent");
 			buf.end_user_action ();
 		}
@@ -935,6 +943,7 @@ namespace Vanubi {
 			buf.delete_selection (true, true);
 			buf.insert_at_cursor (")", -1);
 			ed.view.scroll_mark_onscreen (buf.get_insert ());
+			update_selection (ed);
 			execute_command["indent"] (ed, "indent");
 			buf.end_user_action ();
 		}
