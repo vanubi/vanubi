@@ -59,7 +59,7 @@
   <style name="current-line" background="dl-dark-olive-green"/>
 
   <!-- Bracket Matching -->
-  <style name="bracket-match" background="dl-light-blue"/>
+  <style name="bracket-match" background="dl-orange-red"/>
   <style name="bracket-mismatch" background="dl-violet"/>
 
   <!-- Search Matching -->
