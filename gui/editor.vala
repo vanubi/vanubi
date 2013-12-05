@@ -144,6 +144,7 @@ namespace Vanubi {
 		ScrolledWindow sw;
 		Label file_count;
 		Label file_status;
+		EditorInfoBar infobar;
 
 		public Editor (Configuration conf, File? file) {
 			this.file = file;
@@ -174,7 +175,7 @@ namespace Vanubi {
 			add (sw);
 
 			// lower information bar
-			var infobar = new EditorInfoBar ();
+			infobar = new EditorInfoBar ();
 			infobar.expand = false;
 			infobar.orientation = Orientation.HORIZONTAL;
 			// initially not focused

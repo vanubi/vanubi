@@ -1126,10 +1126,6 @@ namespace Vanubi {
 			paned.position = command == "split-add-right" ? alloc.width/2 : alloc.height/2;
 			parent.add (paned);
 
-			// pack the old editor container
-			paned.pack1 (container, true, false);
-			editor.grab_focus ();
-
 			// get an editor for the same file
 			var ed = get_available_editor (editor.file);
 			if (ed.get_parent() != null) {
@@ -1140,8 +1136,14 @@ namespace Vanubi {
 			var newcontainer = new EditorContainer (ed);
 			// inherit lru from existing editor
 			newcontainer.lru = editor.editor_container.lru.copy ();
+
+			// pack the old editor container
+			paned.pack1 (container, true, false);
+			editor.grab_focus ();
+
 			// pack the new editor container
-			paned.pack2 (newcontainer, true, false);
+			paned.pack2 (newcontainer, true, false);	
+
 			paned.show_all ();
 		}
 

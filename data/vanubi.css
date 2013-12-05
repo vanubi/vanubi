@@ -6,11 +6,17 @@ VanubiEditorView.caret:selected {
 	color: black;
 	background-color: white;
 }
+VanubiEditorInfoBar {
+	background: #1b2e35;
+}
+VanubiEditorInfoBar GtkLabel {
+	color: #babdb6;
+}
 VanubiEditorInfoBar.nonfocused {
-	background: #2f2f2f;
+	background: black;
 }
 VanubiEditorInfoBar.nonfocused GtkLabel {
-	color: #a2a3a4;
+	color: #555753;
 }
 .filename {
 	font-weight: bold;
