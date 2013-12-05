@@ -1059,7 +1059,7 @@ namespace Vanubi {
 			InputStream? stream = null;
 			Cancellable? cancellable = null;
 			
-			var bar = new GrepBar ();
+			var bar = new GrepBar (conf);
 			bar.activate.connect (() => {
 					abort (editor);
 					//var loc = bar.location;

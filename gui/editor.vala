@@ -162,7 +162,6 @@ namespace Vanubi {
 			view.tab_width = conf.get_editor_int("tab_width", 4);
 			view.highlight_current_line = conf.get_editor_bool ("highlight_current_line", true);
 
-			/* TODO: read the style from the config file */
 			SourceStyleScheme st = editor_style.get_scheme(conf.get_editor_string ("style", "zen"));
 			if (st != null) { /* Use default if not found */
 				((SourceBuffer)view.buffer).set_style_scheme(st);

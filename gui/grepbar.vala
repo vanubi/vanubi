@@ -22,8 +22,15 @@ using Gtk;
 
 namespace Vanubi {
 	public class GrepView : SourceView {
-		public GrepView () {
+		public GrepView (Configuration conf) {
 			Object (buffer: new GrepBuffer ());
+			var sm = new SourceStyleSchemeManager();
+			sm.set_search_path({absolute_path("", "~/.vanubi/styles/"), "./data/styles/"});
+			var st = sm.get_scheme (conf.get_editor_string ("style", "zen"));
+			if (st != null) { /* Use default if not found */
+				((SourceBuffer) buffer).set_style_scheme (st);
+			}
+			highlight_current_line = true;
 		}
 	}
 	
@@ -113,9 +120,9 @@ namespace Vanubi {
 		TextView view;
 		ScrolledWindow sw;
 		
-		public GrepBar () {
+		public GrepBar (Configuration conf) {
 			entry.expand = false;
-			view = new GrepView ();
+			view = new GrepView (conf);
 			view.editable = false;
 			view.key_press_event.connect (on_key_press_event);
 			sw = new ScrolledWindow (null, null);
@@ -126,12 +133,25 @@ namespace Vanubi {
 		}
 		
 		protected override bool on_key_press_event (Gdk.EventKey e) {
-			if (e.keyval == Gdk.Key.Up || e.keyval == Gdk.Key.Down || e.keyval == Gdk.Key.Page_Up || e.keyval == Gdk.Key.Page_Down) {
+			TextIter insert;
+			view.buffer.get_iter_at_mark (out insert, view.buffer.get_insert ());
+			switch (e.keyval) {
+			case Gdk.Key.Up:
+				insert.backward_line ();
+				view.buffer.place_cursor (insert);
+				break;
+			case Gdk.Key.Down:
+				insert.forward_line ();
+				view.buffer.place_cursor (insert);
+				break;
+			case Gdk.Key.Page_Down:
+			case Gdk.Key.Page_Up:		
 				var pos = entry.cursor_position;
 				var res = sw.key_press_event (e);
+				view.place_cursor_onscreen ();
 				entry.grab_focus ();
 				entry.set_position (pos);
-				return res;
+				return true;
 			}
 			return base.on_key_press_event (e);
 		}
@@ -144,9 +164,17 @@ namespace Vanubi {
 					if (read == 0) {
 						break;
 					}
+					// save current cursor position
+					TextIter insert;
+					view.buffer.get_iter_at_mark (out insert, view.buffer.get_insert ());
+					int offset = insert.get_offset ();
+					// write
 					TextIter iter;
 					view.buffer.get_end_iter (out iter);
 					yield ((GrepBuffer) view.buffer).insert_text_colored (iter, (string) buffer, (int) read, null);
+					// restore cursor position
+					view.buffer.get_iter_at_offset (out insert, offset);
+					view.buffer.place_cursor (insert);
 				}
 			} catch (Error e) {
 			}
