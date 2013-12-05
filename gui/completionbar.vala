@@ -155,6 +155,7 @@ namespace Vanubi {
 				#endif
 				label.ellipsize = Pango.EllipsizeMode.END;
 				label.justify = Justification.LEFT;
+				label.margin_left = 14;
 				update ();
 				add (label);
 				show_all ();

@@ -17,9 +17,11 @@ test_programs = \
 	testindent	\
 	testmatch	\
 	testsearch	\
+	testvrex	\
 	$(NULL)
 
 testfiles_SOURCES = testfiles.vala
 testindent_SOURCES = testindent.vala
 testmatch_SOURCES = testmatch.vala
 testsearch_SOURCES = testsearch.vala
+testvrex_SOURCES = testvrex.vala
