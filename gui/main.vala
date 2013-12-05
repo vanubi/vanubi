@@ -435,27 +435,68 @@ namespace Vanubi {
 		void unset_loading () {
 		}
 
-		delegate void FileLruOperation (FileLRU lru);
+		/* File/Editor/etc. COMBINATORS */
 		
-		// iterate lru of all EditorContainer and perform an operation on it
-		void lru_operation (FileLruOperation op) {
-			unowned GenericArray<Editor> exeditors;
-			foreach (var exf in files.get_keys ()) {
-				exeditors = exf.get_data ("editors");
-				foreach (unowned Editor ed in exeditors.data) {
+		// return false to quit the loop
+		delegate bool Operation<G> (G object);
+		
+		// iterate all files and perform the given operation on each of them
+		bool each_file (Operation<File?> op, bool include_scratch = true) {
+			if (include_scratch) {
+				if (!op (null)) { // *scratch*
+					return false;
+				}
+			}
+			foreach (var file in files.get_keys ()) {
+				if (!op (file)) {
+					return false;
+				}
+			}
+			return true;
+		}
+		
+		// iterate all editors of a given file and perform the given operation on each of them
+		bool each_file_editor (File? file, Operation<Editor> op) {
+			unowned GenericArray<Editor> editors;
+			if (file == null) {
+				editors = scratch_editors;
+			} else {
+				editors = file.get_data ("editors");
+			}	
+			foreach (unowned Editor ed in editors.data) {
+				if (!op (ed)) {
+					return false;
+				}
+			}
+			return true;
+		}
+		
+		bool each_editor (Operation<Editor> op, bool include_scratch = true) {
+			return each_file ((f) => {
+					return each_file_editor (f, (ed) => {
+							return op (ed);
+					});
+			}, include_scratch);
+		}
+		
+		// iterate all editor containers and perform the given operation on each of them
+		bool each_editor_container (Operation<EditorContainer> op) {
+			return each_editor ((ed) => {
 					var container = ed.get_parent() as EditorContainer;
 					if (container != null) {
-						op(container.lru);
+						if (!op (container)) {
+							return false;
+						}
 					}
-				}
-			}
-			exeditors = scratch_editors;
-			foreach (unowned Editor ed in exeditors.data) {
-				var container = ed.get_parent() as EditorContainer;
-				if (container != null) {
-					op(container.lru);
-				}
-			}
+					return true;
+			});
+		}
+		
+		// iterate lru of all EditorContainer and perform the given operation on each of them
+		bool each_lru (Operation<FileLRU> op) {
+			return each_editor_container ((c) => {
+					return !op (c.lru);
+			});
 		}
 		
 		/* Returns an Editor for the given file */
@@ -470,7 +511,7 @@ namespace Vanubi {
 				var f = files[file];
 				if (f == null) {
 					// update lru of all existing containers
-					lru_operation ((lru) => lru.append (file));
+					each_lru ((lru) => { lru.append (file); return true; });
 					
 					// this is a new file
 					files[file] = file;
@@ -647,7 +688,7 @@ namespace Vanubi {
 				scratch_editors = new GenericArray<Editor> ();
 			} else {
 				// removed file, update all editor containers
-				lru_operation ((lru) => lru.remove (editor.file));
+				each_lru ((lru) => { lru.remove (editor.file); return true; });
 				files.remove (editor.file);
 				conf.cluster.closed_file (editor.file);
 			}
