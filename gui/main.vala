@@ -195,7 +195,12 @@ namespace Vanubi {
 			index_command ("replace-backward", "Replace text backward incrementally");
 			execute_command["replace-backward"].connect (on_search_replace);
 
-			bind_command ({ Key (Gdk.Key.k, Gdk.ModifierType.CONTROL_MASK) }, "kill-line");
+			bind_command ({ Key (Gdk.Key.k, Gdk.ModifierType.CONTROL_MASK) }, "kill-line-right");
+			index_command ("kill-line-right", "Delete line contents on the right of the cursor");
+			execute_command["kill-line-right"].connect (on_kill_line_right);
+			
+			bind_command ({ Key (Gdk.Key.x, Gdk.ModifierType.CONTROL_MASK),
+							Key (Gdk.Key.k, Gdk.ModifierType.CONTROL_MASK) }, "kill-line");
 			index_command ("kill-line", "Delete the current line");
 			execute_command["kill-line"].connect (on_kill_line);
 
@@ -945,13 +950,33 @@ namespace Vanubi {
 
 			TextIter start;
 			buf.get_iter_at_mark (out start, buf.get_insert ());
-			TextIter end = start;
+			buf.get_iter_at_line (out start, start.get_line());
+			
+			var end = start;
+			end.forward_to_line_end ();
+			if (start.get_line() == end.get_line()) {
+				end.forward_char ();
+			}
+
+			buf.begin_user_action ();
+			buf.delete (ref start, ref end);
+			buf.end_user_action ();
+		}
+		
+		void on_kill_line_right (Editor ed) {
+			var buf = ed.view.buffer;
+
+			TextIter start;
+			buf.get_iter_at_mark (out start, buf.get_insert ());
+			
+			var end = start;
 			var start_line = start.get_line ();
 			end.forward_to_line_end ();
 			var end_line = end.get_line ();
 			if (start_line != end_line) {
 				end.set_line_offset (0);
 			}
+			
 			buf.begin_user_action ();
 			buf.delete (ref start, ref end);
 			buf.end_user_action ();
