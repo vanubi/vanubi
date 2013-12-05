@@ -1062,7 +1062,10 @@ namespace Vanubi {
 			var bar = new GrepBar (conf);
 			bar.activate.connect (() => {
 					abort (editor);
-					//var loc = bar.location;
+					var loc = bar.location;
+					if (loc != null && loc.file != null) {
+						open_file (editor, loc.file);
+					}
 			});
 			bar.changed.connect ((pat) => {
 					if (cancellable != null) {

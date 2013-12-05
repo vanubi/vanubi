@@ -21,11 +21,11 @@ namespace Vanubi {
 	public delegate G TaskFunc<G> (Cancellable? cancellable) throws Error;
 
 	public class Location {
-		public File file;
-		public int? row;
-		public int? column;
+		public File? file;
+		public int row;
+		public int column;
 		
-		public Location (File file, int? row, int? column) {
+		public Location (File? file, int row = -1, int column = -1) {
 			this.file = file;
 			this.row = row;
 			this.column = column;

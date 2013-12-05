@@ -131,6 +131,28 @@ namespace Vanubi {
 			sw.show_all ();
 			attach_next_to (sw, entry, PositionType.TOP, 1, 1);
 		}
+
+		protected override void on_activate () {
+			TextIter insert, start, end;
+			view.buffer.get_iter_at_mark (out insert, view.buffer.get_insert ());
+			view.buffer.get_iter_at_line (out start, insert.get_line ());
+			end = start;
+			end.forward_to_line_end ();
+			var line = view.buffer.get_text (start, end, false);
+			if (line == null || line.strip() == "") {
+				return;
+			}
+			var data = line.strip().split(":");
+			if (data.length < 2) {
+				return;
+			}
+			
+			var filename = data[0];
+			var lineno = int.parse (data[1]);
+			location = new Location (File.new_for_path (filename), lineno);
+			
+			base.on_activate ();
+		}
 		
 		protected override bool on_key_press_event (Gdk.EventKey e) {
 			TextIter insert;
@@ -139,11 +161,13 @@ namespace Vanubi {
 			case Gdk.Key.Up:
 				insert.backward_line ();
 				view.buffer.place_cursor (insert);
-				break;
+				view.scroll_mark_onscreen (view.buffer.get_insert ());
+				return true;
 			case Gdk.Key.Down:
 				insert.forward_line ();
 				view.buffer.place_cursor (insert);
-				break;
+				view.scroll_mark_onscreen (view.buffer.get_insert ());
+				return true;
 			case Gdk.Key.Page_Down:
 			case Gdk.Key.Page_Up:		
 				var pos = entry.cursor_position;
@@ -151,7 +175,7 @@ namespace Vanubi {
 				view.place_cursor_onscreen ();
 				entry.grab_focus ();
 				entry.set_position (pos);
-				return true;
+				return res;
 			}
 			return base.on_key_press_event (e);
 		}
