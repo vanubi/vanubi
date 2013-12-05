@@ -212,15 +212,19 @@ namespace Vanubi {
 				});
 
 			view.focus_out_event.connect(() => {
-					TextIter old_selection_start, old_selection_end;
-					view.buffer.get_selection_bounds (out old_selection_start,
-													  out old_selection_end);
-					old_selection_start_offset = old_selection_start.get_offset ();
-					old_selection_end_offset = old_selection_end.get_offset ();
+					update_old_selection ();
 					infobar.get_style_context().add_class ("nonfocused");
 					infobar.reset_style (); // GTK+ 3.4 bug, solved in 3.6
 					return false;
 				});
+		}
+		
+		public void update_old_selection () {
+			TextIter old_selection_start, old_selection_end;
+			view.buffer.get_selection_bounds (out old_selection_start,
+											  out old_selection_end);
+			old_selection_start_offset = old_selection_start.get_offset ();
+			old_selection_end_offset = old_selection_end.get_offset ();
 		}
 
 		public override void grab_focus () {

@@ -145,6 +145,7 @@ namespace Vanubi {
 				if (found) {
 					// found
 					buf.select_range (iter, subiter);
+					editor.update_old_selection ();
 					editor.view.scroll_to_mark (buf.get_insert (), 0, true, 0.5, 0.5);
 					return;
 				}
