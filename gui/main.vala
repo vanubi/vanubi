@@ -243,8 +243,10 @@ namespace Vanubi {
 			
 			index_command ("reload-file", "Reopen the current file");
 			execute_command["reload-file"].connect (on_reload_file);
-			
-			index_command ("repo-grep", "Search text in repository");
+
+			bind_command ({ Key (Gdk.Key.x, Gdk.ModifierType.CONTROL_MASK),
+							Key (Gdk.Key.s, 0) }, "repo-grep");
+			index_command ("repo-grep", "Search for text in repository");
 			execute_command["repo-grep"].connect (on_repo_grep);
 			
 			// setup empty buffer
@@ -384,6 +386,7 @@ namespace Vanubi {
 					TextIter iter;
 					ed.view.buffer.get_iter_at_line (out iter, location.line);
 					ed.view.buffer.place_cursor (iter);
+					Idle.add (() => { ed.view.scroll_to_mark (ed.view.buffer.get_insert (), 0, true, 0.5, 0.5); return false; });
 				}
 				ed.grab_focus ();
 				return;
@@ -422,6 +425,7 @@ namespace Vanubi {
 						buf.get_start_iter (out iter);
 					}
 					buf.place_cursor (iter);
+					Idle.add (() => { ed.view.scroll_to_mark (buf.get_insert (), 0, true, 0.5, 0.5); return false; });
 					replace_widget (editor, ed);
 					ed.grab_focus ();
 				});
