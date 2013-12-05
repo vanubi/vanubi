@@ -148,7 +148,7 @@ namespace Vanubi {
 			}
 			
 			var filename = data[0];
-			var lineno = int.parse (data[1]);
+			var lineno = int.parse (data[1]) - 1;
 			location = new Location (File.new_for_path (filename), lineno);
 			
 			base.on_activate ();

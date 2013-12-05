@@ -22,12 +22,12 @@ namespace Vanubi {
 
 	public class Location {
 		public File? file;
-		public int row;
+		public int line;
 		public int column;
 		
-		public Location (File? file, int row = -1, int column = -1) {
+		public Location (File? file, int line = -1, int column = -1) {
 			this.file = file;
-			this.row = row;
+			this.line = line;
 			this.column = column;
 		}
 	}

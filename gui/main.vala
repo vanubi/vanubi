@@ -364,6 +364,11 @@ namespace Vanubi {
 		}
 
 		public void open_file (Editor editor, File file) {
+			open_location (editor, new Location (file));
+		}
+		
+		public void open_location (Editor editor, Location location) {
+			var file = location.file;
 			set_loading ();
 
 			// first search already opened files
@@ -375,6 +380,11 @@ namespace Vanubi {
 				}
 				unowned Editor ed = get_available_editor (f);
 				replace_widget (editor, ed);
+				if (location.line > 0) {
+					TextIter iter;
+					ed.view.buffer.get_iter_at_line (out iter, location.line);
+					ed.view.buffer.place_cursor (iter);
+				}
 				ed.grab_focus ();
 				return;
 			}
@@ -405,9 +415,13 @@ namespace Vanubi {
 					buf.set_text ((string) content, -1);
 					buf.set_modified (false);
 					buf.end_not_undoable_action ();
-					TextIter start;
-					buf.get_start_iter (out start);
-					buf.place_cursor (start);
+					TextIter iter;
+					if (location.line > 0) {
+						buf.get_iter_at_line (out iter, location.line);
+					} else {						
+						buf.get_start_iter (out iter);
+					}
+					buf.place_cursor (iter);
 					replace_widget (editor, ed);
 					ed.grab_focus ();
 				});
@@ -1064,7 +1078,7 @@ namespace Vanubi {
 					abort (editor);
 					var loc = bar.location;
 					if (loc != null && loc.file != null) {
-						open_file (editor, loc.file);
+						open_location (editor, loc);
 					}
 			});
 			bar.changed.connect ((pat) => {
