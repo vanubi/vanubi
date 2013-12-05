@@ -162,7 +162,14 @@ namespace Vanubi {
 			}
 			saving_cancellable = new Cancellable ();
 			try {
-				yield file.replace_contents_async (saving_data.data, null, true, FileCreateFlags.PRIVATE, saving_cancellable, null);
+				// create a backup
+				var bak = File.new_for_path (file.get_path()+".bak");
+				yield file.copy_async (bak, FileCopyFlags.OVERWRITE, Priority.DEFAULT, saving_cancellable, null);
+				// write to a temp file
+				var tmp = File.new_for_path (file.get_path()+".tmp");
+				yield tmp.replace_contents_async (saving_data.data, null, true, FileCreateFlags.PRIVATE, saving_cancellable, null);
+				// rename temp to file
+				tmp.move (file, FileCopyFlags.OVERWRITE, saving_cancellable, null);
 			} catch (IOError.CANCELLED e) {
 			} catch (Error e) {
 				// TODO: display error message
