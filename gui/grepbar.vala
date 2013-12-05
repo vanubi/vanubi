@@ -21,13 +21,13 @@ using Vte;
 using Gtk;
 
 namespace Vanubi {
-	public class GrepView : TextView {
+	public class GrepView : SourceView {
 		public GrepView () {
 			Object (buffer: new GrepBuffer ());
 		}
 	}
 	
-	public class GrepBuffer : TextBuffer {
+	public class GrepBuffer : SourceBuffer {
 		TextTag[] attrs = null;
 		
 		construct {
