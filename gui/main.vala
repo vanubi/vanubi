@@ -406,7 +406,7 @@ namespace Vanubi {
 					try {
 						file.load_contents_async.end (r, out content, null);
 					} catch (Error e) {
-						message (e.message);
+						display_error (editor, e.message);
 						return;
 					} finally {
 						unset_loading ();
@@ -649,7 +649,7 @@ namespace Vanubi {
 					try {
 						editor.file.load_contents_async.end (r, out content, null);
 					} catch (Error e) {
-						message (e.message);
+						display_error (editor, e.message);
 						return;
 					} finally {
 						unset_loading ();
@@ -693,7 +693,7 @@ namespace Vanubi {
 							editor.file.replace_contents_async.end (r, null);
 							buf.set_modified (false);
 						} catch (Error e) {
-							message (e.message);
+							display_error (editor, e.message);
 						}
 						text = null;
 					});
@@ -845,9 +845,9 @@ namespace Vanubi {
 									var output = (string) execute_command_async.end (r);
 									var clipboard = Clipboard.get (Gdk.SELECTION_CLIPBOARD);
 									clipboard.set_text (output, -1);
-									display_message (ed, "<b>Output of command has been copied to clipboard</b>");
+									display_message (ed, "Output of command has been copied to clipboard");
 								} catch (Error e) {
-									display_message (ed, "<b>Error: %s".printf (e.message));
+									display_error (ed, e.message);
 								}
 						});
 					}
@@ -1069,7 +1069,7 @@ namespace Vanubi {
 		void on_repo_grep (Editor editor) {
 			var repo_dir = conf.cluster.get_git_repo (editor.file);
 			if (repo_dir == null) {
-				display_message (editor, "<b>Not in git repository</b>");
+				display_message (editor, "Not in git repository");
 				return;
 			}
 			
@@ -1227,8 +1227,16 @@ namespace Vanubi {
 			}
 		}
 
+		void display_error (Editor ed, string markup) {
+			var bar = new MessageBar ("<span fgcolor='red'><b>%s</b></span>".printf (markup));
+			bar.aborted.connect (() => { abort (ed); });
+			add_overlay (bar);
+			bar.show ();
+			bar.grab_focus ();
+		
+		}			
 		void display_message (Editor ed, string markup) {
-			var bar = new MessageBar (markup);
+			var bar = new MessageBar ("<b>%s</b>".printf (markup));
 			bar.aborted.connect (() => { abort (ed); });
 			add_overlay (bar);
 			bar.show ();
