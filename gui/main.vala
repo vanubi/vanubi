@@ -948,9 +948,10 @@ namespace Vanubi {
 		void on_kill_line (Editor ed) {
 			var buf = ed.view.buffer;
 
-			TextIter start;
-			buf.get_iter_at_mark (out start, buf.get_insert ());
-			buf.get_iter_at_line (out start, start.get_line());
+			TextIter insert, start;
+			buf.get_iter_at_mark (out insert, buf.get_insert ());
+			var orig_line_offset = insert.get_line_offset ();
+			buf.get_iter_at_line (out start, insert.get_line());
 			
 			var end = start;
 			end.forward_to_line_end ();
@@ -960,6 +961,10 @@ namespace Vanubi {
 
 			buf.begin_user_action ();
 			buf.delete (ref start, ref end);
+			// repositionate at the same line offset
+			buf.get_iter_at_mark (out insert, buf.get_insert ());
+			insert.forward_chars (orig_line_offset);
+			buf.place_cursor (insert);
 			buf.end_user_action ();
 		}
 		
