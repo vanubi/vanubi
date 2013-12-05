@@ -27,7 +27,8 @@ namespace Vanubi.Vrex {
 
 	public errordomain VError {
 		SYNTAX_ERROR,
-		SEMANTIC_ERROR
+		SEMANTIC_ERROR,
+		EVAL_ERROR
 	}
 	
 	public class Expression {
@@ -219,6 +220,7 @@ namespace Vanubi.Vrex {
 			}
 			
 			if (char.isalpha ()) {
+				// identifier
 				var b = new StringBuilder ();
 				while (char.isalpha ()) {
 					b.append_c (char);
