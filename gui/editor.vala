@@ -145,6 +145,8 @@ namespace Vanubi {
 		Label file_count;
 		Label file_status;
 		EditorInfoBar infobar;
+		int old_selection_start_offset;
+		int old_selection_end_offset;
 
 		public Editor (Configuration conf, File? file) {
 			this.file = file;
@@ -200,12 +202,21 @@ namespace Vanubi {
 			on_buffer_changed ();
 
 			view.focus_in_event.connect(() => { 
+					TextIter start, end;
+					view.buffer.get_iter_at_offset (out start, old_selection_start_offset);
+					view.buffer.get_iter_at_offset (out end, old_selection_end_offset);
+					view.buffer.select_range (start, end);
 					infobar.get_style_context().remove_class ("nonfocused");
 					infobar.reset_style (); // GTK+ 3.4 bug, solved in 3.6
 					return false;
 				});
 
-			view.focus_out_event.connect(() => { 
+			view.focus_out_event.connect(() => {
+					TextIter old_selection_start, old_selection_end;
+					view.buffer.get_selection_bounds (out old_selection_start,
+													  out old_selection_end);
+					old_selection_start_offset = old_selection_start.get_offset ();
+					old_selection_end_offset = old_selection_end.get_offset ();
 					infobar.get_style_context().add_class ("nonfocused");
 					infobar.reset_style (); // GTK+ 3.4 bug, solved in 3.6
 					return false;
