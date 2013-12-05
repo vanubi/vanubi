@@ -160,7 +160,7 @@ namespace Vanubi {
 			view.wrap_mode = WrapMode.CHAR;
 			view.set_data ("editor", (Editor*)this);
 			view.tab_width = conf.get_editor_int("tab_width", 4);
-			view.highlight_current_line = true;
+			view.highlight_current_line = conf.get_editor_bool ("highlight_current_line", true);
 
 			/* TODO: read the style from the config file */
 			SourceStyleScheme st = editor_style.get_scheme(conf.get_editor_string ("style", "zen"));

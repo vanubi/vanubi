@@ -75,6 +75,17 @@ namespace Vanubi {
 			}
 		}
 		
+		public bool get_group_bool (string group, string key, bool default) {
+			try {
+				if (backend.has_group (group) && backend.has_key (group, key)) {
+					return backend.get_boolean (group, key);
+				}
+				return default;
+			} catch (Error e) {
+				return default;
+			}
+		}
+		
 		public void remove_group_key (string group, string key) {
 			try {
 				backend.remove_key (group, key);
@@ -120,6 +131,10 @@ namespace Vanubi {
 			return get_group_string ("Editor", key, default);
 		}
 
+		public bool get_editor_bool (string key, bool default = false) {
+			return get_group_bool ("Editor", key, default);
+		}
+		
 		/* File */
 		// get files except *scratch*
 		public File[] get_files () {
