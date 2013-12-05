@@ -1025,24 +1025,39 @@ namespace Vanubi {
 			Indent indent_engine;
 			var vbuf = new UI.Buffer ((SourceView) ed.view);
 			var buf = (SourceBuffer) ed.view.buffer;
-			var langname = buf.language != null ? buf.language.name : "";
-			switch (langname) {
-				case "Assembly (Intel)":
-				case "i386 Assembly":
+			var lang_id = buf.language != null ? buf.language.id : null;
+			if (lang_id == null) {
+				indent_engine = null;
+			} else {
+				switch (lang_id) {
+				case "assembly (intel)":
+				case "i386 assembly":
 					indent_engine = new Indent_Asm (vbuf);
+					break;
+				case "makefile":
+					indent_engine = null;
 					break;
 				default:
 					indent_engine = new Indent_C (vbuf);
 					break;
+				}
 			}
 			
-			var min_line = int.min (selection_start.get_line(), selection_end.get_line());
-			var max_line = int.max (selection_start.get_line(), selection_end.get_line());
-			for (var line=min_line; line <= max_line; line++) {
-				TextIter iter;
-				buf.get_iter_at_line (out iter, line);
-				var viter = new UI.BufferIter (vbuf, iter);
-				indent_engine.indent (viter);
+			if (indent_engine == null) {
+				buf.begin_user_action ();		
+				buf.delete_selection (true, true);
+				buf.insert_at_cursor ("\t", -1);
+				ed.view.scroll_mark_onscreen (buf.get_insert ());
+				buf.end_user_action ();
+			} else {
+				var min_line = int.min (selection_start.get_line(), selection_end.get_line());
+				var max_line = int.max (selection_start.get_line(), selection_end.get_line());
+				for (var line=min_line; line <= max_line; line++) {
+					TextIter iter;
+					buf.get_iter_at_line (out iter, line);
+					var viter = new UI.BufferIter (vbuf, iter);
+					indent_engine.indent (viter);
+				}
 			}
 		}
 
