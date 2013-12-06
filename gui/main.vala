@@ -194,6 +194,9 @@ namespace Vanubi {
 			
 			index_command ("replace-backward", "Replace text backward incrementally");
 			execute_command["replace-backward"].connect (on_search_replace);
+			
+			index_command ("replace-forward-regexp", "Replace text forward incrementally using a regular expression", "regexp");
+			execute_command["replace-forward-regexp"].connect (on_search_replace);
 
 			bind_command ({ Key (Gdk.Key.k, Gdk.ModifierType.CONTROL_MASK) }, "kill-line-right");
 			index_command ("kill-line-right", "Delete line contents on the right of the cursor");
@@ -1341,16 +1344,24 @@ namespace Vanubi {
 
 		void on_search_replace (Editor editor, string command) {
 			SearchBar.Mode mode;
+			bool is_regex;
 			if (command == "search-forward") {
 				mode = SearchBar.Mode.SEARCH_FORWARD;
+				is_regex = false;
 			} else if (command == "search-backward") {
 				mode = SearchBar.Mode.SEARCH_BACKWARD;
+				is_regex = false;				
 			} else if (command == "replace-forward") {
 				mode = SearchBar.Mode.REPLACE_FORWARD;
-			} else {
+				is_regex = false;				
+			} else if (command == "replace-backward") {
 				mode = SearchBar.Mode.REPLACE_BACKWARD;
+				is_regex = false;
+			} else {
+				mode = SearchBar.Mode.REPLACE_FORWARD;
+				is_regex = true;
 			}
-			var bar = new SearchBar (editor, mode, last_search_string, last_replace_string);
+			var bar = new SearchBar (editor, mode, is_regex, last_search_string, last_replace_string);
 			bar.activate.connect (() => {
 				last_search_string = bar.text;
 				last_replace_string = bar.replace_text;

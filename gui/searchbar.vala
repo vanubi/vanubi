@@ -38,11 +38,15 @@ namespace Vanubi {
 		bool first_search = true;
 		bool is_replacing = false;
 		bool replace_complete = false;
+		bool is_regex = false;
+		string matching_string; // keep alive for regex
+		MatchInfo current_match;
 
-		public SearchBar (Editor editor, Mode mode, string search_initial = "", string replace_initial = "") {
+		public SearchBar (Editor editor, Mode mode, bool is_regex, string search_initial = "", string replace_initial = "") {
 			base (search_initial);
 			this.editor = editor;
 			this.mode = mode;
+			this.is_regex = is_regex;
 			
 			if (mode == Mode.REPLACE_FORWARD || mode == Mode.REPLACE_BACKWARD) {
 				replace_entry = new Entry ();
@@ -125,22 +129,43 @@ namespace Vanubi {
 			var buf = editor.view.buffer;
 			var p = entry.get_text ();
 			var insensitive = p.down () == p;
+			Regex regex = null;
+			if (is_regex) {
+				try {
+					regex = new Regex (p, RegexCompileFlags.OPTIMIZE, RegexMatchFlags.ANCHORED);
+				} catch (Error e) {
+					// user still writing regex
+					return;
+				}
+			}
+			
 			while (((mode == Mode.SEARCH_FORWARD || mode == Mode.REPLACE_FORWARD) && !iter.is_end ()) ||
 				   ((mode == Mode.SEARCH_BACKWARD || mode == Mode.REPLACE_BACKWARD) && !iter.is_start ())) {
 				var subiter = iter;
-				int i = 0;
-				unichar c;
 				bool found = true;
-				while (p.get_next_char (ref i, out c)) {
-					var c2 = subiter.get_char ();
-					if (insensitive) {
-						c2 = c2.tolower ();
+				if (is_regex) {
+					var end_line = iter;
+					end_line.forward_to_line_end ();
+					matching_string = buf.get_text (iter, end_line, false);
+					found = regex.match (matching_string, 0, out current_match);
+					if (found) {
+						var full = current_match.fetch (0);
+						subiter.forward_chars (full.length);
 					}
-					if (c != c2) {
-						found = false;
-						break;
+				} else {
+					int i = 0;
+					unichar c;
+					while (p.get_next_char (ref i, out c)) {
+						var c2 = subiter.get_char ();
+						if (insensitive) {
+							c2 = c2.tolower ();
+						}
+						if (c != c2) {
+							found = false;
+							break;
+						}
+						subiter.forward_char ();
 					}
-					subiter.forward_char ();
 				}
 				if (found) {
 					// found
@@ -215,10 +240,17 @@ namespace Vanubi {
 				if (!replace_complete) {
 					if (e.keyval == Gdk.Key.r) {
 						// replace occurrence
+						var r = replace_text;
+						if (is_regex) {
+							// parse back references
+							for (var i=1; i < current_match.get_match_count (); i++) {
+								r = r.replace (@"\\$i", current_match.fetch (i));
+							}
+						}
 						var buf = editor.view.buffer;
 						buf.begin_user_action ();		
 						buf.delete_selection (true, true);
-						buf.insert_at_cursor (replace_text, -1);
+						buf.insert_at_cursor (r, -1);
 						buf.end_user_action ();
 						
 						TextIter iter;
