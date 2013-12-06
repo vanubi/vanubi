@@ -25,13 +25,14 @@ void assert_tok (Token tok, TType type) {
 }
 
 void test_lexer () {
-	var code = "foo++ bar-- 'esc\\'ape' 123 321.456";
+	var code = "foo++ bar-- 'esc\\'ape' 3 123 321.456";
 	var lex = new Lexer (code);
 	assert_tok_id (lex.next (), "foo");
 	assert_tok (lex.next (), TType.INC);
 	assert_tok_id (lex.next (), "bar");
 	assert_tok (lex.next (), TType.DEC);
 	assert_tok_str (lex.next (), "esc\\'ape");
+	assert_tok_num (lex.next (), 3);
 	assert_tok_num (lex.next (), 123);
 	assert_tok_num (lex.next (), 321.456);
 	assert_tok (lex.next (), TType.END);
@@ -43,11 +44,17 @@ void assert_expr (string code, string expect) {
 	var parser = new Parser.for_string (code);
 	var expr = parser.parse_expression ();
 	var str = expr.to_string ();
+	if (str != expect) {
+		message (@"Expect $expect got $str");
+	}
 	assert (str == expect);
 }
 
 void test_parser () {
 	assert_expr ("foo++", "foo++");	
+	assert_expr ("foo+bar+3", "(foo + (bar + 3))");
+	assert_expr ("foo*bar+3", "((foo * bar) + 3)");
+	assert_expr ("(++foo)-(--bar)", "(++foo - --bar)");
 }
 
 
@@ -56,13 +63,16 @@ void assert_eval (Env env, string code, Vrex.Value expect) {
 	var parser = new Parser.for_string (code);
 	var expr = parser.parse_expression ();
 	var val = env.eval (expr);
+	if (!val.equal (expect)) {
+		message (@"Expect $expect got $val");
+	}
 	assert (val.equal (expect));
 }
 
 void test_eval () {
 	var env = new Env ();
 	assert_eval (env, "foo++", new Vrex.Value.for_string (""));
-	assert_eval (env, "foo", new Vrex.Value.for_num (1));
+	assert_eval (env, "foo+3", new Vrex.Value.for_num (4));
 }
 	
 int main (string[] args) {

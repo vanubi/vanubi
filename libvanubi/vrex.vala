@@ -71,6 +71,10 @@ namespace Vanubi.Vrex {
 		public bool equal (Value v) {
 			return str == v.str;
 		}
+		
+		public string to_string () {
+			return str;
+		}
 	}
 	
 	public class Env {
@@ -120,6 +124,8 @@ namespace Vanubi.Vrex {
 		MOD,
 		DIV,
 		MUL,
+		POW,
+		IDIV,
 		GT,
 		LT,
 		GE,
@@ -191,6 +197,20 @@ namespace Vanubi.Vrex {
 					return Token (TType.DEC, orig, 2);
 				}
 				return Token (TType.MINUS, orig, 1);
+			case '*':
+				pos++;
+				if (char == '*') {
+					pos++;
+					return Token (TType.POW, orig, 2);
+				}
+				return Token (TType.MUL, orig, 1);
+			case '/':
+				pos++;
+				if (char == '/') {
+					pos++;
+					return Token (TType.IDIV, orig, 2);
+				}
+				return Token (TType.DIV, orig, 1);
 			case '.':
 				pos++;
 				return Token (TType.DOT, orig, 1);
@@ -588,7 +608,6 @@ namespace Vanubi.Vrex {
 			if (cur.type != type) {
 				generic_error ();
 			}
-			next ();
 		}
 		
 		public Expression parse_expression () throws VError {
@@ -666,6 +685,7 @@ namespace Vanubi.Vrex {
 				next ();
 				expr = parse_expression ();
 				expect (TType.CLOSE_PAREN);
+				next ();
 				return expr;
 			}
 
@@ -726,8 +746,10 @@ namespace Vanubi.Vrex {
 		
 		public Expression parse_function () throws VError {
 			expect (TType.OPEN_BRACE);
+			next ();
 			var expr = parse_expression ();
 			expect (TType.CLOSE_BRACE);
+			next ();
 			return expr;
 		}
 		
