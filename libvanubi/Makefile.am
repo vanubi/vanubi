@@ -20,6 +20,7 @@ libvanubi_la_VALASOURCES = \
 	search.vala 	\
 	util.vala		\
 	vade/env.vala	\
+	vade/eval.vala	\
 	vade/lexer.vala	\
 	vade/parser.vala	\
 	$(NULL)

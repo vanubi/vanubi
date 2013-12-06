@@ -89,7 +89,8 @@ namespace Vanubi.Vade {
 		}
 		
 		public Value eval (Expression expr) {
-			return expr.eval (this);
+			var ev = new EvalVisitor ();
+			return ev.eval (this, expr);
 		}
 	}
 	

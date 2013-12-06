@@ -1,0 +1,130 @@
+/*
+ *  Copyright © 2013 Luca Bruno
+ *
+ *  This file is part of Vanubi.
+ *
+ *  Vanubi is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  Vanubi is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with Vanubi.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+namespace Vanubi.Vade {
+	public class EvalVisitor : Visitor {
+		Value value;
+		Env env;
+		
+		public Value eval (Env env, Expression expr) {
+			this.env = env;
+			expr.visit (this);
+			return value;
+		}
+		
+		public override void visit_string_literal (StringLiteral lit) {
+			value = new Value.for_string (lit.str);			
+		}
+		
+		public override void visit_num_literal (NumLiteral lit) {
+			value = new Value.for_num (lit.num);
+		}
+		
+		public override void visit_binary_expression (BinaryExpression expr) {
+			expr.left.visit (this);
+			var vleft = value;
+			switch (expr.op) {
+			case BinaryOperator.ADD:
+				expr.right.visit (this);
+				value = new Value.for_num (vleft.num+value.num);
+				break;
+			case BinaryOperator.SUB:
+				expr.right.visit (this);
+				value = new Value.for_num (vleft.num-value.num);
+				break;
+			case BinaryOperator.MUL:
+				expr.right.visit (this);
+				value = new Value.for_num (vleft.num*value.num);
+				break;
+			case BinaryOperator.DIV:
+				expr.right.visit (this);
+				value = new Value.for_num (vleft.num/value.num);
+				break;
+			case BinaryOperator.AND:
+				if (vleft.bool) {
+					expr.right.visit (this);
+					value = new Value.for_bool (value.bool);
+				} else {
+					value = new Value.for_bool (false);
+				}
+				break;
+			case BinaryOperator.OR:
+				if (vleft.bool) {
+					value = new Value.for_bool (true);
+				} else {
+					expr.right.visit (this);
+					value = new Value.for_bool (value.bool);
+				}
+				break;
+			default:
+				assert_not_reached ();
+			}		
+		}
+		
+		public override void visit_unary_expression (UnaryExpression expr) {
+			expr.inner.visit (this);
+			var num = value.num;
+			switch (expr.op) {
+			case UnaryOperator.NEGATE:
+				value = new Value.for_num (-num);
+				break;
+			case UnaryOperator.INC:
+				value = new Value.for_num (num+1);
+				env[((MemberAccess) expr.inner).id] = value;
+				break;
+			case UnaryOperator.DEC:
+				value = new Value.for_num (num-1);
+				env[((MemberAccess) expr.inner).id] = value;
+				break;
+			default:
+				assert_not_reached ();
+			}
+		}
+		
+		public override void visit_member_access (MemberAccess expr) {
+			if (expr.inner == null) {
+				var val = env[expr.id];
+				if (val == null) {
+					val = new Value.for_string ("");
+					env[expr.id] = val;
+				}
+				value = val;
+			} else {
+				expr.visit (this);
+			}
+		}
+		
+		public override void visit_postfix_expression (PostfixExpression expr) {
+			expr.inner.visit (this);
+			var num = value.num;
+			Value newval;
+			switch (expr.op) {
+			case PostfixOperator.INC:
+				newval = new Value.for_num (num+1);
+				break;
+			case PostfixOperator.DEC:
+				newval = new Value.for_num (num-1);
+				break;
+			default:
+				assert_not_reached ();
+			}
+			env[((MemberAccess) expr.inner).id] = newval;
+		}
+	}
+}

@@ -18,20 +18,29 @@
  */
 
 namespace Vanubi.Vade {
+	public class Visitor {
+		public virtual void visit_string_literal (StringLiteral lit) { }
+		public virtual void visit_num_literal (NumLiteral lit) { }
+		public virtual void visit_binary_expression (BinaryExpression expr) { }
+		public virtual void visit_unary_expression (UnaryExpression expr) { }
+		public virtual void visit_member_access (MemberAccess expr) { }
+		public virtual void visit_postfix_expression (PostfixExpression expr) { }
+	}
+	
 	public abstract class Expression {
-		public abstract Value eval (Env env);
+		public abstract void visit (Visitor v);
 		public abstract string to_string ();
 	}
 
 	public class NumLiteral : Expression {
-		double num;
+		public double num;
 		
 		public NumLiteral (double num) {
 			this.num = num;
 		}
 		
-		public override Value eval (Env env) {
-			return new Value.for_num (num);
+		public override void visit (Visitor v) {
+			v.visit_num_literal (this);
 		}
 		
 		public override string to_string () {
@@ -40,14 +49,14 @@ namespace Vanubi.Vade {
 	}
 	
 	public class StringLiteral : Expression {
-		string str;
+		public string str;
 		
 		public StringLiteral (string str) {
 			this.str = str;
 		}
 		
-		public override Value eval (Env env) {
-			return new Value.for_string (str);
+		public override void visit (Visitor v) {
+			v.visit_string_literal (this);
 		}
 		
 		public override string to_string () {
@@ -64,17 +73,8 @@ namespace Vanubi.Vade {
 			this.inner = inner;
 		}
 		
-		public override Value eval (Env env) {
-			if (inner == null) {
-				var val = env[id];
-				if (val == null) {
-					val = new Value.for_string ("");
-					env[id] = val;
-				}
-				return val;
-			} else {
-				return inner.eval (env);
-			}
+		public override void visit (Visitor v) {
+			v.visit_member_access (this);
 		}
 		
 		public override string to_string () {
@@ -95,22 +95,8 @@ namespace Vanubi.Vade {
 			this.inner = inner;
 		}
 		
-		public override Value eval (Env env) {
-			var iv = inner.eval (env);
-			var num = iv.num;
-			Value newval;
-			switch (op) {
-			case PostfixOperator.INC:
-				newval = new Value.for_num (num+1);
-				break;
-			case PostfixOperator.DEC:
-				newval = new Value.for_num (num-1);
-				break;
-			default:
-				assert_not_reached ();
-			}
-			env[((MemberAccess) inner).id] = newval;
-			return iv;
+		public override void visit (Visitor v) {
+			v.visit_postfix_expression (this);
 		}
 		
 		public override string to_string () {
@@ -127,26 +113,8 @@ namespace Vanubi.Vade {
 			this.inner = inner;
 		}
 		
-		public override Value eval (Env env) {
-			var iv = inner.eval (env);
-			var num = iv.num;
-			Value newval;
-			switch (op) {
-			case UnaryOperator.NEGATE:
-				newval = new Value.for_num (-num);
-				break;
-			case UnaryOperator.INC:
-				newval = new Value.for_num (num+1);
-				env[((MemberAccess) inner).id] = newval;
-				break;
-			case UnaryOperator.DEC:
-				newval = new Value.for_num (num-1);
-				env[((MemberAccess) inner).id] = newval;
-				break;
-			default:
-				assert_not_reached ();
-			}
-			return newval;
+		public override void visit (Visitor v) {
+			v.visit_unary_expression (this);
 		}
 		
 		public override string to_string () {
@@ -165,46 +133,8 @@ namespace Vanubi.Vade {
 			this.right = right;
 		}
 		
-		public override Value eval (Env env) {
-			var vleft = left.eval (env);
-			Value newval;
-			switch (op) {
-			case BinaryOperator.ADD:
-				var vright = right.eval (env);
-				newval = new Value.for_num (vleft.num+vright.num);
-				break;
-			case BinaryOperator.SUB:
-				var vright = right.eval (env);
-				newval = new Value.for_num (vleft.num-vright.num);
-				break;
-			case BinaryOperator.MUL:
-				var vright = right.eval (env);
-				newval = new Value.for_num (vleft.num*vright.num);
-				break;
-			case BinaryOperator.DIV:
-				var vright = right.eval (env);
-				newval = new Value.for_num (vleft.num/vright.num);
-				break;
-			case BinaryOperator.AND:
-				if (vleft.bool) {
-					var vright = right.eval (env);
-					newval = new Value.for_bool (vright.bool);
-				} else {
-					newval = new Value.for_bool (false);
-				}
-				break;
-			case BinaryOperator.OR:
-				if (vleft.bool) {
-					newval = new Value.for_bool (true);
-				} else {
-					var vright = right.eval (env);
-					newval = new Value.for_bool (vright.bool);
-				}
-				break;
-			default:
-				assert_not_reached ();
-			}		
-			return newval;
+		public override void visit (Visitor v) {
+			v.visit_binary_expression (this);
 		}
 		
 		public override string to_string () {
