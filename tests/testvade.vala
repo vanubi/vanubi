@@ -55,6 +55,7 @@ void test_parser () {
 	assert_expr ("foo+bar+3", "(foo + (bar + 3))");
 	assert_expr ("foo*bar+3", "((foo * bar) + 3)");
 	assert_expr ("(++foo)-(--bar)", "(++foo - --bar)");
+	assert_expr ("foo; bar = baz", "foo; bar = baz");
 }
 
 
@@ -73,6 +74,7 @@ void test_eval () {
 	var env = new Env ();
 	assert_eval (env, "foo++", new Vade.Value.for_string (""));
 	assert_eval (env, "foo+3", new Vade.Value.for_num (4));
+	assert_eval (env, "a=b=3; c=4; d=a+b+c", new Vade.Value.for_num (10));
 }
 	
 int main (string[] args) {

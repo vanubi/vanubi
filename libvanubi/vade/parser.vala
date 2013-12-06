@@ -25,6 +25,8 @@ namespace Vanubi.Vade {
 		public virtual void visit_unary_expression (UnaryExpression expr) { }
 		public virtual void visit_member_access (MemberAccess expr) { }
 		public virtual void visit_postfix_expression (PostfixExpression expr) { }
+		public virtual void visit_seq_expression (SeqExpression expr) { }
+		public virtual void visit_assign_expression (AssignExpression expr) { }
 	}
 	
 	public abstract class Expression {
@@ -142,6 +144,43 @@ namespace Vanubi.Vade {
 		}
 	}
 	
+	public class SeqExpression : Expression {
+		public Expression inner;
+		public Expression next;
+		
+		public SeqExpression (Expression inner, Expression next) {
+			this.inner = inner;
+			this.next = next;
+		}
+		
+		public override void visit (Visitor v) {
+			v.visit_seq_expression (this);
+		}
+		
+		public override string to_string () {
+			return @"$inner; $next";
+		}
+	}
+
+	public class AssignExpression : Expression {
+		public AssignOperator op;
+		public Expression left;
+		public Expression right;
+		
+		public AssignExpression (AssignOperator op, Expression left, Expression right) {
+			this.left = left;
+			this.right = right;
+		}
+		
+		public override void visit (Visitor v) {
+			v.visit_assign_expression (this);
+		}
+		
+		public override string to_string () {
+			return @"$left $op $right";
+		}
+	}
+
 	public enum PostfixOperator {
 		INC,
 		DEC;
@@ -205,6 +244,31 @@ namespace Vanubi.Vade {
 		}		
 	}
 	
+	public enum AssignOperator {
+		SIMPLE,
+		ADD,
+		SUB,
+		MUL,
+		DIV;
+		
+		public string to_string () {
+			switch (this) {
+			case ADD:
+				return "+";
+			case SUB:
+				return "-";
+			case MUL:
+				return "*";
+			case DIV:
+				return "/";
+			case SIMPLE:
+				return "=";
+			default:
+				assert_not_reached ();
+			}
+		}
+	}
+	
 	public class Parser {
 		Lexer lex;
 		Token cur;
@@ -230,11 +294,37 @@ namespace Vanubi.Vade {
 		}
 		
 		public Expression parse_expression () throws VError {
+			var expr = parse_seq_expression ();
+			return expr;
+		}
+		
+		public Expression parse_seq_expression () throws VError {
 			var expr = parse_binary_expression ();
+			if (cur.type == TType.SEMICOMMA) {
+				next ();
+				var next = parse_seq_expression ();
+				expr = new SeqExpression (expr, next);
+			}
 			return expr;
 		}
 		
 		public Expression parse_binary_expression () throws VError {
+			var expr = parse_assign_expression ();
+			return expr;
+		}
+		
+		public Expression parse_assign_expression () throws VError {
+			var expr = parse_relational_expression ();
+			if (cur.type == TType.ASSIGN) {
+				next ();
+				var right = parse_assign_expression ();
+				expr = new AssignExpression (AssignOperator.SIMPLE, expr, right);
+			}
+			return expr;
+		}
+		
+		public Expression parse_relational_expression () throws VError {
+			// TODO
 			var expr = parse_add_expression ();
 			return expr;
 		}

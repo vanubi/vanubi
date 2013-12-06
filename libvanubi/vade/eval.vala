@@ -126,5 +126,15 @@ namespace Vanubi.Vade {
 			}
 			env[((MemberAccess) expr.inner).id] = newval;
 		}
+		
+		public override void visit_seq_expression (SeqExpression expr) {
+			expr.inner.visit (this);
+			expr.next.visit (this);
+		}
+		
+		public override void visit_assign_expression (AssignExpression expr) {
+			expr.right.visit (this);
+			env[((MemberAccess) expr.left).id] = value;
+		}
 	}
 }
