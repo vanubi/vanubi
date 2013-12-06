@@ -35,7 +35,8 @@ namespace Vanubi.Vrex {
 		EVAL_ERROR
 	}
 	
-	public class Expression {
+	public abstract class Expression {
+		public abstract string to_string ();
 	}
 	
 	public enum TType {
@@ -181,9 +182,7 @@ namespace Vanubi.Vrex {
 				var b = new StringBuilder ();
 				while (char != '\'') {
 					if (char == '\\') {
-						if (code[pos+1] != '\'') {
-							b.append_c (char);
-						}
+						b.append_c (char);
 						pos++;
 						b.append_c (char);
 						pos++;
@@ -245,6 +244,10 @@ namespace Vanubi.Vrex {
 		public NumLiteral (double num) {
 			this.num = num;
 		}
+		
+		public override string to_string () {
+			return "%g".printf (num);
+		}
 	}
 	
 	public class StringLiteral : Expression {
@@ -253,6 +256,10 @@ namespace Vanubi.Vrex {
 		public StringLiteral (string str) {
 			this.str = str;
 		}
+		
+		public override string to_string () {
+			return "'"+str+"'";
+		}
 	}
 	
 	public class ArrayLiteral : Expression {
@@ -260,6 +267,10 @@ namespace Vanubi.Vrex {
 		
 		public ArrayLiteral (GenericArray<Expression> elements) {
 			this.elements = elements;
+		}
+		
+		public override string to_string () {
+			return "TODO";
 		}
 	}
 	
@@ -271,6 +282,14 @@ namespace Vanubi.Vrex {
 			this.id = id;
 			this.inner = inner;
 		}
+		
+		public override string to_string () {
+			if (inner == null) {
+				return id;
+			} else {
+				return inner.to_string()+"."+id;
+			}
+		}
 	}
 	
 	public class CallExpression : Expression {
@@ -281,6 +300,10 @@ namespace Vanubi.Vrex {
 			this.inner = inner;
 			this.args = args;
 		}
+		
+		public override string to_string () {
+			return "TODO";
+		}
 	}
 	
 	public class PostfixExpression : Expression {
@@ -290,6 +313,18 @@ namespace Vanubi.Vrex {
 		public PostfixExpression (PostfixOperator op, Expression inner) {
 			this.op = op;
 			this.inner = inner;
+		}
+		
+		public override string to_string () {
+			var str = inner.to_string ();
+			switch (op) {
+			case PostfixOperator.INC:
+				return str+"++";
+			case PostfixOperator.DEC:
+				return str+"--";
+			default:
+				assert_not_reached ();
+			}
 		}
 	}
 	

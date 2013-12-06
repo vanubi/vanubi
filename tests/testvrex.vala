@@ -31,19 +31,21 @@ void test_lexer () {
 	assert_tok (lex.next (), TType.INC);
 	assert_tok_id (lex.next (), "bar");
 	assert_tok (lex.next (), TType.DEC);
-	assert_tok_str (lex.next (), "esc'ape");
+	assert_tok_str (lex.next (), "esc\\'ape");
 	assert_tok_num (lex.next (), 123);
 	assert_tok_num (lex.next (), 321.456);
 	assert_tok (lex.next (), TType.END);
 }
 
-void test_parser () {
-	var code = "foo++";
+void assert_expr (string code, string expect) {
 	var parser = new Parser.for_string (code);
 	var expr = parser.parse_expression ();
-	assert (expr is PostfixExpression);
-	var inner = ((PostfixExpression) expr).inner;
-	assert (inner is MemberAccess);
+	var str = expr.to_string ();
+	assert (str == expect);
+}
+
+void test_parser () {
+	assert_expr ("foo++", "foo++");	
 }
 
 int main (string[] args) {
