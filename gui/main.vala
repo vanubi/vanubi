@@ -815,8 +815,100 @@ namespace Vanubi {
 			bar.show ();
 			bar.grab_focus ();
 		}
-		
+
+		Editor? get_visible_editor (bool return_any, bool include_scratch) {
+			Editor? visible = null;
+
+			each_editor((ed) => {
+					if (ed.visible) {
+						visible = ed;
+						return false;
+					}
+					return true;
+				}, include_scratch);
+
+			if (return_any && visible == null) {
+				/* Return the first editor */
+				each_editor((ed) => {
+						visible = ed;
+						return true;
+					}, include_scratch);
+			}
+
+			return visible;
+		}
+
+		Editor? get_modified_editor () {
+			Editor? visible = null;
+
+			each_editor((ed) => {
+					if (ed.view.buffer.get_modified ()) {
+						visible = ed;
+						return false;
+					}
+					return true;
+				}, false);
+			return visible;
+		}
+
+		void save_file_sync(Editor ed) {
+			if (ed.view.buffer.get_modified ()) {
+				var buf = ed.view.buffer;
+				if (ed.file != null) {
+					TextIter start, end;
+					buf.get_start_iter (out start);
+					buf.get_end_iter (out end);
+					string text = buf.get_text (start, end, false);
+					try {
+						ed.file.replace_contents(text.data, null, true, FileCreateFlags.NONE, null, null);
+						buf.set_modified (false);
+					} catch (Error e) {
+						display_error (ed, e.message); /* FIXME */
+					}
+				}
+			}
+		}
+
+		void save_modified_editors (Editor? ed) {
+			if (ed == null) {
+				/* No more modified editors */
+				quit ();
+				return;
+			}
+
+			Editor? visible = get_visible_editor(false, true);
+
+			on_join_all (ed); /* XXX */
+			if (visible != null && visible != ed) {
+				replace_widget (visible, ed);
+			}
+
+			var bar = new KeyChoiceBar ("Save buffer before quit? [s=save|n=discard|!=save-all|q=discard-all]");
+			bar.choice.connect ((e) => {
+					if (e.keyval == Gdk.Key.s) {
+						save_file_sync(ed);
+						abort (ed);
+						save_modified_editors (get_modified_editor ());
+					// } else if (e.keyval == Gdk.Key.n) {
+					// 	abort (ed);
+					// 	save_modified_editors (get_modified_editor (ed));
+					} else if (e.keyval == Gdk.Key.q) {
+						quit();
+					} else if (e.keyval == '!') {
+						each_editor((editor) => {
+								save_file_sync(editor);
+								return true;
+							}, false);
+						quit();
+					}
+				});
+			add_overlay (bar);
+			bar.show ();
+			bar.grab_focus ();
+		}
+
 		void on_quit () {
+			// save_modified_editors(get_modified_editor ());
 			quit ();
 		}
 
