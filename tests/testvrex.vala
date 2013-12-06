@@ -37,10 +37,20 @@ void test_lexer () {
 	assert_tok (lex.next (), TType.END);
 }
 
+void test_parser () {
+	var code = "foo++";
+	var parser = new Parser.for_string (code);
+	var expr = parser.parse_expression ();
+	assert (expr is PostfixExpression);
+	var inner = ((PostfixExpression) expr).inner;
+	assert (inner is MemberAccess);
+}
+
 int main (string[] args) {
 	Test.init (ref args);
 
 	Test.add_func ("/vrex/lexer", test_lexer);
+	Test.add_func ("/vrex/parser", test_parser);
 
 	return Test.run ();
 }

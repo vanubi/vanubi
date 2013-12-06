@@ -23,6 +23,10 @@ namespace Vanubi.Vrex {
 	
 	public class Env {
 		public HashTable<string, Value> registers = new HashTable<string, Value> (str_hash, str_equal);
+		
+		public Value eval (Expression expr) {
+			return new Value ();
+		}
 	}
 
 	public errordomain VError {
@@ -83,9 +87,9 @@ namespace Vanubi.Vrex {
 	}
 	
 	public class Lexer {
-		string code;
-		int len;
-		int pos;
+		internal string code;
+		internal int len;
+		internal int pos;
 		
 		char @char {
 			get {
@@ -234,4 +238,137 @@ namespace Vanubi.Vrex {
 			throw new VError.SYNTAX_ERROR ("Unknown char '%c' at pos %d in '%s'", char, pos, code);
 		}
 	}	
+	
+	public class NumLiteral : Expression {
+		double num;
+		
+		public NumLiteral (double num) {
+			this.num = num;
+		}
+	}
+	
+	public class StringLiteral : Expression {
+		string str;
+		
+		public StringLiteral (string str) {
+			this.str = str;
+		}
+	}
+	
+	public class ArrayLiteral : Expression {
+		GenericArray<Expression> elements;
+		
+		public ArrayLiteral (GenericArray<Expression> elements) {
+			this.elements = elements;
+		}
+	}
+	
+	public class MemberAccess : Expression {
+		public string id;
+		public Expression inner;
+		
+		public MemberAccess (string id, Expression? inner = null) {
+			this.id = id;
+			this.inner = inner;
+		}
+	}
+	
+	public class CallExpression : Expression {
+		public Expression inner;
+		public GenericArray<Expression> args;
+		
+		public CallExpression (Expression inner, GenericArray<Expression> args) {
+			this.inner = inner;
+			this.args = args;
+		}
+	}
+	
+	public class PostfixExpression : Expression {
+		public PostfixOperator op;
+		public Expression inner;
+		
+		public PostfixExpression (PostfixOperator op, Expression inner) {
+			this.op = op;
+			this.inner = inner;
+		}
+	}
+	
+	public enum PostfixOperator {
+		INC,
+		DEC
+	}
+	
+	public class Parser {
+		Lexer lex;
+		Token cur;
+		
+		public Parser (Lexer lex) throws VError {
+			this.lex = lex;
+			next ();
+		}
+		
+		public Parser.for_string (string str) throws VError {
+			this (new Lexer (str));
+		}
+		
+		public Token next () throws VError {
+			this.cur = lex.next ();
+			return this.cur;
+		}
+		
+		public Expression parse_expression () throws VError {
+			var expr = parse_member_access (null);			
+			switch (cur.type) {
+			case TType.INC:
+			case TType.DEC:
+				expr = parse_postfix_expression (expr);
+				break;
+			default:
+				generic_error ();
+			}
+			return expr;
+		}
+			
+		public Expression parse_member_access (Expression? inner) throws VError {
+			var id = parse_identifier ();
+			var expr = new MemberAccess (id, inner);
+			if (cur.type == TType.DOT) {
+				next ();
+				return parse_member_access (expr);
+			} else {
+				return expr;
+			}			
+		}
+		
+		public Expression parse_postfix_expression (Expression inner) throws VError {
+			switch (cur.type) {
+			case TType.INC:
+				next ();
+				return new PostfixExpression (PostfixOperator.INC, inner);
+			case TType.DEC:
+				next ();
+				return new PostfixExpression (PostfixOperator.DEC, inner);
+			default:
+				generic_error ();
+			}
+		}
+		
+		[NoReturn]
+		public void generic_error () throws VError {
+			throw new VError.SYNTAX_ERROR ("Unexpected %s at pos %d in '%s'",
+										   cur.to_string(),
+										   lex.pos,
+										   lex.code);		
+		}
+		
+		public string? parse_identifier () throws VError {
+			if (cur.type == TType.ID) {
+				var str = cur.str;
+				next ();
+				return str;
+			} else {
+				generic_error ();
+			}
+		}
+	}
 }
