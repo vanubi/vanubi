@@ -82,7 +82,7 @@ namespace Vanubi.Vrex {
 		}
 	}
 	
-	public class Tokenizer {
+	public class Lexer {
 		string code;
 		int len;
 		int pos;
@@ -93,13 +93,13 @@ namespace Vanubi.Vrex {
 			}
 		}
 		
-		public Tokenizer (string code) {
+		public Lexer (string code) {
 			this.code = code;
 			this.len = code.length;
 			this.pos = 0;
 		}
 		
-		public Token next_token () throws VError.SYNTAX_ERROR {
+		public Token next () throws VError.SYNTAX_ERROR {
 			while (pos < len && char.isspace ()) pos++;
 			if (pos >= len) {
 				return Token (TType.END, pos, 0);

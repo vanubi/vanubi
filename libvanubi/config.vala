@@ -188,7 +188,7 @@ namespace Vanubi {
 			} catch (IOError.CANCELLED e) {
 			} catch (Error e) {
 				// TODO: display error message
-				warning ("Could not save file: %s", e.message);
+				warning ("Could not save configuration: %s", e.message);
 			}
 		}
 	}
