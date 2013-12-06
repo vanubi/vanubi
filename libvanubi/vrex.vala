@@ -23,8 +23,8 @@ namespace Vanubi.Vrex {
 			STRING
 		}
 		
-		Type type;
-		string str;
+		public Type type;
+		public string str;
 		
 		public Value.for_string (string str) {
 			this.type = Type.STRING;
@@ -35,13 +35,36 @@ namespace Vanubi.Vrex {
 			this.type = Type.STRING;
 			this.num = num;
 		}
-		
+
+		public Value.for_bool (bool b) {
+			this.type = Type.STRING;
+			this.bool = bool;
+		}
+
 		public double num {
 			get {
 				return double.parse (str);
 			}
 			set {
 				str = value.to_string ();
+			}
+		}
+		
+		public bool @bool {
+			get {
+				return @int != 0;
+			}
+			set {
+				@int = (int) value;
+			}
+		}
+
+		public int @int {
+			get {
+				return (int) num;
+			}
+			set {
+				num = value;
 			}
 		}
 		
@@ -102,6 +125,10 @@ namespace Vanubi.Vrex {
 		GE,
 		LE,
 		EQ,
+		AND,
+		OR,
+		BIT_AND,
+		BIT_OR,
 		ASSIGN,
 		DOT,
 		END
@@ -167,9 +194,6 @@ namespace Vanubi.Vrex {
 			case '.':
 				pos++;
 				return Token (TType.DOT, orig, 1);
-			case '&':
-				pos++;
-				return Token (TType.ADDRESS, orig, 1);
 			case '{':
 				pos++;
 				return Token (TType.OPEN_BRACE, orig, 1);
@@ -194,6 +218,20 @@ namespace Vanubi.Vrex {
 			case ';':
 				pos++;
 				return Token (TType.SEMICOMMA, orig, 1);
+			case '&':
+				pos++;
+				if (char == '&') {
+					pos++;
+					return Token (TType.AND, orig, 1);
+				}
+				return Token (TType.BIT_AND, orig, 1);
+			case '|':
+				pos++;
+				if (char == '|') {
+					pos++;
+					return Token (TType.OR, orig, 1);
+				}
+				return Token (TType.BIT_OR, orig, 1);
 			case '=':
 				pos++;
 				if (char == '=') {
@@ -351,28 +389,181 @@ namespace Vanubi.Vrex {
 		public override Value eval (Env env) {
 			var iv = inner.eval (env);
 			var num = iv.num;
-			var val = new Value.for_num (num);
-			var newval = new Value.for_num (num+1);
+			Value newval;
+			switch (op) {
+			case PostfixOperator.INC:
+				newval = new Value.for_num (num+1);
+				break;
+			case PostfixOperator.DEC:
+				newval = new Value.for_num (num-1);
+				break;
+			default:
+				assert_not_reached ();
+			}
 			env[((MemberAccess) inner).id] = newval;
-			return val;
+			return iv;
 		}
 		
 		public override string to_string () {
-			var str = inner.to_string ();
+			return @"$inner$op";
+		}
+	}
+	
+	public class UnaryExpression : Expression {
+		public UnaryOperator op;
+		public Expression inner;
+		
+		public UnaryExpression (UnaryOperator op, Expression inner) {
+			this.op = op;
+			this.inner = inner;
+		}
+		
+		public override Value eval (Env env) {
+			var iv = inner.eval (env);
+			var num = iv.num;
+			Value newval;
 			switch (op) {
-			case PostfixOperator.INC:
-				return str+"++";
-			case PostfixOperator.DEC:
-				return str+"--";
+			case UnaryOperator.NEGATE:
+				newval = new Value.for_num (-num);
+				break;
+			case UnaryOperator.INC:
+				newval = new Value.for_num (num+1);
+				env[((MemberAccess) inner).id] = newval;
+				break;
+			case UnaryOperator.DEC:
+				newval = new Value.for_num (num-1);
+				env[((MemberAccess) inner).id] = newval;
+				break;
+			default:
+				assert_not_reached ();
+			}
+			return newval;
+		}
+		
+		public override string to_string () {
+			return @"$op$inner";
+		}
+	}
+	
+	public class BinaryExpression : Expression {
+		public BinaryOperator op;
+		public Expression left;
+		public Expression right;
+		
+		public BinaryExpression (BinaryOperator op, Expression left, Expression right) {
+			this.op = op;
+			this.left = left;
+			this.right = right;
+		}
+		
+		public override Value eval (Env env) {
+			var vleft = left.eval (env);
+			Value newval;
+			switch (op) {
+			case BinaryOperator.ADD:
+				var vright = right.eval (env);
+				newval = new Value.for_num (vleft.num+vright.num);
+				break;
+			case BinaryOperator.SUB:
+				var vright = right.eval (env);
+				newval = new Value.for_num (vleft.num-vright.num);
+				break;
+			case BinaryOperator.MUL:
+				var vright = right.eval (env);
+				newval = new Value.for_num (vleft.num*vright.num);
+				break;
+			case BinaryOperator.DIV:
+				var vright = right.eval (env);
+				newval = new Value.for_num (vleft.num/vright.num);
+				break;
+			case BinaryOperator.AND:
+				if (vleft.bool) {
+					var vright = right.eval (env);
+					newval = new Value.for_bool (vright.bool);
+				} else {
+					newval = new Value.for_bool (false);
+				}
+				break;
+			case BinaryOperator.OR:
+				if (vleft.bool) {
+					newval = new Value.for_bool (true);
+				} else {
+					var vright = right.eval (env);
+					newval = new Value.for_bool (vright.bool);
+				}
+				break;
+			default:
+				assert_not_reached ();
+			}		
+			return newval;
+		}
+		
+		public override string to_string () {
+			return @"($left $op $right)";
+		}
+	}
+	
+	public enum PostfixOperator {
+		INC,
+		DEC;
+		
+		public string to_string () {
+			switch (this) {
+			case INC:
+				return "++";
+			case DEC:
+				return "--";
 			default:
 				assert_not_reached ();
 			}
 		}
 	}
 	
-	public enum PostfixOperator {
+	public enum UnaryOperator {
+		NEGATE,
 		INC,
-		DEC
+		DEC;
+		
+		public string to_string () {
+			switch (this) {
+			case INC:
+				return "++";
+			case DEC:
+				return "--";
+			case NEGATE:
+				return "-";
+			default:
+				assert_not_reached ();
+			}
+		}
+	}
+	
+	public enum BinaryOperator {
+		ADD,
+		SUB,
+		MUL,
+		DIV,
+		AND,
+		OR;
+		
+		public string to_string () {
+			switch (this) {
+			case ADD:
+				return "+";
+			case SUB:
+				return "-";
+			case MUL:
+				return "*";
+			case DIV:
+				return "/";
+			case AND:
+				return "&&";
+			case OR:
+				return "||";
+			default:
+				assert_not_reached ();
+			}
+		}		
 	}
 	
 	public class Parser {
@@ -393,17 +584,122 @@ namespace Vanubi.Vrex {
 			return this.cur;
 		}
 		
+		public void expect (TType type) throws VError {
+			if (cur.type != type) {
+				generic_error ();
+			}
+			next ();
+		}
+		
 		public Expression parse_expression () throws VError {
-			var expr = parse_member_access (null);			
+			var expr = parse_binary_expression ();
+			return expr;
+		}
+		
+		public Expression parse_binary_expression () throws VError {
+			var expr = parse_add_expression ();
+			return expr;
+		}
+		
+		public Expression parse_add_expression () throws VError {
+			var expr = parse_mul_expression ();
 			switch (cur.type) {
-			case TType.INC:
-			case TType.DEC:
-				expr = parse_postfix_expression (expr);
+			case TType.PLUS:
+				next ();
+				var right = parse_add_expression ();
+				expr = new BinaryExpression (BinaryOperator.ADD, expr, right);
+				break;
+			case TType.MINUS:
+				next ();
+				var right = parse_add_expression ();
+				expr = new BinaryExpression (BinaryOperator.SUB, expr, right);
+				break;
+			}
+			return expr;
+		}
+		
+		public Expression parse_mul_expression () throws VError {
+			var expr = parse_unary_expression ();
+			switch (cur.type) {
+			case TType.MUL:
+				next ();
+				var right = parse_mul_expression ();
+				expr = new BinaryExpression (BinaryOperator.MUL, expr, right);
+				break;
+			case TType.DIV:
+				next ();
+				var right = parse_mul_expression ();
+				expr = new BinaryExpression (BinaryOperator.DIV, expr, right);
 				break;
 			}
 			return expr;
 		}
 			
+		public Expression parse_unary_expression () throws VError {
+			Expression expr;
+			switch (cur.type) {
+			case TType.MINUS:
+				next ();
+				expr = parse_simple_expression ();
+				expr = new UnaryExpression (UnaryOperator.NEGATE, expr);
+				break;
+			case TType.INC:
+				next ();
+				expr = parse_simple_expression ();
+				expr = new UnaryExpression (UnaryOperator.INC, expr);
+				break;
+			case TType.DEC:
+				next ();
+				expr = parse_simple_expression ();
+				expr = new UnaryExpression (UnaryOperator.DEC, expr);
+				break;
+			default:
+				expr = parse_simple_expression ();
+				break;
+			}
+			return expr;
+		}
+		
+		public Expression parse_simple_expression () throws VError {
+			Expression expr;
+			if (cur.type == TType.OPEN_PAREN) {
+				next ();
+				expr = parse_expression ();
+				expect (TType.CLOSE_PAREN);
+				return expr;
+			}
+
+			switch (cur.type) {
+			case TType.ID:
+				expr = parse_member_access (null);			
+				switch (cur.type) {
+				case TType.INC:
+				case TType.DEC:
+					expr = parse_postfix_expression (expr);
+					break;
+				}
+				break;
+			case TType.OPEN_BRACE:
+				expr = parse_function ();
+				break;
+			case TType.OPEN_PAREN:
+				expr = parse_expression ();
+				if (cur.type != TType.CLOSE_PAREN) {
+					generic_error ();
+				}
+				break;
+			case TType.NUM:
+				expr = parse_num_literal ();
+				break;
+			case TType.STRING:
+				expr = parse_string_literal ();
+				break;
+			default:
+				generic_error ();
+			}
+			return expr;
+		}
+		
 		public Expression parse_member_access (Expression? inner) throws VError {
 			var id = parse_identifier ();
 			var expr = new MemberAccess (id, inner);
@@ -426,6 +722,27 @@ namespace Vanubi.Vrex {
 			default:
 				generic_error ();
 			}
+		}
+		
+		public Expression parse_function () throws VError {
+			expect (TType.OPEN_BRACE);
+			var expr = parse_expression ();
+			expect (TType.CLOSE_BRACE);
+			return expr;
+		}
+		
+		public Expression parse_num_literal () throws VError {
+			expect (TType.NUM);
+			var expr = new NumLiteral (cur.num);
+			next ();
+			return expr;
+		}
+		
+		public Expression parse_string_literal () throws VError {
+			expect (TType.STRING);
+			var expr = new StringLiteral (cur.str);
+			next ();
+			return expr;
 		}
 		
 		[NoReturn]

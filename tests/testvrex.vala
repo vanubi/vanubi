@@ -61,7 +61,7 @@ void assert_eval (Env env, string code, Vrex.Value expect) {
 
 void test_eval () {
 	var env = new Env ();
-	assert_eval (env, "foo++", new Vrex.Value.for_num (0));
+	assert_eval (env, "foo++", new Vrex.Value.for_string (""));
 	assert_eval (env, "foo", new Vrex.Value.for_num (1));
 }
 	

@@ -207,6 +207,7 @@ namespace Vanubi {
 				buf.get_iter_at_offset (out bound, original_bound);
 				editor.view.buffer.select_range (insert, bound);
 				editor.view.scroll_to_mark (editor.view.buffer.get_insert (), 0, false, 0.5, 0.5);
+				editor.update_old_selection ();
 				aborted ();
 				return true;
 			} else if (mode == Mode.SEARCH_FORWARD || mode == Mode.SEARCH_BACKWARD) {
