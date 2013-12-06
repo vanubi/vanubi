@@ -19,13 +19,50 @@
 
 namespace Vanubi.Vrex {
 	public class Value {
+		public enum Type {
+			STRING
+		}
+		
+		Type type;
+		string str;
+		
+		public Value.for_string (string str) {
+			this.type = Type.STRING;
+			this.str = str;
+		}
+		
+		public Value.for_num (double num) {
+			this.type = Type.STRING;
+			this.num = num;
+		}
+		
+		public double num {
+			get {
+				return double.parse (str);
+			}
+			set {
+				str = value.to_string ();
+			}
+		}
+		
+		public bool equal (Value v) {
+			return str == v.str;
+		}
 	}
 	
 	public class Env {
 		public HashTable<string, Value> registers = new HashTable<string, Value> (str_hash, str_equal);
 		
+		public unowned Value? get (string name) {
+			return registers.lookup (name);
+		}
+		
+		public void set (string name, Value val) {
+			registers.insert (name, val);
+		}
+		
 		public Value eval (Expression expr) {
-			return new Value ();
+			return expr.eval (this);
 		}
 	}
 
@@ -36,6 +73,7 @@ namespace Vanubi.Vrex {
 	}
 	
 	public abstract class Expression {
+		public abstract Value eval (Env env);
 		public abstract string to_string ();
 	}
 	
@@ -245,6 +283,10 @@ namespace Vanubi.Vrex {
 			this.num = num;
 		}
 		
+		public override Value eval (Env env) {
+			return new Value.for_num (num);
+		}
+		
 		public override string to_string () {
 			return "%g".printf (num);
 		}
@@ -257,23 +299,15 @@ namespace Vanubi.Vrex {
 			this.str = str;
 		}
 		
+		public override Value eval (Env env) {
+			return new Value.for_string (str);
+		}
+		
 		public override string to_string () {
 			return "'"+str+"'";
 		}
 	}
-	
-	public class ArrayLiteral : Expression {
-		GenericArray<Expression> elements;
 		
-		public ArrayLiteral (GenericArray<Expression> elements) {
-			this.elements = elements;
-		}
-		
-		public override string to_string () {
-			return "TODO";
-		}
-	}
-	
 	public class MemberAccess : Expression {
 		public string id;
 		public Expression inner;
@@ -281,6 +315,19 @@ namespace Vanubi.Vrex {
 		public MemberAccess (string id, Expression? inner = null) {
 			this.id = id;
 			this.inner = inner;
+		}
+		
+		public override Value eval (Env env) {
+			if (inner == null) {
+				var val = env[id];
+				if (val == null) {
+					val = new Value.for_string ("");
+					env[id] = val;
+				}
+				return val;
+			} else {
+				return inner.eval (env);
+			}
 		}
 		
 		public override string to_string () {
@@ -291,21 +338,7 @@ namespace Vanubi.Vrex {
 			}
 		}
 	}
-	
-	public class CallExpression : Expression {
-		public Expression inner;
-		public GenericArray<Expression> args;
 		
-		public CallExpression (Expression inner, GenericArray<Expression> args) {
-			this.inner = inner;
-			this.args = args;
-		}
-		
-		public override string to_string () {
-			return "TODO";
-		}
-	}
-	
 	public class PostfixExpression : Expression {
 		public PostfixOperator op;
 		public Expression inner;
@@ -313,6 +346,15 @@ namespace Vanubi.Vrex {
 		public PostfixExpression (PostfixOperator op, Expression inner) {
 			this.op = op;
 			this.inner = inner;
+		}
+		
+		public override Value eval (Env env) {
+			var iv = inner.eval (env);
+			var num = iv.num;
+			var val = new Value.for_num (num);
+			var newval = new Value.for_num (num+1);
+			env[((MemberAccess) inner).id] = newval;
+			return val;
 		}
 		
 		public override string to_string () {
@@ -358,8 +400,6 @@ namespace Vanubi.Vrex {
 			case TType.DEC:
 				expr = parse_postfix_expression (expr);
 				break;
-			default:
-				generic_error ();
 			}
 			return expr;
 		}

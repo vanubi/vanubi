@@ -37,6 +37,8 @@ void test_lexer () {
 	assert_tok (lex.next (), TType.END);
 }
 
+
+
 void assert_expr (string code, string expect) {
 	var parser = new Parser.for_string (code);
 	var expr = parser.parse_expression ();
@@ -48,11 +50,27 @@ void test_parser () {
 	assert_expr ("foo++", "foo++");	
 }
 
+
+
+void assert_eval (Env env, string code, Vrex.Value expect) {
+	var parser = new Parser.for_string (code);
+	var expr = parser.parse_expression ();
+	var val = env.eval (expr);
+	assert (val.equal (expect));
+}
+
+void test_eval () {
+	var env = new Env ();
+	assert_eval (env, "foo++", new Vrex.Value.for_num (0));
+	assert_eval (env, "foo", new Vrex.Value.for_num (1));
+}
+	
 int main (string[] args) {
 	Test.init (ref args);
 
 	Test.add_func ("/vrex/lexer", test_lexer);
 	Test.add_func ("/vrex/parser", test_parser);
+	Test.add_func ("/vrex/eval", test_eval);
 
 	return Test.run ();
 }
