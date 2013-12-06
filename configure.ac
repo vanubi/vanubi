@@ -17,7 +17,7 @@ AC_INIT([vanubi],
 AC_CONFIG_HEADER([config.h])
 AC_CONFIG_MACRO_DIR([m4])
 
-AM_INIT_AUTOMAKE([1.11 foreign])
+AM_INIT_AUTOMAKE([1.11 foreign subdir-objects])
 AM_MAINTAINER_MODE([enable])
 
 AM_SILENT_RULES([yes])
@@ -108,10 +108,10 @@ AC_SUBST(VANUBI_CFLAGS)
 AC_SUBST(VANUBI_LIBS)
 
 AC_CONFIG_FILES([
-		 Makefile
-		 gui/Makefile
-		 libvanubi/Makefile
-		 tests/Makefile
+		Makefile
+		libvanubi/Makefile
+		gui/Makefile
+		tests/Makefile
 ])
 
 AC_OUTPUT
