@@ -18,7 +18,7 @@
  */
 
 namespace Vanubi {
-	public delegate G TaskFunc<G> (Cancellable? cancellable) throws Error;
+	public delegate G TaskFunc<G> () throws Error;
 
 	public class Location {
 		public File? file;
@@ -46,14 +46,18 @@ namespace Vanubi {
 		if (thread_pool != null) {
 			return;
 		}
-		thread_pool = new ThreadPool<ThreadWorker>.with_owned_data ((worker) => {
-			// Call worker.run () on thread-start
-			worker.task_func ();
-		}, 20, false);
+		try {
+			thread_pool = new ThreadPool<ThreadWorker>.with_owned_data ((worker) => {
+					// Call worker.run () on thread-start
+					worker.task_func ();
+			}, 20, false);
+		} catch (Error e) {
+			error ("Could not initialize thread pool: %s".printf (e.message));
+		}
 		ThreadPool.set_max_unused_threads (2);
 	}
 
-	public async G run_in_thread<G> (owned ThreadFunc<G> func) throws Error {
+	public async G run_in_thread<G> (owned TaskFunc<G> func) throws Error {
 		initialize_thread_pool ();
 		SourceFunc resume = run_in_thread.callback;
 		Error err = null;

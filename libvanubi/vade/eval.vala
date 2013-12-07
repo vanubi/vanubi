@@ -22,63 +22,63 @@ namespace Vanubi.Vade {
 		Value value;
 		Scope scope;
 		
-		public Value eval (Scope scope, Expression expr) {
+		public async Value eval (Scope scope, Expression expr) {
 			this.scope = scope;
-			expr.visit (this);
+			yield expr.visit (this);
 			return value;
 		}
 		
-		public override void visit_string_literal (StringLiteral lit) {
+		public override async void visit_string_literal (StringLiteral lit) {
 			value = new Value.for_string (lit.str.compress ());
 		}
 		
-		public override void visit_num_literal (NumLiteral lit) {
+		public override async void visit_num_literal (NumLiteral lit) {
 			value = new Value.for_num (lit.num);
 		}
 		
-		public override void visit_binary_expression (BinaryExpression expr) {
-			expr.left.visit (this);
+		public override async void visit_binary_expression (BinaryExpression expr) {
+			yield expr.left.visit (this);
 			var vleft = value;
 			switch (expr.op) {
 			case BinaryOperator.ADD:
-				expr.right.visit (this);
+				yield expr.right.visit (this);
 				value = new Value.for_num (vleft.num+value.num);
 				break;
 			case BinaryOperator.SUB:
-				expr.right.visit (this);
+				yield expr.right.visit (this);
 				value = new Value.for_num (vleft.num-value.num);
 				break;
 			case BinaryOperator.MUL:
-				expr.right.visit (this);
+				yield expr.right.visit (this);
 				value = new Value.for_num (vleft.num*value.num);
 				break;
 			case BinaryOperator.DIV:
-				expr.right.visit (this);
+				yield expr.right.visit (this);
 				value = new Value.for_num (vleft.num/value.num);
 				break;
 			case BinaryOperator.GT:
-				expr.right.visit (this);
+				yield expr.right.visit (this);
 				value = new Value.for_bool (vleft.num>value.num);
 				break;
 			case BinaryOperator.GE:
-				expr.right.visit (this);
+				yield expr.right.visit (this);
 				value = new Value.for_bool (vleft.num>=value.num);
 				break;
 			case BinaryOperator.LT:
-				expr.right.visit (this);
+				yield expr.right.visit (this);
 				value = new Value.for_bool (vleft.num<value.num);
 				break;
 			case BinaryOperator.LE:
-				expr.right.visit (this);
+				yield expr.right.visit (this);
 				value = new Value.for_bool (vleft.num<=value.num);
 				break;
 			case BinaryOperator.EQ:
-				expr.right.visit (this);
+				yield expr.right.visit (this);
 				value = new Value.for_bool (vleft.str==value.str);
 				break;
 			case BinaryOperator.AND:
 				if (vleft.bool) {
-					expr.right.visit (this);
+					yield expr.right.visit (this);
 					value = new Value.for_bool (value.bool);
 				} else {
 					value = new Value.for_bool (false);
@@ -88,7 +88,7 @@ namespace Vanubi.Vade {
 				if (vleft.bool) {
 					value = new Value.for_bool (true);
 				} else {
-					expr.right.visit (this);
+					yield expr.right.visit (this);
 					value = new Value.for_bool (value.bool);
 				}
 				break;
@@ -97,8 +97,8 @@ namespace Vanubi.Vade {
 			}		
 		}
 		
-		public override void visit_unary_expression (UnaryExpression expr) {
-			expr.inner.visit (this);
+		public override async void visit_unary_expression (UnaryExpression expr) {
+			yield expr.inner.visit (this);
 			var num = value.num;
 			switch (expr.op) {
 			case UnaryOperator.NEGATE:
@@ -117,7 +117,7 @@ namespace Vanubi.Vade {
 			}
 		}
 		
-		public override void visit_member_access (MemberAccess expr) {
+		public override async void visit_member_access (MemberAccess expr) {
 			if (expr.inner == null) {
 				var val = scope[expr.id];
 				if (val == null) {
@@ -126,12 +126,12 @@ namespace Vanubi.Vade {
 				}
 				value = val;
 			} else {
-				expr.visit (this);
+				yield expr.visit (this);
 			}
 		}
 		
-		public override void visit_postfix_expression (PostfixExpression expr) {
-			expr.inner.visit (this);
+		public override async void visit_postfix_expression (PostfixExpression expr) {
+			yield expr.inner.visit (this);
 			var num = value.num;
 			Value newval;
 			switch (expr.op) {
@@ -147,42 +147,42 @@ namespace Vanubi.Vade {
 			scope[((MemberAccess) expr.inner).id] = newval;
 		}
 		
-		public override void visit_seq_expression (SeqExpression expr) {
-			expr.inner.visit (this);
-			expr.next.visit (this);
+		public override async void visit_seq_expression (SeqExpression expr) {
+			yield expr.inner.visit (this);
+			yield expr.next.visit (this);
 		}
 		
-		public override void visit_assign_expression (AssignExpression expr) {
-			expr.right.visit (this);
+		public override async void visit_assign_expression (AssignExpression expr) {
+			yield expr.right.visit (this);
 			scope[((MemberAccess) expr.left).id] = value;
 		}
 		
-		public override void visit_if_expression (IfExpression expr) {
-			expr.condition.visit (this);
+		public override async void visit_if_expression (IfExpression expr) {
+			yield expr.condition.visit (this);
 			if (value.bool) {
-				expr.true_expr.visit (this);
+				yield expr.true_expr.visit (this);
 			} else {
-				expr.false_expr.visit (this);
+				yield expr.false_expr.visit (this);
 			}
 		}
 		
-		public override void visit_function_expression (FunctionExpression expr) {
+		public override async void visit_function_expression (FunctionExpression expr) {
 			value = new Value.for_function (expr.func, scope);
 		}
 		
-		public override void visit_call_expression (CallExpression expr) {
-			expr.inner.visit (this);
+		public override async void visit_call_expression (CallExpression expr) {
+			yield expr.inner.visit (this);
 			var func = value;
 			
 			Value[] args = new Value[expr.arguments.length];
 			for (var i=0; i < args.length; i++) {
-				expr.arguments[i].visit (this);
+				yield expr.arguments[i].visit (this);
 				args[i] = value;
 			}
 			
 			if (func.type == Value.Type.FUNCTION) {
 				var innerscope = new Scope (func.func_scope);
-				value = func.func.eval (innerscope, args);
+				value = yield func.func.eval (innerscope, args);
 			}
 		}
 	}

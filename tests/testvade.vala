@@ -65,7 +65,7 @@ void test_parser () {
 void assert_eval (Scope scope, string code, Vade.Value expect) {
 	var parser = new Parser.for_string (code);
 	var expr = parser.parse_expression ();
-	var val = scope.eval (expr);
+	var val = scope.eval_sync (expr);
 	if (!val.equal (expect)) {
 		message (@"Expect $expect got $val");
 	}
