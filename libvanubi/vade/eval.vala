@@ -56,6 +56,26 @@ namespace Vanubi.Vade {
 				expr.right.visit (this);
 				value = new Value.for_num (vleft.num/value.num);
 				break;
+			case BinaryOperator.GT:
+				expr.right.visit (this);
+				value = new Value.for_bool (vleft.num>value.num);
+				break;
+			case BinaryOperator.GE:
+				expr.right.visit (this);
+				value = new Value.for_bool (vleft.num>=value.num);
+				break;
+			case BinaryOperator.LT:
+				expr.right.visit (this);
+				value = new Value.for_bool (vleft.num<value.num);
+				break;
+			case BinaryOperator.LE:
+				expr.right.visit (this);
+				value = new Value.for_bool (vleft.num<=value.num);
+				break;
+			case BinaryOperator.EQ:
+				expr.right.visit (this);
+				value = new Value.for_bool (vleft.str==value.str);
+				break;
 			case BinaryOperator.AND:
 				if (vleft.bool) {
 					expr.right.visit (this);
@@ -135,6 +155,15 @@ namespace Vanubi.Vade {
 		public override void visit_assign_expression (AssignExpression expr) {
 			expr.right.visit (this);
 			env[((MemberAccess) expr.left).id] = value;
+		}
+		
+		public override void visit_if_expression (IfExpression expr) {
+			expr.condition.visit (this);
+			if (value.bool) {
+				expr.true_expr.visit (this);
+			} else {
+				expr.false_expr.visit (this);
+			}
 		}
 	}
 }

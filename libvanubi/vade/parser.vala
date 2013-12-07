@@ -27,6 +27,7 @@ namespace Vanubi.Vade {
 		public virtual void visit_postfix_expression (PostfixExpression expr) { }
 		public virtual void visit_seq_expression (SeqExpression expr) { }
 		public virtual void visit_assign_expression (AssignExpression expr) { }
+		public virtual void visit_if_expression (IfExpression expr) { }
 	}
 	
 	public abstract class Expression {
@@ -162,6 +163,30 @@ namespace Vanubi.Vade {
 		}
 	}
 
+	public class IfExpression : Expression {
+		public Expression condition;
+		public Expression true_expr;
+		public Expression? false_expr;
+		
+		public IfExpression (Expression condition, Expression true_expr, Expression? false_expr) {
+			this.condition = condition;
+			this.true_expr = true_expr;
+			this.false_expr = false_expr;
+		}
+		
+		public override void visit (Visitor v) {
+			v.visit_if_expression (this);
+		}
+		
+		public override string to_string () {
+			if (false_expr == null) {
+				return @"if ($condition) $true_expr";
+			} else {
+				return @"if ($condition) $true_expr else $false_expr";
+			}
+		}			
+	}
+	
 	public class AssignExpression : Expression {
 		public AssignOperator op;
 		public Expression left;
@@ -222,7 +247,12 @@ namespace Vanubi.Vade {
 		MUL,
 		DIV,
 		AND,
-		OR;
+		OR,
+		GT,
+		GE,
+		LT,
+		LE,
+		EQ;
 		
 		public string to_string () {
 			switch (this) {
@@ -238,6 +268,16 @@ namespace Vanubi.Vade {
 				return "&&";
 			case OR:
 				return "||";
+			case GT:
+				return ">";
+			case GE:
+				return ">=";
+			case LT:
+				return "<";
+			case LE:
+				return "<=";
+			case EQ:
+				return "==";
 			default:
 				assert_not_reached ();
 			}
@@ -299,11 +339,37 @@ namespace Vanubi.Vade {
 		}
 		
 		public Expression parse_seq_expression () throws VError {
-			var expr = parse_binary_expression ();
+			var expr = parse_if_expression ();
 			if (cur.type == TType.SEMICOMMA) {
 				next ();
 				var next = parse_seq_expression ();
 				expr = new SeqExpression (expr, next);
+			}
+			return expr;
+		}
+		
+		public Expression parse_if_expression () throws VError {
+			Expression expr;
+			if (cur.type == TType.ID && cur.str == "if") {
+				next ();
+				
+				expect (TType.OPEN_PAREN);
+				next ();
+				var cond = parse_binary_expression ();
+				expect (TType.CLOSE_PAREN);
+				next ();
+				
+				var true_expr = parse_binary_expression ();
+				
+				if (cur.type == TType.ID && cur.str == "else") {
+					next ();
+					var false_expr = parse_binary_expression ();
+					expr = new IfExpression (cond, true_expr, false_expr);
+				} else {
+					expr = new IfExpression (cond, true_expr, null);
+				}
+			} else {
+				expr = parse_binary_expression ();
 			}
 			return expr;
 		}
@@ -324,8 +390,34 @@ namespace Vanubi.Vade {
 		}
 		
 		public Expression parse_relational_expression () throws VError {
-			// TODO
 			var expr = parse_add_expression ();
+			switch (cur.type) {
+			case TType.GT:
+				next ();
+				var right = parse_add_expression ();
+				expr = new BinaryExpression (BinaryOperator.GT, expr, right);
+				break;
+			case TType.GE:
+				next ();
+				var right = parse_add_expression ();
+				expr = new BinaryExpression (BinaryOperator.GE, expr, right);
+				break;
+			case TType.LT:
+				next ();
+				var right = parse_add_expression ();
+				expr = new BinaryExpression (BinaryOperator.LT, expr, right);
+				break;
+			case TType.LE:
+				next ();
+				var right = parse_add_expression ();
+				expr = new BinaryExpression (BinaryOperator.LE, expr, right);
+				break;
+			case TType.EQ:
+				next ();
+				var right = parse_add_expression ();
+				expr = new BinaryExpression (BinaryOperator.EQ, expr, right);
+				break;
+			}
 			return expr;
 		}
 		

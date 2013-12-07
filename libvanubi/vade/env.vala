@@ -38,7 +38,7 @@ namespace Vanubi.Vade {
 
 		public Value.for_bool (bool b) {
 			this.type = Type.STRING;
-			this.bool = bool;
+			this.bool = b;
 		}
 
 		public double num {

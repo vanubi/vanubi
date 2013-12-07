@@ -56,6 +56,7 @@ void test_parser () {
 	assert_expr ("foo*bar+3", "((foo * bar) + 3)");
 	assert_expr ("(++foo)-(--bar)", "(++foo - --bar)");
 	assert_expr ("foo; bar = baz", "foo; bar = baz");
+	assert_expr ("a=1;b=2;if (a>b) c=5 else c=3", "a = 1; b = 2; if ((a > b)) c = 5 else c = 3");
 }
 
 
@@ -75,6 +76,7 @@ void test_eval () {
 	assert_eval (env, "foo++", new Vade.Value.for_string (""));
 	assert_eval (env, "foo+3", new Vade.Value.for_num (4));
 	assert_eval (env, "a=b=3; c=4; d=a+b+c", new Vade.Value.for_num (10));
+	assert_eval (env, "a=1;b=2;if (a>b) c=5 else c=3", new Vade.Value.for_num (3));
 }
 	
 int main (string[] args) {
