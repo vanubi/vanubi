@@ -165,5 +165,9 @@ namespace Vanubi.Vade {
 				expr.false_expr.visit (this);
 			}
 		}
+		
+		public override void visit_function_expression (FunctionExpression expr) {
+			value = new Value.for_function (expr.func, scope);
+		}
 	}
 }

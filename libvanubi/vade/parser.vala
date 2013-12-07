@@ -28,6 +28,7 @@ namespace Vanubi.Vade {
 		public virtual void visit_seq_expression (SeqExpression expr) { }
 		public virtual void visit_assign_expression (AssignExpression expr) { }
 		public virtual void visit_if_expression (IfExpression expr) { }
+		public virtual void visit_function_expression (FunctionExpression expr) { }
 	}
 	
 	public abstract class Expression {
@@ -215,6 +216,23 @@ namespace Vanubi.Vade {
 		}
 	}
 
+	[Immutable]
+	public class FunctionExpression : Expression {
+		public Function func;
+		
+		public FunctionExpression (Function func) {
+			this.func = func;
+		}
+		
+		public override void visit (Visitor v) {
+			v.visit_function_expression (this);
+		}
+		
+		public override string to_string () {
+			return func.to_string ();
+		}
+	}
+	
 	public enum PostfixOperator {
 		INC,
 		DEC;
@@ -557,9 +575,24 @@ namespace Vanubi.Vade {
 		public Expression parse_function () throws VError {
 			expect (TType.OPEN_BRACE);
 			next ();
+			string[] parameters = null;
+			if (cur.type == TType.ID) {
+				while (cur.type == TType.ID) {
+					parameters += cur.str;
+					next ();
+				}
+				if (cur.type != TType.BIT_OR) {
+					parameters = null;
+				} else {
+					next ();
+				}
+			}
+			
 			var expr = parse_expression ();
 			expect (TType.CLOSE_BRACE);
 			next ();
+			
+			expr = new FunctionExpression (new Function (parameters, expr));
 			return expr;
 		}
 		
@@ -585,7 +618,7 @@ namespace Vanubi.Vade {
 										   lex.code);		
 		}
 		
-		public string? parse_identifier () throws VError {
+		public string parse_identifier () throws VError {
 			if (cur.type == TType.ID) {
 				var str = cur.str;
 				next ();

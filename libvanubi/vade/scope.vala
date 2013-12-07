@@ -20,19 +20,29 @@
 namespace Vanubi.Vade {
 	[Immutable]
 	public class Function {
-		public Scope captured;
 		public string[] parameters;
 		public Expression body;
 		
-		public Function (Scope? captured, string[] parameters, Expression body) {
-			this.captured = captured;
+		public Function (string[]? parameters, Expression body) {
 			this.parameters = parameters;
 			this.body = body;
 		}
 		
-		public Value eval () {
+		public Value eval (Scope? captured, Value[] arguments) {
 			var scope = new Scope (captured);
+			for (var i=0; i < int.min(parameters.length, arguments.length); i++) {
+				scope.set_local (parameters[i], arguments[i]);
+			}
 			return scope.eval (body);
+		}
+		
+		public string to_string () {
+			if (parameters.length == 0) {
+				return @"{ $body }";
+			} else {
+				var pars = string.joinv (" ", parameters);
+				return @"{ $pars | $body }";
+			}
 		}
 	}
 	
@@ -46,6 +56,7 @@ namespace Vanubi.Vade {
 		public Type type;
 		public string str;
 		public Function func;
+		public Scope func_scope;
 		
 		public Value.for_string (string str) {
 			this.type = Type.STRING;
@@ -62,9 +73,10 @@ namespace Vanubi.Vade {
 			this.str = ((int) b).to_string ();
 		}
 		
-		public Value.for_function (Function func) {
+		public Value.for_function (Function func, Scope scope) {
 			this.type = Type.FUNCTION;
 			this.func = func;
+			this.func_scope = scope;
 		}
 
 		public double num {

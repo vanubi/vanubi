@@ -57,6 +57,7 @@ void test_parser () {
 	assert_expr ("(++foo)-(--bar)", "(++foo - --bar)");
 	assert_expr ("foo; bar = baz", "foo; bar = baz");
 	assert_expr ("a=1;b=2;if (a>b) c=5 else c=3", "a = 1; b = 2; if ((a > b)) c = 5 else c = 3");
+	assert_expr ("{ a b | foo }", "{ a b | foo }");
 }
 
 
