@@ -175,9 +175,9 @@ namespace Vanubi.Vade {
 			var func = value;
 			
 			Value[] args = new Value[expr.arguments.length];
-			foreach (var argexpr in expr.arguments) {
-				argexpr.visit (this);
-				args += value;
+			for (var i=0; i < args.length; i++) {
+				expr.arguments[i].visit (this);
+				args[i] = value;
 			}
 			
 			if (func.type == Value.Type.FUNCTION) {

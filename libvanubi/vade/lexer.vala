@@ -236,7 +236,9 @@ namespace Vanubi.Vade {
 			if (char.isalpha ()) {
 				// identifier
 				var b = new StringBuilder ();
-				while (char.isalpha ()) {
+				b.append_c (char);
+				pos++;
+				while (char.isalnum () || char == '_') {
 					b.append_c (char);
 					pos++;
 				}

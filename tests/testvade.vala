@@ -57,7 +57,7 @@ void test_parser () {
 	assert_expr ("(++foo)-(--bar)", "(++foo - --bar)");
 	assert_expr ("foo; bar = baz", "foo; bar = baz");
 	assert_expr ("a=1;b=2;if (a>b) c=5 else c=3", "a = 1; b = 2; if ((a > b)) c = 5 else c = 3");
-	assert_expr ("{ a b | foo }", "{ a b | foo }");
+	assert_expr ("foo; bar; baz={ a b | foo }; end", "foo; bar; baz = { a b | foo }; end");
 }
 
 
@@ -88,6 +88,9 @@ void test_eval () {
 	higher.set_local ("foo", new Vade.Value.for_num (14));
 	assert_eval (higher, "++foo", new Vade.Value.for_num (15));
 	assert_eval (scope, "foo", new Vade.Value.for_num (2));
+	
+	// functions
+	assert_eval (scope, "f1={a|a+2}; f2={x|x*2}; f1(3)+f2(4)", new Vade.Value.for_num (13));
 }
 	
 int main (string[] args) {

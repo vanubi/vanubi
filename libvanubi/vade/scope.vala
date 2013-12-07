@@ -102,6 +102,9 @@ namespace Vanubi.Vade {
 		}
 		
 		public string to_string () {
+			if (type == Type.FUNCTION) {
+				return func.to_string();
+			}
 			return str;
 		}
 	}
