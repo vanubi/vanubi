@@ -78,6 +78,7 @@ void test_eval () {
 	assert_eval (scope, "foo+3", new Vade.Value.for_num (4));
 	assert_eval (scope, "a=b=3; c=4; d=a+b+c", new Vade.Value.for_num (10));
 	assert_eval (scope, "a=1;b=2;if (a>b) c=5 else c=3", new Vade.Value.for_num (3));
+	assert_eval (scope, "'foo\\'bar'", new Vade.Value.for_string ("foo'bar"));
 	
 	// captured/local scope
 	var higher = new Scope (scope);

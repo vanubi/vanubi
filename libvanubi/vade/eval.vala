@@ -29,7 +29,7 @@ namespace Vanubi.Vade {
 		}
 		
 		public override void visit_string_literal (StringLiteral lit) {
-			value = new Value.for_string (lit.str);			
+			value = new Value.for_string (lit.str.compress ());
 		}
 		
 		public override void visit_num_literal (NumLiteral lit) {
