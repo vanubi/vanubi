@@ -1215,7 +1215,6 @@ namespace Vanubi {
 			
 			var git_command = conf.get_global_string ("git_command", "git");
 			InputStream? stream = null;
-			Cancellable? cancellable = null;
 			
 			var bar = new GrepBar (conf);
 			bar.activate.connect (() => {
@@ -1226,9 +1225,6 @@ namespace Vanubi {
 					}
 			});
 			bar.changed.connect ((pat) => {
-					if (cancellable != null) {
-						cancellable.cancel ();
-					}
 					if (stream != null) {
 						try {
 							stream.close ();
@@ -1236,7 +1232,6 @@ namespace Vanubi {
 						}
 					}
 					int stdout;
-					cancellable = new Cancellable ();
 					Process.spawn_async_with_pipes (repo_dir.get_path(),
 													{git_command, "grep", "-inI", "--color", pat},
 													null,

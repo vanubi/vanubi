@@ -21,11 +21,18 @@ namespace Vanubi.Vade {
 	public class EvalVisitor : Visitor {
 		Value value;
 		Scope scope;
+		Cancellable cancellable;
 		
-		public async Value eval (Scope scope, Expression expr) {
+		public async Value eval (Scope scope, Expression expr, Cancellable cancellable) {
 			this.scope = scope;
+			this.cancellable = cancellable;
 			yield expr.visit (this);
 			return value;
+		}
+		
+		/* Always check this function before running a loop or side effects */
+		public bool is_cancelled () {
+			return cancellable.is_cancelled ();
 		}
 		
 		public override async void visit_string_literal (StringLiteral lit) {
@@ -99,6 +106,10 @@ namespace Vanubi.Vade {
 		
 		public override async void visit_unary_expression (UnaryExpression expr) {
 			yield expr.inner.visit (this);
+			if (is_cancelled ()) {
+				return;
+			}
+
 			var num = value.num;
 			switch (expr.op) {
 			case UnaryOperator.NEGATE:
@@ -122,7 +133,6 @@ namespace Vanubi.Vade {
 				var val = scope[expr.id];
 				if (val == null) {
 					val = new Value.for_string ("");
-					scope[expr.id] = val;
 				}
 				value = val;
 			} else {
@@ -144,6 +154,10 @@ namespace Vanubi.Vade {
 			default:
 				assert_not_reached ();
 			}
+			
+			if (is_cancelled ()) {
+				return;
+			}
 			scope[((MemberAccess) expr.inner).id] = newval;
 		}
 		
@@ -154,6 +168,10 @@ namespace Vanubi.Vade {
 		
 		public override async void visit_assign_expression (AssignExpression expr) {
 			yield expr.right.visit (this);
+
+			if (is_cancelled ()) {
+				return;
+			}
 			scope[((MemberAccess) expr.left).id] = value;
 		}
 		
@@ -172,6 +190,7 @@ namespace Vanubi.Vade {
 		
 		public override async void visit_call_expression (CallExpression expr) {
 			yield expr.inner.visit (this);
+
 			var func = value;
 			
 			Value[] args = new Value[expr.arguments.length];
@@ -182,7 +201,10 @@ namespace Vanubi.Vade {
 			
 			if (func.type == Value.Type.FUNCTION) {
 				var innerscope = new Scope (func.func_scope);
-				value = yield func.func.eval (innerscope, args);
+				if (is_cancelled ()) {
+					return;
+				}
+				value = yield func.func.eval (innerscope, args, cancellable);
 			}
 		}
 	}

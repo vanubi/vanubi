@@ -58,7 +58,7 @@ namespace Vanubi {
 			attrs[47] = create_tag ("bg_white", background: "white");
 		}
 		
-		public async void insert_text_colored (Gtk.TextIter pos, string new_text, int new_text_length, Cancellable? cancellable) {
+		public async void insert_text_colored (Gtk.TextIter pos, string new_text, int new_text_length, Cancellable cancellable) throws Error {
 			yield run_in_thread<void*> (() => {
 					TextTag[] tags = null;
 					int last_start = 0;
@@ -67,6 +67,8 @@ namespace Vanubi {
 						if (new_text[i] == 0x1b) {
 							// write last string with tags
 							unowned string cur = new_text.offset (last_start);
+							
+							cancellable.set_error_if_cancelled ();
 							Gdk.threads_enter ();
 							TextIter end;
 							get_end_iter (out end);
@@ -112,13 +114,18 @@ namespace Vanubi {
 		public Location location { get; private set; }
 		public InputStream stream {
 			set {
+				if (cancellable != null) {
+					cancellable.cancel ();
+				}
+				cancellable = new Cancellable ();
 				view.buffer.set_text ("");
-				read_stream.begin (value);
+				read_stream.begin (value, cancellable);
 			}
 		}
 		
 		TextView view;
 		ScrolledWindow sw;
+		Cancellable cancellable;
 		
 		public GrepBar (Configuration conf) {
 			entry.expand = false;
@@ -180,11 +187,11 @@ namespace Vanubi {
 			return base.on_key_press_event (e);
 		}
 		
-		public async void read_stream (InputStream stream) {
+		public async void read_stream (InputStream stream, Cancellable cancellable) {
 			try {
 				uint8[] buffer = new uint8[1024];
 				while (true) {
-					var read = yield stream.read_async (buffer);
+					var read = yield stream.read_async (buffer, Priority.DEFAULT, cancellable);
 					if (read == 0) {
 						break;
 					}
@@ -195,8 +202,9 @@ namespace Vanubi {
 					// write
 					TextIter iter;
 					view.buffer.get_end_iter (out iter);
-					yield ((GrepBuffer) view.buffer).insert_text_colored (iter, (string) buffer, (int) read, null);
+					yield ((GrepBuffer) view.buffer).insert_text_colored (iter, (string) buffer, (int) read, cancellable);
 					// restore cursor position
+					cancellable.set_error_if_cancelled ();
 					view.buffer.get_iter_at_offset (out insert, offset);
 					view.buffer.place_cursor (insert);
 				}

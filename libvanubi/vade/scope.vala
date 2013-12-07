@@ -19,7 +19,7 @@
 
 namespace Vanubi.Vade {
 	public abstract class Function {
-		public abstract async Value eval (Scope scope, Value[] arguments);
+		public abstract async Value eval (Scope scope, Value[] arguments, Cancellable cancellable);
 		public abstract string to_string ();
 	}
 	
@@ -33,11 +33,11 @@ namespace Vanubi.Vade {
 			this.body = body;
 		}
 		
-		public override async Value eval (Scope scope, Value[] arguments) {
+		public override async Value eval (Scope scope, Value[] arguments, Cancellable cancellable) {
 			for (var i=0; i < int.min(parameters.length, arguments.length); i++) {
 				scope.set_local (parameters[i], arguments[i]);
 			}
-			var ret = yield scope.eval (body);
+			var ret = yield scope.eval (body, cancellable);
 			return ret;
 		}
 		
@@ -151,9 +151,9 @@ namespace Vanubi.Vade {
 			}
 		}
 		
-		public async Value eval (Expression expr) {
+		public async Value eval (Expression expr, Cancellable cancellable) {
 			var ev = new EvalVisitor ();
-			var ret = yield ev.eval (this, expr);
+			var ret = yield ev.eval (this, expr, cancellable);
 			return ret;
 		}
 		
@@ -162,7 +162,7 @@ namespace Vanubi.Vade {
 			
 			var ctx = MainContext.default ();
 			var loop = new MainLoop (ctx, false);
-			eval.begin (expr, (s,r) => {
+			eval.begin (expr, new Cancellable(), (s,r) => {
 					ret = eval.end (r);
 					loop.quit ();
 			});
