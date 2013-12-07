@@ -884,8 +884,18 @@ namespace Vanubi {
 						}
 						return false;
 				});
-				bar.aborted.connect (() => { aborted = true; abort (ed); });
-				bar.destroy.connect (() => { aborted = true; abort (ed); });
+				bar.aborted.connect (() => {
+						aborted = true;
+						Idle.add (() => { resume (); return false; });
+						abort (ed);
+				});
+				// ensure this coroutine does not deadlock
+				bar.destroy.connect (() => {
+						if (!aborted) {
+							Idle.add (() => { resume (); return false; });
+						}
+						aborted = true;
+				});						
 				add_overlay (bar);
 				bar.show ();
 				bar.grab_focus ();
