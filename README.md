@@ -6,7 +6,7 @@ Vanubi Programming Editor
 Install
 -------
 
-```sh
+```
 # apt-get install autotools-dev libtool valac libgtksourceview-3.0-dev libvte-2.90-dev
 $ git clone http://github.com/vanubi/vanubi.git
 $ cd vanubi
