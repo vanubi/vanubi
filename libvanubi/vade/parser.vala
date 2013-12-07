@@ -35,6 +35,7 @@ namespace Vanubi.Vade {
 		public abstract string to_string ();
 	}
 
+	[Immutable]
 	public class NumLiteral : Expression {
 		public double num;
 		
@@ -51,6 +52,7 @@ namespace Vanubi.Vade {
 		}
 	}
 	
+	[Immutable]
 	public class StringLiteral : Expression {
 		public string str;
 		
@@ -67,6 +69,7 @@ namespace Vanubi.Vade {
 		}
 	}
 		
+	[Immutable]
 	public class MemberAccess : Expression {
 		public string id;
 		public Expression inner;
@@ -89,6 +92,7 @@ namespace Vanubi.Vade {
 		}
 	}
 		
+	[Immutable]
 	public class PostfixExpression : Expression {
 		public PostfixOperator op;
 		public Expression inner;
@@ -107,6 +111,7 @@ namespace Vanubi.Vade {
 		}
 	}
 	
+	[Immutable]
 	public class UnaryExpression : Expression {
 		public UnaryOperator op;
 		public Expression inner;
@@ -125,6 +130,7 @@ namespace Vanubi.Vade {
 		}
 	}
 	
+	[Immutable]
 	public class BinaryExpression : Expression {
 		public BinaryOperator op;
 		public Expression left;
@@ -145,6 +151,7 @@ namespace Vanubi.Vade {
 		}
 	}
 	
+	[Immutable]
 	public class SeqExpression : Expression {
 		public Expression inner;
 		public Expression next;
@@ -163,6 +170,7 @@ namespace Vanubi.Vade {
 		}
 	}
 
+	[Immutable]
 	public class IfExpression : Expression {
 		public Expression condition;
 		public Expression true_expr;
@@ -187,6 +195,7 @@ namespace Vanubi.Vade {
 		}			
 	}
 	
+	[Immutable]
 	public class AssignExpression : Expression {
 		public AssignOperator op;
 		public Expression left;

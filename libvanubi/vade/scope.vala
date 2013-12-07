@@ -18,13 +18,34 @@
  */
 
 namespace Vanubi.Vade {
+	[Immutable]
+	public class Function {
+		public Scope captured;
+		public string[] parameters;
+		public Expression body;
+		
+		public Function (Scope? captured, string[] parameters, Expression body) {
+			this.captured = captured;
+			this.parameters = parameters;
+			this.body = body;
+		}
+		
+		public Value eval () {
+			var scope = new Scope (captured);
+			return scope.eval (body);
+		}
+	}
+	
+	[Immutable]
 	public class Value {
 		public enum Type {
-			STRING
+			STRING,
+			FUNCTION
 		}
 		
 		public Type type;
 		public string str;
+		public Function func;
 		
 		public Value.for_string (string str) {
 			this.type = Type.STRING;
@@ -33,20 +54,22 @@ namespace Vanubi.Vade {
 		
 		public Value.for_num (double num) {
 			this.type = Type.STRING;
-			this.num = num;
+			this.str = "%g".printf (num);
 		}
 
 		public Value.for_bool (bool b) {
 			this.type = Type.STRING;
-			this.bool = b;
+			this.str = ((int) b).to_string ();
+		}
+		
+		public Value.for_function (Function func) {
+			this.type = Type.FUNCTION;
+			this.func = func;
 		}
 
 		public double num {
 			get {
 				return double.parse (str);
-			}
-			set {
-				str = value.to_string ();
 			}
 		}
 		
@@ -54,17 +77,11 @@ namespace Vanubi.Vade {
 			get {
 				return @int != 0;
 			}
-			set {
-				@int = (int) value;
-			}
 		}
 
 		public int @int {
 			get {
 				return (int) num;
-			}
-			set {
-				num = value;
 			}
 		}
 		
@@ -77,15 +94,41 @@ namespace Vanubi.Vade {
 		}
 	}
 	
-	public class Env {
+	[Immutable]
+	public class Scope {
 		public HashTable<string, Value> registers = new HashTable<string, Value> (str_hash, str_equal);
+		public Scope? parent;
+		
+		public Scope (Scope? parent) {
+			this.parent = parent;
+		}
+		
+		public void set_local (string name, Value val) {
+			registers[name] = val;
+		}
+		
+		public Value get_local (string name) {
+			return registers[name];
+		}
 		
 		public unowned Value? get (string name) {
-			return registers.lookup (name);
+			unowned Value? val = registers[name];
+			if (val == null && parent != null) {
+				val = parent[name];
+			}
+			return val;
 		}
 		
 		public void set (string name, Value val) {
-			registers.insert (name, val);
+			if (parent == null) {
+				registers[name] = val;
+			} else {
+				if (name in registers) {
+					registers[name] = val;
+				} else {
+					parent[name] = val;
+				}
+			}
 		}
 		
 		public Value eval (Expression expr) {

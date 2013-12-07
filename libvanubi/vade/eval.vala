@@ -20,10 +20,10 @@
 namespace Vanubi.Vade {
 	public class EvalVisitor : Visitor {
 		Value value;
-		Env env;
+		Scope scope;
 		
-		public Value eval (Env env, Expression expr) {
-			this.env = env;
+		public Value eval (Scope scope, Expression expr) {
+			this.scope = scope;
 			expr.visit (this);
 			return value;
 		}
@@ -106,11 +106,11 @@ namespace Vanubi.Vade {
 				break;
 			case UnaryOperator.INC:
 				value = new Value.for_num (num+1);
-				env[((MemberAccess) expr.inner).id] = value;
+				scope[((MemberAccess) expr.inner).id] = value;
 				break;
 			case UnaryOperator.DEC:
 				value = new Value.for_num (num-1);
-				env[((MemberAccess) expr.inner).id] = value;
+				scope[((MemberAccess) expr.inner).id] = value;
 				break;
 			default:
 				assert_not_reached ();
@@ -119,10 +119,10 @@ namespace Vanubi.Vade {
 		
 		public override void visit_member_access (MemberAccess expr) {
 			if (expr.inner == null) {
-				var val = env[expr.id];
+				var val = scope[expr.id];
 				if (val == null) {
 					val = new Value.for_string ("");
-					env[expr.id] = val;
+					scope[expr.id] = val;
 				}
 				value = val;
 			} else {
@@ -144,7 +144,7 @@ namespace Vanubi.Vade {
 			default:
 				assert_not_reached ();
 			}
-			env[((MemberAccess) expr.inner).id] = newval;
+			scope[((MemberAccess) expr.inner).id] = newval;
 		}
 		
 		public override void visit_seq_expression (SeqExpression expr) {
@@ -154,7 +154,7 @@ namespace Vanubi.Vade {
 		
 		public override void visit_assign_expression (AssignExpression expr) {
 			expr.right.visit (this);
-			env[((MemberAccess) expr.left).id] = value;
+			scope[((MemberAccess) expr.left).id] = value;
 		}
 		
 		public override void visit_if_expression (IfExpression expr) {

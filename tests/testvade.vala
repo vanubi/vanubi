@@ -61,10 +61,10 @@ void test_parser () {
 
 
 
-void assert_eval (Env env, string code, Vade.Value expect) {
+void assert_eval (Scope scope, string code, Vade.Value expect) {
 	var parser = new Parser.for_string (code);
 	var expr = parser.parse_expression ();
-	var val = env.eval (expr);
+	var val = scope.eval (expr);
 	if (!val.equal (expect)) {
 		message (@"Expect $expect got $val");
 	}
@@ -72,11 +72,20 @@ void assert_eval (Env env, string code, Vade.Value expect) {
 }
 
 void test_eval () {
-	var env = new Env ();
-	assert_eval (env, "foo++", new Vade.Value.for_string (""));
-	assert_eval (env, "foo+3", new Vade.Value.for_num (4));
-	assert_eval (env, "a=b=3; c=4; d=a+b+c", new Vade.Value.for_num (10));
-	assert_eval (env, "a=1;b=2;if (a>b) c=5 else c=3", new Vade.Value.for_num (3));
+	var scope = new Scope (null);
+	assert_eval (scope, "foo++", new Vade.Value.for_string (""));
+	assert_eval (scope, "foo+3", new Vade.Value.for_num (4));
+	assert_eval (scope, "a=b=3; c=4; d=a+b+c", new Vade.Value.for_num (10));
+	assert_eval (scope, "a=1;b=2;if (a>b) c=5 else c=3", new Vade.Value.for_num (3));
+	
+	// captured/local scope
+	var higher = new Scope (scope);
+	assert_eval (higher, "++foo", new Vade.Value.for_num (2));
+	assert (higher.get_local ("foo") == null);
+	assert_eval (scope, "foo", new Vade.Value.for_num (2));
+	higher.set_local ("foo", new Vade.Value.for_num (14));
+	assert_eval (higher, "++foo", new Vade.Value.for_num (15));
+	assert_eval (scope, "foo", new Vade.Value.for_num (2));
 }
 	
 int main (string[] args) {

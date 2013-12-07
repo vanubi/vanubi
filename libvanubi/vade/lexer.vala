@@ -54,6 +54,7 @@ namespace Vanubi.Vade {
 		END
 	}
 	
+	[Immutable]
 	public struct Token {
 		public TType type;
 		public int offset;
