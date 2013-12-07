@@ -19,6 +19,7 @@ libvanubi_la_VALASOURCES = \
 	matching.vala 	\
 	search.vala 	\
 	util.vala		\
+	vade/ast.vala	\
 	vade/eval.vala	\
 	vade/lexer.vala	\
 	vade/parser.vala	\
