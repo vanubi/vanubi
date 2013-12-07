@@ -838,6 +838,11 @@ namespace Vanubi {
 			saving_on_quit = true;
 			
 			var modified = get_modified_editors ();
+			if (modified.length == 0) {
+				// faster
+				quit ();
+			}
+			
 			execute_command["join-all"](ed, "join-all");
 
 			var save_all = false;
