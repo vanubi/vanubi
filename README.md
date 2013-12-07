@@ -3,6 +3,20 @@ Vanubi Programming Editor
 
 "All editors suck. This one just sucks less." -mutt, circa 1995
 
+Install
+-------
+
+```sh
+# apt-get install autotools-dev libtool valac libgtksourceview-3.0-dev libvte-2.90-dev
+$ git clone http://github.com/vanubi/vanubi.git
+$ cd vanubi
+$ ./autogen.sh
+$ make
+$ gui/vanubi
+```
+
+Make sure to have the most recent Vala compiler at your disposal.
+
 Ideas
 -----
  - Simple, complete, keyboard based, intelligent, unobtrusive, well integrated
