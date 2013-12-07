@@ -42,6 +42,46 @@ namespace Vanubi.Vade {
 			}
 		}
 		
+		// If regex match is provided, will substitute back references with the relative matched groups
+		public Expression parse_embedded (MatchInfo? regex_match = null) throws VError {
+			// Idea 1: transform each $(...) in an expression, substitute regex backreferences in it
+			// Idea 2: concatenate literal strings and expressions with concat()
+			
+			Expression[] args = null;
+			var last_str_off = 0;
+			while (lex.pos < lex.len) {
+				if (lex.char == '\\') {
+					lex.pos += 2;
+					continue;
+				} else if (lex.char == '$') {
+					lex.pos++;
+					if (lex.char == '(') {
+						// add last string to be concatenated
+						var str = lex.code.substring (last_str_off, lex.pos-last_str_off-1);
+						str = str.replace ("'", "\\'");
+						args += new StringLiteral ((owned) str);
+						
+						lex.pos++;
+						next ();
+						var expr = parse_expression ();
+						expect (TType.CLOSE_PAREN);
+						args += expr;
+						
+						last_str_off = lex.pos;
+					}
+				} else {
+					lex.pos++;
+				}
+			}
+			// append remaining string
+			var str = lex.code.substring (last_str_off, lex.pos-last_str_off);
+			str = str.replace ("'", "\\'");
+			args += new StringLiteral ((owned) str);
+			
+			var expr = new CallExpression (new MemberAccess ("concat", null), args);
+			return expr;
+		}
+		
 		public Expression parse_expression () throws VError {
 			var expr = parse_seq_expression ();
 			return expr;
@@ -297,6 +337,7 @@ namespace Vanubi.Vade {
 				if (cur.type != TType.COMMA) {
 					break;
 				}
+				next ();
 			}
 			
 			expect (TType.CLOSE_PAREN);
@@ -315,7 +356,7 @@ namespace Vanubi.Vade {
 		
 		public Expression parse_string_literal () throws VError {
 			expect (TType.STRING);
-			var expr = new StringLiteral (cur.str);
+			var expr = new StringLiteral ((owned) cur.str);
 			next ();
 			return expr;
 		}

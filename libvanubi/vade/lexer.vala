@@ -51,7 +51,8 @@ namespace Vanubi.Vade {
 		BIT_OR,
 		ASSIGN,
 		DOT,
-		END
+		END,
+		UNKNOWN
 	}
 	
 	[Immutable]
@@ -74,11 +75,11 @@ namespace Vanubi.Vade {
 	}
 	
 	public class Lexer {
-		internal string code;
-		internal int len;
-		internal int pos;
+		public string code;
+		public int len;
+		public int pos;
 		
-		char @char {
+		public char @char {
 			get {
 				return code[pos];
 			}
@@ -246,8 +247,8 @@ namespace Vanubi.Vade {
 				tok.str = (owned) b.str;
 				return tok;
 			}
-			
-			throw new VError.SYNTAX_ERROR ("Unknown char '%c' at pos %d in '%s'", char, pos, code);
+
+			return Token (TType.UNKNOWN, orig, 1);
 		}
 	}	
 }

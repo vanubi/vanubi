@@ -100,6 +100,26 @@ void test_native_functions () {
 	var scope = Vade.create_base_scope ();
 	assert_eval (scope, "a='foo'; concat(a, 'bar', 'baz')", new Vade.Value.for_string ("foobarbaz"));
 }
+
+
+
+
+void assert_embed (Scope scope, string code, Vade.Value expect) {
+	var parser = new Parser.for_string (code);
+	var expr = parser.parse_embedded ();
+	var val = scope.eval_sync (expr);
+	if (!val.equal (expect)) {
+		message (@"Expect $expect got $val");
+	}
+	assert (val.equal (expect));
+}
+
+void test_embedded () {
+	var scope = Vade.create_base_scope ();
+	assert_embed (scope, "$(1+2)", new Vade.Value.for_num (3));
+	assert_embed (scope, "\\$(1+2)", new Vade.Value.for_string ("$(1+2)"));
+	assert_embed (scope, "$(1+2) foo $(foo++) $(foo)", new Vade.Value.for_string ("3 foo  1"));
+}
 	
 int main (string[] args) {
 	Test.init (ref args);
@@ -107,6 +127,8 @@ int main (string[] args) {
 	Test.add_func ("/vade/lexer", test_lexer);
 	Test.add_func ("/vade/parser", test_parser);
 	Test.add_func ("/vade/eval", test_eval);
+	Test.add_func ("/vade/native", test_native_functions);
+	Test.add_func ("/vade/embedded", test_embedded);
 
 	return Test.run ();
 }
