@@ -41,36 +41,10 @@ namespace Vanubi {
 		}
 	}
 	
-	public class KeyChoiceBar : Bar {
-		EventBox box;
-
-		public signal void choice (Gdk.EventKey e);
-
-		public KeyChoiceBar (string markup) {
-			box = new EventBox ();
-			box.set_above_child (true);
-			box.can_focus = true;
-			var label = new Label (markup);
-			label.use_markup = true;
-			box.add (label);
-
-			box.key_press_event.connect (on_key_press_event);
-			add (box);
-			show_all ();
-		}
-
-		public override void grab_focus () {
-			box.grab_focus ();
-		}
-
-		protected override bool on_key_press_event (Gdk.EventKey e) {
-			choice (e);
-			return true;
-		}
-	}
-
 	public class MessageBar : Bar {
 		EventBox box;
+		
+		public signal bool key_pressed (Gdk.EventKey e);
 		
 		public MessageBar (string markup) {
 			box = new EventBox ();
@@ -87,6 +61,13 @@ namespace Vanubi {
 
 		public override void grab_focus () {
 			box.grab_focus ();
+		}
+		
+		protected override bool on_key_press_event (Gdk.EventKey e) {
+			if (key_pressed (e)) {
+				return true;
+			}
+			return base.on_key_press_event (e);
 		}
 	}
 
