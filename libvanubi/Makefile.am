@@ -23,6 +23,7 @@ libvanubi_la_VALASOURCES = \
 	vade/eval.vala	\
 	vade/lexer.vala	\
 	vade/parser.vala	\
+	vade/runtime.vala	\
 	vade/scope.vala	\
 	$(NULL)
 

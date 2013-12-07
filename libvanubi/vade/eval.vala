@@ -181,7 +181,8 @@ namespace Vanubi.Vade {
 			}
 			
 			if (func.type == Value.Type.FUNCTION) {
-				value = func.func.eval (func.func_scope, args);
+				var innerscope = new Scope (func.func_scope);
+				value = func.func.eval (innerscope, args);
 			}
 		}
 	}

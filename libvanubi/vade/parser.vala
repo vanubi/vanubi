@@ -283,7 +283,7 @@ namespace Vanubi.Vade {
 			expect (TType.CLOSE_BRACE);
 			next ();
 			
-			expr = new FunctionExpression (new Function (parameters, expr));
+			expr = new FunctionExpression (new UserFunction (parameters, expr));
 			return expr;
 		}
 

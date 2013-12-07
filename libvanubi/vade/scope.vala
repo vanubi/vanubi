@@ -18,25 +18,29 @@
  */
 
 namespace Vanubi.Vade {
+	public abstract class Function {
+		public abstract Value eval (Scope scope, Value[] arguments);
+		public abstract string to_string ();
+	}
+	
 	[Immutable]
-	public class Function {
+	public class UserFunction : Function {
 		public string[] parameters;
 		public Expression body;
 		
-		public Function (string[]? parameters, Expression body) {
+		public UserFunction (string[]? parameters, Expression body) {
 			this.parameters = parameters;
 			this.body = body;
 		}
 		
-		public Value eval (Scope? captured, Value[] arguments) {
-			var scope = new Scope (captured);
+		public override Value eval (Scope scope, Value[] arguments) {
 			for (var i=0; i < int.min(parameters.length, arguments.length); i++) {
 				scope.set_local (parameters[i], arguments[i]);
 			}
 			return scope.eval (body);
 		}
 		
-		public string to_string () {
+		public override string to_string () {
 			if (parameters.length == 0) {
 				return @"{ $body }";
 			} else {
@@ -45,7 +49,7 @@ namespace Vanubi.Vade {
 			}
 		}
 	}
-	
+
 	[Immutable]
 	public class Value {
 		public enum Type {
@@ -56,11 +60,11 @@ namespace Vanubi.Vade {
 		public Type type;
 		public string str;
 		public Function func;
-		public Scope func_scope;
+		public unowned Scope func_scope;
 		
-		public Value.for_string (string str) {
+		public Value.for_string (owned string str) {
 			this.type = Type.STRING;
-			this.str = str;
+			this.str = (owned) str;
 		}
 		
 		public Value.for_num (double num) {
