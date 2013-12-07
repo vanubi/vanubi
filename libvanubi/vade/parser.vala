@@ -48,12 +48,17 @@ namespace Vanubi.Vade {
 		}
 		
 		public Expression parse_seq_expression () throws VError {
-			var expr = parse_if_expression ();
+			var expr = parse_nonseq_expression ();
 			if (cur.type == TType.SEMICOMMA) {
 				next ();
 				var next = parse_seq_expression ();
 				expr = new SeqExpression (expr, next);
 			}
+			return expr;
+		}
+		
+		public Expression parse_nonseq_expression () throws VError {
+			var expr = parse_if_expression ();
 			return expr;
 		}
 		
@@ -190,15 +195,7 @@ namespace Vanubi.Vade {
 		}
 		
 		public Expression parse_simple_expression () throws VError {
-			Expression expr;
-			if (cur.type == TType.OPEN_PAREN) {
-				next ();
-				expr = parse_expression ();
-				expect (TType.CLOSE_PAREN);
-				next ();
-				return expr;
-			}
-
+			Expression expr = null;
 			switch (cur.type) {
 			case TType.ID:
 				expr = parse_member_access (null);			
@@ -213,10 +210,10 @@ namespace Vanubi.Vade {
 				expr = parse_function ();
 				break;
 			case TType.OPEN_PAREN:
-				expr = parse_expression ();
-				if (cur.type != TType.CLOSE_PAREN) {
-					generic_error ();
-				}
+				next ();
+				expr = parse_nonseq_expression ();
+				expect (TType.CLOSE_PAREN);
+				next ();
 				break;
 			case TType.NUM:
 				expr = parse_num_literal ();
@@ -227,18 +224,30 @@ namespace Vanubi.Vade {
 			default:
 				generic_error ();
 			}
+			
+			var found = true;
+			while (found) {
+				switch (cur.type) {
+				case TType.DOT:
+					next ();
+					expr = parse_member_access (expr);
+					break;
+				case TType.OPEN_PAREN:
+					expr = parse_call_expression (expr);
+					break;
+				default:
+					found = false;
+					break;
+				}
+			}
+			
 			return expr;
 		}
 		
 		public Expression parse_member_access (Expression? inner) throws VError {
 			var id = parse_identifier ();
 			var expr = new MemberAccess (id, inner);
-			if (cur.type == TType.DOT) {
-				next ();
-				return parse_member_access (expr);
-			} else {
-				return expr;
-			}			
+			return expr;
 		}
 		
 		public Expression parse_postfix_expression (Expression inner) throws VError {
@@ -275,6 +284,25 @@ namespace Vanubi.Vade {
 			next ();
 			
 			expr = new FunctionExpression (new Function (parameters, expr));
+			return expr;
+		}
+
+		public Expression parse_call_expression (Expression inner) throws VError {
+			expect (TType.OPEN_PAREN);
+			next ();
+			
+			Expression[] args = null;
+			while (cur.type != TType.CLOSE_PAREN && cur.type != TType.END) {
+				args += parse_nonseq_expression ();
+				if (cur.type != TType.COMMA) {
+					break;
+				}
+			}
+			
+			expect (TType.CLOSE_PAREN);
+			next ();
+			
+			var expr = new CallExpression (inner, (owned) args);
 			return expr;
 		}
 		

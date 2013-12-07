@@ -169,5 +169,20 @@ namespace Vanubi.Vade {
 		public override void visit_function_expression (FunctionExpression expr) {
 			value = new Value.for_function (expr.func, scope);
 		}
+		
+		public override void visit_call_expression (CallExpression expr) {
+			expr.inner.visit (this);
+			var func = value;
+			
+			Value[] args = new Value[expr.arguments.length];
+			foreach (var argexpr in expr.arguments) {
+				argexpr.visit (this);
+				args += value;
+			}
+			
+			if (func.type == Value.Type.FUNCTION) {
+				value = func.func.eval (func.func_scope, args);
+			}
+		}
 	}
 }
