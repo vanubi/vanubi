@@ -91,6 +91,9 @@ void test_eval () {
 	
 	// user defined functions
 	assert_eval (scope, "f1={a|a+2}; f2={x|x*2}; f1(3)+f2(4)", new Vade.Value.for_num (13));
+	
+	// conditions
+	assert_eval (scope, "if (2>3) 4 else { bar++; bar }", new Vade.Value.for_num (1));
 }
 
 

@@ -307,7 +307,9 @@ namespace Vanubi.Vade {
 		
 		public Expression parse_function () throws VError {
 			expect (TType.OPEN_BRACE);
+			var rollback = lex.pos;
 			next ();
+			
 			string[] parameters = null;
 			if (cur.type == TType.ID) {
 				while (cur.type == TType.ID) {
@@ -316,6 +318,8 @@ namespace Vanubi.Vade {
 				}
 				if (cur.type != TType.BIT_OR) {
 					parameters = null;
+					lex.pos = rollback;
+					next ();
 				} else {
 					next ();
 				}

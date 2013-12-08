@@ -19,7 +19,7 @@
 
 namespace Vanubi.Vade {
 	public abstract class Function {
-		public abstract async Value eval (Scope scope, Value[] arguments, Cancellable cancellable);
+		public abstract async Value eval (Scope scope, Value[]? arguments, Cancellable cancellable);
 		public abstract string to_string ();
 	}
 	
@@ -33,7 +33,7 @@ namespace Vanubi.Vade {
 			this.body = body;
 		}
 		
-		public override async Value eval (Scope scope, Value[] arguments, Cancellable cancellable) {
+		public override async Value eval (Scope scope, Value[]? arguments, Cancellable cancellable) {
 			for (var i=0; i < int.min(parameters.length, arguments.length); i++) {
 				scope.set_local (parameters[i], arguments[i]);
 			}

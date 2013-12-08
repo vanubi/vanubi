@@ -182,6 +182,13 @@ namespace Vanubi.Vade {
 			} else {
 				yield expr.false_expr.visit (this);
 			}
+			if (value.type == Value.Type.FUNCTION) {
+				if (is_cancelled ()) {
+					return;
+				}
+				var innerscope = new Scope (value.func_scope);
+				value = yield value.func.eval (innerscope, null, cancellable);
+			}
 		}
 		
 		public override async void visit_function_expression (FunctionExpression expr) {
@@ -200,10 +207,10 @@ namespace Vanubi.Vade {
 			}
 			
 			if (func.type == Value.Type.FUNCTION) {
-				var innerscope = new Scope (func.func_scope);
 				if (is_cancelled ()) {
 					return;
 				}
+				var innerscope = new Scope (func.func_scope);
 				value = yield func.func.eval (innerscope, args, cancellable);
 			}
 		}
