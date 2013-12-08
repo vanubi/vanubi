@@ -9,7 +9,6 @@ Vade is a simple language for writing expressions in Vanubi.
 ==== Friendly syntax explanation
 
 In Vade everything is an expression, and each expression evaluates to a value.
-Below a friendly informal description of the language syntax.
 
 An expression is a sequence of sub expressions separated by `;`.
 
@@ -85,7 +84,7 @@ string = "'" escaped-string "'"
 
 === Semantics
 
-Every expression in Vade evaluates to a value. A value is always a string, and is interpreted as a number or a boolean depending on the operation performed on the value.
+Every expression in Vade evaluates to a value. The type of a value is either a function or a string. If the value is a string, it is interpreted as a number or a boolean depending on the operation performed on the value.
 
 An expression is evaluated within a `scope`. A scope is a mapping between registers (or variables) and values. Registers are referenced by identifiers in the code.
 
