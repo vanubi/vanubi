@@ -124,7 +124,7 @@ namespace Vanubi {
 			search (iter);
 		}
 
-		void search (TextIter iter) {
+		async void search (TextIter iter) {
 			// inefficient naive implementation
 			var buf = editor.view.buffer;
 			var p = entry.get_text ();
@@ -139,8 +139,16 @@ namespace Vanubi {
 				}
 			}
 			
+			// yield to gui every 50 iterations
+			int iterations = 0;
+			
 			while (((mode == Mode.SEARCH_FORWARD || mode == Mode.REPLACE_FORWARD) && !iter.is_end ()) ||
 				   ((mode == Mode.SEARCH_BACKWARD || mode == Mode.REPLACE_BACKWARD) && !iter.is_start ())) {
+				if (iterations++ >= 50) {
+					SourceFunc resume = search.callback;
+					Idle.add (() => { resume (); return false; });
+					yield;
+				}
 				var subiter = iter;
 				bool found = true;
 				if (is_regex) {
@@ -234,7 +242,7 @@ namespace Vanubi {
 							iter.backward_char ();
 						}
 					}
-					search (iter);
+					search.begin (iter);
 					return true;
 				}
 			} else if (is_replacing && (mode == Mode.REPLACE_FORWARD || mode == Mode.REPLACE_BACKWARD)) {
@@ -256,7 +264,7 @@ namespace Vanubi {
 						
 						TextIter iter;
 						buf.get_iter_at_mark (out iter, buf.get_insert ());
-						search (iter);
+						search.begin (iter);
 						return true;
 					} else if (e.keyval == Gdk.Key.s) {
 						// skip occurrence
@@ -264,7 +272,7 @@ namespace Vanubi {
 						TextIter iter;
 						buf.get_iter_at_mark (out iter, buf.get_insert ());
 						iter.forward_char ();
-						search (iter);
+						search.begin (iter);
 						return true;
 					}
 				}
