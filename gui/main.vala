@@ -1160,6 +1160,7 @@ namespace Vanubi {
 
 			TextIter insert, start;
 			buf.get_iter_at_mark (out insert, buf.get_insert ());
+			var orig_line = insert.get_line ();
 			var orig_line_offset = insert.get_line_offset ();
 			buf.get_iter_at_line (out start, insert.get_line());
 			
@@ -1171,10 +1172,13 @@ namespace Vanubi {
 
 			buf.begin_user_action ();
 			buf.delete (ref start, ref end);
+			
 			// repositionate at the same line offset
-			buf.get_iter_at_mark (out insert, buf.get_insert ());
-			insert.forward_chars (orig_line_offset);
-			buf.place_cursor (insert);
+			buf.get_iter_at_line (out start, orig_line);
+			while (!start.ends_line () && start.get_line_offset () < orig_line_offset) {
+				start.forward_char ();
+			}
+			buf.place_cursor (start);
 			buf.end_user_action ();
 		}
 		
