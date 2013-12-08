@@ -134,7 +134,7 @@ The expression below will evaluate to `5` (not `7`) because `b` is zero in the p
 
 [source,javascript]
 ------
-a = 3; f = { b = 2; a = a+b }; f()+b
+a = 3; f = { b = 2; a = a+b }; f(); a+b
 ------
 
 ==========
