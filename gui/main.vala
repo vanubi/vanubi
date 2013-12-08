@@ -31,6 +31,7 @@ namespace Vanubi {
 		string last_search_string = "";
 		string last_replace_string = "";
 		string last_pipe_command = "";
+		string last_vade_code = "";
 		// Editor selection before calling a command
 		TextIter selection_start;
 		TextIter selection_end;
@@ -269,6 +270,9 @@ namespace Vanubi {
 							Key (Gdk.Key.s, 0) }, "repo-grep");
 			index_command ("repo-grep", "Search for text in repository");
 			execute_command["repo-grep"].connect (on_repo_grep);
+			
+			index_command ("eval-expression", "Execute Vade code");
+			execute_command["eval-expression"].connect (on_eval_expression);
 			
 			// setup empty buffer
 			unowned Editor ed = get_available_editor (null);
@@ -1238,7 +1242,31 @@ namespace Vanubi {
 			bar.show ();
 			bar.grab_focus ();
 		}
+
+		async void do_eval_expression (Editor editor, string code) {
+			try {
+				var parser = new Vade.Parser.for_string (code);
+				var expr = parser.parse_expression ();
+				var val = yield base_scope.eval (expr, new Cancellable ());
+				display_message (editor, val.str);
+			} catch (Error e) {
+				display_error (editor, e.message);
+			}
+		}
 		
+		void on_eval_expression (Editor editor) {
+			var bar = new EntryBar (last_vade_code);
+			bar.activate.connect ((code) => {
+					abort (editor);
+					last_vade_code = code;
+					do_eval_expression.begin (editor, code);
+			});
+			bar.aborted.connect (() => { abort (editor); });
+			add_overlay (bar);
+			bar.show ();
+			bar.grab_focus ();
+		}
+
 		void on_repo_grep (Editor editor) {
 			var repo_dir = conf.cluster.get_git_repo (editor.file);
 			if (repo_dir == null) {
