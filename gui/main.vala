@@ -1476,12 +1476,16 @@ namespace Vanubi {
 			var bar = new SearchBar (editor, mode, is_regex, last_search_string, last_replace_string);
 			bar.activate.connect (() => {
 				last_search_string = bar.text;
-				last_replace_string = bar.replace_text;
+				if (command.has_prefix ("replace")) {
+					last_replace_string = bar.replace_text;
+				}
 				abort (editor);
 			});
 			bar.aborted.connect (() => {
 				last_search_string = bar.text;
-				last_replace_string = bar.replace_text;
+				if (command.has_prefix ("replace")) {
+					last_replace_string = bar.replace_text;
+				}
 				abort (editor);
 			});
 			add_overlay (bar);
