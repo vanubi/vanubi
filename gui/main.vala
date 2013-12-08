@@ -1016,26 +1016,30 @@ namespace Vanubi {
 		}
 
 		void on_start_line(Editor ed) {
-			bool forward = false;
 			var buf = ed.view.buffer;
-			TextIter start;
-			buf.get_iter_at_mark (out start, buf.get_insert ());
+			TextIter initial;
+			buf.get_iter_at_mark (out initial, buf.get_insert ());
+			
+			/* Cursor at the start of the line */
+			ed.view.move_cursor (MovementStep.DISPLAY_LINE_ENDS, -1, false);
+			TextIter current;
+			buf.get_iter_at_mark (out current, buf.get_insert ());
 
-			while (!start.starts_line()) {
-				start.backward_char();
-				ed.view.move_cursor (MovementStep.VISUAL_POSITIONS, -1, false);
-
-				if (!forward && !start.get_char().isspace()) {
-					forward = true;
+			if (initial.equal (current)) {
+				// Already at the start of the visual line, go to the real start of the line
+				ed.view.buffer.get_iter_at_line (out current, initial.get_line ());
+				ed.view.buffer.place_cursor (current);
+			} else {
+				// Find the first non-space of the line
+				while (current.get_char().isspace ()) {
+					current.forward_char ();
+				}
+				// Move cursor only if initial position is after the first non-space char
+				if (current.get_line_offset() < initial.get_line_offset ()) {
+					ed.view.buffer.place_cursor (current);
 				}
 			}
-
-			if (forward) {
-				while (start.get_char().isspace()) {
-					start.forward_char();
-					ed.view.move_cursor (MovementStep.VISUAL_POSITIONS, 1, false);
-				}
-			}
+			
 			ed.view.scroll_mark_onscreen (buf.get_insert ());
 		}
 
@@ -1047,6 +1051,7 @@ namespace Vanubi {
 			ed.view.move_cursor (MovementStep.DISPLAY_LINE_ENDS, 1, false);
 			TextIter current;
 			buf.get_iter_at_mark (out current, buf.get_insert ());
+
 			if (initial.equal (current)) {
 				// try going really to the end of the line
 				while (!current.ends_line ()) {
