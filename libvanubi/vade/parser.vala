@@ -46,12 +46,14 @@ namespace Vanubi.Vade {
 		public Expression parse_embedded (MatchInfo? regex_match = null) throws VError {
 			// Idea 1: transform each $(...) in an expression, substitute regex backreferences in it
 			// Idea 2: concatenate literal strings and expressions with concat()
-			
 			Expression[] args = null;
 			var last_str_off = 0;
 			while (lex.pos < lex.len) {
 				if (lex.char == '\\') {
-					lex.pos += 2;
+					lex.pos++;
+					if (lex.pos < lex.len) {
+						lex.pos++;
+					}
 					continue;
 				} else if (lex.char == '$') {
 					lex.pos++;

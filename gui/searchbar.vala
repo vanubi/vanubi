@@ -41,11 +41,14 @@ namespace Vanubi {
 		bool is_regex = false;
 		string matching_string; // keep alive for regex
 		MatchInfo current_match;
+		Vade.Scope? scope; // scope in which to execute Vade expressions, or null to avoid parsing expressions
+		Cancellable cancellable;
 
-		public SearchBar (Editor editor, Mode mode, bool is_regex, string search_initial = "", string replace_initial = "") {
+		public SearchBar (Vade.Scope? scope, Editor editor, Mode mode, bool is_regex, string search_initial = "", string replace_initial = "") {
 			base (search_initial);
 			this.editor = editor;
 			this.mode = mode;
+			this.scope = scope;
 			this.is_regex = is_regex;
 			
 			if (mode == Mode.REPLACE_FORWARD || mode == Mode.REPLACE_BACKWARD) {
@@ -97,7 +100,8 @@ namespace Vanubi {
 				var buf = editor.view.buffer;
 				TextIter iter;
 				buf.get_iter_at_mark (out iter, buf.get_insert ());
-				search (iter);
+				
+				search.begin (iter);
 			}
 		}
 		
@@ -121,14 +125,33 @@ namespace Vanubi {
 			} else {
 				buf.get_iter_at_mark (out iter, buf.get_insert ());
 			}
-			search (iter);
+			search.begin (iter);
 		}
 
 		async void search (TextIter iter) {
+			if (cancellable != null) {
+				cancellable.cancel ();
+			}
+			cancellable = new Cancellable ();
+			var cur_cancellable = cancellable;
+			
 			// inefficient naive implementation
 			var buf = editor.view.buffer;
 			var p = entry.get_text ();
 			var insensitive = p.down () == p;
+			
+			// Eval pattern expression
+			if (scope != null) {
+				try {
+					var parser = new Vade.Parser.for_string (p);
+					var expr = parser.parse_embedded ();
+					var value = yield scope.eval (expr, cur_cancellable);
+					p = value.str;
+				} catch (Error e) {
+					// do not parse in case of any error during parsing or evaluating the expression
+				}
+			}
+			
 			Regex regex = null;
 			if (is_regex) {
 				try {
@@ -144,6 +167,10 @@ namespace Vanubi {
 			
 			while (((mode == Mode.SEARCH_FORWARD || mode == Mode.REPLACE_FORWARD) && !iter.is_end ()) ||
 				   ((mode == Mode.SEARCH_BACKWARD || mode == Mode.REPLACE_BACKWARD) && !iter.is_start ())) {
+				if (cur_cancellable.is_cancelled ()) {
+					return;
+				}
+				
 				if (iterations++ >= 50) {
 					SourceFunc resume = search.callback;
 					Idle.add (() => { resume (); return false; });
@@ -190,9 +217,11 @@ namespace Vanubi {
 			}
 			
 			if (mode == Mode.REPLACE_FORWARD || mode == Mode.REPLACE_BACKWARD) {
-				var replace_label = (Label) replace_box.get_child ();
-				replace_label.set_markup ("<b>Replaced occurrences till end of file</b>");
-				replace_complete = true;
+				if (replace_box != null) {
+					var replace_label = (Label) replace_box.get_child ();
+					replace_label.set_markup ("<b>Replaced occurrences till end of file</b>");
+					replace_complete = true;
+				}
 				return;
 			}
 			
@@ -206,9 +235,50 @@ namespace Vanubi {
 			show_all ();
 		}
 
+		async void replace () {
+			if (cancellable != null) {
+				cancellable.cancel ();
+			}
+			cancellable = new Cancellable ();
+			var cur_cancellable = cancellable;
+			
+			// replace occurrence
+			var r = replace_text;
+			if (is_regex) {
+				// parse back references
+				for (var i=1; i < current_match.get_match_count (); i++) {
+					r = r.replace (@"\\$i", current_match.fetch (i));
+				}
+			}
+
+			// evaluate replace expression, TODO: pass the current match
+			try {
+				var parser = new Vade.Parser.for_string (r);
+				var expr = parser.parse_embedded ();
+				var value = yield scope.eval (expr, cur_cancellable);
+				r = value.str;
+			} catch (Error e) {
+				// do not parse in case of any error during parsing or evaluating the expression
+			}
+			
+			var buf = editor.view.buffer;
+			buf.begin_user_action ();		
+			buf.delete_selection (true, true);
+			buf.insert_at_cursor (r, -1);
+			buf.end_user_action ();
+						
+			TextIter iter;
+			buf.get_iter_at_mark (out iter, buf.get_insert ());
+			search.begin (iter);
+		}
+		
 		protected override bool on_key_press_event (Gdk.EventKey e) {
 			if (e.keyval == Gdk.Key.Escape || (e.keyval == Gdk.Key.g && Gdk.ModifierType.CONTROL_MASK in e.state)) {
 				// abort
+				if (cancellable != null) {
+					cancellable.cancel ();
+				}
+				
 				TextIter insert, bound;
 				var buf = editor.view.buffer;
 				buf.get_iter_at_offset (out insert, original_insert);
@@ -248,23 +318,7 @@ namespace Vanubi {
 			} else if (is_replacing && (mode == Mode.REPLACE_FORWARD || mode == Mode.REPLACE_BACKWARD)) {
 				if (!replace_complete) {
 					if (e.keyval == Gdk.Key.r) {
-						// replace occurrence
-						var r = replace_text;
-						if (is_regex) {
-							// parse back references
-							for (var i=1; i < current_match.get_match_count (); i++) {
-								r = r.replace (@"\\$i", current_match.fetch (i));
-							}
-						}
-						var buf = editor.view.buffer;
-						buf.begin_user_action ();		
-						buf.delete_selection (true, true);
-						buf.insert_at_cursor (r, -1);
-						buf.end_user_action ();
-						
-						TextIter iter;
-						buf.get_iter_at_mark (out iter, buf.get_insert ());
-						search.begin (iter);
+						replace.begin ();
 						return true;
 					} else if (e.keyval == Gdk.Key.s) {
 						// skip occurrence

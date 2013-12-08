@@ -45,11 +45,13 @@ namespace Vanubi {
 		public Configuration conf;
 		public StringSearchIndex command_index;
 		public StringSearchIndex lang_index;
+		public Vade.Scope base_scope; // Scope for Vade expressions
 
 		public Manager () {
 			conf = new Configuration ();
 			orientation = Orientation.VERTICAL;
 			keymanager = new KeyManager<Editor> (on_command);
+			base_scope = Vade.create_base_scope ();
 
 			// setup languages index
 			lang_index = new StringSearchIndex ();
@@ -1473,7 +1475,7 @@ namespace Vanubi {
 				mode = SearchBar.Mode.REPLACE_BACKWARD;
 			}
 			is_regex = command.has_suffix ("-regexp");
-			var bar = new SearchBar (editor, mode, is_regex, last_search_string, last_replace_string);
+			var bar = new SearchBar (base_scope, editor, mode, is_regex, last_search_string, last_replace_string);
 			bar.activate.connect (() => {
 				last_search_string = bar.text;
 				if (command.has_prefix ("replace")) {
