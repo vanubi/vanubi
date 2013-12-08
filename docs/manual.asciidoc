@@ -83,3 +83,59 @@ num = DIGIT* [ '.' DIGIT* ]
 string = "'" escaped-string "'"
 ----------
 
+=== Semantics
+
+Every expression in Vade evaluates to a value. A value is always a string, and is interpreted as a number or a boolean depending on the operation performed on the value.
+
+An expression is evaluated within a `scope`. A scope is a mapping between registers (or variables) and values. Registers are referenced by identifiers in the code.
+
+An expression made up of a sequence of expressions (`expr1; ..., exprN`) will evaluate to the value of the last expression.
+
+.Using registers and evaluating the last expression
+=============
+
+The expression below will evaluate to `10`:
+	
+[source,javascript]
+----------
+a = 4; b = 6; a+b
+----------
+
+=============
+
+Referencing a non-existant register will evaluate to an empty string (or 0 if used as a number).
+
+.Using undefined registers
+=========
+
+The expression below will evaluate to `1`:
+	
+[source,javascript]
+----------
+++foo
+----------
+=========
+
+In the Vanubi editor, a `base scope` is created and all top-level expressions will share the same scope. Therefore a register assigned in an expression will then be reusable within the application when evaluating another expression at a later time.
+
+Functions in Vade run in a scope which is created starting from the scope in which they are defined (`parent scope`).
+Assigning a register `reg` inside a scope with a parent scope follows the rules below:
+	
+	1. If `reg` is defined in the scope, then the value within the scope is updated.
+	2. Otherwise, if `reg` is defined in the parent (or any ancestor) scope, then `reg` is updated in that parent (or ancestor) scope.
+	3. If `reg` is not defined in the parent (or ancestor) scope, then `reg` will be defined in the current scope (`local` to the function).
+	
+This allows for simple access to top-level registers, yet keeping the definition of new registers local to the function scope.
+Parameters of function will define a local register in the function scope, hiding any register in the parent scope.
+
+.Global and local registers
+==========
+
+The expression below will evaluate to `5` (not `7`) because `b` is zero in the parent scope:
+
+[source,javascript]
+------
+a = 3; f = { b = 2; a = a+b }; f()+b
+------
+
+==========

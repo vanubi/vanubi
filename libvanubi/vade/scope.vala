@@ -139,11 +139,21 @@ namespace Vanubi.Vade {
 			return val;
 		}
 		
+		public bool contains (string name) {
+			if (name in registers) {
+				return true;
+			}
+			if (parent != null) {
+				return name in parent;
+			}
+			return false;
+		}
+		
 		public void set (string name, Value val) {
 			if (parent == null) {
 				registers[name] = val;
 			} else {
-				if (name in registers) {
+				if (name in registers || !(name in parent)) {
 					registers[name] = val;
 				} else {
 					parent[name] = val;
