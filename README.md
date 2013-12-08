@@ -17,6 +17,11 @@ $ gui/vanubi
 
 Make sure to have the most recent Vala compiler at your disposal.
 
+Manual
+------
+
+The manual of Vanubi is under ```docs/manual.asciidoc```. You can consult an online version [here](https://github.com/vanubi/vanubi/wiki/Manual).
+
 Ideas
 -----
  - Simple, complete, keyboard based, intelligent, unobtrusive, well integrated
@@ -31,7 +36,7 @@ Ideas
  - Semantic support for languages similar to eclipse but much less invasive, and faster
  - Integrate with libinfinity for real-time collaborative editing
 
-Key Bindings
+Partial list of key bindings
 -------------
 
 | Combo | Action |
