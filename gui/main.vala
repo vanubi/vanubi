@@ -242,6 +242,14 @@ namespace Vanubi {
 			index_command ("compile-shell", "Execute a shell for compiling the code", "build");
 			execute_command["compile-shell"].connect (on_compile_shell);
 
+			bind_command ({ Key (Gdk.Key.F9, Gdk.ModifierType.SHIFT_MASK) }, "compile-shell-left");
+			index_command ("compile-shell-left", "Execute a shell for compiling the code, open on the left", "build");
+			execute_command["compile-shell-left"].connect (on_compile_shell);
+
+			bind_command ({ Key (Gdk.Key.F9, Gdk.ModifierType.CONTROL_MASK) }, "compile-shell-right");
+			index_command ("compile-shell-right", "Execute a shell for compiling the code", "build");
+			execute_command["compile-shell-right"].connect (on_compile_shell);
+
 			bind_command ({ Key (Gdk.Key.y, Gdk.ModifierType.CONTROL_MASK) }, "redo");
 			index_command ("redo", "Redo action");
 			execute_command["redo"].connect (on_redo);
@@ -296,15 +304,40 @@ namespace Vanubi {
 			execute_command[command] (ed, command);
 		}
 
-		public void add_overlay (Widget widget, bool paned = false) {
+		public enum OverlayMode {
+			FIXED,
+			PANE_BOTTOM,
+			PANE_LEFT,
+			PANE_RIGHT
+		}
+		
+		public void add_overlay (Widget widget, OverlayMode mode = OverlayMode.FIXED) {
+			Allocation alloc;
+			get_allocation (out alloc);
+
 			var self = this; // keep alive
 			var parent = (Container) get_parent ();
 			parent.remove (this);
-			if (paned) {
+			if (mode == OverlayMode.PANE_BOTTOM) {
 				var p = new Paned (Orientation.VERTICAL);
 				p.pack1 (this, true, false);
 				p.pack2 (widget, true, false);
 				parent.add (p);
+				p.position = alloc.height*2/3;
+				p.show ();
+			} else if (mode == OverlayMode.PANE_LEFT) {
+				var p = new Paned (Orientation.HORIZONTAL);
+				p.pack1 (widget, true, false);
+				p.pack2 (this, true, false);
+				parent.add (p);
+				p.position = alloc.width/2;
+				p.show ();
+			} else if (mode == OverlayMode.PANE_RIGHT) {
+				var p = new Paned (Orientation.HORIZONTAL);
+				p.pack1 (this, true, false);
+				p.pack2 (widget, true, false);
+				parent.add (p);
+				p.position = alloc.width/2;
 				p.show ();
 			} else {
 				var grid = new Grid ();
@@ -881,13 +914,13 @@ namespace Vanubi {
 				bar.key_pressed.connect ((e) => {
 						if (e.keyval == Gdk.Key.s) {
 							ignore_abort = true;
-							Idle.add (resume);
+							Idle.add ((owned) resume);
 							abort (ed);
 							return true;
 						} else if (e.keyval == Gdk.Key.n) {
 							ignore_abort = true;
 							discard = true;
-							Idle.add (resume);
+							Idle.add ((owned) resume);
 							abort (ed);
 							return true;
 						} else if (e.keyval == Gdk.Key.q) {
@@ -896,7 +929,7 @@ namespace Vanubi {
 						} else if (e.keyval == '!') {
 							ignore_abort = true;
 							save_all = true;
-							Idle.add (resume);
+							Idle.add ((owned) resume);
 							abort (ed);
 							return true;
 						}
@@ -904,13 +937,13 @@ namespace Vanubi {
 				});
 				bar.aborted.connect (() => {
 						aborted = true;
-						Idle.add (resume);
+						Idle.add ((owned) resume);
 						abort (ed);
 				});
 				// ensure this coroutine does not deadlock
 				bar.destroy.connect (() => {
 						if (!aborted) {
-							Idle.add (resume);
+							Idle.add ((owned) resume);
 						}
 						aborted = true;
 				});						
@@ -1014,10 +1047,10 @@ namespace Vanubi {
 					execute_command_async.begin (ed.file, command, text.data, null, (s,r) => {
 							try {
 								output = execute_command_async.end (r);
-								Idle.add (resume);
+								Idle.add ((owned) resume);
 							} catch (Error e) {
 								error = e;
-								Idle.add (resume);
+								Idle.add ((owned) resume);
 							}
 					});
 			});
@@ -1344,7 +1377,7 @@ namespace Vanubi {
 					bar.stream = stream;
 			});
 			bar.aborted.connect (() => { abort (editor); });
-			add_overlay (bar, true);
+			add_overlay (bar, OverlayMode.PANE_BOTTOM);
 			bar.show ();
 			bar.grab_focus ();
 		}
@@ -1565,12 +1598,18 @@ namespace Vanubi {
 			bar.grab_focus ();
 		}
 
-		void on_compile_shell (Editor editor) {
+		void on_compile_shell (Editor editor, string cmd) {
 			var bar = new ShellBar (conf, editor.file);
 			bar.aborted.connect (() => {
 					abort (editor);
 				});
-			add_overlay (bar, true);
+			if (cmd == "compile-shell") {
+				add_overlay (bar, OverlayMode.PANE_BOTTOM);
+			} else if (cmd == "compile-shell-left") {
+				add_overlay (bar, OverlayMode.PANE_LEFT);
+			} else if (cmd == "compile-shell-right") {
+				add_overlay (bar, OverlayMode.PANE_RIGHT);
+			}
 			bar.show ();
 			bar.grab_focus ();
 		}
