@@ -182,13 +182,6 @@ namespace Vanubi.Vade {
 			} else {
 				yield expr.false_expr.visit (this);
 			}
-			if (value.type == Value.Type.FUNCTION) {
-				if (is_cancelled ()) {
-					return;
-				}
-				var innerscope = new Scope (value.func_scope);
-				value = yield value.func.eval (innerscope, null, cancellable);
-			}
 		}
 		
 		public override async void visit_function_expression (FunctionExpression expr) {

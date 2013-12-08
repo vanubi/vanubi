@@ -112,26 +112,26 @@ namespace Vanubi.Vade {
 				
 				expect (TType.OPEN_PAREN);
 				next ();
-				var cond = parse_binary_expression ();
+				var cond = parse_expression ();
 				expect (TType.CLOSE_PAREN);
 				next ();
 				
-				var true_expr = parse_binary_expression ();
+				var true_expr = parse_primary_expression ();
 				
 				if (cur.type == TType.ID && cur.str == "else") {
 					next ();
-					var false_expr = parse_binary_expression ();
+					var false_expr = parse_primary_expression ();
 					expr = new IfExpression (cond, true_expr, false_expr);
 				} else {
 					expr = new IfExpression (cond, true_expr, null);
 				}
 			} else {
-				expr = parse_binary_expression ();
+				expr = parse_primary_expression ();
 			}
 			return expr;
 		}
 		
-		public Expression parse_binary_expression () throws VError {
+		public Expression parse_primary_expression () throws VError {
 			var expr = parse_assign_expression ();
 			return expr;
 		}
@@ -254,7 +254,7 @@ namespace Vanubi.Vade {
 				break;
 			case TType.OPEN_PAREN:
 				next ();
-				expr = parse_nonseq_expression ();
+				expr = parse_expression ();
 				expect (TType.CLOSE_PAREN);
 				next ();
 				break;

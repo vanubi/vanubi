@@ -58,9 +58,9 @@ expr = seq
 seq = nonseq [ ';' seq-expr ]
 nonseq = binary | if
 
-if = 'if' '(' binary ')' binary [ 'else' binary ]
+if = 'if' '(' expr ')' primary [ 'else' primary ]
 
-binary = assign
+primary = assign
 assign = rel [ ('='|'+='|'-='|'*='|'/=') assign ]
 rel = add [ ('=='|'!='|'>'|'>='|'<'|'<=') rel ]
 add = mul [ ('+'|'-') add ]
