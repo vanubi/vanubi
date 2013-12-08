@@ -101,7 +101,7 @@ namespace Vanubi {
 		string[] argv;
 		Shell.parse_argv (command_line, out argv);
 		int stdin, stdout;
-		Process.spawn_async_with_pipes (get_base_directory (base_file), argv, null, SpawnFlags.SEARCH_PATH|SpawnFlags.FILE_AND_ARGV_ZERO, null, null, out stdin, out stdout, null);
+		Process.spawn_async_with_pipes (get_base_directory (base_file), argv, null, SpawnFlags.SEARCH_PATH, null, null, out stdin, out stdout, null);
 		
 		var os = new UnixOutputStream (stdin, true);
 		yield os.write_async (input, Priority.DEFAULT, cancellable);

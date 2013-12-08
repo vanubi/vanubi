@@ -260,6 +260,9 @@ namespace Vanubi {
 			index_command ("pipe-shell-clipboard", "Pass selected or whole text to a shell command and copy the output to the clipboard");
 			execute_command["pipe-shell-clipboard"].connect (on_pipe_shell_clipboard);
 			
+			index_command ("pipe-shell-replace", "Pass selected or whole text to a shell command and replace the buffer with the output");
+			execute_command["pipe-shell-replace"].connect (on_pipe_shell_replace);
+			
 			index_command ("set-language", "Set the syntax highlight for this file");
 			execute_command["set-language"].connect (on_set_language);
 			
@@ -878,13 +881,13 @@ namespace Vanubi {
 				bar.key_pressed.connect ((e) => {
 						if (e.keyval == Gdk.Key.s) {
 							ignore_abort = true;
-							Idle.add (() => { resume (); return false; });
+							Idle.add (resume);
 							abort (ed);
 							return true;
 						} else if (e.keyval == Gdk.Key.n) {
 							ignore_abort = true;
 							discard = true;
-							Idle.add (() => { resume (); return false; });
+							Idle.add (resume);
 							abort (ed);
 							return true;
 						} else if (e.keyval == Gdk.Key.q) {
@@ -893,7 +896,7 @@ namespace Vanubi {
 						} else if (e.keyval == '!') {
 							ignore_abort = true;
 							save_all = true;
-							Idle.add (() => { resume (); return false; });
+							Idle.add (resume);
 							abort (ed);
 							return true;
 						}
@@ -901,13 +904,13 @@ namespace Vanubi {
 				});
 				bar.aborted.connect (() => {
 						aborted = true;
-						Idle.add (() => { resume (); return false; });
+						Idle.add (resume);
 						abort (ed);
 				});
 				// ensure this coroutine does not deadlock
 				bar.destroy.connect (() => {
 						if (!aborted) {
-							Idle.add (() => { resume (); return false; });
+							Idle.add (resume);
 						}
 						aborted = true;
 				});						
@@ -953,6 +956,42 @@ namespace Vanubi {
 		}
 
 		void on_pipe_shell_clipboard (Editor ed) {
+			pipe_shell.begin (ed, (s,r) => {
+					try {
+						var output = (string) pipe_shell.end (r);
+						var clipboard = Clipboard.get (Gdk.SELECTION_CLIPBOARD);
+						clipboard.set_text (output, -1);
+						display_message (ed, "Output of command has been copied to clipboard");
+					} catch (Error e) {
+						display_error (ed, e.message);
+					}
+			});
+		}
+		
+		void on_pipe_shell_replace (Editor ed) {
+			var old_offset = selection_start.get_offset ();
+			pipe_shell.begin (ed, (s,r) => {
+					try {
+						var output = (string) pipe_shell.end (r);
+
+						var buf = ed.view.buffer;
+						buf.begin_user_action ();
+						buf.set_text (output, -1);
+						buf.end_user_action ();
+
+						TextIter iter;
+						buf.get_iter_at_offset (out iter, old_offset);
+						buf.place_cursor (iter);
+						ed.view.scroll_mark_onscreen (buf.get_insert ());
+						
+						display_message (ed, "Output of command has been replaced into the editor");
+					} catch (Error e) {
+						display_error (ed, e.message);
+					}
+			});
+		}
+
+		async uint8[] pipe_shell (Editor ed) throws Error {
 			// get text
 			var start = selection_start;
 			var end = selection_end;
@@ -963,32 +1002,35 @@ namespace Vanubi {
 			}
 			var text = buf.get_text (start, end, false);
 			
-			abort (ed);
+			SourceFunc resume = pipe_shell.callback;
+			uint8[]? output = null;			
+			Error? error = null;
 			
 			// prompt for shell command
 			var bar = new EntryBar (last_pipe_command);
 			bar.activate.connect ((command) => {
 					abort (ed);
-					if (text != "") {
-						last_pipe_command = command;
-						execute_command_async.begin (ed.file, last_pipe_command, text.data, null, (s,r) => {
-								// set to clipboard
-								try {
-									var output = (string) execute_command_async.end (r);
-									var clipboard = Clipboard.get (Gdk.SELECTION_CLIPBOARD);
-									clipboard.set_text (output, -1);
-									display_message (ed, "Output of command has been copied to clipboard");
-								} catch (Error e) {
-									display_error (ed, e.message);
-								}
-						});
-					}
+					last_pipe_command = command;
+					execute_command_async.begin (ed.file, command, text.data, null, (s,r) => {
+							try {
+								output = execute_command_async.end (r);
+								Idle.add (resume);
+							} catch (Error e) {
+								error = e;
+								Idle.add (resume);
+							}
+					});
 			});
 			bar.aborted.connect (() => { abort (ed); });
 			add_overlay (bar);
 			bar.show ();
 			bar.grab_focus ();
 
+			yield;
+			if (error != null) {
+				throw error;
+			}
+			return output;
 		}
 		
 		void on_move_block(Editor ed, string command) {

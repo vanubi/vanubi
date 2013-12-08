@@ -173,7 +173,7 @@ namespace Vanubi {
 				
 				if (iterations++ >= 50) {
 					SourceFunc resume = search.callback;
-					Idle.add (() => { resume (); return false; });
+					Idle.add (resume);
 					yield;
 				}
 				var subiter = iter;
