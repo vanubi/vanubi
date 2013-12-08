@@ -437,16 +437,19 @@ namespace Vanubi {
 			// first search already opened files
 			var f = files[file];
 			if (f != null) {
-				if (f == editor.file) {
-					// no-op
-					return;
+				unowned Editor ed;
+				if (f != editor.file) {
+					ed = get_available_editor (f);
+					replace_widget (editor, ed);
+				} else {
+					ed = editor;
 				}
-				unowned Editor ed = get_available_editor (f);
-				replace_widget (editor, ed);
+				
 				if (location.line > 0) {
 					TextIter iter;
 					ed.view.buffer.get_iter_at_line (out iter, location.line);
 					ed.view.buffer.place_cursor (iter);
+					ed.update_old_selection ();
 					Idle.add (() => { ed.view.scroll_to_mark (ed.view.buffer.get_insert (), 0, true, 0.5, 0.5); return false; });
 				}
 				ed.grab_focus ();
