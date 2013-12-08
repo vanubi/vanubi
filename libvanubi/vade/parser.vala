@@ -30,6 +30,7 @@ namespace Vanubi.Vade {
 		public Parser.for_string (string str) throws VError {
 			this (new Lexer (str));
 		}
+
 		
 		public Token next () throws VError {
 			this.cur = lex.next ();
@@ -150,12 +151,12 @@ namespace Vanubi.Vade {
 			switch (cur.type) {
 			case TType.GT:
 				next ();
-				var right = parse_add_expression ();
+				var right = parse_relational_expression ();
 				expr = new BinaryExpression (BinaryOperator.GT, expr, right);
 				break;
 			case TType.GE:
 				next ();
-				var right = parse_add_expression ();
+				var right = parse_relational_expression ();
 				expr = new BinaryExpression (BinaryOperator.GE, expr, right);
 				break;
 			case TType.LT:
@@ -165,12 +166,12 @@ namespace Vanubi.Vade {
 				break;
 			case TType.LE:
 				next ();
-				var right = parse_add_expression ();
+				var right = parse_relational_expression ();
 				expr = new BinaryExpression (BinaryOperator.LE, expr, right);
 				break;
 			case TType.EQ:
 				next ();
-				var right = parse_add_expression ();
+				var right = parse_relational_expression ();
 				expr = new BinaryExpression (BinaryOperator.EQ, expr, right);
 				break;
 			}

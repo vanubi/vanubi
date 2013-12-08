@@ -1,0 +1,85 @@
+= Vanubi Manual
+
+== Vade language
+
+Vade is a simple language for writing expressions in Vanubi.
+
+=== Syntax
+
+==== Friendly syntax explanation
+
+In Vade everything is an expression, and each expression evaluates to a value.
+Below a friendly informal description of the language syntax.
+
+An expression is a sequence of sub expressions separated by `;`.
+
+[source,bison]
+-------
+expr1 ; expr2; ...; exprN
+-------
+
+Expressions can be `if` expressions, with an optional `else` branch:
+	
+[source,javascript]
+-------
+if (condition) true_expr else false_expr
+-------
+
+Usual assignment, arithmetic and relational expressions are supported. Assignment is done with `=` as follows:
+	
+[source,javascript]
+-------
+identifier = value
+-------
+
+If an expression is a function (like `concat`) it is possible to call such a function with arguments separated by `,` as follows:
+
+[source,javascript]
+-------
+concat(arg1, ..., argN)
+-------
+
+You can define your own functions as follows:
+
+[source,javascript]
+-------
+func = { param1 param2 | body }
+func_without_params = { body }
+-------
+
+That is, enclosing an expression between braces will create an anonymous function.
+
+==== Formal syntax
+
+Below a BNF-like description of the language.
+
+[source,bison]
+----------
+expr = seq
+seq = nonseq [ ';' seq-expr ]
+nonseq = binary | if
+
+if = 'if' '(' binary ')' binary [ 'else' binary ]
+
+binary = assign
+assign = rel [ ('='|'+='|'-='|'*='|'/=') assign ]
+rel = add [ ('=='|'!='|'>'|'>='|'<'|'<=') rel ]
+add = mul [ ('+'|'-') add ]
+mul = unary [ ('*'|'/') mul ]
+unary = simple | ('-','++','--') simple
+
+simple = simple-init [ simple-access ]*
+simple-init = identifier [ ('++'|'--') ] | function | '(' nonseq ')' | literal
+simple-access = '.' identifier | call
+call = '(' [ arguments ] ')'
+arguments = nonseq [ ',' nonseq ]*
+
+function = '{' [ parameters '|' ] expr '}'
+parameters = identifier [ ' ' identifier ]*
+
+identifier = ALPHA [ ALPHANUM ]*
+literal = num | string
+num = DIGIT* [ '.' DIGIT* ]
+string = "'" escaped-string "'"
+----------
+

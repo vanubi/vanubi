@@ -98,8 +98,9 @@ namespace Vanubi {
 	}
 	
 	public async uint8[] execute_command_async (File? base_file, string command_line, uint8[]? input = null, Cancellable? cancellable = null) throws Error {
-		string[] argv;
-		Shell.parse_argv (command_line, out argv);
+		/*string[] cmd_argv;
+		Shell.parse_argv (command_line, out argv);*/
+		string[] argv = {"sh", "-c", command_line};
 		int stdin, stdout;
 		Process.spawn_async_with_pipes (get_base_directory (base_file), argv, null, SpawnFlags.SEARCH_PATH, null, null, out stdin, out stdout, null);
 		
