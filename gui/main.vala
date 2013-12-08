@@ -185,10 +185,16 @@ namespace Vanubi {
 			index_command ("search-forward", "Search text forward incrementally");
 			execute_command["search-forward"].connect (on_search_replace);
 
+			index_command ("search-forward-regexp", "Search text forward incrementally using a regular expression");
+			execute_command["search-forward-regexp"].connect (on_search_replace);
+
 			bind_command ({ Key (Gdk.Key.r, Gdk.ModifierType.CONTROL_MASK) }, "search-backward");
 			index_command ("search-backward", "Search text backward incrementally");
 			execute_command["search-backward"].connect (on_search_replace);
-			
+
+			index_command ("search-backward-regexp", "Search text backward incrementally using a regular expression");
+			execute_command["search-backward-regexp"].connect (on_search_replace);
+
 			bind_command ({ Key (Gdk.Key.x, Gdk.ModifierType.CONTROL_MASK),
 							Key (Gdk.Key.r, 0) }, "replace-forward");
 			index_command ("replace-forward", "Replace text forward incrementally");
@@ -197,8 +203,11 @@ namespace Vanubi {
 			index_command ("replace-backward", "Replace text backward incrementally");
 			execute_command["replace-backward"].connect (on_search_replace);
 			
-			index_command ("replace-forward-regexp", "Replace text forward incrementally using a regular expression", "regexp");
+			index_command ("replace-forward-regexp", "Replace text forward incrementally using a regular expression");
 			execute_command["replace-forward-regexp"].connect (on_search_replace);
+
+			index_command ("replace-backward-regexp", "Replace text backward incrementally using a regular expression");
+			execute_command["replace-backward-regexp"].connect (on_search_replace);
 
 			bind_command ({ Key (Gdk.Key.k, Gdk.ModifierType.CONTROL_MASK) }, "kill-line-right");
 			index_command ("kill-line-right", "Delete line contents on the right of the cursor");
@@ -1454,22 +1463,16 @@ namespace Vanubi {
 		void on_search_replace (Editor editor, string command) {
 			SearchBar.Mode mode;
 			bool is_regex;
-			if (command == "search-forward") {
+			if (command.has_prefix ("search-forward")) {
 				mode = SearchBar.Mode.SEARCH_FORWARD;
-				is_regex = false;
-			} else if (command == "search-backward") {
+			} else if (command.has_prefix ("search-backward")) {
 				mode = SearchBar.Mode.SEARCH_BACKWARD;
-				is_regex = false;				
-			} else if (command == "replace-forward") {
+			} else if (command.has_prefix ("replace-forward")) {
 				mode = SearchBar.Mode.REPLACE_FORWARD;
-				is_regex = false;				
-			} else if (command == "replace-backward") {
-				mode = SearchBar.Mode.REPLACE_BACKWARD;
-				is_regex = false;
 			} else {
-				mode = SearchBar.Mode.REPLACE_FORWARD;
-				is_regex = true;
+				mode = SearchBar.Mode.REPLACE_BACKWARD;
 			}
+			is_regex = command.has_suffix ("-regexp");
 			var bar = new SearchBar (editor, mode, is_regex, last_search_string, last_replace_string);
 			bar.activate.connect (() => {
 				last_search_string = bar.text;
