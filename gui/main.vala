@@ -1041,7 +1041,7 @@ namespace Vanubi {
 			SourceFunc resume = pipe_shell.callback;
 			uint8[]? output = null;			
 			Error? error = null;
-			
+
 			// prompt for shell command
 			var bar = new EntryBar (last_pipe_command);
 			bar.activate.connect ((command) => {
@@ -1166,8 +1166,7 @@ namespace Vanubi {
 			buf.get_iter_at_line (out start, insert.get_line());
 			
 			var end = start;
-			end.forward_to_line_end ();
-			if (start.get_line() == end.get_line()) {
+			while (start.get_line() == end.get_line()) {
 				end.forward_char ();
 			}
 
