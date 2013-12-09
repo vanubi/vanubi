@@ -1047,9 +1047,10 @@ namespace Vanubi {
 			bar.activate.connect ((command) => {
 					abort (ed);
 					last_pipe_command = command;
-					execute_command_async.begin (ed.file, command, text.data, null, (s,r) => {
+					var cmd = command.replace("%f", Shell.quote(ed.file.get_path())).replace("%s", start.get_offset().to_string()).replace("%e", end.get_offset().to_string());
+					execute_shell_async.begin (ed.file, cmd, text.data, null, (s,r) => {
 							try {
-								output = execute_command_async.end (r);
+								output = execute_shell_async.end (r);
 								Idle.add ((owned) resume);
 							} catch (Error e) {
 								error = e;

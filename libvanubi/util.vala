@@ -97,7 +97,7 @@ namespace Vanubi {
 		}
 	}
 	
-	public async uint8[] execute_command_async (File? base_file, string command_line, uint8[]? input = null, Cancellable? cancellable = null) throws Error {
+	public async uint8[] execute_shell_async (File? base_file, string command_line, uint8[]? input = null, Cancellable? cancellable = null) throws Error {
 		/*string[] cmd_argv;
 		Shell.parse_argv (command_line, out argv);*/
 		string[] argv = {"sh", "-c", command_line};
