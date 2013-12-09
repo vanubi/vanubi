@@ -1142,11 +1142,9 @@ namespace Vanubi {
 			var buf = ed.view.buffer;
 			TextIter initial;
 			buf.get_iter_at_mark (out initial, buf.get_insert ());
+			
 			ed.view.move_cursor (MovementStep.DISPLAY_LINE_ENDS, 1, false);
-			buf.get_iter_at_mark (out initial, buf.get_insert ());
-			if (!initial.ends_line ()) {
-				initial.forward_char ();
-			}
+			
 			TextIter current;
 			buf.get_iter_at_mark (out current, buf.get_insert ());
 
