@@ -183,6 +183,12 @@ namespace Vanubi {
 
 			bind_command ({	Key (Gdk.Key.p, Gdk.ModifierType.CONTROL_MASK) }, "backward-line");
 			execute_command["backward-line"].connect (on_forward_backward_line);
+			
+			bind_command ({ Key (Gdk.Key.f, Gdk.ModifierType.CONTROL_MASK) }, "forward-char");
+			execute_command["forward-char"].connect (on_forward_backward_char);
+			
+			bind_command ({ Key (Gdk.Key.b, Gdk.ModifierType.CONTROL_MASK) }, "backward-char");
+			execute_command["backward-char"].connect (on_forward_backward_char);
 
 			bind_command ({ Key (Gdk.Key.s, Gdk.ModifierType.CONTROL_MASK) }, "search-forward");
 			index_command ("search-forward", "Search text forward incrementally");
@@ -1632,6 +1638,13 @@ namespace Vanubi {
 				ed.view.move_cursor (MovementStep.DISPLAY_LINES, 1, false);
 			} else {
 				ed.view.move_cursor (MovementStep.DISPLAY_LINES, -1, false);
+			}
+		}
+		void on_forward_backward_char (Editor ed, string command) {
+			if (command == "forward-char") {
+				ed.view.move_cursor (MovementStep.VISUAL_POSITIONS, 1, false);
+			} else {
+				ed.view.move_cursor (MovementStep.VISUAL_POSITIONS, -1, false);
 			}
 		}
 	}
