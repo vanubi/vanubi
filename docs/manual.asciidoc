@@ -1,5 +1,54 @@
 = Vanubi Manual
 
+== Key/mouse bindings
+
+Most of programming in Vanubi happens on the keyword. It's important to have meaningful key bindings. In this regard, Vanubi inherits some of Emacs key bindings.
+Key bindings are made up of one or multiple key combinations: for example `C-x C-s` has to be interpreted as press `Ctrl+x` then press `Ctrl+s`, or keep `Ctrl+x` pressed then press `s`.
+Pressing them at the same time is not needed, the important thing is to press keys in the correct order.
+
+Currently supported modifiers are Shift (S-) and Ctrl (C-). Note that `C-x k`, `C-x C-k` and `C-k` and three different key bindings.
+
+== Commands
+
+Vanubi is controlled by commands issued by the user. A command might be activated by a key binding, a mouse action, or programmatically by invoking a command using `C-h` (the help command).
+Not all commands have key bindings, however using `C-h` it gets very handy to run unusual commands.
+
+== Fuzzy search
+
+All of the matching and search components of Vanubi use fuzzy search when possible. Fuzzy search means you can type only part of the text, and it will match and sort documents accordingly.
+For example the query 'fb' will match 'foobar'. Sorting takes in consideration how and where the query pattern matches the document to obtain the best result.
+
+== Dealing with files
+
+At start you are prompted to edit `*scratch*`. This is not relative to any particular file, it exists as a temporary buffers for your own notetaking.
+
+You can open a file for reading or create a new file with `open-file` (`C-x C-f`). You can type only part of the file and Vanubi will fuzzy search through file names.
+It is also possible to fuzzy search through sub directories. For example '/u/b' will match all sub directories like `/usr/bin`, `/usr/sbin`, `/run/dbus`, `/usr/lib`, etc.
+The tidle (`~`) is expand to the user home directory.
+
+You can save a new or existing file being edited using `save-file` (`C-x C-s`). The file will be overwritten of it already exists.
+
+If a file has been edited elsewhere and you want to reload it, it is possible with `reload-file`.
+
+== Buffers or views or editors
+
+A buffer (or editor) is a view of a file being edited. It is possible to split buffers horizontally or vertically (search for such commands with `C-h`).
+This allows you to open two views for the same file.
+
+You can switch between files within a view using `switch-buffer` (`C-x b`). Note that the first file in the switch buffer completion is the last file you edited in that view. That allows you to quickly switch between two files repeatedly within the same view, and to keep focus on the files you are recently editing.
+
+To close a buffer you can issue `kill-buffer` with `C-x k`. If the closed buffer was the last visible buffer for a file, the file will be removed from Vanubi and won't be visible when switching buffers anymore.
+
+== Shell terminals
+
+== Pipe-shell commands
+
+Pipe-shell commands allow you to pipe the current contents (being saved or not) to a command, and do something with the output of the command.
+Additionally, `%f`, `%s` and `%e` are replaced with the filename, selection start and selection end respectively in the shell command.
+
+In particular, `pipe-shell-replace` allows you to create complex scripts to edit the current edited buffer as you wish.
+While `pipe-shell-clipboard` allows you to call commands like `pastebinit` to share part or the whole buffer, or `asciidoc && xdg-open` to render and view the result.
+
 == Vade language
 
 Vade is a simple language for writing expressions in Vanubi.
