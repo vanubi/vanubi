@@ -260,6 +260,36 @@ namespace Vanubi {
 				((SourceBuffer) view.buffer).set_language (lang);
 			}
 		}
+
+		// Returns true if location changed
+		public bool set_location (Location location) {
+			// set specific location
+			TextIter start_iter;
+			var buf = view.buffer;
+			if (location.start_line >= 0) {
+				buf.get_iter_at_line (out start_iter, location.start_line);
+				if (location.start_column > 0) {
+					start_iter.forward_chars (location.start_column);
+				}
+			} else {
+				return false;
+			}
+					
+			TextIter end_iter = start_iter;
+			if (location.end_line >= 0){
+				buf.get_iter_at_line (out end_iter, location.end_line);
+				if (location.end_column >= 0) {
+					end_iter.forward_chars (location.end_column);
+				} else {
+					end_iter.forward_chars (location.start_column);
+				}
+			}
+					
+			buf.select_range (start_iter, end_iter);
+			update_old_selection ();
+			
+			return true;
+		}
 		
 		/* events */
 

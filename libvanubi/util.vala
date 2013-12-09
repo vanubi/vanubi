@@ -22,13 +22,37 @@ namespace Vanubi {
 
 	public class Location {
 		public File? file;
-		public int line;
-		public int column;
+		public int start_line;
+		public int start_column;
+		public int end_line;
+		public int end_column;
 		
-		public Location (File? file, int line = -1, int column = -1) {
+		public Location (File? file, int start_line = -1, int start_column = -1, int end_line = -1, int end_column = -1) {
 			this.file = file;
-			this.line = line;
-			this.column = column;
+			this.start_line = start_line;
+			this.start_column = start_column;
+			this.end_line = end_line < 0 ? start_line : end_line;
+			this.end_column = end_column < 0 ? start_column : end_column;
+		}
+		
+		public string to_string () {
+			var s = "";
+			if (file != null) {
+				s += file.get_path ();
+			}
+			if (start_line >= 0) {
+				s += ":"+start_line.to_string ();
+				if (start_column >= 0) {
+					s += "."+start_column.to_string();
+				}
+			}
+			if (end_line >= 0) {
+				s += "-"+end_line.to_string ();
+				if (end_column >= 0) {
+					s += "."+end_column.to_string();
+				}
+			}
+			return s;
 		}
 	}
 	

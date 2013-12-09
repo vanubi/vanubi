@@ -285,6 +285,10 @@ namespace Vanubi {
 			index_command ("eval-expression", "Execute Vade code");
 			execute_command["eval-expression"].connect (on_eval_expression);
 			
+			bind_command ({ Key ('\'', Gdk.ModifierType.CONTROL_MASK) }, "goto-error");
+			index_command ("goto-error", "Jump to next error in the compilation shell");
+			execute_command["goto-error"].connect (on_goto_error);
+			
 			// setup empty buffer
 			unowned Editor ed = get_available_editor (null);
 			var container = new EditorContainer (ed);
@@ -445,11 +449,7 @@ namespace Vanubi {
 					ed = editor;
 				}
 				
-				if (location.line > 0) {
-					TextIter iter;
-					ed.view.buffer.get_iter_at_line (out iter, location.line);
-					ed.view.buffer.place_cursor (iter);
-					ed.update_old_selection ();
+				if (ed.set_location (location)) {
 					Idle.add (() => { ed.view.scroll_to_mark (ed.view.buffer.get_insert (), 0, true, 0.5, 0.5); return false; });
 				}
 				ed.grab_focus ();
@@ -482,14 +482,13 @@ namespace Vanubi {
 					buf.set_text ((string) content, -1);
 					buf.set_modified (false);
 					buf.end_not_undoable_action ();
-					TextIter iter;
-					if (location.line > 0) {
-						buf.get_iter_at_line (out iter, location.line);
-					} else {						
-						buf.get_start_iter (out iter);
+					
+					if (location.start_line < 0) {
+						location.start_line = location.start_column = 0;
 					}
-					buf.place_cursor (iter);
-					Idle.add (() => { ed.view.scroll_to_mark (buf.get_insert (), 0, true, 0.5, 0.5); return false; });
+					if (ed.set_location (location)) {
+						Idle.add (() => { ed.view.scroll_to_mark (buf.get_insert (), 0, true, 0.5, 0.5); return false; });
+					}
 					replace_widget (editor, ed);
 					ed.grab_focus ();
 				});
@@ -1351,6 +1350,26 @@ namespace Vanubi {
 			bar.grab_focus ();
 		}
 
+		void on_goto_error (Editor editor) {
+			Vte.Terminal term = editor.file.get_data ("shell");
+			if (term != null) {
+				ShellData data = term.get_data ("shell_data");
+				if (data != null && data.errors != null) {
+					var loc = data.errors.data;
+					unowned List<Location> link = data.errors;
+					data.errors.delete_link (link);
+					
+					if (loc.file.query_exists ()) {
+						open_location (editor, loc);
+					} else {
+						display_error (editor, "File %s not found".printf (loc.file.get_path ()));
+					}
+				} else {
+					display_message (editor, "No more errors");
+				}
+			}
+		}
+		
 		void on_repo_grep (Editor editor) {
 			var repo_dir = conf.cluster.get_git_repo (editor.file);
 			if (repo_dir == null) {
@@ -1608,7 +1627,7 @@ namespace Vanubi {
 		}
 
 		void on_compile_shell (Editor editor, string cmd) {
-			var bar = new ShellBar (conf, editor.file);
+			var bar = new ShellBar (conf, editor);
 			bar.aborted.connect (() => {
 					abort (editor);
 				});
