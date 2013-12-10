@@ -31,14 +31,15 @@ namespace Vanubi {
 		Configuration config;
 		Editor editor;
 		
-		static Regex error_regex1 = null;
-		static Regex loc_regex1 = null;
+		static Regex error_regex_vala = null;
+		static Regex error_regex_php = null;
 		
 		static construct {
 			try {
-				error_regex1 = new Regex ("^(.+?):(.+?):.+?error:", RegexCompileFlags.CASELESS|RegexCompileFlags.OPTIMIZE);
 				// vala style
-				loc_regex1 = new Regex ("""^(\d+)\.(\d+)-(\d+)\.(\d+)""", RegexCompileFlags.OPTIMIZE);
+				error_regex_vala = new Regex ("""^(.+?):(\d+)\.(\d+)-(\d+)\.(\d+):.+?error:""", RegexCompileFlags.CASELESS|RegexCompileFlags.OPTIMIZE);
+				// php style
+				error_regex_php = new Regex ("""^.*error:.* in (.+) on line (\d+)""", RegexCompileFlags.CASELESS|RegexCompileFlags.OPTIMIZE);
 			} catch (Error e) {
 				error (e.message);
 			}
@@ -119,40 +120,47 @@ namespace Vanubi {
 			}
 		}
 		
-		Location? match_error_regex (string text) {
-			var base_file = editor.file;
-			
+		Location? match_error_vala (string text) {
 			MatchInfo info;
-			if (error_regex1.match (text, 0, out info)) {
-				// matched an error
+			if (error_regex_vala.match (text, 0, out info)) {
 				var filename = info.fetch(1);
-				var locstr = info.fetch(2);
-							
-				MatchInfo loc_info;
-				if (loc_regex1.match (locstr, 0, out loc_info)) {
-					// matched error location
-					var start_line = int.parse (loc_info.fetch (1));
-					var start_column = int.parse (loc_info.fetch (2));
-					int end_line = -1;
-					int end_column = -1;
-								
-					var end_line_str = loc_info.fetch (3);
-					if (end_line_str.length > 0) {
-						end_line = int.parse (end_line_str);
-						end_column = int.parse (loc_info.fetch (4));
-					}
+				var start_line = int.parse (info.fetch (2));
+				var start_column = int.parse (info.fetch (3));
+				var end_line = int.parse (info.fetch (4));
+				var end_column = int.parse (info.fetch (5));
 					
-					var file = File.new_for_path (filename);
-					if (base_file != null && filename[0] != '/') {
-						file = base_file.get_parent().get_child (filename);
-					}
-					
-					var loc = new Location (file, start_line, start_column, end_line, end_column);
-					return loc;
+				var file = File.new_for_path (filename);
+				if (editor.file != null && filename[0] != '/') {
+					file = editor.file.get_parent().get_child (filename);
 				}
+				
+				var loc = new Location (file, start_line-1, start_column, end_line-1, end_column);
+				return loc;
 			}
-			
 			return null;
+		}
+		
+		Location? match_error_php (string text) {
+			MatchInfo info;
+			if (error_regex_php.match (text, 0, out info)) {
+				var filename = info.fetch(1);
+				var start_line = int.parse (info.fetch (2));
+
+				var file = File.new_for_path (filename);
+				if (editor.file != null && filename[0] != '/') {
+					file = editor.file.get_parent().get_child (filename);
+				}
+				
+				var loc = new Location (file, start_line-1);
+				return loc;
+			}
+			return null;
+		}
+		
+		Location? match_error_regex (string text) {
+			var loc = (match_error_vala (text) ??
+					   match_error_php (text));
+			return loc;
 		}
 		
 		Terminal create_new_term (File? base_file) {
