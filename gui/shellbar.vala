@@ -31,12 +31,12 @@ namespace Vanubi {
 		Configuration config;
 		Editor editor;
 		
-		static Regex error_regex = null;
+		static Regex error_regex1 = null;
 		static Regex loc_regex1 = null;
 		
 		static construct {
 			try {
-				error_regex = new Regex ("^(.+?):(.+?):.+?error:", RegexCompileFlags.CASELESS|RegexCompileFlags.OPTIMIZE);
+				error_regex1 = new Regex ("^(.+?):(.+?):.+?error:", RegexCompileFlags.CASELESS|RegexCompileFlags.OPTIMIZE);
 				// vala style
 				loc_regex1 = new Regex ("""^(\d+)\.(\d+)-(\d+)\.(\d+)""", RegexCompileFlags.OPTIMIZE);
 			} catch (Error e) {
@@ -59,7 +59,6 @@ namespace Vanubi {
 				base_file.set_data ("shell", term.ref ());
 				term.set_data ("shell_data", new ShellData ());
 			}
-			Pid pid = term.get_data ("pid");
 			term.expand = true;
 			term.key_press_event.connect (on_key_press_event);
 				
@@ -73,10 +72,9 @@ namespace Vanubi {
 					
 					// store cwd in config file
 					if (base_file != null) {
-						var buf = new char[1024];
-						var olddir = config.get_file_string (base_file, "shell_cwd", get_base_directory (base_file));
-						if (Posix.readlink (@"/proc/$(pid)/cwd", buf) > 0) {
-							var curdir = (string) buf;
+						var curdir = get_cwd ();
+						if (curdir != null) {
+							var olddir = config.get_file_string (base_file, "shell_cwd", get_base_directory (base_file));
 							if (absolute_path ("", olddir) != absolute_path ("", curdir)) {
 								config.set_file_string (base_file, "shell_cwd", curdir);
 								config.save.begin ();
@@ -93,33 +91,9 @@ namespace Vanubi {
 					
 					for (var i=data.last_row; i < row; i++) {
 						var text = term.get_text_range (i, 0, i, term.get_column_count(), null, null);
-						MatchInfo info;
-						if (error_regex.match (text, 0, out info)) {
-							// matched an error
-							var filename = info.fetch(1);
-							var locstr = info.fetch(2);
-							
-							MatchInfo loc_info;
-							if (loc_regex1.match (locstr, 0, out loc_info)) {
-								// matched error location
-								var start_line = int.parse (loc_info.fetch (1));
-								var start_column = int.parse (loc_info.fetch (2));
-								int end_line = -1;
-								int end_column = -1;
-								
-								var end_line_str = loc_info.fetch (3);
-								if (end_line_str.length > 0) {
-									end_line = int.parse (end_line_str);
-									end_column = int.parse (loc_info.fetch (4));
-								}
-								
-								var file = File.new_for_path (filename);
-								if (base_file != null && filename[0] != '/') {
-									file = base_file.get_parent().get_child (filename);
-								}
-								var loc = new Location (file, start_line, start_column, end_line, end_column);
-								manager.error_locations.append (loc);
-							}
+						var loc = match_error_regex (text);
+						if (loc != null) {
+							manager.error_locations.append (loc);
 						}
 					}
 					
@@ -133,6 +107,52 @@ namespace Vanubi {
 
 			add (term);
 			show_all ();
+		}
+		
+		string? get_cwd () {
+			Pid pid = term.get_data ("pid");
+			var buf = new char[1024];
+			if (Posix.readlink (@"/proc/$(pid)/cwd", buf) > 0) {
+				return (string) buf;
+			} else {
+				return null;
+			}
+		}
+		
+		Location? match_error_regex (string text) {
+			var base_file = editor.file;
+			
+			MatchInfo info;
+			if (error_regex1.match (text, 0, out info)) {
+				// matched an error
+				var filename = info.fetch(1);
+				var locstr = info.fetch(2);
+							
+				MatchInfo loc_info;
+				if (loc_regex1.match (locstr, 0, out loc_info)) {
+					// matched error location
+					var start_line = int.parse (loc_info.fetch (1));
+					var start_column = int.parse (loc_info.fetch (2));
+					int end_line = -1;
+					int end_column = -1;
+								
+					var end_line_str = loc_info.fetch (3);
+					if (end_line_str.length > 0) {
+						end_line = int.parse (end_line_str);
+						end_column = int.parse (loc_info.fetch (4));
+					}
+					
+					var file = File.new_for_path (filename);
+					if (base_file != null && filename[0] != '/') {
+						file = base_file.get_parent().get_child (filename);
+					}
+					
+					var loc = new Location (file, start_line, start_column, end_line, end_column);
+					return loc;
+				}
+			}
+			
+			return null;
 		}
 		
 		Terminal create_new_term (File? base_file) {
