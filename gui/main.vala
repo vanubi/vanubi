@@ -47,6 +47,7 @@ namespace Vanubi {
 		public StringSearchIndex command_index;
 		public StringSearchIndex lang_index;
 		public Vade.Scope base_scope; // Scope for Vade expressions
+		public List<Location> error_locations = new List<Location> ();
 
 		public Manager () {
 			conf = new Configuration ();
@@ -1357,22 +1358,18 @@ namespace Vanubi {
 		}
 
 		void on_goto_error (Editor editor) {
-			Vte.Terminal term = editor.file.get_data ("shell");
-			if (term != null) {
-				ShellData data = term.get_data ("shell_data");
-				if (data != null && data.errors != null) {
-					var loc = data.errors.data;
-					unowned List<Location> link = data.errors;
-					data.errors.delete_link (link);
+			if (error_locations != null) {
+				var loc = error_locations.data;
+				unowned List<Location> link = error_locations;
+				error_locations.delete_link (link);
 					
-					if (loc.file.query_exists ()) {
-						open_location (editor, loc);
-					} else {
-						display_error (editor, "File %s not found".printf (loc.file.get_path ()));
-					}
+				if (loc.file.query_exists ()) {
+					open_location (editor, loc);
 				} else {
-					display_message (editor, "No more errors");
+					display_error (editor, "File %s not found".printf (loc.file.get_path ()));
 				}
+			} else {
+				display_message (editor, "No more errors");
 			}
 		}
 		
@@ -1633,7 +1630,7 @@ namespace Vanubi {
 		}
 
 		void on_compile_shell (Editor editor, string cmd) {
-			var bar = new ShellBar (conf, editor);
+			var bar = new ShellBar (this, editor);
 			bar.aborted.connect (() => {
 					abort (editor);
 				});

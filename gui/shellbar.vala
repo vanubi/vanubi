@@ -24,7 +24,6 @@ namespace Vanubi {
 	public class ShellData {
 		public long last_col;
 		public long last_row;
-		public List<Location> errors;
 	}
 	
 	public class ShellBar : Bar {
@@ -45,9 +44,9 @@ namespace Vanubi {
 			}
 		}
 		
-		public ShellBar (Configuration config, Editor editor) {
+		public ShellBar (Manager manager, Editor editor) {
 			this.editor = editor;
-			this.config = config;
+			this.config = manager.conf;
 			
 			var base_file = editor.file;
 			
@@ -69,8 +68,7 @@ namespace Vanubi {
 
 					// if user executed any other command, clear errors
 					if ("\n" in text || "\r" in text) {
-						ShellData data = term.get_data ("shell_data");
-						data.errors = new List<Location> ();
+						manager.error_locations = new List<Location> ();
 					}
 					
 					// store cwd in config file
@@ -120,7 +118,7 @@ namespace Vanubi {
 									file = base_file.get_parent().get_child (filename);
 								}
 								var loc = new Location (file, start_line, start_column, end_line, end_column);
-								data.errors.append (loc);
+								manager.error_locations.append (loc);
 							}
 						}
 					}
