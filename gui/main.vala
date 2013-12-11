@@ -48,12 +48,30 @@ namespace Vanubi {
 		public StringSearchIndex lang_index;
 		public Vade.Scope base_scope; // Scope for Vade expressions
 		public List<Location> error_locations = new List<Location> ();
+		EventBox main_box;
+		Grid editors_grid;
+		Statusbar statusbar;
 
 		public Manager () {
 			conf = new Configuration ();
 			orientation = Orientation.VERTICAL;
 			keymanager = new KeyManager<Editor> (on_command);
 			base_scope = Vade.create_base_scope ();
+
+			// placeholder for the editors grid
+			main_box = new EventBox();
+			main_box.expand = true;
+			add (main_box);
+			
+			// grid containing the editors
+			editors_grid = new Grid ();
+			main_box.add (editors_grid);
+			
+			// status bar
+			statusbar = new Statusbar ();
+			statusbar.expand = false;
+			statusbar.push (statusbar.get_context_id("manager"), "Ready.");
+			add (statusbar);
 
 			// setup languages index
 			lang_index = new StringSearchIndex ();
@@ -300,7 +318,7 @@ namespace Vanubi {
 			unowned Editor ed = get_available_editor (null);
 			var container = new EditorContainer (ed);
 			container.lru.append (null); // *scratch*
-			add (container);
+			editors_grid.add (container);
 			container.grab_focus ();
 		}
 		
@@ -326,39 +344,39 @@ namespace Vanubi {
 			Allocation alloc;
 			get_allocation (out alloc);
 
-			var self = this; // keep alive
-			var parent = (Container) get_parent ();
-			parent.remove (this);
+			main_box.remove (editors_grid);
 			if (mode == OverlayMode.PANE_BOTTOM) {
 				var p = new Paned (Orientation.VERTICAL);
-				p.pack1 (this, true, false);
+				p.expand = true;
+				p.pack1 (editors_grid, true, false);
 				p.pack2 (widget, true, false);
-				parent.add (p);
 				p.position = alloc.height*2/3;
+				main_box.add (p);
 				p.show ();
 			} else if (mode == OverlayMode.PANE_LEFT) {
 				var p = new Paned (Orientation.HORIZONTAL);
+				p.expand = true;
 				p.pack1 (widget, true, false);
-				p.pack2 (this, true, false);
-				parent.add (p);
+				p.pack2 (editors_grid, true, false);
 				p.position = alloc.width/2;
+				main_box.add (p);
 				p.show ();
 			} else if (mode == OverlayMode.PANE_RIGHT) {
 				var p = new Paned (Orientation.HORIZONTAL);
-				p.pack1 (this, true, false);
+				p.expand = true;
+				p.pack1 (editors_grid, true, false);
 				p.pack2 (widget, true, false);
-				parent.add (p);
 				p.position = alloc.width/2;
+				main_box.add (p);
 				p.show ();
 			} else {
 				var grid = new Grid ();
 				grid.orientation = Orientation.VERTICAL;
-				grid.add (this);
+				grid.add (editors_grid);
 				grid.add (widget);
-				parent.add (grid);
+				main_box.add (grid);
 				grid.show ();
 			}
-			self = null;
 		}
 
 		public void index_command (string command, string description, string? keywords = null) {
@@ -503,18 +521,14 @@ namespace Vanubi {
 
 		public void abort (Editor editor) {
 			keymanager.reset ();
-			var self = this; // keep alive
-			var parent = (Container) get_parent ();
-			var pparent = (Container) parent.get_parent ();
-			if (pparent == null) {
+			if (main_box.get_child() == editors_grid) {
 				return;
 			}
-			parent.remove (this);
-			pparent.remove (parent);
-			pparent.add (this);
+			var parent = (Container) editors_grid.get_parent();
+			parent.remove (editors_grid);
+			main_box.remove (main_box.get_child ());
+			main_box.add (editors_grid);
 			editor.grab_focus ();
-
-			self = null;
 		}
 
 		void set_loading () {
@@ -1418,15 +1432,14 @@ namespace Vanubi {
 			Allocation alloc;
 			editor.get_allocation (out alloc);
 			// unparent the editor container
-			var container = editor.get_parent ();
-			var parent = (Container) container.get_parent ();
-			parent.remove (container);
+			var container = editor.editor_container;
+
 			// create the GUI split
 			var paned = new Paned (command == "split-add-right" ? Orientation.HORIZONTAL : Orientation.VERTICAL);
 			paned.expand = true;
 			// set the position of the split at half of the editor width/height
 			paned.position = command == "split-add-right" ? alloc.width/2 : alloc.height/2;
-			parent.add (paned);
+			replace_widget (container, paned);
 
 			// get an editor for the same file
 			var ed = get_available_editor (editor.file);
@@ -1441,12 +1454,12 @@ namespace Vanubi {
 
 			// pack the old editor container
 			paned.pack1 (container, true, false);
-			editor.grab_focus ();
 
 			// pack the new editor container
 			paned.pack2 (newcontainer, true, false);	
 
 			paned.show_all ();
+			editor.grab_focus ();
 		}
 
 		static void find_editor(Widget node, bool dir_up, bool dir_left, bool forward)
@@ -1566,30 +1579,31 @@ namespace Vanubi {
 
 		void on_join_all (Editor editor) {
 			// parent of editor is an editor container
-			var paned = editor.get_parent().get_parent() as Paned;
+			var paned = editor.editor_container.get_parent() as Paned;
 			if (paned == null) {
 				// already on front
 				return;
 			}
-			// find the right manager child
-			unowned Widget parent = editor;
-			while (parent.get_parent() != this) {
-				parent = parent.get_parent ();
+			
+			var editor_container = editor.editor_container;
+			((Container) editor_container.get_parent()).remove (editor_container);
+
+			var children = editors_grid.get_children ();
+			foreach (var child in children) {
+				editors_grid.remove (child);
+				detach_editors (child);
 			}
-			var container = editor.get_parent ();
-			paned.remove (container); // avoid detach
-			detach_editors (parent);
-			replace_widget (parent, container);
+			editors_grid.add (editor_container);
 			editor.grab_focus ();
 		}
 
 		void on_join (Editor editor) {
-			var paned = editor.get_parent().get_parent() as Paned;
+			var paned = editor.editor_container.get_parent() as Paned;
 			if (paned == null) {
 				// already on front
 				return;
 			}
-			var container = editor.get_parent ();
+			var container = editor.editor_container;
 			paned.remove (container);
 			detach_editors (paned);
 			replace_widget (paned, container);
