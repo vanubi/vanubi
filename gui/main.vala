@@ -48,6 +48,7 @@ namespace Vanubi {
 		public StringSearchIndex lang_index;
 		public Vade.Scope base_scope; // Scope for Vade expressions
 		public List<Location<string>> error_locations = new List<Location> ();
+		public unowned List<Location<string>> current_error = null;
 		EventBox main_box;
 		Grid editors_grid;
 		Statusbar statusbar;
@@ -311,10 +312,14 @@ namespace Vanubi {
 			index_command ("eval-expression", "Execute Vade code");
 			execute_command["eval-expression"].connect (on_eval_expression);
 			
-			bind_command ({ Key ('\'', Gdk.ModifierType.CONTROL_MASK) }, "goto-error");
-			index_command ("goto-error", "Jump to next error in the compilation shell");
-			execute_command["goto-error"].connect (on_goto_error);
-			
+			bind_command ({ Key ('\'', Gdk.ModifierType.CONTROL_MASK) }, "next-error");
+			index_command ("next-error", "Jump to successive error in the compilation shell");
+			execute_command["next-error"].connect (on_goto_error);
+
+			bind_command ({ Key ('0', Gdk.ModifierType.CONTROL_MASK) }, "prev-error");
+			index_command ("prev-error", "Jump to previous error in the compilation shell");
+			execute_command["prev-error"].connect (on_goto_error);
+
 			// setup empty buffer
 			unowned Editor ed = get_available_editor (null);
 			var container = new EditorContainer (ed);
@@ -1408,20 +1413,37 @@ namespace Vanubi {
 			bar.grab_focus ();
 		}
 
-		void on_goto_error (Editor editor) {
-			if (error_locations != null) {
-				var loc = error_locations.data;
-				var list = (owned) error_locations;
-				error_locations = (owned) list.next;
-					
+		void on_goto_error (Editor editor, string cmd) {
+			bool no_more_errors = true;
+			if (error_locations != null) {	
+				if (current_error == null) {
+					current_error = error_locations;
+					no_more_errors = false;
+				} else {
+					if (cmd == "prev-error") {
+						if (current_error.prev != null) {
+							current_error = current_error.prev;
+							no_more_errors = false;
+						}
+					} else {
+						if (current_error.next != null) {
+							current_error = current_error.next;
+							no_more_errors = false;
+						}
+					}
+				}
+			}
+
+			if (no_more_errors) {
+				set_manager_status ("No more errors");
+			} else {
+				var loc = current_error.data;
 				if (loc.file.query_exists ()) {
 					open_location (editor, loc);
 					set_manager_status (loc.data);
 				} else {
 					set_manager_status ("File %s not found".printf (loc.file.get_path ()));
 				}
-			} else {
-				set_manager_status ("No more errors");
 			}
 		}
 		

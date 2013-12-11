@@ -77,6 +77,7 @@ namespace Vanubi {
 					// if user executed any other command, clear errors
 					if ("\n" in text || "\r" in text) {
 						manager.error_locations = new List<Location> ();
+						manager.current_error = null;
 					}
 					
 					// store cwd in config file
@@ -167,7 +168,6 @@ namespace Vanubi {
 							b.append_c ((char) cur[i]);
 						} else {
 							// new line, match error or directory change
-							message(b.str);
 							MatchInfo info;
 							if (dir_regex.match (b.str, 0, out info)) {
 								curdir = info.fetch (1);
