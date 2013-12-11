@@ -209,6 +209,14 @@ namespace Vanubi {
 				aborted ();
 				return true;
 			}
+			if (e.keyval == 'C' && Gdk.ModifierType.CONTROL_MASK in e.state) {
+				term.copy_clipboard ();
+				return true;
+			}
+			if (e.keyval == 'V' && Gdk.ModifierType.CONTROL_MASK in e.state) {
+				term.paste_clipboard ();
+				return true;
+			}
 			if (e.keyval == '\'' && Gdk.ModifierType.CONTROL_MASK in e.state) {
 				return editor.view.key_press_event (e);
 			}
