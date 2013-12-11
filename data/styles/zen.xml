@@ -56,7 +56,7 @@
   <style name="text" foreground="dl-white" background="dl-black"/>
   <style name="selection" background="dl-blue"/>
   <style name="cursor" foreground="dl-yellow"/>
-  <style name="current-line" background="dl-dark-gray"/>
+  <style name="current-line" background="#0d0f0f"/>
 
   <!-- Bracket Matching -->
   <style name="bracket-match" background="dl-dark-olive-green"/>
