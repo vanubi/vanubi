@@ -67,6 +67,9 @@ namespace Vanubi {
 				
 			term.commit.connect ((bin, size) => {
 					var text = bin.substring (0, size);
+					int stdin = term.get_data ("stdin");
+					unowned uint8[] buf = (uint8[]) text;
+					Posix.write (stdin, buf, size);
 
 					// if user executed any other command, clear errors
 					if ("\n" in text || "\r" in text) {
@@ -170,17 +173,24 @@ namespace Vanubi {
 			term.scrollback_lines = config.get_global_int ("shell_scrollback", 65535);
 			var shell = Vte.get_user_shell ();
 			if (shell == null) {
-				shell = "/bin/sh";
+				shell = "/bin/bash";
 			}
 			try {
 				string[] argv;
 				Shell.parse_argv (shell, out argv);
 				var workdir = config.get_file_string (base_file, "shell_cwd", get_base_directory (base_file));
 
-				Pid pid;
-				term.fork_command_full (PtyFlags.DEFAULT, workdir, argv, null, SpawnFlags.SEARCH_PATH, null, out pid);
-				term.set_data ("pid", pid);
-				term.feed_child ("make", -1);
+				int fd;
+				Pid pty = Linux.forkpty(out fd, null, null, null);
+				if (pty == 0) {
+					Posix.chdir (workdir);
+					Posix.execlp (shell, shell);
+					Process.exit(1);
+				}
+				term.set_data ("pid", pty);
+				read_sh.begin (fd);
+				Posix.write (fd, "make", 4);
+				term.set_data ("stdin", fd);
 
 				mouse_match (term, """^.+error:""");
 				mouse_match (term, """^.+warning:""");
@@ -192,6 +202,26 @@ namespace Vanubi {
 			return term;
 		}
 
+		async void read_sh (int fd) {
+			try {
+				var is = new UnixInputStream (fd, true);
+				var buf = new uint8[1024];
+				var newbuf = new uint8[2048];
+				while (true) {
+					var r = yield is.read_async (buf);
+					if (r == 0) {
+						break;
+					}
+					
+					unowned uint8[] cur = buf;
+					cur.length = (int) r;
+					term.feed (cur);
+				}
+			} catch (Error e) {
+				warning(e.message);
+			}
+		}
+		
 		private void mouse_match (Terminal t, string str) {
 			try {
 				var regex = new Regex (str);

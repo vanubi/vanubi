@@ -60,7 +60,8 @@ dnl We ignore GTK_3_10_*
 PKG_CHECK_MODULES(GTK_3_10, [gtk+-3.0 >= 3.10],
 				  [VANUBI_VALAFLAGS="$VANUBI_VALAFLAGS -D GTK_3_10"],
 				  [echo '*** Recommended version of gtk+-3.0 is at least 3.10'])
-VALA_CHECK_PACKAGES([posix], [VANUBI_VALAFLAGS="$VANUBI_VALAFLAGS --pkg posix"])
+VALA_CHECK_PACKAGES([posix linux], [VANUBI_VALAFLAGS="$VANUBI_VALAFLAGS --pkg posix --pkg linux"])
+VANUBI_LIBS="$VANUBI_LIBS -lutil"
 
 AM_CONDITIONAL(ENABLE_GLIB_TEST, [test "x$enable_glibtest" = "xyes"])
 
