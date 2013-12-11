@@ -28,6 +28,7 @@ namespace Vanubi {
 			REPLACE_BACKWARD
 		}
 		
+		weak Manager manager;
 		weak Editor editor;
 		int original_insert;
 		int original_bound;
@@ -44,8 +45,9 @@ namespace Vanubi {
 		Vade.Scope? scope; // scope in which to execute Vade expressions, or null to avoid parsing expressions
 		Cancellable cancellable;
 
-		public SearchBar (Vade.Scope? scope, Editor editor, Mode mode, bool is_regex, string search_initial = "", string replace_initial = "") {
+		public SearchBar (Manager manager, Vade.Scope? scope, Editor editor, Mode mode, bool is_regex, string search_initial = "", string replace_initial = "") {
 			base (search_initial);
+			this.manager = manager;
 			this.editor = editor;
 			this.mode = mode;
 			this.scope = scope;
@@ -164,6 +166,7 @@ namespace Vanubi {
 			
 			// yield to gui every 50 iterations
 			int iterations = 0;
+			manager.push_overlay_status ("Searching...");
 			
 			while (((mode == Mode.SEARCH_FORWARD || mode == Mode.REPLACE_FORWARD) && !iter.is_end ()) ||
 				   ((mode == Mode.SEARCH_BACKWARD || mode == Mode.REPLACE_BACKWARD) && !iter.is_start ())) {
@@ -172,6 +175,7 @@ namespace Vanubi {
 				}
 				
 				if (iterations++ >= 50) {
+					iterations = 0;
 					SourceFunc resume = search.callback;
 					Idle.add ((owned) resume);
 					yield;
@@ -207,6 +211,7 @@ namespace Vanubi {
 					buf.select_range (iter, subiter);
 					editor.update_old_selection ();
 					editor.view.scroll_to_mark (buf.get_insert (), 0, true, 0.5, 0.5);
+					manager.clear_overlay_status ();
 					return;
 				}
 				if (mode == Mode.SEARCH_FORWARD || mode == Mode.REPLACE_FORWARD) {
@@ -215,7 +220,8 @@ namespace Vanubi {
 					iter.backward_char ();
 				}
 			}
-			
+			manager.clear_overlay_status ();
+
 			if (mode == Mode.REPLACE_FORWARD || mode == Mode.REPLACE_BACKWARD) {
 				if (replace_box != null) {
 					var replace_label = (Label) replace_box.get_child ();

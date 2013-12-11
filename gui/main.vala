@@ -321,6 +321,14 @@ namespace Vanubi {
 			editors_grid.add (container);
 			container.grab_focus ();
 		}
+	
+		public void push_overlay_status (string msg) {
+			statusbar.push (statusbar.get_context_id ("overlay"), msg);
+		}
+		
+		public void clear_overlay_status () {
+			statusbar.remove_all (statusbar.get_context_id ("overlay"));
+		}
 		
 		public void update_selection (Editor ed) {
 			var buf = ed.view.buffer;
@@ -524,6 +532,8 @@ namespace Vanubi {
 			if (main_box.get_child() == editors_grid) {
 				return;
 			}
+			clear_overlay_status ();
+			
 			var parent = (Container) editors_grid.get_parent();
 			parent.remove (editors_grid);
 			main_box.remove (main_box.get_child ());
@@ -1623,7 +1633,7 @@ namespace Vanubi {
 				mode = SearchBar.Mode.REPLACE_BACKWARD;
 			}
 			is_regex = command.has_suffix ("-regexp");
-			var bar = new SearchBar (base_scope, editor, mode, is_regex, last_search_string, last_replace_string);
+			var bar = new SearchBar (this, base_scope, editor, mode, is_regex, last_search_string, last_replace_string);
 			bar.activate.connect (() => {
 				last_search_string = bar.text;
 				if (command.has_prefix ("replace")) {
