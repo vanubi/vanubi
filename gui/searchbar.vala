@@ -166,7 +166,7 @@ namespace Vanubi {
 			
 			// yield to gui every 50 iterations
 			int iterations = 0;
-			manager.push_overlay_status ("Searching...");
+			manager.set_overlay_status ("Searching...");
 			
 			while (((mode == Mode.SEARCH_FORWARD || mode == Mode.REPLACE_FORWARD) && !iter.is_end ()) ||
 				   ((mode == Mode.SEARCH_BACKWARD || mode == Mode.REPLACE_BACKWARD) && !iter.is_start ())) {

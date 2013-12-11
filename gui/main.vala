@@ -47,7 +47,7 @@ namespace Vanubi {
 		public StringSearchIndex command_index;
 		public StringSearchIndex lang_index;
 		public Vade.Scope base_scope; // Scope for Vade expressions
-		public List<Location> error_locations = new List<Location> ();
+		public List<Location<string>> error_locations = new List<Location> ();
 		EventBox main_box;
 		Grid editors_grid;
 		Statusbar statusbar;
@@ -70,8 +70,8 @@ namespace Vanubi {
 			// status bar
 			statusbar = new Statusbar ();
 			statusbar.expand = false;
-			statusbar.push (statusbar.get_context_id("manager"), "Ready.");
 			add (statusbar);
+			clear_manager_status ();
 
 			// setup languages index
 			lang_index = new StringSearchIndex ();
@@ -322,12 +322,23 @@ namespace Vanubi {
 			container.grab_focus ();
 		}
 	
-		public void push_overlay_status (string msg) {
+		public void set_overlay_status (string msg) {
+			clear_overlay_status ();
 			statusbar.push (statusbar.get_context_id ("overlay"), msg);
 		}
 		
 		public void clear_overlay_status () {
 			statusbar.remove_all (statusbar.get_context_id ("overlay"));
+		}
+		
+		public void set_manager_status (string msg) {
+			clear_manager_status ();
+			statusbar.push (statusbar.get_context_id ("manager"), msg);
+		}
+		
+		public void clear_manager_status () {
+			statusbar.remove_all (statusbar.get_context_id ("manager"));
+			statusbar.push (statusbar.get_context_id ("manager"), "Ready");
 		}
 		
 		public void update_selection (Editor ed) {
@@ -464,7 +475,7 @@ namespace Vanubi {
 		}
 
 		public void open_file (Editor editor, File file) {
-			open_location (editor, new Location (file));
+			open_location (editor, new Location<void*> (file));
 		}
 		
 		public void open_location (Editor editor, Location location) {
@@ -1384,16 +1395,17 @@ namespace Vanubi {
 		void on_goto_error (Editor editor) {
 			if (error_locations != null) {
 				var loc = error_locations.data;
-				unowned List<Location> link = error_locations;
-				error_locations.delete_link (link);
+				var list = (owned) error_locations;
+				error_locations = (owned) list.next;
 					
 				if (loc.file.query_exists ()) {
 					open_location (editor, loc);
+					set_manager_status (loc.data);
 				} else {
-					display_error (editor, "File %s not found".printf (loc.file.get_path ()));
+					set_manager_status ("File %s not found".printf (loc.file.get_path ()));
 				}
 			} else {
-				display_message (editor, "No more errors");
+				set_manager_status ("No more errors");
 			}
 		}
 		

@@ -32,9 +32,11 @@ namespace Vanubi {
 		static construct {
 			try {
 				// vala style
-				var	vala_error = """^(?<f>.+?):(?<sl>\d+)\.(?<sc>\d+)-(?<el>\d+)\.(?<ec>\d+):.+?error:""";
+				var	vala_error = """^(?<f>.+?):(?<sl>\d+)\.(?<sc>\d+)-(?<el>\d+)\.(?<ec>\d+):.*?error:(?<msg>.+)$""";
+				// c style
+				var	c_error = """^(?<f>.+?):(?<sl>\d+):(?<sc>\d+):.*?error:(?<msg>.+)$""";
 				// php style
-				var php_error = """^.*error:.* in (?<f>.+) on line (?<sl>\d+)""";
+				var php_error = """^(?<msg>.+)error:.* in (?<f>.+) on line (?<sl>\d+)\s*$""";
 				error_regex = new Regex (@"(?:$(vala_error))|(?:$(php_error))", RegexCompileFlags.CASELESS|RegexCompileFlags.OPTIMIZE|RegexCompileFlags.DUPNAMES|RegexCompileFlags.MULTILINE);
 			} catch (Error e) {
 				error (e.message);
@@ -184,8 +186,9 @@ namespace Vanubi {
 								file = editor.file.get_parent().get_child (filename);
 							}
 							
-							var loc = new Location (file, start_line, start_column, end_line, end_column);
+							var loc = new Location<string> (file, start_line, start_column, end_line, end_column, info.fetch_named ("msg"));
 							manager.error_locations.append (loc);
+							manager.set_overlay_status ("Found %u errors".printf (manager.error_locations.length ()));
 						} while (info.next ());
 					}
 				}
