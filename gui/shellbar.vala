@@ -21,31 +21,28 @@ using Vte;
 using Gtk;
 
 namespace Vanubi {
-	public class ShellData {
-		public long last_col;
-		public long last_row;
-	}
-	
 	public class ShellBar : Bar {
+		unowned Manager manager;
 		Terminal term;
 		Configuration config;
 		Editor editor;
 		
-		static Regex error_regex_vala = null;
-		static Regex error_regex_php = null;
+		static Regex error_regex = null;
 		
 		static construct {
 			try {
 				// vala style
-				error_regex_vala = new Regex ("""^(.+?):(\d+)\.(\d+)-(\d+)\.(\d+):.+?error:""", RegexCompileFlags.CASELESS|RegexCompileFlags.OPTIMIZE);
+				var	vala_error = """^(?<f>.+?):(?<sl>\d+)\.(?<sc>\d+)-(?<el>\d+)\.(?<ec>\d+):.+?error:""";
 				// php style
-				error_regex_php = new Regex ("""^.*error:.* in (.+) on line (\d+)""", RegexCompileFlags.CASELESS|RegexCompileFlags.OPTIMIZE);
+				var php_error = """^.*error:.* in (?<f>.+) on line (?<sl>\d+)""";
+				error_regex = new Regex (@"(?:$(vala_error))|(?:$(php_error))", RegexCompileFlags.CASELESS|RegexCompileFlags.OPTIMIZE|RegexCompileFlags.DUPNAMES|RegexCompileFlags.MULTILINE);
 			} catch (Error e) {
 				error (e.message);
 			}
 		}
 		
 		public ShellBar (Manager manager, Editor editor) {
+			this.manager = manager;
 			this.editor = editor;
 			this.config = manager.conf;
 			
@@ -60,7 +57,6 @@ namespace Vanubi {
 				if (base_file != null) {
 					base_file.set_data ("shell", term.ref ());
 				}
-				term.set_data ("shell_data", new ShellData ());
 			}
 			term.expand = true;
 			term.key_press_event.connect (on_key_press_event);
@@ -89,24 +85,6 @@ namespace Vanubi {
 					}
 			});
 			
-			term.contents_changed.connect (() => {
-					// grep for errors
-					long col, row;
-					term.get_cursor_position (out col, out row);
-					ShellData data = term.get_data ("shell_data");
-					
-					for (var i=data.last_row; i < row; i++) {
-						var text = term.get_text_range (i, 0, i, term.get_column_count(), null, null);
-						var loc = match_error_regex (text);
-						if (loc != null) {
-							manager.error_locations.append (loc);
-						}
-					}
-					
-					data.last_col = long.max(col, data.last_col);
-					data.last_row = long.max(row, data.last_row);
-			});
-			
 			if (!is_new) {
 				term.feed_child ("\033[B\033[A", -1);
 			}
@@ -123,49 +101,6 @@ namespace Vanubi {
 			} else {
 				return null;
 			}
-		}
-		
-		Location? match_error_vala (string text) {
-			MatchInfo info;
-			if (error_regex_vala.match (text, 0, out info)) {
-				var filename = info.fetch(1);
-				var start_line = int.parse (info.fetch (2));
-				var start_column = int.parse (info.fetch (3));
-				var end_line = int.parse (info.fetch (4));
-				var end_column = int.parse (info.fetch (5));
-					
-				var file = File.new_for_path (filename);
-				if (editor.file != null && filename[0] != '/') {
-					file = editor.file.get_parent().get_child (filename);
-				}
-				
-				var loc = new Location (file, start_line-1, start_column, end_line-1, end_column);
-				return loc;
-			}
-			return null;
-		}
-		
-		Location? match_error_php (string text) {
-			MatchInfo info;
-			if (error_regex_php.match (text, 0, out info)) {
-				var filename = info.fetch(1);
-				var start_line = int.parse (info.fetch (2));
-
-				var file = File.new_for_path (filename);
-				if (editor.file != null && filename[0] != '/') {
-					file = editor.file.get_parent().get_child (filename);
-				}
-				
-				var loc = new Location (file, start_line-1);
-				return loc;
-			}
-			return null;
-		}
-		
-		Location? match_error_regex (string text) {
-			var loc = (match_error_vala (text) ??
-					   match_error_php (text));
-			return loc;
 		}
 		
 		Terminal create_new_term (File? base_file) {
@@ -206,7 +141,6 @@ namespace Vanubi {
 			try {
 				var is = new UnixInputStream (fd, true);
 				var buf = new uint8[1024];
-				var newbuf = new uint8[2048];
 				while (true) {
 					var r = yield is.read_async (buf);
 					if (r == 0) {
@@ -215,7 +149,45 @@ namespace Vanubi {
 					
 					unowned uint8[] cur = buf;
 					cur.length = (int) r;
+					cur[r] = '\0';
 					term.feed (cur);
+					
+					unowned string text = (string) cur;
+					MatchInfo info;
+					if (error_regex.match (text, 0, out info)) {
+						do {
+							var filename = info.fetch_named ("f");
+							var start_line_str = info.fetch_named ("sl");
+							var start_column_str = info.fetch_named ("sc");
+							var end_line_str = info.fetch_named ("el");
+							var end_column_str = info.fetch_named ("ec");
+							
+							int start_line = -1;
+							int start_column = -1;
+							int end_line = -1;
+							int end_column = -1;
+							if (start_line_str.length > 0) {
+								start_line = int.parse (start_line_str)-1;
+								if (start_column_str.length > 0) {
+									start_column = int.parse (start_column_str);
+								}
+								if (end_line_str.length > 0) {
+									end_line = int.parse (end_line_str)-1;
+									if (end_column_str.length > 0) {
+										end_column = int.parse (end_column_str);
+									}
+								}
+							}
+							
+							var file = File.new_for_path (filename);
+							if (editor.file != null && filename[0] != '/') {
+								file = editor.file.get_parent().get_child (filename);
+							}
+							
+							var loc = new Location (file, start_line, start_column, end_line, end_column);
+							manager.error_locations.append (loc);
+						} while (info.next ());
+					}
 				}
 			} catch (Error e) {
 				warning(e.message);

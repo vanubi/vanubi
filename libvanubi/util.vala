@@ -31,8 +31,8 @@ namespace Vanubi {
 			this.file = file;
 			this.start_line = start_line;
 			this.start_column = start_column;
-			this.end_line = end_line < 0 ? start_line : end_line;
-			this.end_column = end_column < 0 ? start_column : end_column;
+			this.end_line = end_line;
+			this.end_column = end_column;
 		}
 		
 		public string to_string () {
