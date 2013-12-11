@@ -52,12 +52,14 @@ namespace Vanubi {
 			var base_file = editor.file;
 			
 			expand = true;
-			term = base_file.get_data ("shell");
+			term = base_file != null ? base_file.get_data<Terminal> ("shell") : null;
 			var is_new = false;
 			if (term == null) {
 				is_new = true;
 				term = create_new_term (base_file);
-				base_file.set_data ("shell", term.ref ());
+				if (base_file != null) {
+					base_file.set_data ("shell", term.ref ());
+				}
 				term.set_data ("shell_data", new ShellData ());
 			}
 			term.expand = true;
