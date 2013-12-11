@@ -2,38 +2,58 @@ VanubiEditorView {
 	-GtkWidget-cursor-aspect-ratio: 0.1;
 	-GtkWidget-cursor-color: white;
 }
+
 VanubiEditorView.caret:selected {
 	color: black;
 	background-color: white;
 }
+
 VanubiEditorInfoBar {
 	background: #1b2e35;
 }
+
 VanubiEditorInfoBar GtkLabel {
 	color: #babdb6;
 }
+
 VanubiEditorInfoBar.nonfocused {
 	background: black;
 }
+
 VanubiEditorInfoBar.nonfocused GtkLabel {
 	color: #555753;
 }
+
 .filename {
 	font-weight: bold;
+
 }
 VanubiBar GtkEntry {
 	color: white;
-	border: none;
+	border: 1px solid #204a87;
 	background: black;
 	padding: 2px 3px 2px 3px;
 }
+
 VanubiBar GtkEntry.error {
 	background: #720000;
 }
+
 VanubiCompletionBarCompletionBox GtkLabel {
 	padding: 2px 6px 2px 6px;
 }
+
 VanubiGrepView {
 	background: black;
 	color: white;
+}
+
+VanubiManager {
+	color: white;
+	background: black;
+	font-size: 11px;
+}
+
+GtkStatusbar {
+	color: #1b2e35;
 }
