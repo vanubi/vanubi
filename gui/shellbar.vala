@@ -171,12 +171,12 @@ namespace Vanubi {
 							if (start_line_str.length > 0) {
 								start_line = int.parse (start_line_str)-1;
 								if (start_column_str.length > 0) {
-									start_column = int.parse (start_column_str);
+									start_column = int.parse (start_column_str)-1;
 								}
 								if (end_line_str.length > 0) {
 									end_line = int.parse (end_line_str)-1;
 									if (end_column_str.length > 0) {
-										end_column = int.parse (end_column_str);
+										end_column = int.parse (end_column_str)-1;
 									}
 								}
 							}

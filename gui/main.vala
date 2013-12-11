@@ -51,6 +51,7 @@ namespace Vanubi {
 		EventBox main_box;
 		Grid editors_grid;
 		Statusbar statusbar;
+		uint status_timeout;
 
 		public Manager () {
 			conf = new Configuration ();
@@ -325,6 +326,10 @@ namespace Vanubi {
 		public void set_overlay_status (string msg) {
 			clear_overlay_status ();
 			statusbar.push (statusbar.get_context_id ("overlay"), msg);
+			if (status_timeout > 0) {
+				Source.remove (status_timeout);
+				status_timeout = 0;
+			}
 		}
 		
 		public void clear_overlay_status () {
@@ -334,6 +339,10 @@ namespace Vanubi {
 		public void set_manager_status (string msg) {
 			clear_manager_status ();
 			statusbar.push (statusbar.get_context_id ("manager"), msg);
+			if (status_timeout > 0) {
+				Source.remove (status_timeout);
+				status_timeout = 0;
+			}
 		}
 		
 		public void clear_manager_status () {
@@ -679,6 +688,13 @@ namespace Vanubi {
 		/* events */
 
 		bool on_key_press_event (Widget w, Gdk.EventKey e) {
+			if (status_timeout == 0) {
+				// reset status bar
+				status_timeout = Timeout.add_seconds (conf.get_global_int ("status_timeout", 2), () => {
+						status_timeout = 0; clear_overlay_status (); clear_manager_status(); return false;
+				});
+			}
+			
 			var sv = (SourceView) w;
 			Editor editor = sv.get_data ("editor");
 			var keyval = e.keyval;
