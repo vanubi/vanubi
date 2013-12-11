@@ -28,6 +28,7 @@ namespace Vanubi {
 		Editor editor;
 		
 		static Regex error_regex = null;
+		static Regex dir_regex = null;
 		
 		static construct {
 			try {
@@ -37,7 +38,11 @@ namespace Vanubi {
 				var	c_error = """^(?<f>.+?):(?<sl>\d+):(?<sc>\d+):.*?error:(?<msg>.+)$""";
 				// php style
 				var php_error = """^(?<msg>.+)error:.* in (?<f>.+) on line (?<sl>\d+)\s*$""";
-				error_regex = new Regex (@"(?:$(vala_error))|(?:$(php_error))", RegexCompileFlags.CASELESS|RegexCompileFlags.OPTIMIZE|RegexCompileFlags.DUPNAMES|RegexCompileFlags.MULTILINE);
+				error_regex = new Regex (@"(?:$(vala_error))|(?:$(php_error))", RegexCompileFlags.CASELESS|RegexCompileFlags.OPTIMIZE|RegexCompileFlags.DUPNAMES);
+				
+				// enter directory
+				var make_dir = """^.*Entering directory `(.+?)'.*$""";
+				dir_regex = new Regex (@"(?:$(make_dir))", RegexCompileFlags.CASELESS|RegexCompileFlags.OPTIMIZE|RegexCompileFlags.DUPNAMES);
 			} catch (Error e) {
 				error (e.message);
 			}
@@ -143,53 +148,68 @@ namespace Vanubi {
 			try {
 				var is = new UnixInputStream (fd, true);
 				var buf = new uint8[1024];
+				var b = new StringBuilder ();
+				var curdir = editor.file != null ? editor.file.get_parent().get_path () : ".";
+				
 				while (true) {
 					var r = yield is.read_async (buf);
-					if (r == 0) {
+					if (r <= 0) {
+						// eof
 						break;
 					}
 					
 					unowned uint8[] cur = buf;
 					cur.length = (int) r;
-					cur[r] = '\0';
 					term.feed (cur);
 					
-					unowned string text = (string) cur;
-					MatchInfo info;
-					if (error_regex.match (text, 0, out info)) {
-						do {
-							var filename = info.fetch_named ("f");
-							var start_line_str = info.fetch_named ("sl");
-							var start_column_str = info.fetch_named ("sc");
-							var end_line_str = info.fetch_named ("el");
-							var end_column_str = info.fetch_named ("ec");
-							
-							int start_line = -1;
-							int start_column = -1;
-							int end_line = -1;
-							int end_column = -1;
-							if (start_line_str.length > 0) {
-								start_line = int.parse (start_line_str)-1;
-								if (start_column_str.length > 0) {
-									start_column = int.parse (start_column_str)-1;
-								}
-								if (end_line_str.length > 0) {
-									end_line = int.parse (end_line_str)-1;
-									if (end_column_str.length > 0) {
-										end_column = int.parse (end_column_str)-1;
+					for (var i=0; i < cur.length; i++) {
+						if (cur[i] != '\r' && cur[i] != '\n') {
+							b.append_c ((char) cur[i]);
+						} else {
+							// new line, match error or directory change
+							message(b.str);
+							MatchInfo info;
+							if (dir_regex.match (b.str, 0, out info)) {
+								curdir = info.fetch (1);
+							} else if (error_regex.match (b.str, 0, out info)) {
+								var filename = info.fetch_named ("f");
+								var start_line_str = info.fetch_named ("sl");
+								var start_column_str = info.fetch_named ("sc");
+								var end_line_str = info.fetch_named ("el");
+								var end_column_str = info.fetch_named ("ec");
+								
+								int start_line = -1;
+								int start_column = -1;
+								int end_line = -1;
+								int end_column = -1;
+								if (start_line_str.length > 0) {
+									start_line = int.parse (start_line_str)-1;
+									if (start_column_str.length > 0) {
+										start_column = int.parse (start_column_str)-1;
+									}
+									if (end_line_str.length > 0) {
+										end_line = int.parse (end_line_str)-1;
+										if (end_column_str.length > 0) {
+											end_column = int.parse (end_column_str)-1;
+										}
 									}
 								}
+								
+								File file;
+								if (filename[0] != '/') {
+									file = File.new_for_path (curdir+"/"+filename);
+								} else {
+									file = File.new_for_path (filename);
+								}
+								
+								var msg = info.fetch_named ("msg").strip ();
+								var loc = new Location<string> (file, start_line, start_column, end_line, end_column, msg);
+								manager.error_locations.append (loc);
+								manager.set_overlay_status ("Found %u errors".printf (manager.error_locations.length ()));
 							}
 							
-							var file = File.new_for_path (filename);
-							if (editor.file != null && filename[0] != '/') {
-								file = editor.file.get_parent().get_child (filename);
-							}
-							
-							var loc = new Location<string> (file, start_line, start_column, end_line, end_column, info.fetch_named ("msg"));
-							manager.error_locations.append (loc);
-							manager.set_overlay_status ("Found %u errors".printf (manager.error_locations.length ()));
-						} while (info.next ());
+							b.truncate ();
+						}
 					}
 				}
 			} catch (Error e) {

@@ -28,13 +28,13 @@ namespace Vanubi {
 		public int end_column;
 		public D data;
 		
-		public Location (File? file, int start_line = -1, int start_column = -1, int end_line = -1, int end_column = -1, owned D? data = null) {
-			this.file = file;
+		public Location (owned File? file, int start_line = -1, int start_column = -1, int end_line = -1, int end_column = -1, owned D? data = null) {
+			this.file = (owned) file;
 			this.start_line = start_line;
 			this.start_column = start_column;
 			this.end_line = end_line;
 			this.end_column = end_column;
-			this.data = data;
+			this.data = (owned) data;
 		}
 		
 		public string to_string () {
