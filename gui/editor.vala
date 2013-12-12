@@ -144,9 +144,11 @@ namespace Vanubi {
 		ScrolledWindow sw;
 		Label file_count;
 		Label file_status;
+		Label file_external_changed;
 		EditorInfoBar infobar;
 		int old_selection_start_offset = -1;
 		int old_selection_end_offset = -1;
+		FileMonitor monitor;
 
 		public Editor (Configuration conf, File? file) {
 			this.file = file;
@@ -197,6 +199,10 @@ namespace Vanubi {
 			file_status = new Label ("");
 			file_status.margin_left = 20;
 			infobar.add (file_status);
+			
+			file_external_changed = new Label ("");
+			file_external_changed.margin_left = 20;
+			infobar.add (file_external_changed);
 
 			view.notify["buffer"].connect_after (on_buffer_changed);
 			on_buffer_changed ();
@@ -219,6 +225,23 @@ namespace Vanubi {
 					infobar.reset_style (); // GTK+ 3.4 bug, solved in 3.6
 					return false;
 				});
+			
+			start_monitors ();
+		}
+		
+		public void start_monitors () {
+			stop_monitors ();
+			if (file != null) {
+				monitor = file.monitor_file (FileMonitorFlags.WATCH_HARD_LINKS|FileMonitorFlags.SEND_MOVED);
+				monitor.changed.connect (on_external_changed);
+			}
+		}
+		
+		public void stop_monitors () {
+			if (monitor != null) {
+				monitor.changed.disconnect (on_external_changed);
+				monitor = null;
+			}
 		}
 		
 		public void update_old_selection () {
@@ -229,6 +252,10 @@ namespace Vanubi {
 			old_selection_end_offset = old_selection_end.get_offset ();
 		}
 
+		public void reset_external_changed () {
+			file_external_changed.set_label ("");
+		}
+		
 		public override void grab_focus () {
 			view.grab_focus ();
 		}
@@ -326,6 +353,10 @@ namespace Vanubi {
 		void on_modified_changed () {
 			var buf = view.buffer;
 			file_status.set_label (buf.get_modified () ? "modified" : "");
+		}
+		
+		void on_external_changed () {
+			file_external_changed.set_markup ("<span fgcolor='red'><b>file has changed</b></span>");
 		}
 	}
 }
