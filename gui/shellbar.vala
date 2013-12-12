@@ -38,7 +38,9 @@ namespace Vanubi {
 				var	c_error = """^(?<f>.+?):(?<sl>\d+):(?<sc>\d+):.*?error:(?<msg>.+)$""";
 				// php style
 				var php_error = """^(?<msg>.+)error:.* in (?<f>.+) on line (?<sl>\d+)\s*$""";
-				error_regex = new Regex (@"(?:$(vala_error))|(?:$(php_error))", RegexCompileFlags.CASELESS|RegexCompileFlags.OPTIMIZE|RegexCompileFlags.DUPNAMES);
+				// sh style
+				var sh_error = """^(?<f>.+?):.*?(?<sl>\d+?):.*?:(?<msg>.*?):""";
+				error_regex = new Regex (@"(?:$(vala_error))|(?:$(php_error))|(?:$(sh_error))", RegexCompileFlags.CASELESS|RegexCompileFlags.OPTIMIZE|RegexCompileFlags.DUPNAMES);
 				
 				// enter directory
 				var make_dir = """^.*Entering directory `(.+?)'.*$""";
@@ -124,7 +126,8 @@ namespace Vanubi {
 				var workdir = config.get_file_string (base_file, "shell_cwd", get_base_directory (base_file));
 
 				int fd;
-				Pid pty = Linux.forkpty(out fd, null, null, null);
+				var ws = Linux.winsize(){ws_row=17, ws_col=106, ws_xpixel=10, ws_ypixel=10};
+				Pid pty = Linux.forkpty(out fd, null, null, ws);
 				if (pty == 0) {
 					Posix.chdir (workdir);
 					Posix.execlp (shell, shell);
