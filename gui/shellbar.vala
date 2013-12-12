@@ -72,9 +72,6 @@ namespace Vanubi {
 				
 			term.commit.connect ((bin, size) => {
 					var text = bin.substring (0, size);
-					int stdin = term.get_data ("stdin");
-					unowned uint8[] buf = (uint8[]) text;
-					Posix.write (stdin, buf, size);
 
 					// if user executed any other command, clear errors
 					if ("\n" in text || "\r" in text) {
@@ -125,18 +122,11 @@ namespace Vanubi {
 				Shell.parse_argv (shell, out argv);
 				var workdir = config.get_file_string (base_file, "shell_cwd", get_base_directory (base_file));
 
-				int fd;
-				var ws = Linux.winsize(){ws_row=17, ws_col=106, ws_xpixel=10, ws_ypixel=10};
-				Pid pty = Linux.forkpty(out fd, null, null, ws);
-				if (pty == 0) {
-					Posix.chdir (workdir);
-					Posix.execlp (shell, shell);
-					Process.exit(1);
-				}
-				term.set_data ("pid", pty);
-				read_sh.begin (fd);
-				Posix.write (fd, "make", 4);
-				term.set_data ("stdin", fd);
+				Pid pid;
+				term.fork_command_full (PtyFlags.DEFAULT, workdir, {shell}, null, SpawnFlags.SEARCH_PATH, null, out pid);
+				term.set_data ("pid", pid);
+				read_sh.begin (term.pty_object.fd);
+				term.feed_child ("make", -1);
 
 				mouse_match (term, """^.+error:""");
 				mouse_match (term, """^.+warning:""");
