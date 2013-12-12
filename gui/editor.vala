@@ -149,6 +149,7 @@ namespace Vanubi {
 		int old_selection_start_offset = -1;
 		int old_selection_end_offset = -1;
 		FileMonitor monitor;
+		TimeVal? mtime = null;
 
 		public Editor (Configuration conf, File? file) {
 			this.file = file;
@@ -226,22 +227,27 @@ namespace Vanubi {
 					return false;
 				});
 			
-			start_monitors ();
+			mtime = get_mtime ();
+			restart_monitor ();
 		}
 		
-		public void start_monitors () {
-			stop_monitors ();
-			if (file != null) {
-				monitor = file.monitor_file (FileMonitorFlags.WATCH_HARD_LINKS|FileMonitorFlags.SEND_MOVED);
-				monitor.changed.connect (on_external_changed);
-			}
-		}
-		
-		public void stop_monitors () {
+		void restart_monitor () {
 			if (monitor != null) {
 				monitor.changed.disconnect (on_external_changed);
 				monitor = null;
 			}
+			if (file != null) {
+				monitor = file.monitor (FileMonitorFlags.WATCH_HARD_LINKS);
+				monitor.changed.connect (on_external_changed);
+			}
+		}
+		
+		public TimeVal? get_mtime () {
+			if (file != null) {
+				var info = file.query_info (FileAttribute.TIME_MODIFIED, FileQueryInfoFlags.NONE);
+				return info.get_modification_time ();
+			}
+			return null;
 		}
 		
 		public void update_old_selection () {
@@ -254,6 +260,8 @@ namespace Vanubi {
 
 		public void reset_external_changed () {
 			file_external_changed.set_label ("");
+			mtime = get_mtime ();
+			restart_monitor ();
 		}
 		
 		public override void grab_focus () {
@@ -356,7 +364,14 @@ namespace Vanubi {
 		}
 		
 		void on_external_changed () {
-			file_external_changed.set_markup ("<span fgcolor='red'><b>file has changed</b></span>");
+			var cur = get_mtime ();
+			if (mtime == null) {
+				mtime = cur;
+			}
+			if (cur != mtime) {
+				file_external_changed.set_markup ("<span fgcolor='black' bgcolor='red'> <b>file has changed</b> </span>");
+			}
+			restart_monitor ();
 		}
 	}
 }

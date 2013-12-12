@@ -821,14 +821,11 @@ namespace Vanubi {
 				buf.get_end_iter (out end);
 				string text = buf.get_text (start, end, false);
 				try {
-					editor.stop_monitors ();
 					yield editor.file.replace_contents_async (text.data, null, true, FileCreateFlags.NONE, null, null);
 					buf.set_modified (false);
 					editor.reset_external_changed ();
 				} catch (Error e) {
 					display_error (editor, e.message);
-				} finally {
-					Timeout.add_seconds (1, () => { editor.start_monitors (); return false; });
 				}
 			}
 		}
