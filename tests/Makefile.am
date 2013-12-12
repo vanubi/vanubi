@@ -15,6 +15,7 @@ AM_VALAFLAGS = \
 test_programs = \
 	testfiles	\
 	testindent	\
+	testcomment	\
 	testmatch	\
 	testsearch	\
 	testvade	\
@@ -22,6 +23,7 @@ test_programs = \
 
 testfiles_SOURCES = testfiles.vala
 testindent_SOURCES = testindent.vala
+testcomment_SOURCES = testcomment.vala
 testmatch_SOURCES = testmatch.vala
 testsearch_SOURCES = testsearch.vala
 testvade_SOURCES = testvade.vala

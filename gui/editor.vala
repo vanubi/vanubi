@@ -237,7 +237,8 @@ namespace Vanubi {
 				monitor = null;
 			}
 			if (file != null) {
-				monitor = file.monitor (FileMonitorFlags.WATCH_HARD_LINKS);
+			   	/* XXX: use FileMonitorFlags.WATCH_HARD_LINKS with valac >= 0.20.2 */
+				monitor = file.monitor (FileMonitorFlags.NONE);
 				monitor.changed.connect (on_external_changed);
 			}
 		}

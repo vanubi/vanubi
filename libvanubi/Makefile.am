@@ -15,6 +15,7 @@ libvanubi_la_VALASOURCES = \
 	filecluster.vala \
 	files.vala	\
 	indent.vala	\
+	comment.vala \
 	keys.vala \
 	matching.vala 	\
 	search.vala 	\

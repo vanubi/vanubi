@@ -6,6 +6,7 @@
 *.lo
 .libs
 *.stamp
+*.dirstamp
 INSTALL
 Makefile
 Makefile.in
