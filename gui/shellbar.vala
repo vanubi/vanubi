@@ -39,7 +39,7 @@ namespace Vanubi {
 				// php style
 				var php_error = """^(?<msg>.+)error:.* in (?<f>.+) on line (?<sl>\d+)\s*$""";
 				// sh style
-				var sh_error = """^(?<f>.+?):.*?(?<sl>\d+?):.*?:(?<msg>.*?):""";
+				var sh_error = """^(?<f>.+?):.*?(?<sl>\d+?):.*?:(?<msg>.*? error):""";
 				error_regex = new Regex (@"(?:$(vala_error))|(?:$(php_error))|(?:$(sh_error))", RegexCompileFlags.CASELESS|RegexCompileFlags.OPTIMIZE|RegexCompileFlags.DUPNAMES);
 				
 				// enter directory
