@@ -166,7 +166,7 @@ namespace Vanubi {
 			
 			// yield to gui every 50 iterations
 			int iterations = 0;
-			manager.set_overlay_status ("Searching...");
+			manager.set_status ("Searching...");
 			
 			while (((mode == Mode.SEARCH_FORWARD || mode == Mode.REPLACE_FORWARD) && !iter.is_end ()) ||
 				   ((mode == Mode.SEARCH_BACKWARD || mode == Mode.REPLACE_BACKWARD) && !iter.is_start ())) {
@@ -211,7 +211,7 @@ namespace Vanubi {
 					buf.select_range (iter, subiter);
 					editor.update_old_selection ();
 					editor.view.scroll_to_mark (buf.get_insert (), 0, true, 0.5, 0.5);
-					manager.clear_overlay_status ();
+					manager.clear_status ();
 					return;
 				}
 				if (mode == Mode.SEARCH_FORWARD || mode == Mode.REPLACE_FORWARD) {
@@ -220,7 +220,7 @@ namespace Vanubi {
 					iter.backward_char ();
 				}
 			}
-			manager.clear_overlay_status ();
+			manager.clear_status ();
 
 			if (mode == Mode.REPLACE_FORWARD || mode == Mode.REPLACE_BACKWARD) {
 				if (replace_box != null) {
@@ -231,13 +231,15 @@ namespace Vanubi {
 				return;
 			}
 			
-			if (mode == Mode.SEARCH_FORWARD) {
-				at_end_label = new Label ("<b>No matches. C-s again to search from the top.</b>");
-			} else {
-				at_end_label = new Label ("<b>No matches. C-r again to search from the bottom.</b>");
-			}			
-			at_end_label.use_markup = true;
-			attach_next_to (at_end_label, entry, PositionType.TOP, 1, 1);
+			if (at_end_label == null) {
+				if (mode == Mode.SEARCH_FORWARD) {
+					at_end_label = new Label ("<b>No matches. C-s again to search from the top.</b>");
+				} else {
+					at_end_label = new Label ("<b>No matches. C-r again to search from the bottom.</b>");
+				}			
+				at_end_label.use_markup = true;
+				attach_next_to (at_end_label, entry, PositionType.TOP, 1, 1);
+			}
 			show_all ();
 		}
 

@@ -53,6 +53,7 @@ VanubiManager {
 	background: black;
 }
 
-GtkStatusbar {
-	color: #204a87;
+VanubiManager VanubiStatusBar {
+	color: #729fcf;
+	background: black;
 }

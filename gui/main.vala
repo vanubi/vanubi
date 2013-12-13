@@ -20,6 +20,9 @@
 using Gtk;
 
 namespace Vanubi {
+	public class StatusBar : Label {
+	}
+	
 	public class Manager : Grid {
 		
 		/* List of files opened. Work on unique File instances. */
@@ -51,7 +54,7 @@ namespace Vanubi {
 		public unowned List<Location<string>> current_error = null;
 		EventBox main_box;
 		Grid editors_grid;
-		Statusbar statusbar;
+		StatusBar statusbar;
 		uint status_timeout;
 
 		public Manager () {
@@ -70,10 +73,15 @@ namespace Vanubi {
 			main_box.add (editors_grid);
 			
 			// status bar
-			statusbar = new Statusbar ();
+			statusbar = new StatusBar ();
+			statusbar.margin_left = 10;
 			statusbar.expand = false;
-			add (statusbar);
-			clear_manager_status ();
+			statusbar.set_alignment (0.0f, 0.5f);
+			var statusbox = new EventBox ();
+			statusbox.expand = false;
+			statusbox.add (statusbar);
+			add (statusbox);
+			clear_status ();
 
 			// setup languages index
 			lang_index = new StringSearchIndex ();
@@ -328,32 +336,17 @@ namespace Vanubi {
 			editors_grid.add (container);
 			container.grab_focus ();
 		}
-	
-		public void set_overlay_status (string msg) {
-			clear_overlay_status ();
-			statusbar.push (statusbar.get_context_id ("overlay"), msg);
+		
+		public void clear_status () {
+			statusbar.set_markup ("");
+		}
+		
+		public void set_status (string markup) {
+			statusbar.set_markup (markup);
 			if (status_timeout > 0) {
 				Source.remove (status_timeout);
 				status_timeout = 0;
 			}
-		}
-		
-		public void clear_overlay_status () {
-			statusbar.remove_all (statusbar.get_context_id ("overlay"));
-		}
-		
-		public void set_manager_status (string msg) {
-			clear_manager_status ();
-			statusbar.push (statusbar.get_context_id ("manager"), msg);
-			if (status_timeout > 0) {
-				Source.remove (status_timeout);
-				status_timeout = 0;
-			}
-		}
-		
-		public void clear_manager_status () {
-			statusbar.remove_all (statusbar.get_context_id ("manager"));
-			statusbar.push (statusbar.get_context_id ("manager"), "Ready");
 		}
 		
 		public void update_selection (Editor ed) {
@@ -558,7 +551,7 @@ namespace Vanubi {
 			if (main_box.get_child() == editors_grid) {
 				return;
 			}
-			clear_overlay_status ();
+			clear_status ();
 			
 			var parent = (Container) editors_grid.get_parent();
 			parent.remove (editors_grid);
@@ -697,7 +690,7 @@ namespace Vanubi {
 			if (status_timeout == 0) {
 				// reset status bar
 				status_timeout = Timeout.add_seconds (conf.get_global_int ("status_timeout", 2), () => {
-						status_timeout = 0; clear_overlay_status (); clear_manager_status(); return false;
+						status_timeout = 0; clear_status (); return false;
 				});
 			}
 			
@@ -1439,14 +1432,14 @@ namespace Vanubi {
 			}
 
 			if (no_more_errors) {
-				set_manager_status ("No more errors");
+				set_status ("No more errors");
 			} else {
 				var loc = current_error.data;
 				if (loc.file.query_exists ()) {
 					open_location (editor, loc);
-					set_manager_status (loc.data);
+					set_status (loc.data);
 				} else {
-					set_manager_status ("File %s not found".printf (loc.file.get_path ()));
+					set_status ("File %s not found".printf (loc.file.get_path ()));
 				}
 			}
 		}
