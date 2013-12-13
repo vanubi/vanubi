@@ -23,6 +23,7 @@ vanubi_VALASOURCES = \
 	main.vala \
 	searchbar.vala \
 	shellbar.vala \
+	util.vala \
 	$(NULL)
 
 vanubi_SOURCES = \

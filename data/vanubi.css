@@ -56,4 +56,9 @@ VanubiManager {
 VanubiManager VanubiStatusBar {
 	color: #729fcf;
 	background: black;
+	font-weight: bold;
+}
+
+VanubiManager VanubiStatusBar.error {
+	color: red;
 }

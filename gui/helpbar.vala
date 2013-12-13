@@ -102,28 +102,6 @@ namespace Vanubi {
 				add (sw);
 			}
 
-			public string key_to_string (Key key) {
-				var res = "";
-				if (Gdk.ModifierType.CONTROL_MASK in (Gdk.ModifierType) key.modifiers) {
-					res = "C-";
-				}
-				if (Gdk.ModifierType.SHIFT_MASK in (Gdk.ModifierType) key.modifiers) {
-					res += "S-";
-				}
-				res += Gdk.keyval_name (key.keyval);
-				return res;
-			}
-
-			public string keys_to_string (Key?[] keys) {
-				var res = new StringBuilder ();
-				foreach (var key in keys) {
-					res.append (key_to_string (key));
-					res.append (" ");
-				}
-				res.truncate (res.len - 1);
-				return (string) res.data;
-			}
-
 			public void set_docs (List<SearchResultItem> items) {
 				store.clear ();
 				Gtk.TreeIter iter;

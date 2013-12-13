@@ -56,6 +56,7 @@ namespace Vanubi {
 		Grid editors_grid;
 		StatusBar statusbar;
 		uint status_timeout;
+		string status_context;
 
 		public Manager () {
 			conf = new Configuration ();
@@ -337,20 +338,33 @@ namespace Vanubi {
 			container.grab_focus ();
 		}
 		
-		public void clear_status () {
-			statusbar.set_markup ("");
+		public void clear_status (string? context = null) {
+			if (context == null || context == status_context) {
+				statusbar.set_markup ("");
+			}
+			status_context = null;
 		}
 		
-		public void set_status (string msg) {
-			statusbar.set_markup ("<b>%s</b>".printf (msg));
+		public void set_status (string msg, string? context = null) {
+			status_context = context;
+			statusbar.set_markup (msg);
 			if (status_timeout > 0) {
 				Source.remove (status_timeout);
 				status_timeout = 0;
 			}
+			statusbar.get_style_context().remove_class ("error");
 		}
 		
-		public void set_status_error (string msg) {
-			set_status ("<span fgcolor='red'>%s</span>".printf (msg));
+		public void set_status_error (string msg, string? context = null) {
+			set_status (msg, context);
+			statusbar.get_style_context().add_class ("error");
+		}
+		
+		public string get_status (string? context = null) {
+			if (context == null || context == status_context) {
+				return statusbar.get_label ();
+			}
+			return "";
 		}
 		
 		public void update_selection (Editor ed) {
@@ -705,11 +719,13 @@ namespace Vanubi {
 			modifiers &= Gdk.ModifierType.SHIFT_MASK | Gdk.ModifierType.CONTROL_MASK;
 			if (keyval == Gdk.Key.Escape || (keyval == Gdk.Key.g && modifiers == Gdk.ModifierType.CONTROL_MASK)) {
 				// abort
+				clear_status ("keybinding");
 				abort (editor);
 				return true;
 			}
 
-			return keymanager.key_press (editor, Key (keyval, modifiers));
+			var key = Key (keyval, modifiers);
+			return keymanager.key_press (editor, key);
 		}
 
 		bool on_scroll_event (Widget w, Gdk.EventScroll ev) {
@@ -1441,9 +1457,9 @@ namespace Vanubi {
 				var loc = current_error.data;
 				if (loc.file.query_exists ()) {
 					open_location (editor, loc);
-					set_status (loc.data);
+					set_status_error (loc.data);
 				} else {
-					set_status ("File %s not found".printf (loc.file.get_path ()));
+					set_status_error ("File %s not found".printf (loc.file.get_path ()));
 				}
 			}
 		}
