@@ -26,8 +26,8 @@ VanubiEditorInfoBar.nonfocused GtkLabel {
 
 .filename {
 	font-weight: bold;
-
 }
+
 VanubiBar GtkEntry {
 	color: white;
 	border: 1px solid #204a87;
@@ -51,9 +51,8 @@ VanubiGrepView {
 VanubiManager {
 	color: white;
 	background: black;
-	font-size: 11px;
 }
 
 GtkStatusbar {
-	color: #1b2e35;
+	color: #204a87;
 }

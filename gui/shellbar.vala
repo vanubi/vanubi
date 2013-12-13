@@ -26,6 +26,7 @@ namespace Vanubi {
 		Terminal term;
 		Configuration config;
 		Editor editor;
+		bool is_first_line = true;
 		
 		static Regex error_regex = null;
 		static Regex dir_regex = null;
@@ -70,7 +71,7 @@ namespace Vanubi {
 			term.expand = true;
 			term.key_press_event.connect (on_key_press_event);
 				
-			term.commit.connect ((bin, size) => {
+			term.commit.connect ((bin, size) => {				
 					var text = bin.substring (0, size);
 
 					// if user executed any other command, clear errors
@@ -126,7 +127,6 @@ namespace Vanubi {
 				term.fork_command_full (PtyFlags.DEFAULT, workdir, {shell}, null, SpawnFlags.SEARCH_PATH, null, out pid);
 				term.set_data ("pid", pid);
 				read_sh.begin (term.pty_object.fd);
-				term.feed_child ("make", -1);
 
 				mouse_match (term, """^.+error:""");
 				mouse_match (term, """^.+warning:""");
@@ -155,6 +155,11 @@ namespace Vanubi {
 					unowned uint8[] cur = buf;
 					cur.length = (int) r;
 					term.feed (cur);
+					
+					if (is_first_line) {
+						is_first_line = false;
+						Idle.add (() => { term.feed_child ("make", -1); return false; });
+					}
 					
 					for (var i=0; i < cur.length; i++) {
 						if (cur[i] != '\r' && cur[i] != '\n') {
