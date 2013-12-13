@@ -253,6 +253,7 @@ namespace Vanubi {
 			execute_command["select-all"].connect (on_select_all);
 
 			bind_command ({ Key (Gdk.Key.e, Gdk.ModifierType.CONTROL_MASK) }, "end-line");
+			bind_command ({ Key (Gdk.Key.End, 0) }, "end-line");
 			execute_command["end-line"].connect (on_end_line);
 
 			bind_command ({ Key (Gdk.Key.a, Gdk.ModifierType.CONTROL_MASK) }, "start-line");
