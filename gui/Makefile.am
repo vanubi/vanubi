@@ -19,7 +19,7 @@ vanubi_VALASOURCES = \
 	filebar.vala \
 	grepbar.vala \
 	helpbar.vala \
-	indent.vala \
+	buffer.vala \
 	main.vala \
 	searchbar.vala \
 	shellbar.vala \

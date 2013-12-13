@@ -14,6 +14,7 @@ libvanubi_la_VALASOURCES = \
 	filelru.vala \
 	filecluster.vala \
 	files.vala	\
+	buffer.vala 	\
 	indent.vala	\
 	comment.vala \
 	keys.vala \
