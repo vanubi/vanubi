@@ -4,35 +4,64 @@
 
 using Vanubi;
 
-void assert_comment (Comment commenter, Buffer buffer, int line) {
+void comment_default (Buffer buffer, int line) {
+	var commenter = new Comment_Default (buffer);
 	var iter = buffer.line_start (line);
 	commenter.comment (iter);
-	/* XXX TODO: use asser! */
-	message(buffer.line_text (line));
-/*	
-        if (!res) {
-		message("Got indent %d instead of %d for line %d", buffer.get_indent (line), indent, line);
-		assert (buffer.get_indent (line) == indent);
-	}
-*/
 }
 
-void assert_comment_default (Buffer buffer, int line) {
-	var commenter = new Comment_Default (buffer);
-	assert_comment (commenter, buffer, line);
+void comment_hash (Buffer buffer, int line) {
+	var commenter = new Comment_Hash (buffer);
+	var iter = buffer.line_start (line);
+	commenter.comment (iter);
+}
+
+void comment_asm (Buffer buffer, int line) {
+	var commenter = new Comment_Asm (buffer);
+	var iter = buffer.line_start (line);
+	commenter.comment (iter);
 }
 
 void test_default () {
 	var buffer = new StringBuffer.from_text ("
 foo bar
 ");
-	assert_comment_default (buffer, 1);
+	var orig = buffer.line_text (0);
+	comment_default (buffer, 0);
+	assert (orig == buffer.line_text(0));
+
+	comment_default (buffer, 1);
+	assert (/\/\* .+ \*\//.match(buffer.line_text (1)));
+}
+
+void test_hash () {
+	var buffer = new StringBuffer.from_text ("
+foo bar
+");
+	comment_hash (buffer, 0);
+	assert (/# .*/.match(buffer.line_text (0)));
+
+	comment_hash (buffer, 1);
+	assert (/# .+/.match(buffer.line_text (1)));
+}
+
+void test_asm () {
+	var buffer = new StringBuffer.from_text ("
+foo bar
+");
+	comment_asm (buffer, 0);
+	assert (/; .*/.match(buffer.line_text (0)));
+
+	comment_asm (buffer, 1);
+	assert (/; .+/.match(buffer.line_text (1)));
 }
 
 int main (string[] args) {
 	Test.init (ref args);
 
 	Test.add_func ("/comment/default", test_default);
+	Test.add_func ("/comment/hash", test_hash);
+	Test.add_func ("/comment/asm", test_asm);
 
 	return Test.run ();
 }

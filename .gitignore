@@ -46,4 +46,6 @@ tests/testfiles
 tests/testmatch
 tests/testsearch
 tests/testindent
+tests/testvade
+tests/testcomment
 test-driver

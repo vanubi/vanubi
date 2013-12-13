@@ -1,5 +1,6 @@
 /*
- *  Copyright © 2011-2013 Luca Bruno
+ *  Copyright © 2013 Luca Bruno
+ *  Copyright © 2013 Rocco Folino
  *
  *  This file is part of Vanubi.
  *
@@ -51,9 +52,6 @@ namespace Vanubi {
 		}
 		
 		public override void comment (BufferIter iter) {
-			if (buf.empty_line (iter.line)) {
-				return;
-			}
 			var start_iter = buf.line_start (iter.line);
 			start_iter.forward_spaces ();
 			buf.insert (start_iter, "# ");
@@ -69,9 +67,6 @@ namespace Vanubi {
 		}
 		
 		public override void comment (BufferIter iter) {
-			if (buf.empty_line (iter.line)) {
-				return;
-			}
 			var start_iter = buf.line_start (iter.line);
 			start_iter.forward_spaces ();
 			buf.insert (start_iter, "; ");
