@@ -153,6 +153,12 @@ namespace Vanubi.UI {
 			}
 		}
 
+		public override bool sol {
+			get {
+				return iter.starts_line ();
+			}
+		}
+
 		public override unichar char {
 			get {
 				return iter.get_char ();

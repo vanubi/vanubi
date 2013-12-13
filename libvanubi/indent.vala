@@ -84,13 +84,18 @@ namespace Vanubi {
 		public abstract int line_offset { get; }
 		public abstract int line { get; }
 		public abstract bool eol { get; }
+		public abstract bool sol { get; }
 		public abstract unichar char { get; }
 		public abstract BufferIter copy ();
 
 		public virtual void forward_spaces () {
 			while (!eol && char.isspace()) forward_char ();
 		}																					
-		
+
+		public virtual void backward_spaces () {
+			while (!sol && char.isspace()) backward_char ();
+		}
+
 		public virtual int effective_line_offset {
 			get {
 				var iter = copy ();
@@ -251,6 +256,14 @@ namespace Vanubi {
 				warn_if_fail (valid);
 				unowned string l = buf.lines[line];
 				return line_offset >= l.length-1;
+			}
+		}
+
+		public override bool sol {
+			get {
+				warn_if_fail (valid);
+				unowned string l = buf.lines[line];
+				return line_offset == 0;
 			}
 		}
 
