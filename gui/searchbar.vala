@@ -174,12 +174,11 @@ namespace Vanubi {
 					return;
 				}
 				
+				if (iterations >= 1000000 && !displayed_searching) {
+					manager.set_status ("Searching...", "search");
+					displayed_searching = true;
+				}
 				if (iterations++ % 50 == 0) {
-					if (iterations >= 10000 && !displayed_searching) {
-						manager.set_status ("Searching...", "search");
-						displayed_searching = true;
-					}
-					iterations = 0;
 					SourceFunc resume = search.callback;
 					Idle.add ((owned) resume);
 					yield;
