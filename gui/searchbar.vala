@@ -166,7 +166,7 @@ namespace Vanubi {
 			
 			// yield to gui every 50 iterations
 			int iterations = 0;
-			manager.set_status ("Searching...");
+			bool displayed_searching = false;
 			
 			while (((mode == Mode.SEARCH_FORWARD || mode == Mode.REPLACE_FORWARD) && !iter.is_end ()) ||
 				   ((mode == Mode.SEARCH_BACKWARD || mode == Mode.REPLACE_BACKWARD) && !iter.is_start ())) {
@@ -174,7 +174,11 @@ namespace Vanubi {
 					return;
 				}
 				
-				if (iterations++ >= 50) {
+				if (iterations++ % 50 == 0) {
+					if (iterations >= 10000 && !displayed_searching) {
+						manager.set_status ("Searching...", "search");
+						displayed_searching = true;
+					}
 					iterations = 0;
 					SourceFunc resume = search.callback;
 					Idle.add ((owned) resume);
@@ -211,7 +215,7 @@ namespace Vanubi {
 					buf.select_range (iter, subiter);
 					editor.update_old_selection ();
 					editor.view.scroll_to_mark (buf.get_insert (), 0, true, 0.5, 0.5);
-					manager.clear_status ();
+					manager.clear_status ("search");
 					return;
 				}
 				if (mode == Mode.SEARCH_FORWARD || mode == Mode.REPLACE_FORWARD) {
@@ -220,7 +224,7 @@ namespace Vanubi {
 					iter.backward_char ();
 				}
 			}
-			manager.clear_status ();
+			manager.clear_status ("search");
 
 			if (mode == Mode.REPLACE_FORWARD || mode == Mode.REPLACE_BACKWARD) {
 				if (replace_box != null) {
