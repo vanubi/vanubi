@@ -341,12 +341,16 @@ namespace Vanubi {
 			statusbar.set_markup ("");
 		}
 		
-		public void set_status (string markup) {
-			statusbar.set_markup (markup);
+		public void set_status (string msg) {
+			statusbar.set_markup ("<b>%s</b>".printf (msg));
 			if (status_timeout > 0) {
 				Source.remove (status_timeout);
 				status_timeout = 0;
 			}
+		}
+		
+		public void set_status_error (string msg) {
+			set_status ("<span fgcolor='red'>%s</span>".printf (msg));
 		}
 		
 		public void update_selection (Editor ed) {
@@ -522,7 +526,7 @@ namespace Vanubi {
 					try {
 						file.load_contents_async.end (r, out content, null);
 					} catch (Error e) {
-						display_error (editor, e.message);
+						set_status_error (e.message);
 						return;
 					} finally {
 						unset_loading ();
@@ -769,7 +773,7 @@ namespace Vanubi {
 					try {
 						editor.file.load_contents_async.end (r, out content, null);
 					} catch (Error e) {
-						display_error (editor, e.message);
+						set_status_error (e.message);
 						return;
 					} finally {
 						unset_loading ();
@@ -819,7 +823,7 @@ namespace Vanubi {
 					buf.set_modified (false);
 					editor.reset_external_changed ();
 				} catch (Error e) {
-					display_error (editor, e.message);
+					set_status_error (e.message);
 				}
 			}
 		}
@@ -1056,9 +1060,9 @@ namespace Vanubi {
 						var output = (string) pipe_shell.end (r);
 						var clipboard = Clipboard.get (Gdk.SELECTION_CLIPBOARD);
 						clipboard.set_text (output, -1);
-						display_message (ed, "Output of command has been copied to clipboard");
+						set_status ("Output of command has been copied to clipboard");
 					} catch (Error e) {
-						display_error (ed, e.message);
+						set_status_error (e.message);
 					}
 			});
 		}
@@ -1079,9 +1083,9 @@ namespace Vanubi {
 						buf.place_cursor (iter);
 						ed.view.scroll_mark_onscreen (buf.get_insert ());
 						
-						display_message (ed, "Output of command has been replaced into the editor");
+						set_status ("Output of command has been replaced into the editor");
 					} catch (Error e) {
-						display_error (ed, e.message);
+						set_status_error (e.message);
 					}
 			});
 		}
@@ -1391,9 +1395,9 @@ namespace Vanubi {
 				var parser = new Vade.Parser.for_string (code);
 				var expr = parser.parse_expression ();
 				var val = yield base_scope.eval (expr, new Cancellable ());
-				display_message (editor, val.str);
+				set_status (val.str);
 			} catch (Error e) {
-				display_error (editor, e.message);
+				set_status_error (e.message);
 			}
 		}
 		
@@ -1447,7 +1451,7 @@ namespace Vanubi {
 		void on_repo_grep (Editor editor) {
 			var repo_dir = conf.cluster.get_git_repo (editor.file);
 			if (repo_dir == null) {
-				display_message (editor, "Not in git repository");
+				set_status ("Not in git repository");
 				return;
 			}
 			
@@ -1599,24 +1603,7 @@ namespace Vanubi {
 			}
 		}
 
-		void display_error (Editor ed, string markup) {
-			var bar = new MessageBar ("<span fgcolor='red'><b>%s</b></span>".printf (markup));
-			bar.aborted.connect (() => { abort (ed); });
-			add_overlay (bar);
-			bar.show ();
-			bar.grab_focus ();
-		
-		}			
-		void display_message (Editor ed, string markup) {
-			var bar = new MessageBar ("<b>%s</b>".printf (markup));
-			bar.aborted.connect (() => { abort (ed); });
-			add_overlay (bar);
-			bar.show ();
-			bar.grab_focus ();
-		}			
-		
-		void on_switch_editor(Editor ed, string command)
-		{
+		void on_switch_editor (Editor ed, string command) {
 			var paned = ed.get_parent().get_parent() as Paned;
 			bool fwd = (command == "next-editor") ? true : false;
 
