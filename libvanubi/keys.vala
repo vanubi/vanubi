@@ -66,10 +66,11 @@ namespace Vanubi {
 		uint key_timeout = 0;
 		KeyDelegate<G> deleg = null;
 
-		public int timeout { get; set; default = 300; }
+		public int timeout { get; set; default = 400; }
 
-		public KeyManager (owned KeyDelegate<G> deleg) {
+		public KeyManager (Configuration conf, owned KeyDelegate<G> deleg) {
 			this.deleg = (owned) deleg;
+			this.timeout = conf.get_global_int ("key_timeout", 400);
 			current_key = key_root;
 		}
 
@@ -148,7 +149,7 @@ namespace Vanubi {
 			if (current_key.has_children ()) {
 				if (current_key.command != null) {
 					// wait for further keys
-					key_timeout = Timeout.add (300, () => {
+					key_timeout = Timeout.add (timeout, () => {
 							key_timeout = 0;
 							unowned string command = current_key.command;
 							current_key = key_root;
