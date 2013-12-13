@@ -262,7 +262,6 @@ namespace Vanubi {
 		public override bool sol {
 			get {
 				warn_if_fail (valid);
-				unowned string l = buf.lines[line];
 				return line_offset == 0;
 			}
 		}
