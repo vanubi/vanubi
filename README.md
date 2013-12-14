@@ -86,4 +86,4 @@ TODO
  - Make caret bg/fg color configurable for different styles
  - Mimic emacs minibar for matching files and buffers
  - Code fold / Comment fold
- - Support GDB, Hexdump, GPG, Patch/Diff, Git, Git-bz, Pastebin
+ - Support GDB, Hexdump, GPG, Patch/Diff, Git, Git-bz
