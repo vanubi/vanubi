@@ -67,11 +67,11 @@ namespace Vanubi {
 		void set_common_pattern () {
 			if (common_choice != null) {
 				var new_pattern = get_pattern_from_choice (original_pattern, common_choice);
-				entry.set_text (new_pattern);
-				entry.move_cursor (MovementStep.BUFFER_ENDS, 1, false);
 				if (new_pattern == original_pattern) {
 					entry.get_style_context().add_class ("error");
 				}				
+				entry.set_text (new_pattern);
+				entry.move_cursor (MovementStep.BUFFER_ENDS, 1, false);
 			}
 		}
 
