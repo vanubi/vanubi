@@ -78,6 +78,7 @@ namespace Vanubi {
 					if ("\n" in text || "\r" in text) {
 						manager.error_locations = new List<Location> ();
 						manager.current_error = null;
+						manager.clear_status ("errors");
 					}
 					
 					// store cwd in config file
@@ -203,7 +204,7 @@ namespace Vanubi {
 								var msg = info.fetch_named ("msg").strip ();
 								var loc = new Location<string> (file, start_line, start_column, end_line, end_column, msg);
 								manager.error_locations.append (loc);
-								manager.set_status ("Found %u errors".printf (manager.error_locations.length ()));
+								manager.set_status ("Found %u errors".printf (manager.error_locations.length ()), "errors");
 							}
 							
 							b.truncate ();
