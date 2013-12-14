@@ -105,6 +105,25 @@ namespace Vanubi {
 							}
 						}
 					}
+					
+					// write remaining text
+					if (last_start < new_text_length) {
+						unowned string cur = new_text.offset (last_start);
+						cancellable.set_error_if_cancelled ();
+						Gdk.threads_enter ();
+						TextIter end;
+						get_end_iter (out end);
+						var offset = end.get_offset ();
+						insert_text (ref end, cur, new_text_length-last_start);
+						// apply tags
+						TextIter start;
+						get_iter_at_offset (out start, offset);
+						foreach (unowned TextTag tag in tags) {
+							apply_tag (tag, start, end);
+						}
+						Gdk.threads_leave ();
+					}
+					
 					return null;
 			});
 		}
