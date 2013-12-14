@@ -159,7 +159,7 @@ namespace Vanubi {
 					
 					if (is_first_line) {
 						is_first_line = false;
-						Idle.add (() => { term.feed_child ("make", -1); return false; });
+						Idle.add (() => { term.feed_child ("make -j", -1); return false; });
 					}
 					
 					for (var i=0; i < cur.length; i++) {

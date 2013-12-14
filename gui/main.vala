@@ -397,7 +397,7 @@ namespace Vanubi {
 				p.pack2 (widget, true, false);
 				p.position = alloc.height*2/3;
 				main_box.add (p);
-				p.show ();
+				p.show_all ();
 			} else if (mode == OverlayMode.PANE_LEFT) {
 				var p = new Paned (Orientation.HORIZONTAL);
 				p.expand = true;
@@ -405,7 +405,7 @@ namespace Vanubi {
 				p.pack2 (editors_grid, true, false);
 				p.position = alloc.width/2;
 				main_box.add (p);
-				p.show ();
+				p.show_all ();
 			} else if (mode == OverlayMode.PANE_RIGHT) {
 				var p = new Paned (Orientation.HORIZONTAL);
 				p.expand = true;
@@ -413,14 +413,14 @@ namespace Vanubi {
 				p.pack2 (widget, true, false);
 				p.position = alloc.width/2;
 				main_box.add (p);
-				p.show ();
+				p.show_all ();
 			} else {
 				var grid = new Grid ();
 				grid.orientation = Orientation.VERTICAL;
 				grid.add (editors_grid);
 				grid.add (widget);
 				main_box.add (grid);
-				grid.show ();
+				grid.show_all ();
 			}
 		}
 
@@ -501,12 +501,11 @@ namespace Vanubi {
 		}
 
 		public void open_file (Editor editor, File file) {
-			open_location (editor, new Location<void*> (file));
+			open_location.begin (editor, new Location<void*> (file));
 		}
 		
-		public void open_location (Editor editor, Location location) {
+		public async void open_location (Editor editor, Location location) {
 			var file = location.file;
-			set_loading ();
 
 			// first search already opened files
 			var f = files[file];
@@ -535,33 +534,25 @@ namespace Vanubi {
 			}
 
 			// existing file, read it
-			file.load_contents_async.begin (null, (s,r) => {
-					uint8[] content;
-					try {
-						file.load_contents_async.end (r, out content, null);
-					} catch (Error e) {
-						set_status_error (e.message);
-						return;
-					} finally {
-						unset_loading ();
-					}
+			try {
+				var is = yield file.read_async ();
+				var ed = get_available_editor (file);
+				replace_widget (editor, ed);
+				ed.grab_focus ();
 
-					var ed = get_available_editor (file);
-					var buf = (SourceBuffer) ed.view.buffer;
-					buf.begin_not_undoable_action ();
-					buf.set_text ((string) content, -1);
-					buf.set_modified (false);
-					buf.end_not_undoable_action ();
-					
-					if (location.start_line < 0) {
-						location.start_line = location.start_column = 0;
-					}
-					if (ed.set_location (location)) {
-						Idle.add (() => { ed.view.scroll_to_mark (buf.get_insert (), 0, true, 0.5, 0.5); return false; });
-					}
-					replace_widget (editor, ed);
-					ed.grab_focus ();
-				});
+				yield ed.replace_contents (is);
+				
+				var buf = ed.view.buffer;
+				if (location.start_line < 0) {
+					location.start_line = location.start_column = 0;
+				}
+				if (ed.set_location (location)) {
+					Idle.add (() => { ed.view.scroll_to_mark (buf.get_insert (), 0, true, 0.5, 0.5); return false; });
+				}
+			} catch (IOError.CANCELLED e) {
+			} catch (Error e) {
+				set_status_error (e.message);
+			}
 		}
 
 		public void abort (Editor editor) {
@@ -576,12 +567,6 @@ namespace Vanubi {
 			main_box.remove (main_box.get_child ());
 			main_box.add (editors_grid);
 			editor.grab_focus ();
-		}
-
-		void set_loading () {
-		}
-
-		void unset_loading () {
 		}
 
 		/* File/Editor/etc. COMBINATORS */
@@ -780,35 +765,29 @@ namespace Vanubi {
 		}
 		
 		void on_reload_file (Editor editor) {
+			reload_file.begin (editor);
+		}
+		
+		async void reload_file (Editor editor) {
 			if (editor.file == null) {
 				return;
 			}
 			var old_offset = selection_start.get_offset ();
-			editor.file.load_contents_async.begin (null, (s,r) => {
-					uint8[] content;
-					try {
-						editor.file.load_contents_async.end (r, out content, null);
-					} catch (Error e) {
-						set_status_error (e.message);
-						return;
-					} finally {
-						unset_loading ();
-					}
+			try {
+				var is = yield editor.file.read_async ();
+				editor.grab_focus ();
 
-					editor.reset_language ();
-					var buf = (SourceBuffer) editor.view.buffer;
-					buf.begin_not_undoable_action ();
-					buf.set_text ((string) content, -1);
-					buf.set_modified (false);
-					buf.end_not_undoable_action ();
-					TextIter iter;
-					buf.get_iter_at_offset (out iter, old_offset);
-					buf.place_cursor (iter);
-					editor.view.scroll_to_mark (buf.get_insert (), 0, true, 0.5, 0.5);
-					editor.grab_focus ();
-					
-					editor.reset_external_changed ();
-				});
+				yield editor.replace_contents (is);
+
+				TextIter iter;
+				var buf = editor.view.buffer;
+				buf.get_iter_at_offset (out iter, old_offset);
+				buf.place_cursor (iter);
+				editor.view.scroll_mark_onscreen (buf.get_insert ());
+			} catch (IOError.CANCELLED e) {
+			} catch (Error e) {
+				set_status_error (e.message);
+			}
 		}
 		
 		void on_open_file (Editor editor) {
@@ -1084,26 +1063,28 @@ namespace Vanubi {
 		}
 		
 		void on_pipe_shell_replace (Editor ed) {
+			pipe_shell_replace.begin (ed);
+		}
+		
+		async void pipe_shell_replace (Editor ed) {
 			var old_offset = selection_start.get_offset ();
-			pipe_shell.begin (ed, (s,r) => {
-					try {
-						var output = (string) pipe_shell.end (r);
-
-						var buf = ed.view.buffer;
-						buf.begin_user_action ();
-						buf.set_text (output, -1);
-						buf.end_user_action ();
-
-						TextIter iter;
-						buf.get_iter_at_offset (out iter, old_offset);
-						buf.place_cursor (iter);
-						ed.view.scroll_mark_onscreen (buf.get_insert ());
-						
-						set_status ("Output of command has been replaced into the editor");
-					} catch (Error e) {
-						set_status_error (e.message);
-					}
-			});
+			try {
+				var output = yield pipe_shell (ed);
+				
+				var stream = new MemoryInputStream.from_data ((owned) output, GLib.free);
+				ed.replace_contents (stream);
+				
+				TextIter iter;
+				var buf = ed.view.buffer;
+				buf.get_iter_at_offset (out iter, old_offset);
+				buf.place_cursor (iter);
+				ed.view.scroll_mark_onscreen (buf.get_insert ());
+				
+				set_status ("Output of command has been replaced into the editor");
+			} catch (IOError.CANCELLED e) {
+			} catch (Error e) {
+				set_status_error (e.message);
+			}
 		}
 
 		async uint8[] pipe_shell (Editor ed) throws Error {
@@ -1456,7 +1437,7 @@ namespace Vanubi {
 			} else {
 				var loc = current_error.data;
 				if (loc.file.query_exists ()) {
-					open_location (editor, loc);
+					open_location.begin (editor, loc);
 					set_status_error (loc.data);
 				} else {
 					set_status_error ("File %s not found".printf (loc.file.get_path ()));
@@ -1479,7 +1460,7 @@ namespace Vanubi {
 					abort (editor);
 					var loc = bar.location;
 					if (loc != null && loc.file != null) {
-						open_location (editor, loc);
+						open_location.begin (editor, loc);
 					}
 			});
 			bar.changed.connect ((pat) => {

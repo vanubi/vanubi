@@ -114,7 +114,7 @@ namespace Vanubi {
 		public EditorContainer (Editor? ed) {
 			editor = ed;
 		}
-		
+
 		public override void grab_focus () {
 			editor.grab_focus ();
 		}
@@ -145,11 +145,11 @@ namespace Vanubi {
 		Label file_count;
 		Label file_status;
 		Label file_external_changed;
+		Label file_loading;
 		EditorInfoBar infobar;
 		int old_selection_start_offset = -1;
 		int old_selection_end_offset = -1;
 		FileMonitor monitor;
-		TimeVal? mtime = null;
 
 		public Editor (Configuration conf, File? file) {
 			this.file = file;
@@ -204,7 +204,11 @@ namespace Vanubi {
 			file_external_changed = new Label ("");
 			file_external_changed.margin_left = 20;
 			infobar.add (file_external_changed);
-
+			
+			file_loading = new Label ("");
+			file_loading.margin_left = 20;
+			infobar.add (file_loading);
+			
 			view.notify["buffer"].connect_after (on_buffer_changed);
 			on_buffer_changed ();
 
@@ -227,10 +231,9 @@ namespace Vanubi {
 					return false;
 				});
 			
-			mtime = get_mtime ();
 			restart_monitor ();
 		}
-		
+
 		void restart_monitor () {
 			if (monitor != null) {
 				monitor.changed.disconnect (on_external_changed);
@@ -238,6 +241,7 @@ namespace Vanubi {
 			}
 			if (file != null) {
 			   	/* XXX: use FileMonitorFlags.WATCH_HARD_LINKS with valac >= 0.20.2 */
+				file.set_data<TimeVal?> ("editing_mtime", get_mtime ());
 				monitor = file.monitor (FileMonitorFlags.NONE);
 				monitor.changed.connect (on_external_changed);
 			}
@@ -261,7 +265,7 @@ namespace Vanubi {
 
 		public void reset_external_changed () {
 			file_external_changed.set_label ("");
-			mtime = get_mtime ();
+			file.set_data<TimeVal?> ("editing_mtime", get_mtime ());
 			restart_monitor ();
 		}
 		
@@ -328,6 +332,55 @@ namespace Vanubi {
 			
 			return true;
 		}
+
+		Cancellable? loading_cancellable = null;
+		
+		public async void replace_contents (InputStream is, owned Cancellable? cancellable = null) throws Error {
+			if (cancellable == null) {
+				cancellable = new Cancellable ();
+			}
+			if (loading_cancellable != null) {
+				loading_cancellable.cancel ();
+			}
+			loading_cancellable = cancellable;
+			
+			var buf = (SourceBuffer) view.buffer;
+			reset_language ();
+			buf.set_modified (false);
+			reset_external_changed ();
+			
+			file_loading.set_markup ("<i>loading...</i>");
+			
+			try {
+				bool first_load = true;
+				
+				var data = new uint8[1];
+				while (true) {
+					var r = yield is.read_async (data, Priority.LOW, cancellable);
+					if (r == 0) {
+						break;
+					}
+					
+					TextIter iter;
+					buf.get_end_iter (out iter);
+					buf.begin_not_undoable_action ();
+					var old_modified = buf.get_modified ();
+					buf.insert (ref iter, (string) data, (int) r);
+					buf.set_modified (old_modified);
+					buf.end_not_undoable_action ();
+					
+					if (first_load) {
+						first_load = false;
+						TextIter start;
+						buf.get_start_iter (out start);
+						buf.place_cursor (start);
+						data = new uint8[4096];
+					}
+				}
+			} finally {
+				file_loading.set_markup ("");
+			}
+		}
 		
 		/* events */
 
@@ -366,10 +419,13 @@ namespace Vanubi {
 		
 		void on_external_changed () {
 			var cur = get_mtime ();
-			if (mtime == null) {
-				mtime = cur;
+			var editing = file.get_data<TimeVal?> ("editing_mtime");
+			if (editing == null) {
+				file.set_data<TimeVal?> ("editing_mtime", cur);
+				return;
 			}
-			if (cur != mtime) {
+			
+			if (cur != editing) {
 				file_external_changed.set_markup ("<span fgcolor='black' bgcolor='red'> <b>file has changed</b> </span>");
 			}
 			restart_monitor ();
