@@ -36,6 +36,7 @@ namespace Vanubi {
 			completion_box = new CompletionBox (manager, type);
 			attach_next_to (completion_box, entry, PositionType.TOP, 1, 1);
 			show_all ();
+			search ("");
 		}
 
 		protected override void on_changed () {

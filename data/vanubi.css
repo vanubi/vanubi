@@ -62,3 +62,12 @@ VanubiManager VanubiStatusBar {
 VanubiManager VanubiStatusBar.error {
 	color: red;
 }
+
+GtkTreeView {
+	background: black;
+	color: white;
+}
+
+GtkTreeView:selected {
+	background: #204a87;
+}

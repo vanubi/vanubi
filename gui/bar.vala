@@ -62,7 +62,7 @@ namespace Vanubi {
 		public override void grab_focus () {
 			box.grab_focus ();
 		}
-		
+	
 		protected override bool on_key_press_event (Gdk.EventKey e) {
 			if (key_pressed (e)) {
 				return true;
@@ -80,12 +80,14 @@ namespace Vanubi {
 
 		public EntryBar (string? initial = null) {
 			expand = false;
+			column_homogeneous = true;
+			
 			entry = new Entry ();
 			if (initial != null) {
 				entry.set_text (initial);
 			}
 			entry.set_activates_default (true);
-			entry.expand = true;
+			entry.expand = false;
 			entry.activate.connect (on_activate);
 			entry.changed.connect (on_changed);
 			entry.key_press_event.connect (on_key_press_event);

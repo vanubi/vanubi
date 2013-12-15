@@ -744,7 +744,7 @@ namespace Vanubi {
 					execute_command[cmd] (editor, cmd);
 				});
 			bar.aborted.connect (() => { abort (editor); });
-			add_overlay (bar);
+			add_overlay (bar, OverlayMode.PANE_BOTTOM);
 			bar.show ();
 			bar.grab_focus ();
 		}
@@ -1778,7 +1778,7 @@ namespace Vanubi {
 				
 				// global keybinding
 				Keybinder.init ();
-				Keybinder.bind (manager.conf.get_global_string ("global_keybinding", "<Ctrl><Mod1>o"), () => { win.present_with_time (Keybinder.get_current_event_time ()); });
+				Keybinder.bind (manager.conf.get_global_string ("global_keybinding", "<Ctrl><Mod1>v"), () => { win.present_with_time (Keybinder.get_current_event_time ()); });
 			} 
 			try {
 				win.icon = new Gdk.Pixbuf.from_file("./data/vanubi.png");
