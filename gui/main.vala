@@ -275,6 +275,12 @@ namespace Vanubi {
 			bind_command ({ Key (Gdk.Key.Up, Gdk.ModifierType.CONTROL_MASK) }, "move-block-up");
 			execute_command["move-block-up"].connect (on_move_block);
 
+			bind_command ({ Key (Gdk.Key.Down, Gdk.ModifierType.CONTROL_MASK|Gdk.ModifierType.SHIFT_MASK) }, "select-block-down");
+			execute_command["select-block-down"].connect (on_move_block);
+
+			bind_command ({ Key (Gdk.Key.Up, Gdk.ModifierType.CONTROL_MASK|Gdk.ModifierType.SHIFT_MASK) }, "select-block-up");
+			execute_command["select-block-up"].connect (on_move_block);
+
 			bind_command ({ Key (Gdk.Key.F9, 0) }, "compile-shell");
 			index_command ("compile-shell", "Execute a shell for compiling the code", "build");
 			execute_command["compile-shell"].connect (on_compile_shell);
@@ -1130,11 +1136,12 @@ namespace Vanubi {
 			return output;
 		}
 		
-		void on_move_block(Editor ed, string command) {
+		void on_move_block (Editor ed, string command) {
 			var buf = ed.view.buffer;
 			string line = null;
 			TextIter start;
-			bool is_down = command == "move-block-down";
+			bool is_down = "down" in command;
+			bool is_select = "select" in command;
 			int direction = is_down ? 1 : -1;
 
 			buf.get_iter_at_mark (out start, buf.get_insert ());
@@ -1159,7 +1166,7 @@ namespace Vanubi {
 					TextIter iter;
 					buf.get_iter_at_mark (out iter, buf.get_insert ());
 					var old_line = iter.get_line ();
-					ed.view.move_cursor (MovementStep.DISPLAY_LINES, direction, false);
+					ed.view.move_cursor (MovementStep.DISPLAY_LINES, direction, is_select);
 					buf.get_iter_at_mark (out iter, buf.get_insert ());
 					var new_line = iter.get_line ();
 					if (old_line != new_line) {
