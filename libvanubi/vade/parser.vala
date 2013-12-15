@@ -47,6 +47,7 @@ namespace Vanubi.Vade {
 		public Expression parse_embedded (MatchInfo? regex_match = null) throws VError {
 			// Idea 1: transform each $(...) in an expression, substitute regex backreferences in it
 			// Idea 2: concatenate literal strings and expressions with concat()
+			lex.pos = 0;
 			Expression[] args = null;
 			var last_str_off = 0;
 			while (lex.pos < lex.len) {
@@ -61,7 +62,7 @@ namespace Vanubi.Vade {
 					if (lex.char == '(') {
 						// add last string to be concatenated
 						var str = lex.code.substring (last_str_off, lex.pos-last_str_off-1);
-						str = str.replace ("'", "\\'");
+						str = str.escape("\"").replace ("'", "\\'");
 						args += new StringLiteral ((owned) str);
 						
 						lex.pos++;
@@ -76,9 +77,10 @@ namespace Vanubi.Vade {
 					lex.pos++;
 				}
 			}
+			
 			// append remaining string
 			var str = lex.code.substring (last_str_off, lex.pos-last_str_off);
-			str = str.replace ("'", "\\'");
+			str = str.escape("\"").replace ("'", "\\'");
 			args += new StringLiteral ((owned) str);
 			
 			var expr = new CallExpression (new MemberAccess ("concat", null), args);
