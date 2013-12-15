@@ -3,6 +3,7 @@ NULL =
 AM_CPPFLAGS = \
 	-I$(top_srcdir) \
 	-I$(top_srcdir)/libvanubi \
+	-I$(top_srcdir)/gui/keybinder \
 	$(VANUBI_CFLAGS) \
 	$(NULL)
 
@@ -28,11 +29,12 @@ vanubi_VALASOURCES = \
 
 vanubi_SOURCES = \
 	.vanubi.vala.stamp \
+	keybinder/bind.c \
 	$(vanubi_VALASOURCES:.vala=.c) \
 	$(NULL)
 
 .vanubi.vala.stamp: $(vanubi_VALASOURCES)
-	$(VALA_V)$(VALAC) $(VANUBI_VALAFLAGS) -C --pkg vanubi --vapidir $(top_srcdir)/libvanubi $^
+	$(VALA_V)$(VALAC) $(VANUBI_VALAFLAGS) -C --pkg vanubi --vapidir $(top_srcdir)/libvanubi $(top_srcdir)/gui/keybinder/keybinder.vapi $^
 	@touch $@
 
 vanubi_LDADD = \

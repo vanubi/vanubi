@@ -1775,6 +1775,10 @@ namespace Vanubi {
 						manager.conf.save.begin ();
 						return false;
 				});
+				
+				// global keybinding
+				Keybinder.init ();
+				Keybinder.bind (manager.conf.get_global_string ("global_keybinding", "<Ctrl><Mod1>o"), () => { win.present_with_time (Keybinder.get_current_event_time ()); });
 			} 
 			try {
 				win.icon = new Gdk.Pixbuf.from_file("./data/vanubi.png");

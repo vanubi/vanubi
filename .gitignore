@@ -1,5 +1,8 @@
 *.o
-*.c
+libvanubi/*.c
+libvanubi/vade/*.c
+gui/*.c
+tests/*.c
 *~
 .deps
 *.la
