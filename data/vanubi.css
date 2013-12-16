@@ -64,6 +64,10 @@ VanubiManager VanubiStatusBar {
 	font-weight: bold;
 }
 
+VanubiManager GtkEventBox {
+    background: black;
+}
+
 VanubiManager VanubiStatusBar.error {
 	color: red;
 }
