@@ -144,7 +144,7 @@ namespace Vanubi {
 		}
 
 		private bool is_line_commented (int line) {
-			return /\s*# .+/.match(buf.line_text (line));
+			return /\s*# .*/.match(buf.line_text (line));
 		}
 
 		private int count_commented_lines (int start_line, int end_line) {
@@ -210,7 +210,7 @@ namespace Vanubi {
 		}
 
 		private bool is_line_commented (int line) {
-			return /\s*; .+/.match(buf.line_text (line));
+			return /\s*; .*/.match(buf.line_text (line));
 		}
 
 		private int count_commented_lines (int start_line, int end_line) {
