@@ -65,6 +65,22 @@ foo bar
 	assert (/# .+/.match(buffer.line_text (1)));
 }
 
+void test_hash_region () {
+	var buffer = new StringBuffer.from_text ("
+foo bar
+# asd asd
+");
+	var commenter = new Comment_Hash (buffer);
+
+	commenter.comment (buffer.line_start (1), buffer.line_start (2));
+	assert (buffer.line_text (1) == "# foo bar\n");
+	assert (buffer.line_text (2) == "# # asd asd\n");
+
+	commenter.comment (buffer.line_start (1), buffer.line_start (2));
+	assert (buffer.line_text (1) == "foo bar\n");
+	assert (buffer.line_text (2) == "# asd asd\n");
+}
+
 void test_asm () {
 	var buffer = new StringBuffer.from_text ("
 foo bar
@@ -76,13 +92,31 @@ foo bar
 	assert (/; .+/.match(buffer.line_text (1)));
 }
 
+void test_asm_region () {
+	var buffer = new StringBuffer.from_text ("
+foo bar
+; asd asd
+");
+	var commenter = new Comment_Asm (buffer);
+
+	commenter.comment (buffer.line_start (1), buffer.line_start (2));
+	assert (buffer.line_text (1) == "; foo bar\n");
+	assert (buffer.line_text (2) == "; ; asd asd\n");
+
+	commenter.comment (buffer.line_start (1), buffer.line_start (2));
+	assert (buffer.line_text (1) == "foo bar\n");
+	assert (buffer.line_text (2) == "; asd asd\n");
+}
+
 int main (string[] args) {
 	Test.init (ref args);
 
 	Test.add_func ("/comment/default", test_default);
 	Test.add_func ("/comment/default-region", test_default_region);
 	Test.add_func ("/comment/hash", test_hash);
+	Test.add_func ("/comment/hash-region", test_hash_region);
 	Test.add_func ("/comment/asm", test_asm);
+	Test.add_func ("/comment/asm-region", test_asm_region);
 
 	return Test.run ();
 }
