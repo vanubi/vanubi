@@ -142,6 +142,13 @@ namespace Vanubi {
 			index_command ("indent", "Indent the current line");
 			execute_command["indent"].connect (on_indent);
 
+			bind_command ({
+					Key (Gdk.Key.c, Gdk.ModifierType.CONTROL_MASK),
+						Key (Gdk.Key.c, Gdk.ModifierType.CONTROL_MASK) },
+				"comment-region");
+			index_command ("comment-region", "Comment region");
+			execute_command["comment-region"].connect (on_comment_region);
+
 			bind_command ({ Key (Gdk.Key.Tab, Gdk.ModifierType.CONTROL_MASK) }, "tab");
 			index_command ("tab", "Insert a tab", "deindent");
 			execute_command["tab"].connect (on_tab);
@@ -1371,6 +1378,36 @@ namespace Vanubi {
 					var viter = new UI.BufferIter (vbuf, iter);
 					indent_engine.indent (viter);
 				}
+			}
+		}
+
+		void on_comment_region (Editor ed) {
+			Comment comment_engine;
+			var vbuf = new UI.Buffer ((SourceView) ed.view);
+			var buf = (SourceBuffer) ed.view.buffer;
+			var lang_id = buf.language != null ? buf.language.id : null;
+			if (lang_id == null) {
+				comment_engine = null;
+			} else {
+				switch (lang_id) {
+				case "assembly (intel)":
+				case "i386 assembly":
+					comment_engine = new Comment_Asm (vbuf);
+					break;
+				case "makefile":
+				case "python":
+					comment_engine = new Comment_Hash (vbuf);;
+					break;
+				default:
+					comment_engine = new Comment_Default (vbuf);
+					break;
+				}
+			}
+
+			if (comment_engine != null) {
+				var iter_start = vbuf.line_start(selection_start.get_line());
+				var iter_end = vbuf.line_start(selection_end.get_line());
+				comment_engine.comment (iter_start, iter_end);
 			}
 		}
 
