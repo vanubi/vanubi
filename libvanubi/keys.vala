@@ -137,10 +137,9 @@ namespace Vanubi {
 				current_key = key_root;
 				if (old_key != null && old_key.command != null) {
 					deleg (subject, old_key.command);
-					handled = true;
 					if (old_key != key_root) {
 						// this might be a new command, retry from root
-						key_press (subject, pressed);
+						handled = key_press (subject, pressed);
 					}
 				}
 				return handled;
