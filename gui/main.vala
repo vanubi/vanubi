@@ -1410,6 +1410,9 @@ namespace Vanubi {
 				case "python":
 					comment_engine = new Comment_Hash (vbuf);;
 					break;
+				case "lua":
+					comment_engine = new Comment_Lua (vbuf);;
+					break;
 				default:
 					comment_engine = new Comment_Default (vbuf);
 					break;
