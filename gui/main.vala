@@ -166,6 +166,10 @@ namespace Vanubi {
 			bind_command ({ Key (')', Gdk.ModifierType.SHIFT_MASK) }, "close-paren");
 			execute_command["close-paren"].connect (on_close_paren);
 
+			bind_command ({ Key (Gdk.Key.c, Gdk.ModifierType.CONTROL_MASK) }, "copy");
+			index_command ("copy", "Copy text to clipboard");
+			execute_command["copy"].connect (on_copy);
+
 			bind_command ({ Key (Gdk.Key.x, Gdk.ModifierType.CONTROL_MASK) }, "cut");
 			index_command ("cut", "Cut text to clipboard");
 			execute_command["cut"].connect (on_cut);
@@ -1052,6 +1056,10 @@ namespace Vanubi {
 
 		void on_quit (Editor ed) {
 			ask_save_modified_editors.begin (ed);
+		}
+
+		void on_copy (Editor ed) {
+			ed.view.copy_clipboard ();
 		}
 
 		void on_cut (Editor ed) {
