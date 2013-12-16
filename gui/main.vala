@@ -1778,7 +1778,7 @@ namespace Vanubi {
 				
 				// global keybinding
 				Keybinder.init ();
-				Keybinder.bind (manager.conf.get_global_string ("global_keybinding", "<Ctrl><Mod1>v"), () => { win.present_with_time (Keybinder.get_current_event_time ()); });
+				Keybinder.bind (manager.conf.get_global_string ("global_keybinding", "<Ctrl><Mod1>v"), () => { focus_window (win); });
 			} 
 			try {
 				win.icon = new Gdk.Pixbuf.from_file("./data/vanubi.png");
@@ -1795,6 +1795,23 @@ namespace Vanubi {
 			return win;
 		}
 
+		void focus_window (Window w) {
+			// update wnck
+			var wnscreen = Wnck.Screen.get_default ();
+			wnscreen.force_update ();
+			
+			// get wnck window
+			var xid = Gdk.X11Window.get_xid (w.get_window());
+			weak Wnck.Window wnw = Wnck.Window.get (xid);
+			if (wnw != null) {
+				wnw.get_workspace().activate (Keybinder.get_current_event_time ());
+				wnw.activate (Keybinder.get_current_event_time ());
+			} else {
+				// fallback, we cnanot switch workspace though
+				w.present_with_time (Keybinder.get_current_event_time ());
+			}
+		}
+		
 		public override void open (File[] files, string hint) {
 			var win = get_active_window ();
 			if (win == null) {

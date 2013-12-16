@@ -55,7 +55,7 @@ AC_SUBST(GLIB_PREFIX)
 VALA_CHECK_MODULES(LIBVANUBI, [gio-2.0 gio-unix-2.0])
 LIBVANUBI_VALAFLAGS="$LIBVANUBI_VALAFLAGS --target-glib 2.32"
 
-VALA_CHECK_MODULES(VANUBI, [gtk+-3.0 gio-unix-2.0 gtksourceview-3.0 vte-2.90])
+VALA_CHECK_MODULES(VANUBI, [gtk+-3.0 gio-unix-2.0 gtksourceview-3.0 vte-2.90 gdk-x11-3.0 libwnck-3.0])
 dnl We ignore GTK_3_10_*
 PKG_CHECK_MODULES(GTK_3_10, [gtk+-3.0 >= 3.10],
 				  [VANUBI_VALAFLAGS="$VANUBI_VALAFLAGS -D GTK_3_10"],
