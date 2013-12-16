@@ -49,8 +49,13 @@ VanubiGrepView {
 }
 
 VanubiManager {
-	color: white;
 	background: black;
+	color: white;
+}
+
+VanubiManager VanubiCompletionBarCompletionBox {
+	background: black;
+	color: white;
 }
 
 VanubiManager VanubiStatusBar {
