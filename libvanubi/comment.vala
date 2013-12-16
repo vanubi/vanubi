@@ -267,4 +267,72 @@ namespace Vanubi {
 			}
 		}
 	}
+
+	public class Comment_Lua : Comment {
+		Buffer buf;
+
+		public Comment_Lua (Buffer buf) {
+			this.buf = buf;
+		}
+
+		private bool is_line_commented (int line) {
+			/* XXX: evaluate support "---" commenting */
+			return /\s*-- .*/.match(buf.line_text (line));
+		}
+
+		private int count_commented_lines (int start_line, int end_line) {
+			var count = 0;
+			for (var i=start_line; i<=end_line; i++) {
+				if (is_line_commented (i)) {
+					count++;
+				}
+			}
+			return count;
+		}
+
+		private void comment_line (int line) {
+			var iter = buf.line_start (line);
+			iter.forward_spaces ();
+			buf.insert (iter, "-- ");
+		}
+
+		private void decomment_line (int line) {
+			if (is_line_commented (line)) {
+				var iter = buf.line_start (line);
+				iter.forward_spaces ();
+				var del_iter = iter.copy ();
+				iter.forward_char (); /* Skip '-' */
+				iter.forward_char (); /* Skip '-' */
+				iter.forward_char (); /* Skip ' ' */
+				buf.delete (del_iter, iter);
+			}
+		}
+
+		public override void comment (BufferIter start_iter, BufferIter end_iter) {
+			var start_line = start_iter.line;
+			var end_line = end_iter.line;
+			var tot_lines = (end_line - start_line) + 1;
+			if (tot_lines < 0) { /* Invalid region */
+				warning ("Invalid comment region [%d]", tot_lines);
+				return;
+			} else if (tot_lines == 1) { /* Commenting single line */
+				if (is_line_commented (start_line)) {
+					decomment_line (start_line);
+				} else {
+					comment_line (start_line);
+				}
+			} else { /* Commenting region */
+				var commented_lines = count_commented_lines (start_iter.line, end_iter.line);
+				if (commented_lines == tot_lines) { /* Decomment all */
+					for (var i=start_line; i<=end_line; i++) {
+						decomment_line (i);
+					}
+				} else { /* Comment all and escape already commented lines */
+					for (var i=start_line; i<=end_line; i++) {
+						comment_line (i);
+					}
+				}
+			}
+		}
+	}
 }

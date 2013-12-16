@@ -22,6 +22,12 @@ void comment_asm (Buffer buffer, int line) {
 	commenter.comment (iter, iter);
 }
 
+void comment_lua (Buffer buffer, int line) {
+	var commenter = new Comment_Lua (buffer);
+	var iter = buffer.line_start (line);
+	commenter.comment (iter, iter);
+}
+
 void test_default () {
 	var buffer = new StringBuffer.from_text ("
 foo bar
@@ -111,6 +117,33 @@ foo bar
 	assert (buffer.line_text (2) == "; asd asd\n");
 }
 
+void test_lua () {
+	var buffer = new StringBuffer.from_text ("
+foo bar
+");
+	comment_lua (buffer, 0);
+	assert (/-- .*/.match(buffer.line_text (0)));
+
+	comment_lua (buffer, 1);
+	assert (/-- .+/.match(buffer.line_text (1)));
+}
+
+void test_lua_region () {
+	var buffer = new StringBuffer.from_text ("
+foo bar
+-- asd asd
+");
+	var commenter = new Comment_Lua (buffer);
+
+	commenter.comment (buffer.line_start (1), buffer.line_start (2));
+	assert (buffer.line_text (1) == "-- foo bar\n");
+	assert (buffer.line_text (2) == "-- -- asd asd\n");
+
+	commenter.comment (buffer.line_start (1), buffer.line_start (2));
+	assert (buffer.line_text (1) == "foo bar\n");
+	assert (buffer.line_text (2) == "-- asd asd\n");
+}
+
 int main (string[] args) {
 	Test.init (ref args);
 
@@ -120,6 +153,8 @@ int main (string[] args) {
 	Test.add_func ("/comment/hash-region", test_hash_region);
 	Test.add_func ("/comment/asm", test_asm);
 	Test.add_func ("/comment/asm-region", test_asm_region);
+	Test.add_func ("/comment/lua", test_lua);
+	Test.add_func ("/comment/lua-region", test_lua_region);
 
 	return Test.run ();
 }
