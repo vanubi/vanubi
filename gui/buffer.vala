@@ -73,6 +73,12 @@ namespace Vanubi.UI {
 			iter.forward_to_line_end ();
 			return new BufferIter (this, iter);
 		}
+		
+		public override Vanubi.BufferIter line_at_offset (int line, int line_offset) {
+			Gtk.TextIter iter;
+			buf.get_iter_at_line_offset (out iter, line, line_offset);
+			return new BufferIter (this, iter);
+		}
 
 		// only on a single line
 		public override void insert (Vanubi.BufferIter iter, string text) {

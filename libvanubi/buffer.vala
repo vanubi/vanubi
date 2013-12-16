@@ -22,6 +22,7 @@ namespace Vanubi {
 		public virtual IndentMode indent_mode { get; set; default = IndentMode.TABS; }
 		public abstract BufferIter line_start (int line);
 		public abstract BufferIter line_end (int line);
+		public abstract BufferIter line_at_offset (int line, int line_offset);
 		public abstract void insert (BufferIter iter, string text);
 		public abstract void delete (BufferIter start, BufferIter end);
 		public abstract string line_text (int line);
@@ -150,6 +151,10 @@ namespace Vanubi {
 		public override BufferIter line_end (int line) {
 			unowned string l = lines[line];
 			return new StringBufferIter (this, line, l.length-1);
+		}
+		
+		public override BufferIter line_at_offset (int line, int line_offset) {
+			return new StringBufferIter (this, line, line_offset);
 		}
 
 		// only on a single line
