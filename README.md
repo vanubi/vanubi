@@ -55,7 +55,7 @@ Partial list of key bindings
 |C-x 3    |        split horizontally (one editor left, one right)  
 |TAB       |       Indent current line  
 |F9         |      Run compile command  
-|C-c C-c     |     Comment a region [not implemented yet!]  
+|C-c C-c     |     Comment a region  
 |C-x C-x      |    Exec shell command [not implemented yet!]  
 |C-n           |   Go to next line  
 |C-p            |  Go to previous line  
