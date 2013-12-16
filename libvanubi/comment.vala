@@ -37,7 +37,7 @@ namespace Vanubi {
 		private int count_commented_lines (int start_line, int end_line) {
 			var count = 0;
 			for (var i=start_line; i<=end_line; i++) {
-				if (is_line_commented (i)) {
+				if (is_line_commented (i) || buf.empty_line(i)) {
 					count++;
 				}
 			}
@@ -122,7 +122,7 @@ namespace Vanubi {
 					comment_line (start_line);
 				}
 			} else { /* Commenting region */
-				var commented_lines = count_commented_lines (start_iter.line, end_iter.line);
+				var commented_lines = count_commented_lines (start_line, end_line);
 				if (commented_lines == tot_lines) { /* Decomment all */
 					for (var i=start_line; i<=end_line; i++) {
 						decomment_line (i);

@@ -42,16 +42,19 @@ void test_default_region () {
 	var buffer = new StringBuffer.from_text ("
 foo bar
 /* asd asd */
+   
 ");
 	var commenter = new Comment_Default (buffer);
 
-	commenter.comment (buffer.line_start (1), buffer.line_start (2));
+	commenter.comment (buffer.line_start (1), buffer.line_start (3));
 	assert (/\/\* .+ \*\//.match(buffer.line_text (1)));
 	assert (buffer.line_text (2) == "/* \\/* asd asd *\\/ */\n");
+	assert (buffer.line_text (3) == "   \n");
 
-	commenter.comment (buffer.line_start (1), buffer.line_start (2));
+	commenter.comment (buffer.line_start (1), buffer.line_start (3));
 	assert (buffer.line_text (1) == "foo bar\n");
 	assert (buffer.line_text (2) == "/* asd asd */\n");
+	assert (buffer.line_text (3) == "   \n");
 }
 
 void test_hash () {
