@@ -354,13 +354,18 @@ namespace Vanubi {
 			try {
 				bool first_load = true;
 				
-				var data = new uint8[1];
+				var data = new uint8[4096];
 				while (true) {
-					var r = yield is.read_async (data, Priority.LOW, cancellable);
+					ssize_t r;
+					if (first_load) { // first loads sync
+						r = is.read (data, cancellable);
+					} else {
+						r = yield is.read_async (data, Priority.LOW, cancellable);
+					}
 					if (r == 0) {
 						break;
 					}
-					
+
 					TextIter iter;
 					buf.get_end_iter (out iter);
 					buf.begin_not_undoable_action ();
@@ -371,10 +376,8 @@ namespace Vanubi {
 					
 					if (first_load) {
 						first_load = false;
-						TextIter start;
-						buf.get_start_iter (out start);
-						buf.place_cursor (start);
-						data = new uint8[4096];
+						buf.get_iter_at_mark (out iter, buf.get_insert ());
+						buf.place_cursor (iter);
 					}
 				}
 			} finally {

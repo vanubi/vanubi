@@ -567,8 +567,10 @@ namespace Vanubi {
 				if (location.start_line < 0) {
 					location.start_line = location.start_column = 0;
 				}
-				if (ed.set_location (location)) {
-					Idle.add (() => { ed.view.scroll_to_mark (buf.get_insert (), 0, true, 0.5, 0.5); return false; });
+				if (!(location.start_line == 0 && location.start_column == 0)) {
+					if (ed.set_location (location)) {
+						Idle.add (() => { ed.view.scroll_to_mark (buf.get_insert (), 0, true, 0.5, 0.5); return false; });
+					}
 				}
 			} catch (IOError.CANCELLED e) {
 			} catch (Error e) {
