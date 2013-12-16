@@ -146,6 +146,10 @@ namespace Vanubi {
 					Key (Gdk.Key.c, Gdk.ModifierType.CONTROL_MASK),
 						Key (Gdk.Key.c, Gdk.ModifierType.CONTROL_MASK) },
 				"comment-region");
+			bind_command ({
+					Key (Gdk.Key.c, Gdk.ModifierType.CONTROL_MASK),
+						Key (Gdk.Key.Return, Gdk.ModifierType.CONTROL_MASK) },
+				"comment-region");
 			index_command ("comment-region", "Comment region");
 			execute_command["comment-region"].connect (on_comment_region);
 
