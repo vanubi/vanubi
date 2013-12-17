@@ -376,7 +376,7 @@ namespace Vanubi {
 					
 					if (first_load) {
 						first_load = false;
-						buf.get_iter_at_mark (out iter, buf.get_insert ());
+						buf.get_start_iter (out iter);
 						buf.place_cursor (iter);
 					}
 				}
