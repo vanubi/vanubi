@@ -154,21 +154,21 @@ namespace Vanubi {
 			execute_command["comment-region"].connect (on_comment_region);
 
 			bind_command ({ Key (Gdk.Key.Tab, Gdk.ModifierType.CONTROL_MASK) }, "tab");
-			index_command ("tab", "Insert a tab", "deindent");
-			execute_command["tab"].connect (on_tab);
+			index_command ("tab", "Insert a tab");
+			execute_command["tab"].connect (on_insert_simple);
 
 			bind_command ({ Key (Gdk.Key.Return, 0) }, "return");
 			bind_command ({ Key (Gdk.Key.Return, Gdk.ModifierType.SHIFT_MASK) }, "return");
-			execute_command["return"].connect (on_return);
+			execute_command["return"].connect (on_insert_simple);
 
 			bind_command ({ Key ('}', Gdk.ModifierType.SHIFT_MASK) }, "close-curly-brace");
-			execute_command["close-curly-brace"].connect (on_close_curly_brace);
+			execute_command["close-curly-brace"].connect (on_insert_simple);
 
 			bind_command ({ Key (']', Gdk.ModifierType.SHIFT_MASK) }, "close-square-brace");
-			execute_command["close-square-brace"].connect (on_close_square_brace);
+			execute_command["close-square-brace"].connect (on_insert_simple);
 
 			bind_command ({ Key (')', Gdk.ModifierType.SHIFT_MASK) }, "close-paren");
-			execute_command["close-paren"].connect (on_close_paren);
+			execute_command["close-paren"].connect (on_insert_simple);
 
 			bind_command ({ Key (Gdk.Key.c, Gdk.ModifierType.CONTROL_MASK) }, "copy");
 			index_command ("copy", "Copy text to clipboard");
@@ -1291,57 +1291,32 @@ namespace Vanubi {
 			buf.end_user_action ();
 		}
 
-		void on_return (Editor ed) {
+		void on_insert_simple (Editor ed, string command) {
 			var buf = ed.view.buffer;
 			buf.begin_user_action ();		
+			
 			buf.delete_selection (true, true);
-			buf.insert_at_cursor ("\n", -1);
+			
+			if (command == "return") {
+				buf.insert_at_cursor ("\n", -1);
+			} else if (command == "close-paren") {
+				buf.insert_at_cursor (")", -1);
+			} else if (command == "close-curly-brace") {
+				buf.insert_at_cursor ("}", -1);
+			} else if (command == "close-square-brace") {
+				buf.insert_at_cursor ("]", -1);
+			} else if (command == "tab") {
+				buf.insert_at_cursor ("\t", -1);
+			}
+			
 			ed.view.scroll_mark_onscreen (buf.get_insert ());
 			update_selection (ed);
-			execute_command["indent"] (ed, "indent");
-			buf.end_user_action ();
-		}
-
-		void on_tab (Editor ed) {
-			var buf = ed.view.buffer;
-			buf.begin_user_action ();		
-			buf.delete_selection (true, true);
-			buf.insert_at_cursor ("\t", -1);
-			update_selection (ed);
-			ed.view.scroll_mark_onscreen (buf.get_insert ());
-			buf.end_user_action ();
-		}
-
-		void on_close_curly_brace (Editor ed) {
-			var buf = ed.view.buffer;
-			buf.begin_user_action ();		
-			buf.delete_selection (true, true);
-			buf.insert_at_cursor ("}", -1);
-			ed.view.scroll_mark_onscreen (buf.get_insert ());
-			update_selection (ed);
-			execute_command["indent"] (ed, "indent");
-			buf.end_user_action ();
-		}
-
-		void on_close_square_brace (Editor ed) {
-			var buf = ed.view.buffer;
-			buf.begin_user_action ();		
-			buf.delete_selection (true, true);
-			buf.insert_at_cursor ("]", -1);
-			ed.view.scroll_mark_onscreen (buf.get_insert ());
-			update_selection (ed);
-			execute_command["indent"] (ed, "indent");
-			buf.end_user_action ();
-		}
-
-		void on_close_paren (Editor ed) {
-			var buf = ed.view.buffer;
-			buf.begin_user_action ();		
-			buf.delete_selection (true, true);
-			buf.insert_at_cursor (")", -1);
-			ed.view.scroll_mark_onscreen (buf.get_insert ());
-			update_selection (ed);
-			execute_command["indent"] (ed, "indent");
+			
+			var indent_engine = get_indent_engine (ed);
+			if (indent_engine != null) {
+				execute_command["indent"] (ed, "indent");
+			}
+			
 			buf.end_user_action ();
 		}
 
@@ -1355,35 +1330,40 @@ namespace Vanubi {
 			buf.delete (ref insert_iter, ref next_iter);
 		}
 		
-		void on_indent (Editor ed) {
-			Indent indent_engine;
+		Indent? get_indent_engine (Editor ed) {
 			var vbuf = new UI.Buffer ((SourceView) ed.view);
 			var buf = (SourceBuffer) ed.view.buffer;
 			var lang_id = buf.language != null ? buf.language.id : null;
+			
 			if (lang_id == null) {
-				indent_engine = null;
+				return null;
 			} else {
 				switch (lang_id) {
 				case "assembly (intel)":
 				case "i386 assembly":
-					indent_engine = new Indent_Asm (vbuf);
-					break;
+					return new Indent_Asm (vbuf);
 				case "makefile":
-					indent_engine = null;
-					break;
+					return null;
 				default:
-					indent_engine = new Indent_C (vbuf);
-					break;
+					return new Indent_C (vbuf);
 				}
 			}
-			
+		}
+		
+		void on_indent (Editor ed) {
+			var indent_engine = get_indent_engine (ed);
+			var vbuf = indent_engine.buffer;
+			var buf = (SourceBuffer) ed.view.buffer;
+
 			if (indent_engine == null) {
+				// insert a tab
 				buf.begin_user_action ();		
 				buf.delete_selection (true, true);
 				buf.insert_at_cursor ("\t", -1);
 				ed.view.scroll_mark_onscreen (buf.get_insert ());
 				buf.end_user_action ();
 			} else {
+				// indent every selected line
 				var min_line = int.min (selection_start.get_line(), selection_end.get_line());
 				var max_line = int.max (selection_start.get_line(), selection_end.get_line());
 				for (var line=min_line; line <= max_line; line++) {
@@ -1394,7 +1374,7 @@ namespace Vanubi {
 				}
 			}
 		}
-
+		
 		void on_comment_region (Editor ed) {
 			Comment comment_engine;
 			var vbuf = new UI.Buffer ((SourceView) ed.view);
@@ -1866,7 +1846,7 @@ namespace Vanubi {
 				wnw.get_workspace().activate (Keybinder.get_current_event_time ());
 				wnw.activate (Keybinder.get_current_event_time ());
 			} else {
-				// fallback, we cnanot switch workspace though
+				// fallback, we cannot switch workspace though
 				w.present_with_time (Keybinder.get_current_event_time ());
 			}
 		}

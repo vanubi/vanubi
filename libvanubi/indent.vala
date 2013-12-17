@@ -24,6 +24,7 @@ namespace Vanubi {
 	}
 
 	public abstract class Indent {
+		public Buffer buffer { get; protected set; }
 		public abstract void indent (BufferIter iter);
 	}
 
@@ -31,7 +32,7 @@ namespace Vanubi {
 		Buffer buf;
 
 		public Indent_C (Buffer buf) {
-			this.buf = buf;
+			this.buffer = this.buf = buf;
 		}
 
 		bool is_char (BufferIter iter) {
@@ -212,7 +213,7 @@ namespace Vanubi {
 		Buffer buf;
 
 		public Indent_Asm (Buffer buf) {
-			this.buf = buf;
+			this.buffer = this.buf = buf;
 		}
 
 		public override void indent (BufferIter indent_iter) {
