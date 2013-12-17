@@ -346,6 +346,7 @@ namespace Vanubi {
 			
 			var buf = (SourceBuffer) view.buffer;
 			reset_language ();
+			buf.set_text ("", -1);
 			buf.set_modified (false);
 			reset_external_changed ();
 			
