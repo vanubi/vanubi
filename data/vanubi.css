@@ -41,6 +41,7 @@ VanubiBar GtkEntry.error {
 
 VanubiCompletionBarCompletionBox GtkLabel {
 	padding: 2px 6px 2px 6px;
+	color: white;
 }
 
 VanubiGrepView {
