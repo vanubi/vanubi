@@ -693,7 +693,6 @@ namespace Vanubi {
 					// store editors in the File itself
 					file.set_data ("editors", (owned) etors);
 					// save session for the new opened file
-					save_session (file);
 				} else {
 					// get the editors of the file
 					editors = f.get_data ("editors");
@@ -728,14 +727,15 @@ namespace Vanubi {
 		}
 
 		/* Session */
-		public void save_session (File? focused) {
+		public void save_session (Editor ed) {
 			var session = new Session ();
 			each_file ((f) => {
 					session.files.add (f);
 					return true;
 			}, false);
-			session.focused_file = focused;
+			session.location = ed.get_location ();
 			conf.save_session (session);
+			conf.save.begin ();
 		}
 		
 		/* events */
@@ -796,14 +796,15 @@ namespace Vanubi {
 
 		void on_restore_session (Editor editor) {
 			var session = last_session;
+			File? focused_file = session.location != null ? session.location.file : null;
 			foreach (var file in session.files.data) {
-				open_file (editor, file, false);
+				if (focused_file == null || !file.equal (focused_file)) {
+					open_file (editor, file, false);
+				}
 			}
-			
-			if (session.focused_file != null) {
-				unowned Editor ed = get_available_editor (session.focused_file);
-				replace_widget (editor, ed);
-				ed.grab_focus ();
+
+			if (session.location != null) {
+				open_location (editor, session.location);
 			}
 		}
 		

@@ -20,7 +20,7 @@
 namespace Vanubi {
 	public class Session {
 		public GenericArray<File> files = new GenericArray<File> ();
-		public File? focused_file;
+		public Location? location;
 	}
 	
 	public class Configuration {
@@ -54,7 +54,7 @@ namespace Vanubi {
 		public void migrate (int from_version) {
 		}
 		
-		public int get_group_int (string group, string key, int default) {
+		public int get_group_int (string group, string key, int default = 0) {
 			try {
 				if (backend.has_group (group) && backend.has_key (group, key)) {
 					return backend.get_integer (group, key);
@@ -142,8 +142,10 @@ namespace Vanubi {
 		public void save_session (Session session, string name = "default") {
 			var group = "session:"+name;
 			remove_group (group);
-			if (session.focused_file != null) {
-				set_group_string (group, "focused_file", session.focused_file.get_uri ());
+			if (session.location != null && session.location.file != null) {
+				set_group_string (group, "focused_file", session.location.file.get_uri ());
+				set_group_int (group, "focused_line", session.location.start_line);
+				set_group_int (group, "focused_column", session.location.start_column);
 			}
 			for (var i=0; i < session.files.length; i++) {
 				set_group_string (group, "file"+(i+1).to_string(), session.files[i].get_uri ());
@@ -155,7 +157,10 @@ namespace Vanubi {
 			var session = new Session ();
 			if (backend.has_group (group)) {
 				if (has_group_key (group, "focused_file")) {
-					session.focused_file = File.new_for_uri (get_group_string (group, "focused_file"));
+					var file = File.new_for_uri (get_group_string (group, "focused_file"));
+					session.location = new Location<void*> (file,
+															get_group_int (group, "focused_line"),
+															get_group_int (group, "focused_column"));
 				}
 				foreach (var key in get_group_keys (group)) {
 					if (key.has_prefix ("file")) {

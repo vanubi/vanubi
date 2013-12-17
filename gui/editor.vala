@@ -273,7 +273,7 @@ namespace Vanubi {
 		
 		public override void grab_focus () {
 			view.grab_focus ();
-			manager.save_session (file); // changed focused 
+			manager.save_session (this); // changed focused 
 		}
 
 		public string get_editor_name () {
@@ -304,6 +304,15 @@ namespace Vanubi {
 			}
 		}
 
+		public Location get_location () {
+			TextIter iter;
+			view.buffer.get_iter_at_mark (out iter, view.buffer.get_insert ());
+			var loc = new Location<void*> (file,
+										   iter.get_line (),
+										   iter.get_line_offset ());
+			return loc;
+		}
+		
 		// Returns true if location changed
 		public bool set_location (Location location) {
 			// set specific location
@@ -417,6 +426,9 @@ namespace Vanubi {
 			}
 
 			file_count.set_label ("(%d, %d)".printf (line+1, column+1));
+			
+			// update current location
+			manager.save_session (this);
 		}
 
 		void on_modified_changed () {
