@@ -158,6 +158,13 @@ namespace Vanubi {
 			attach_next_to (sw, entry, PositionType.TOP, 1, 1);
 		}
 
+		public override void dispose () {
+			if (cancellable != null) {
+				cancellable.cancel ();
+			}
+			base.dispose ();
+		}
+		
 		protected override void on_activate () {
 			TextIter insert, start, end;
 			view.buffer.get_iter_at_mark (out insert, view.buffer.get_insert ());
@@ -221,9 +228,10 @@ namespace Vanubi {
 					// write
 					TextIter iter;
 					view.buffer.get_end_iter (out iter);
-					yield ((GrepBuffer) view.buffer).insert_text_colored (iter, (string) buffer, (int) read, cancellable);
-					// restore cursor position
 					cancellable.set_error_if_cancelled ();
+					yield ((GrepBuffer) view.buffer).insert_text_colored (iter, (string) buffer, (int) read, cancellable);
+					cancellable.set_error_if_cancelled ();
+					// restore cursor position
 					view.buffer.get_iter_at_offset (out insert, offset);
 					view.buffer.place_cursor (insert);
 				}
