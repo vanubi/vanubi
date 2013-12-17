@@ -57,12 +57,15 @@ namespace Vanubi {
 		StatusBar statusbar;
 		uint status_timeout;
 		string status_context;
+		
+		Session last_session;
 
 		public Manager () {
 			conf = new Configuration ();
 			orientation = Orientation.VERTICAL;
 			keymanager = new KeyManager<Editor> (conf, on_command);
 			base_scope = Vade.create_base_scope ();
+			last_session = conf.get_session ();
 
 			// placeholder for the editors grid
 			main_box = new EventBox();
@@ -351,8 +354,8 @@ namespace Vanubi {
 			index_command ("prev-error", "Jump to previous error in the compilation shell");
 			execute_command["prev-error"].connect (on_goto_error);
 
-			/* index_command ("restore-session", "Open the files of the last session"); */
-			/* execute_command["restore-session"].connect (on_restore_session); */
+			index_command ("restore-session", "Open the files of the last session");
+			execute_command["restore-session"].connect (on_restore_session);
 
 			// setup empty buffer
 			unowned Editor ed = get_available_editor (null);
@@ -524,11 +527,11 @@ namespace Vanubi {
 			assert_not_reached ();
 		}
 
-		public void open_file (Editor editor, File file) {
-			open_location.begin (editor, new Location<void*> (file));
+		public void open_file (Editor editor, File file, bool focus = true) {
+			open_location.begin (editor, new Location<void*> (file), focus);
 		}
 		
-		public async void open_location (Editor editor, Location location) {
+		public async void open_location (Editor editor, Location location, bool focus = true) {
 			var file = location.file;
 
 			// first search already opened files
@@ -537,7 +540,9 @@ namespace Vanubi {
 				unowned Editor ed;
 				if (f != editor.file) {
 					ed = get_available_editor (f);
-					replace_widget (editor, ed);
+					if (focus) {
+						replace_widget (editor, ed);
+					}
 				} else {
 					ed = editor;
 				}
@@ -545,15 +550,20 @@ namespace Vanubi {
 				if (ed.set_location (location)) {
 					Idle.add (() => { ed.view.scroll_to_mark (ed.view.buffer.get_insert (), 0, true, 0.5, 0.5); return false; });
 				}
-				ed.grab_focus ();
+				
+				if (focus) {
+					ed.grab_focus ();
+				}
 				return;
 			}
 
 			// if the file doesn't exist, don't try to read it
 			if (!file.query_exists ()) {
 				unowned Editor ed = get_available_editor (file);
-				replace_widget (editor, ed);
-				ed.grab_focus ();
+				if (focus) {
+					replace_widget (editor, ed);
+					ed.grab_focus ();
+				}
 				return;
 			}
 
@@ -561,8 +571,10 @@ namespace Vanubi {
 			try {
 				var is = yield file.read_async ();
 				var ed = get_available_editor (file);
-				replace_widget (editor, ed);
-				ed.grab_focus ();
+				if (focus) {
+					replace_widget (editor, ed);
+					ed.grab_focus ();
+				}
 
 				yield ed.replace_contents (is);
 				
@@ -684,7 +696,7 @@ namespace Vanubi {
 					save_session (file);
 				} else {
 					// get the editors of the file
-					editors = file.get_data ("editors");
+					editors = f.get_data ("editors");
 				}
 			}
 
@@ -780,6 +792,19 @@ namespace Vanubi {
 			add_overlay (bar, OverlayMode.PANE_BOTTOM);
 			bar.show ();
 			bar.grab_focus ();
+		}
+
+		void on_restore_session (Editor editor) {
+			var session = last_session;
+			foreach (var file in session.files.data) {
+				open_file (editor, file, false);
+			}
+			
+			if (session.focused_file != null) {
+				unowned Editor ed = get_available_editor (session.focused_file);
+				replace_widget (editor, ed);
+				ed.grab_focus ();
+			}
 		}
 		
 		void on_set_language (Editor editor) {
