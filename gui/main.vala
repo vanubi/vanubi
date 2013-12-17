@@ -907,13 +907,10 @@ namespace Vanubi {
 		}
 
 		void on_kill_buffer (Editor editor) {
-			unowned File next_file = null;
-			foreach (unowned File f in files.get_keys ()) {
-				if (f != editor.file) {
-					next_file = f;
-					break;
-				}
-			}
+			var files = editor.editor_container.get_files ();
+			// get next lru file
+			unowned File next_file = files[0];
+
 			GenericArray<Editor> editors;
 			if (editor.file == null) {
 				editors = scratch_editors;
