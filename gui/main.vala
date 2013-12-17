@@ -1352,7 +1352,7 @@ namespace Vanubi {
 			update_selection (ed);
 			
 			var indent_engine = get_indent_engine (ed);
-			if (indent_engine != null) {
+			if (indent_engine != null && command != "tab") {
 				execute_command["indent"] (ed, "indent");
 			}
 			
