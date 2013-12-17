@@ -18,6 +18,11 @@
  */
 
 namespace Vanubi {
+	public class Session {
+		public GenericArray<File> files = new GenericArray<File> ();
+		public File? focused_file;
+	}
+	
 	public class Configuration {
 		KeyFile backend;
 		File file;
@@ -104,7 +109,22 @@ namespace Vanubi {
 				return false;
 			}
 		}
+		
+		public string[]? get_group_keys (string group) {
+			try {
+				return backend.get_keys (group);
+			} catch (Error e) {
+				return null;
+			}
+		}
 
+		public void remove_group (string group) {
+			try {
+				backend.remove_group (group);
+			} catch (Error e) {
+			}
+		}
+		
 		/* Global */
 		public string get_global_string (string key, string? default = null) {
 			return get_group_string ("Global", key, default);
@@ -118,6 +138,34 @@ namespace Vanubi {
 			set_group_int ("Global", key, value);
 		}
 
+		/* Session */
+		public void save_session (Session session, string name = "default") {
+			var group = "session:"+name;
+			remove_group (group);
+			if (session.focused_file != null) {
+				set_group_string (group, "focused_file", session.focused_file.get_uri ());
+			}
+			for (var i=0; i < session.files.length; i++) {
+				set_group_string (group, "file"+(i+1).to_string(), session.files[i].get_uri ());
+			}
+		}
+		
+		public Session get_session (string name = "default") {
+			var group = "session:"+name;
+			var session = new Session ();
+			if (backend.has_group (group)) {
+				if (has_group_key (group, "focused_file")) {
+					session.focused_file = File.new_for_uri (get_group_string (group, "focused_file"));
+				}
+				foreach (var key in get_group_keys (group)) {
+					if (key.has_prefix ("file")) {
+						session.files.add (File.new_for_uri (get_group_string (group, key)));
+					}
+				}
+			}
+			return session;
+		}
+		
 		/* Editor */
 		public int get_editor_int (string key, int default = 0) {
 			return get_group_int ("Editor", key, default);

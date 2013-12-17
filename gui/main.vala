@@ -351,6 +351,9 @@ namespace Vanubi {
 			index_command ("prev-error", "Jump to previous error in the compilation shell");
 			execute_command["prev-error"].connect (on_goto_error);
 
+			/* index_command ("restore-session", "Open the files of the last session"); */
+			/* execute_command["restore-session"].connect (on_restore_session); */
+
 			// setup empty buffer
 			unowned Editor ed = get_available_editor (null);
 			var container = new EditorContainer (ed);
@@ -677,6 +680,8 @@ namespace Vanubi {
 					editors = etors;
 					// store editors in the File itself
 					file.set_data ("editors", (owned) etors);
+					// save session for the new opened file
+					save_session (file);
 				} else {
 					// get the editors of the file
 					editors = file.get_data ("editors");
@@ -690,7 +695,7 @@ namespace Vanubi {
 				}
 			}
 			// no editor reusable, so create one
-			var ed = new Editor (conf, file);
+			var ed = new Editor (this, conf, file);
 			// set the font according to the user/system configuration
 			var system_size = ed.view.style.font_desc.get_size () / Pango.SCALE;
 			ed.view.override_font (Pango.FontDescription.from_string ("Monospace %d".printf (conf.get_editor_int ("font_size", system_size))));
@@ -710,6 +715,17 @@ namespace Vanubi {
 			return ret;
 		}
 
+		/* Session */
+		public void save_session (File? focused) {
+			var session = new Session ();
+			each_file ((f) => {
+					session.files.add (f);
+					return true;
+			}, false);
+			session.focused_file = focused;
+			conf.save_session (session);
+		}
+		
 		/* events */
 
 		bool on_key_press_event (Widget w, Gdk.EventKey e) {

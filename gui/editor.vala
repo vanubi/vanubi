@@ -137,6 +137,7 @@ namespace Vanubi {
 	}
 	
 	public class Editor : Grid {
+		weak Manager manager;
 		Configuration conf;
 		public File file { get; private set; }
 		public SourceView view { get; private set; }
@@ -151,7 +152,8 @@ namespace Vanubi {
 		int old_selection_end_offset = -1;
 		FileMonitor monitor;
 
-		public Editor (Configuration conf, File? file) {
+		public Editor (Manager manager, Configuration conf, File? file) {
+			this.manager = manager;
 			this.file = file;
 			this.conf = conf;
 			orientation = Orientation.VERTICAL;
@@ -271,6 +273,7 @@ namespace Vanubi {
 		
 		public override void grab_focus () {
 			view.grab_focus ();
+			manager.save_session (file); // changed focused 
 		}
 
 		public string get_editor_name () {
