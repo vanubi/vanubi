@@ -1558,6 +1558,10 @@ namespace Vanubi {
 						}
 					}
 					
+					if (pat == "") {
+						return;
+					}
+					
 					int stdout, stderr;
 					Process.spawn_async_with_pipes (repo_dir.get_path(),
 													{git_command, "grep", "-inI", "--color", pat},
