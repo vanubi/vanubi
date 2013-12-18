@@ -1549,20 +1549,32 @@ namespace Vanubi {
 					}
 			});
 			bar.changed.connect ((pat) => {
+					clear_status ("grep");
+					
 					if (stream != null) {
 						try {
 							stream.close ();
 						} catch (Error e) {
 						}
 					}
-					int stdout;
+					
+					int stdout, stderr;
 					Process.spawn_async_with_pipes (repo_dir.get_path(),
 													{git_command, "grep", "-inI", "--color", pat},
 													null,
 													SpawnFlags.SEARCH_PATH,
-													null, null, null, out stdout, null);
+													null, null, null, out stdout, out stderr);
 					stream = new UnixInputStream (stdout, true);
 					bar.stream = stream;
+					
+					read_all_async.begin (new UnixInputStream (stderr, true), null, (s,r) => {
+							var res = read_all_async.end (r);
+							var err = (string) res;
+							err = err.strip ();
+							if (err != "") {
+								set_status_error (err, "grep");
+							}
+					});
 			});
 			bar.aborted.connect (() => { abort (editor); });
 			add_overlay (bar, OverlayMode.PANE_BOTTOM);
