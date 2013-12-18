@@ -1540,7 +1540,7 @@ namespace Vanubi {
 			var git_command = conf.get_global_string ("git_command", "git");
 			InputStream? stream = null;
 			
-			var bar = new GrepBar (conf);
+			var bar = new GrepBar (conf, repo_dir);
 			bar.activate.connect (() => {
 					abort (editor);
 					var loc = bar.location;

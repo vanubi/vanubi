@@ -145,8 +145,10 @@ namespace Vanubi {
 		TextView view;
 		ScrolledWindow sw;
 		Cancellable cancellable;
+		File base_path;
 		
-		public GrepBar (Configuration conf) {
+		public GrepBar (Configuration conf, File base_path) {
+			this.base_path = base_path;
 			entry.expand = false;
 			view = new GrepView (conf);
 			view.editable = false;
@@ -182,7 +184,7 @@ namespace Vanubi {
 			
 			var filename = data[0];
 			var lineno = int.parse (data[1]) - 1;
-			location = new Location<void*> (File.new_for_path (filename), lineno);
+			location = new Location<void*> (File.new_for_path (base_path.get_path()+"/"+filename), lineno);
 			
 			base.on_activate ();
 		}
