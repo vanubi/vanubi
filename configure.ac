@@ -69,30 +69,30 @@ AM_CONDITIONAL(ENABLE_GLIB_TEST, [test "x$enable_glibtest" = "xyes"])
 
 dnl === Enable debug level ====================================================
 
-m4_define([debug_default], [m4_if(m4_eval(vanubi_minor_version % 2), [1], [yes], [ccode])])
-
 AC_ARG_ENABLE([debug],
-              [AS_HELP_STRING([--enable-debug=@<:@no/minimum/yes@:>@],
+              [AS_HELP_STRING([--enable-debug=@<:@no/ccode/yes@:>@],
                               [turn on debugging @<:@default=]debug_default[@:>@])],
               [],
-              [enable_debug=debug_default])
+              [enable_debug=no])
 
 AS_CASE([$enable_debug],
 
         [yes],
         [
-          test "$cflags_set" = set || CFLAGS="$CFLAGS -g"
-          VANUBI_DEBUG_CFLAGS="-DVANUBI_ENABLE_DEBUG"
+			LIBVANUBI_VALAFLAGS="$LIBVANUBI_VALAFLAGS -g"
+			VANUBI_VALAFLAGS="$VANUBI_VALAFLAGS -g"
         ],
 
         [ccode],
         [
-          VANUBI_DEBUG_CFLAGS="-DVANUBI_ENABLE_DEBUG -DG_DISABLE_CAST_CHECKS"
+			LIBVANUBI_CFLAGS="$LIBVANUBI_CFLAGS -X -g"
+			VANUBI_CFLAGS="$VANUBI_CFLAGS -X -g"
         ],
 
         [no],
         [
-          VANUBI_DEBUG_CFLAGS="-DG_DISABLE_ASSERT -DG_DISABLE_CHECKS -DG_DISABLE_CAST_CHECKS"
+			LIBVANUBI_CFLAGS="-X -DG_DISABLE_ASSERT -X -DG_DISABLE_CHECKS -X -DG_DISABLE_CAST_CHECKS"
+			VANUBI_CFLAGS="-X -DG_DISABLE_ASSERT -X -DG_DISABLE_CHECKS -X -DG_DISABLE_CAST_CHECKS"
         ],
 
         [AC_MSG_ERROR([Unknown argument to --enable-debug])]
@@ -125,7 +125,5 @@ echo ""
 echo " Vanubi - $VERSION"
 echo ""
 echo " • Prefix: ${prefix}"
-echo ""
 echo " • Debug level: ${enable_debug}"
-echo " • Compiler flags: ${CFLAGS}"
 echo ""
