@@ -2,9 +2,10 @@
 # bump micro_version to the next odd number after each release
 m4_define([vanubi_major_version], [0])
 m4_define([vanubi_minor_version], [0])
-m4_define([vanubi_micro_version], [3])
+m4_define([vanubi_micro_version], [2])
+m4_define([vanubi_patch_version], [2])
 
-m4_define([vanubi_version], [vanubi_major_version.vanubi_minor_version.vanubi_micro_version])
+m4_define([vanubi_version], [vanubi_major_version.vanubi_minor_version.vanubi_micro_version.vanubi_patch_version])
 
 AC_PREREQ([2.63])
 
@@ -41,10 +42,12 @@ dnl === Versioning ============================================================
 VANUBI_MAJOR_VERSION=vanubi_major_version
 VANUBI_MINOR_VERSION=vanubi_minor_version
 VANUBI_MICRO_VERSION=vanubi_micro_version
+VANUBI_PATCH_VERSION=vanubi_patch_version
 VANUBI_VERSION=vanubi_version
 AC_SUBST(VANUBI_MAJOR_VERSION)
 AC_SUBST(VANUBI_MICRO_VERSION)
 AC_SUBST(VANUBI_MINOR_VERSION)
+AC_SUBST(VANUBI_PATCH_VERSION)
 AC_SUBST(VANUBI_VERSION)
 
 dnl === Dependencies ==========================================================
