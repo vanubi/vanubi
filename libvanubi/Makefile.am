@@ -10,6 +10,7 @@ BUILT_SOURCES = .libvanubi.vala.stamp
 lib_LTLIBRARIES = libvanubi@PACKAGE_SUFFIX@.la
 
 libvanubi_la_VALASOURCES = \
+	charset.vala \
 	config.vala \
 	filelru.vala \
 	filecluster.vala \

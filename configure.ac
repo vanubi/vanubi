@@ -54,9 +54,13 @@ dnl === Dependencies ==========================================================
 
 GLIB_PREFIX="`$PKG_CONFIG --variable=prefix glib-2.0`"
 AC_SUBST(GLIB_PREFIX)
+AC_ARG_VAR(top_srcdir, "Top source directory")
 
 VALA_CHECK_MODULES(LIBVANUBI, [gio-2.0 gio-unix-2.0])
-LIBVANUBI_VALAFLAGS="$LIBVANUBI_VALAFLAGS --target-glib 2.32"
+PKG_CHECK_MODULES(LIBVANUBI_CUSTOM, [icu-i18n])
+LIBVANUBI_VALAFLAGS="$LIBVANUBI_VALAFLAGS --target-glib 2.32 --vapidir \${top_srcdir}/vapi --pkg icu-i18n"
+LIBVANUBI_CFLAGS="$LIBVANUBI_CFLAGS $LIBVANUBI_CUSTOM_CFLAGS"
+LIBVANUBI_LIBS="$LIBVANUBI_LIBS $LIBVANUBI_CUSTOM_LIBS"
 
 VALA_CHECK_MODULES(VANUBI, [gtk+-3.0 gio-unix-2.0 gtksourceview-3.0 vte-2.90 gdk-x11-3.0 libwnck-3.0])
 dnl We ignore GTK_3_10_*

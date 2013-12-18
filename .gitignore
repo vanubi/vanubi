@@ -52,3 +52,5 @@ tests/testindent
 tests/testvade
 tests/testcomment
 test-driver
+tests/testcharset
+docs/manual.html
