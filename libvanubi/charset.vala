@@ -18,32 +18,77 @@
  */
 
 namespace Vanubi {
-	public errordomain CharsetError {
-		DETECT
-	}
+	static const string[] detected_charsets = { "ISO-8859-1" };
 	
-	void check_icu_error (Icu.ErrorCode err) throws CharsetError {
-		if (err.failure) {
-			throw new CharsetError.DETECT (err.to_string ());
+	/* Try to guess the charset and return the converted data along with the number of bytes read.
+	 * If no charset can be detected, returns latin1 converted to utf-8 with fallbacks */
+	public uint8[]? convert_to_utf8 (uint8[] text, ref string? charset, out int read, out int fallbacks) throws Error {
+		var default_charset = charset ?? "UTF-8";
+		var buf = new uint8[text.length*4];
+		uint8[] bestbuf = null;
+		charset = null;
+		read = 0;
+		fallbacks = 0;
+		
+		// first try the default charset
+		var conv = new CharsetConverter ("UTF-8", default_charset);
+		size_t sread, written;
+		try {
+			conv.convert (text, buf, ConverterFlags.NONE, out sread, out written);
+			var newread = (int) sread;
+			charset = default_charset;
+			bestbuf = buf;
+			bestbuf.length = (int) written;
+			read = newread;
+		} catch (IOError.PARTIAL_INPUT e) {
+			var newread = (int) sread;
+			charset = default_charset;
+			bestbuf = buf;
+			bestbuf.length = (int) written;
+			read = newread;
+		} catch (Error e) {
+			// invalid byte sequence
 		}
-	}
-	
-	public unowned string? detect_charset (uint8[] text) throws CharsetError {
-		Icu.ErrorCode err;
-		var detector = new Icu.CharsetDetector (out err);
-		check_icu_error (err);
 		
-		detector.set_text (text, out err);
-		check_icu_error (err);
-		
-		unowned Icu.CharsetMatch match = detector.detect (out err);
-		check_icu_error (err);
-		
-		if (match != null) {
-			unowned string result = match.get_name (out err);
-			check_icu_error (err);
-			return result;
+		foreach (unowned string cset in detected_charsets) {
+			if (cset == default_charset) {
+				continue;
+			}
+			
+			conv = new CharsetConverter ("UTF-8", cset);
+			try {
+				conv.convert (text, buf, ConverterFlags.NONE, out sread, out written);
+				var newread = (int) sread;
+				if (newread > read) { // FIXME: check readable chars
+					charset = cset;
+					bestbuf = buf;
+					bestbuf.length = (int) written;
+					read = newread;
+				}
+			} catch (IOError.PARTIAL_INPUT e) {
+				var newread = (int) sread;
+				if (newread > read) { // FIXME: check reaable chars
+					charset = cset;
+					bestbuf = buf;
+					bestbuf.length = (int) written;
+					read = newread;
+				}
+			} catch (Error e) {
+				// invalid byte sequence
+			}
 		}
-		return null;
+
+		if (bestbuf == null) {
+			// assume latin1 with fallbacks
+			conv = new CharsetConverter ("UTF-8", "ISO-8859-1");
+			conv.use_fallback = true;
+			conv.convert (text, bestbuf, ConverterFlags.NONE, out sread, out written);
+			read = (int) read;
+			bestbuf.length = (int) written;
+			charset = "ISO-8859-1";
+			fallbacks = (int) conv.get_num_fallbacks ();
+		}
+
+		return bestbuf;
 	}
 }

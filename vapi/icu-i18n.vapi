@@ -11,6 +11,12 @@ namespace Icu {
 		
 		[CCode (cname = "ucsdet_detect")]
 		public unowned CharsetMatch detect (out ErrorCode status);
+		
+		[CCode (cname = "ucsdet_detectAll", array_length_pos=1.1)]
+		public unowned CharsetMatch*[] detect_all (out ErrorCode status);
+		
+		[CCode (cname = "ucsdet_setDeclaredEncoding")]
+		public void set_declared_encoding (uint8[] encoding, out ErrorCode status);
 	}
 	
 	[SimpleType]
