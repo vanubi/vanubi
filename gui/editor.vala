@@ -250,7 +250,7 @@ namespace Vanubi {
 		}
 		
 		public TimeVal? get_mtime () {
-			if (file != null) {
+			if (file != null && file.query_exists ()) {
 				var info = file.query_info (FileAttribute.TIME_MODIFIED, FileQueryInfoFlags.NONE);
 				return info.get_modification_time ();
 			}
