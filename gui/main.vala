@@ -1556,9 +1556,8 @@ namespace Vanubi {
 						}
 					}
 					int stdout;
-					var newpat = pat.replace("\\", "\\\\");
 					Process.spawn_async_with_pipes (repo_dir.get_path(),
-													{git_command, "grep", "-inI", "--color", newpat},
+													{git_command, "grep", "-inI", "--color", pat},
 													null,
 													SpawnFlags.SEARCH_PATH,
 													null, null, null, out stdout, null);
