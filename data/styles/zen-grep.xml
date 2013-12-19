@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<style-scheme id="zen-grep" _name="Zen for grep" version="1.0">
+
+  <author>Rocco Folino</author>
+  <_description>Zen dark scheme</_description>
+
+  <!-- Tango Palette -->
+  <color name="dl-aquamarine" value="#7fffd4"/>
+  <color name="dl-aquamarine-1" value="#7fffd4"/>
+  <color name="dl-aquamarine-2" value="#76eec6"/>
+  <color name="dl-aquamarine-3" value="#66cdaa"/>
+  <color name="dl-aquamarine-4" value="#458b74"/>
+  <color name="dl-black" value="#000000"/>
+  <color name="dl-blue" value="#0000ff"/>
+  <color name="dl-blue-3" value="#0000cd"/>
+  <color name="dl-chocolate" value="#d2691e"/>
+  <color name="dl-cyan" value="#00ffff"/>
+  <color name="dl-dark-gray" value="#262626"/>
+  <color name="dl-dark-olive-green" value="#556b2f"/>
+  <color name="dl-dark-slate-blue" value="#483d8b"/>
+  <color name="dl-dark-turquoise" value="#00ced1"/>
+  <color name="dl-deep-sky-blue" value="#00bfff"/>
+  <color name="dl-dim-gray" value="#696969"/>
+  <color name="dl-forest-green" value="#228b22"/>
+  <color name="dl-gold" value="#ffd700"/>
+  <color name="dl-green-3" value="#00cd00"/>
+  <color name="dl-green-4" value="#008b00"/>
+  <color name="dl-khaki" value="#f0e68c"/>
+  <color name="dl-light-blue" value="#add8e6"/>
+  <color name="dl-light-goldenrod" value="#eedd82"/>
+  <color name="dl-light-gray" value="#d3d3d3"/>
+  <color name="dl-light-pink" value="#ffb6c1"/>
+  <color name="dl-light-salmon" value="#ffa07a"/>
+  <color name="dl-light-sky-blue" value="#87cefa"/>
+  <color name="dl-light-steel-blue" value="#b0c4de"/>
+  <color name="dl-lime-green" value="#32cd32"/>
+  <color name="dl-magenta" value="#ff00ff"/>
+  <color name="dl-medium-purple" value="#9370db"/>
+  <color name="dl-orange" value="#ffa500"/>
+  <color name="dl-orange-red" value="#ff4500"/>
+  <color name="dl-pale-green" value="#98fb98"/>
+  <color name="dl-pale-turquoise" value="#afeeee"/>
+  <color name="dl-pink" value="#ffc0cb"/>
+  <color name="dl-purple" value="#a020f0"/>
+  <color name="dl-red" value="#ff0000"/>
+  <color name="dl-sienna-1" value="#ff8247"/>
+  <color name="dl-sky-blue" value="#87ceeb"/>
+  <color name="dl-spring-green" value="#00ff7f"/>
+  <color name="dl-turquoise" value="#40e0d0"/>
+  <color name="dl-violet" value="#ee82ee"/>
+  <color name="dl-white" value="#ffffff"/>
+  <color name="dl-yellow" value="#ffff00"/>
+  
+  <!-- Global Settings -->
+  <style name="text" foreground="dl-white" background="dl-black"/>
+  <style name="selection" background="dl-blue"/>
+  <style name="cursor" foreground="dl-yellow"/>
+  <style name="current-line" background="#204a87"/>
+
+  <!-- Bracket Matching -->
+  <style name="bracket-match" background="dl-dark-olive-green"/>
+  <style name="bracket-mismatch" background="dl-violet"/>
+
+  <!-- Search Matching -->
+  <style name="search-match" background="dl-blue"/>
+
+  <!-- Comments -->
+  <style name="def:comment" foreground="dl-orange-red"/>
+  <style name="def:shebang" foreground="dl-orange-red"/>
+  <style name="def:doc-comment-element" italic="true"/>
+
+  <!-- Constants -->
+  <style name="def:constant" foreground="dl-aquamarine"/>
+  <style name="def:string" foreground="dl-light-salmon"/>
+  <style name="def:special-char" foreground="dl-light-goldenrod"/>
+  <style name="def:special-constant" foreground="dl-light-goldenrod"/>
+  <style name="def:floating-point" foreground="dl-light-goldenrod"/>
+
+  <!-- Identifiers -->
+  <style name="def:identifier" foreground="dl-light-sky-blue"/>
+
+  <!-- Statements -->
+  <style name="def:statement" foreground="dl-aquamarine"/>
+
+  <!-- Types -->
+  <style name="def:type" foreground="dl-pale-green"/> 
+
+  <!-- Others -->
+  <style name="def:preprocessor" foreground="dl-aquamarine"/>
+  <style name="def:error" foreground="dl-black" background="dl-red"/>
+  <style name="def:note" bold="true"/>
+  <style name="def:underlined" italic="true" underline="true"/>
+
+  <!-- Language specific -->
+  <!--
+  <style name="diff:added-line"             foreground="butter2"/>
+  <style name="diff:removed-line"           foreground="skyblue1"/>
+  <style name="diff:changed-line"           foreground="plum1"/>
+  <style name="diff:diff-file"              foreground="chameleon1" bold="true"/> 
+  <style name="diff:location"               foreground="chameleon1"/> 
+  <style name="diff:special-case"           foreground="#white" bold="true"/>
+  -->
+
+</style-scheme>

@@ -26,7 +26,8 @@ namespace Vanubi {
 			Object (buffer: new GrepBuffer ());
 			var sm = new SourceStyleSchemeManager();
 			sm.set_search_path({absolute_path("", "~/.vanubi/styles/"), "./data/styles/"});
-			var st = sm.get_scheme (conf.get_editor_string ("style", "zen"));
+			var st = sm.get_scheme (conf.get_editor_string ("style", "zen-grep"));
+		
 			if (st != null) { /* Use default if not found */
 				((SourceBuffer) buffer).set_style_scheme (st);
 			}
@@ -229,25 +230,32 @@ namespace Vanubi {
 		public async void read_stream (InputStream stream, Cancellable cancellable) {
 			try {
 				uint8[] buffer = new uint8[1024];
+				bool first_load = true;
 				while (true) {
 					manager.set_status ("Searching...", "grep");
-					var read = yield stream.read_async (buffer, Priority.DEFAULT, cancellable);
+					ssize_t read;
+					if (first_load) { // first loads sync
+						read = stream.read (buffer, cancellable);
+					} else {
+						read = yield stream.read_async (buffer, Priority.DEFAULT, cancellable);
+					}
 					if (read == 0) {
 						break;
 					}
-					// save current cursor position
-					TextIter insert;
-					view.buffer.get_iter_at_mark (out insert, view.buffer.get_insert ());
-					int offset = insert.get_offset ();
+					
 					// write
 					TextIter iter;
 					view.buffer.get_end_iter (out iter);
 					cancellable.set_error_if_cancelled ();
 					yield ((GrepBuffer) view.buffer).insert_text_colored (iter, (string) buffer, (int) read, cancellable);
 					cancellable.set_error_if_cancelled ();
+					
 					// restore cursor position
-					view.buffer.get_iter_at_offset (out insert, offset);
-					view.buffer.place_cursor (insert);
+					if (first_load) {
+						first_load = false;
+						view.buffer.get_start_iter (out iter);
+						view.buffer.place_cursor (iter);
+					}
 				}
 			} catch (Error e) {
 			} finally {
