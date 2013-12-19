@@ -368,6 +368,7 @@ namespace Vanubi {
 				bool first_load = true;
 				
 				var data = new uint8[4096];
+				string? default_charset = null;
 				while (true) {
 					ssize_t r;
 					if (first_load) { // first loads sync
@@ -378,6 +379,8 @@ namespace Vanubi {
 					if (r == 0) {
 						break;
 					}
+					
+					data = convert_to_utf8 (data, ref default_charset, null, null);
 
 					TextIter iter;
 					buf.get_end_iter (out iter);
