@@ -71,20 +71,24 @@ namespace Vanubi {
 								// write last string with tags
 								string cur = new_text.substring (last_start, i-last_start);
 								uint8[] converted = convert_to_utf8 (cur.data, ref default_charset, null, null);
-								
-								cancellable.set_error_if_cancelled ();
+
 								Gdk.threads_enter ();
-								TextIter end;
-								get_end_iter (out end);
-								var offset = end.get_offset ();
-								insert_text (ref end, (string) converted, converted.length);
-								// apply tags
-								TextIter start;
-								get_iter_at_offset (out start, offset);
-								foreach (unowned TextTag tag in tags) {
-									apply_tag (tag, start, end);
+								try {
+									cancellable.set_error_if_cancelled ();
+									TextIter end;
+									get_end_iter (out end);
+									var offset = end.get_offset ();
+									insert_text (ref end, (string) converted, converted.length);
+									// apply tags
+									TextIter start;
+									get_iter_at_offset (out start, offset);
+									foreach (unowned TextTag tag in tags) {
+										apply_tag (tag, start, end);
+									}
+								} catch (Error e) {
+								} finally {
+									Gdk.threads_leave ();
 								}
-								Gdk.threads_leave ();
 							}
 							
 							// parse command
@@ -119,19 +123,23 @@ namespace Vanubi {
 						string cur = new_text.substring (last_start, new_text_length-last_start);
 						uint8[] converted = convert_to_utf8 (cur.data, ref default_charset, null, null);
 
-						cancellable.set_error_if_cancelled ();
 						Gdk.threads_enter ();
-						TextIter end;
-						get_end_iter (out end);
-						var offset = end.get_offset ();
-						insert_text (ref end, (string) converted, converted.length);
-						// apply tags
-						TextIter start;
-						get_iter_at_offset (out start, offset);
-						foreach (unowned TextTag tag in tags) {
-							apply_tag (tag, start, end);
+						try {
+							cancellable.set_error_if_cancelled ();
+							TextIter end;
+							get_end_iter (out end);
+							var offset = end.get_offset ();
+							insert_text (ref end, (string) converted, converted.length);
+							// apply tags
+							TextIter start;
+							get_iter_at_offset (out start, offset);
+							foreach (unowned TextTag tag in tags) {
+								apply_tag (tag, start, end);
+							}
+						} catch (Error e) {
+						} finally {
+							Gdk.threads_leave ();
 						}
-						Gdk.threads_leave ();
 					}
 					
 					return null;
