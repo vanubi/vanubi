@@ -151,12 +151,14 @@ namespace Vanubi {
 			}
 		}
 		
+		unowned Manager manager;
 		TextView view;
 		ScrolledWindow sw;
 		Cancellable cancellable;
 		File base_path;
 		
-		public GrepBar (Configuration conf, File base_path) {
+		public GrepBar (Manager manager, Configuration conf, File base_path) {
+			this.manager = manager;
 			this.base_path = base_path;
 			entry.expand = false;
 			view = new GrepView (conf);
@@ -228,6 +230,7 @@ namespace Vanubi {
 			try {
 				uint8[] buffer = new uint8[1024];
 				while (true) {
+					manager.set_status ("Searching...", "grep");
 					var read = yield stream.read_async (buffer, Priority.DEFAULT, cancellable);
 					if (read == 0) {
 						break;
@@ -247,6 +250,8 @@ namespace Vanubi {
 					view.buffer.place_cursor (insert);
 				}
 			} catch (Error e) {
+			} finally {
+				manager.clear_status ("grep");
 			}
 		}
 	}
