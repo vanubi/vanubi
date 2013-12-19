@@ -41,6 +41,10 @@
 				 return null;
 			 }
 			 
+			 if (current != null && current.prev == null) {
+				 return null;
+			 }
+			 
 			 if (current == null) {
 				 current = stack.last ();
 			 } else {

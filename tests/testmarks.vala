@@ -13,6 +13,7 @@ void test_marks () {
 	marks.mark (loc1);
 	assert (marks.next_mark () == null);
 	assert (marks.prev_mark () == loc1);
+	assert (marks.prev_mark () == null);
 	assert (marks.next_mark () == null);
 	
 	marks.mark (loc2);

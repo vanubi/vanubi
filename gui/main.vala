@@ -57,6 +57,7 @@ namespace Vanubi {
 		StatusBar statusbar;
 		uint status_timeout;
 		string status_context;
+		MarkManager marks = new MarkManager ();
 		
 		Session last_session;
 
@@ -356,6 +357,18 @@ namespace Vanubi {
 
 			index_command ("restore-session", "Open the files of the last session");
 			execute_command["restore-session"].connect (on_restore_session);
+			
+			bind_command ({ Key (Gdk.Key.m, Gdk.ModifierType.CONTROL_MASK) }, "mark");
+			index_command ("mark", "Save the current location to the stack of positions");
+			execute_command["mark"].connect (on_mark);
+			
+			bind_command ({ Key ('.', Gdk.ModifierType.CONTROL_MASK) }, "next-mark");
+			index_command ("next-mark", "Go to the next saved position");
+			execute_command["next-mark"].connect (on_goto_mark);
+			
+			bind_command ({ Key (',', Gdk.ModifierType.CONTROL_MASK) }, "prev-mark");
+			index_command ("prev-mark", "Go to the previously saved position");
+			execute_command["prev-mark"].connect (on_goto_mark);
 
 			// setup empty buffer
 			unowned Editor ed = get_available_editor (null);
@@ -805,6 +818,27 @@ namespace Vanubi {
 
 			if (session.location != null) {
 				open_location (editor, session.location);
+			}
+		}
+		
+		void on_mark (Editor editor) {
+			var loc = editor.get_location ();
+			marks.mark (loc);
+			set_status ("Mark saved", "marks");
+		}
+		
+		void on_goto_mark (Editor editor, string command) {
+			Location? loc;
+			if (command == "next-mark") {
+				loc = marks.next_mark ();
+			} else {
+				loc = marks.prev_mark ();
+			}
+			
+			if (loc == null) {
+				set_status ("No more marks", "marks");
+			} else {
+				open_location.begin (editor, loc);
 			}
 		}
 		
