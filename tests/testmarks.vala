@@ -28,6 +28,7 @@ void test_marks () {
 	assert (marks.prev_mark () == loc2);
 	
 	marks.mark (loc4);
+	assert (marks.prev_mark () == loc4);
 	assert (marks.next_mark () == loc3);
 	assert (marks.prev_mark () == loc4);
 	assert (marks.prev_mark () == loc2);

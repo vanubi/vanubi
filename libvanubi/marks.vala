@@ -28,10 +28,10 @@
 			 } else {
 				 if (current.next == null) {
 					 stack.append (loc);
-					 current = stack.last ();
+					 current = null;
 				 } else {
-					 stack.insert_before (current.next, loc);
 					 current = current.next;
+					 stack.insert_before (current, loc);
 				 }
 			 }
 		 }
