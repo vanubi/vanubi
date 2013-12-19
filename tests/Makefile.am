@@ -17,6 +17,7 @@ test_programs = \
 	testfiles	\
 	testindent	\
 	testcomment	\
+	testmarks	\
 	testmatch	\
 	testsearch	\
 	testvade	\
@@ -26,6 +27,7 @@ testcharset_SOURCES = testcharset.vala
 testfiles_SOURCES = testfiles.vala
 testindent_SOURCES = testindent.vala
 testcomment_SOURCES = testcomment.vala
+testmarks_SOURCES = testmarks.vala
 testmatch_SOURCES = testmatch.vala
 testsearch_SOURCES = testsearch.vala
 testvade_SOURCES = testvade.vala

@@ -19,6 +19,7 @@ libvanubi_la_VALASOURCES = \
 	indent.vala	\
 	comment.vala \
 	keys.vala \
+	marks.vala	\
 	matching.vala 	\
 	search.vala 	\
 	util.vala		\
