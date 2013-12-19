@@ -355,6 +355,9 @@ namespace Vanubi {
 			index_command ("prev-error", "Jump to previous error in the compilation shell");
 			execute_command["prev-error"].connect (on_goto_error);
 
+			index_command ("save-session", "Save currently opened the files in a session for being opened later");
+			execute_command["save-session"].connect (on_save_session);
+			
 			index_command ("restore-session", "Open the files of the last session");
 			execute_command["restore-session"].connect (on_restore_session);
 			
@@ -740,14 +743,14 @@ namespace Vanubi {
 		}
 
 		/* Session */
-		public void save_session (Editor ed) {
+		public void save_session (Editor ed, string name = "default") {
 			var session = new Session ();
 			each_file ((f) => {
 					session.files.add (f);
 					return true;
 			}, false);
 			session.location = ed.get_location ();
-			conf.save_session (session);
+			conf.save_session (session, name);
 			conf.save.begin ();
 		}
 		
@@ -807,18 +810,51 @@ namespace Vanubi {
 			bar.grab_focus ();
 		}
 
+		void on_save_session (Editor editor) {
+			var bar = new EntryBar ();
+			bar.activate.connect ((name) => {
+					abort (editor);
+					if (name != "") {
+						save_session (editor, name);
+						set_status ("Session %s saved".printf (name), "sessions");
+					}
+			});
+			bar.aborted.connect (() => { abort (editor); });
+			add_overlay (bar, OverlayMode.PANE_BOTTOM);
+			bar.show ();
+			bar.grab_focus ();
+		}
+		
 		void on_restore_session (Editor editor) {
-			var session = last_session;
-			File? focused_file = session.location != null ? session.location.file : null;
-			foreach (var file in session.files.data) {
-				if (focused_file == null || !file.equal (focused_file)) {
-					open_file (editor, file, false);
-				}
-			}
+			var bar = new EntryBar ("default");
+			bar.activate.connect ((name) => {
+					abort (editor);
+					Session session;
+					if (name == "default") {
+						session = last_session;
+					} else {
+						session = conf.get_session (name);
+					}
+					
+					if (session == null) {
+						set_status ("Session not found", "sessions");
+					} else {
+						File? focused_file = session.location != null ? session.location.file : null;
+						foreach (var file in session.files.data) {
+							if (focused_file == null || !file.equal (focused_file)) {
+								open_file (editor, file, false);
+							}
+						}
 
-			if (session.location != null) {
-				open_location (editor, session.location);
-			}
+						if (session.location != null) {
+							open_location (editor, session.location);
+						}
+					}
+			});
+			bar.aborted.connect (() => { abort (editor); });
+			add_overlay (bar, OverlayMode.FIXED);
+			bar.show ();
+			bar.grab_focus ();
 		}
 		
 		void on_mark (Editor editor) {
