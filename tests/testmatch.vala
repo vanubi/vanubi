@@ -32,6 +32,18 @@ void test_count () {
 	assert (count ("foobar", 'o') == 2);
 }
 
+void test_common_prefix () {
+	var common = "foobar";
+	compute_common_prefix ("foobaz", ref common);
+	assert (common == "fooba");
+	
+	compute_common_prefix ("foobia", ref common);
+	assert (common == "foob");
+	
+	compute_common_prefix ("fqux", ref common);
+	assert (common == "f");
+}
+
 int main (string[] args) {
 	Test.init (ref args);
 
@@ -41,6 +53,7 @@ int main (string[] args) {
 	Test.add_func ("/match/substring", test_substring);
 	Test.add_func ("/match/similar", test_similar);
 	Test.add_func ("/match/count", test_count);
+	Test.add_func ("/match/common-prefix", test_common_prefix);
 
 	return Test.run ();
 }

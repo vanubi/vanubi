@@ -138,6 +138,9 @@ namespace Vanubi {
 				for (var i=1; i < matches.length; i++) {
 					compute_common_prefix (matches[i].str, ref common_choice);
 				}
+				if (common_choice.length < pattern.length) {
+					common_choice = pattern;
+				}
 			}
 
 			var res = (owned)matches.data;

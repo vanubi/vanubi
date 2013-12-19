@@ -105,11 +105,10 @@ namespace Vanubi {
 	}
 
 	public void compute_common_prefix (string str, ref string prefix) {
-		var sl = str.length;
-		var pl = prefix.length;
-		for (var i=0; i < int.min(sl,pl); i++) {
+		var l = int.min (str.length, prefix.length);
+		for (var i=0; i < l; i++) {
 			if (str[i] != prefix[i]) {
-				prefix = str.substring (0, i-1);
+				prefix = str.substring (0, i);
 				break;
 			}
 		}
