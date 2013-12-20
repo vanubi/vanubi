@@ -23,6 +23,8 @@ namespace Vanubi {
 	/* Try to guess the charset and return the converted data along with the number of bytes read.
 	 * If no charset can be detected, returns latin1 converted to utf-8 with fallbacks */
 	public uint8[]? convert_to_utf8 (uint8[] text, ref string? charset, out int read, out int fallbacks) throws Error {
+		read = 0;
+		fallbacks = 0;
 		if (text.length == 0) {
 			return text;
 		}
@@ -32,8 +34,6 @@ namespace Vanubi {
 		buf.length--; // space for trailing zero
 		uint8[] bestbuf = null;
 		charset = null;
-		read = 0;
-		fallbacks = 0;
 		
 		// first try the default charset
 		var conv = new CharsetConverter ("UTF-8", default_charset);
