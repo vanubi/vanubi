@@ -11,7 +11,7 @@ Currently supported modifiers are Shift (S-) and Ctrl (C-). Note that `C-x k`, `
 == Commands
 
 Vanubi is controlled by commands issued by the user. A command might be activated by a key binding, a mouse action, or programmatically by invoking a command using `C-h` (the help command).
-Not all commands have key bindings, however using `C-h` it gets very handy to run unusual commands.
+Not all commands have key bindings, however by using `C-h` it gets very handy to run unusual commands.
 
 == Fuzzy search
 
@@ -20,13 +20,13 @@ For example the query 'fb' will match 'foobar'. Sorting takes in consideration h
 
 == Dealing with files
 
-At start you are prompted to edit `*scratch*`. This is not relative to any particular file, it exists as a temporary buffers for your own notetaking.
+At start you are prompted to edit `*scratch*`. This is not relative to any particular file, it exists as a temporary buffer for your own notetaking.
 
 You can open a file for reading or create a new file with `open-file` (`C-x C-f`). You can type only part of the file and Vanubi will fuzzy search through file names.
 It is also possible to fuzzy search through sub directories. For example '/u/b' will match all sub directories like `/usr/bin`, `/usr/sbin`, `/run/dbus`, `/usr/lib`, etc.
 The tidle (`~`) is expand to the user home directory.
 
-You can save a new or existing file being edited using `save-file` (`C-x C-s`). The file will be overwritten of it already exists.
+You can save a new or existing file being edited using `save-file` (`C-x C-s`). The file will be overwritten if it already exists.
 
 If a file has been edited elsewhere and you want to reload it, it is possible with `reload-file`.
 
@@ -41,13 +41,28 @@ To close a buffer you can issue `kill-buffer` with `C-x k`. If the closed buffer
 
 == Shell terminals
 
+Currently shell terminals can be opened with `compile-shell`. It will open a shell intended for compilation, though it's a general purpose shell.
+Each file has its own shell, and the current working directory is saved for that file so that when you reopen Vanubi, the shell will initially open on your last working directory.
+
+Vanubi will parse the output of compilation and try to guess possible errors. You can navigate through errors with `next-error` (`C-'`) and `prev-error` (`C-0`).
+
 == Pipe-shell commands
 
 Pipe-shell commands allow you to pipe the current contents (being saved or not) to a command, and do something with the output of the command.
 Additionally, `%f`, `%s` and `%e` are replaced with the filename, selection start and selection end respectively in the shell command.
 
 In particular, `pipe-shell-replace` allows you to create complex scripts to edit the current edited buffer as you wish.
-While `pipe-shell-clipboard` allows you to call commands like `pastebinit` to share part or the whole buffer, or `asciidoc && xdg-open` to render and view the result.
+While `pipe-shell-clipboard` allows you to call commands like `pastebinit` to share part or the whole buffer, or `asciidoc -b html5 - > tmp.html && xdg-open tmp.html` to render an asciidoc in your browser.
+
+== Sessions
+
+Vala keeps track of opened files and the current location of your cursor, and saves this information in the `default` session. After opening Vanubi, you can restore the last session with `restore-session`.
+It is possible to save a named session with `save-session`, which you can later open with `restore-session` by specifying the name of the session.
+
+== Marks
+
+Vanubi keeps a stack of marks among files that are set by the user, and are never implicitly set.
+You can set a mark on the current location with `mark` (`C-m`). You can go to the last mark set with `prev-mark` (`C-,`). Marks are added to a stack, so you can go back to previously set marks, and go forward with `next-mark` (`C-.`), until no more marks are available.
 
 == Vade language
 
