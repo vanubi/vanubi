@@ -1511,13 +1511,10 @@ namespace Vanubi {
 			}
 
 			if (comment_engine != null) {
-				var iter_start = vbuf.line_start(selection_start.get_line());
-				var iter_end = vbuf.line_start(selection_end.get_line());
-				
-				if ((selection_end.get_line () - selection_start.get_line () > 0) && 
-				     selection_end.get_line_offset() == 0) {
-					iter_end = vbuf.line_start(selection_end.get_line() - 1);
-				}
+				var iter_start = vbuf.line_at_offset (selection_start.get_line (),
+								      selection_start.get_line_offset ());
+				var iter_end = vbuf.line_at_offset (selection_end.get_line (),
+								      selection_end.get_line_offset ());
 				comment_engine.comment (iter_start, iter_end);
 			}
 		}

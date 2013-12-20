@@ -28,6 +28,10 @@ namespace Vanubi {
 			var start_line = start_iter.line;
 			var end_line = end_iter.line;
 			var tot_lines = (end_line - start_line) + 1;
+			if (tot_lines > 1 && end_iter.line_offset == 0) {
+				end_line--;
+				tot_lines--;
+			}
 			if (tot_lines < 0) {
 				/* Invalid region */
 				warning ("Invalid comment region [%d]", tot_lines);
