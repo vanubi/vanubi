@@ -57,9 +57,12 @@ header h1 {
   -webkit-font-smoothing: antialiased;
 }
 
-header h1:before {
-  content: "./ ";
-  font-size: 24px;
+header .container {
+	background-image: url('../images/vanubi.png');
+	background-repeat: no-repeat;
+	background-size: 5.5em;
+	background-position: 50% 0;
+	padding: 1em 0 0 2.7em;
 }
 
 header h2 {
