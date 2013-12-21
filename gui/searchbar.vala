@@ -157,9 +157,11 @@ namespace Vanubi {
 			Regex regex = null;
 			if (is_regex) {
 				try {
+					manager.clear_status ("search");
 					regex = new Regex (p, RegexCompileFlags.OPTIMIZE, RegexMatchFlags.ANCHORED);
 				} catch (Error e) {
-					// user still writing regex
+					// user still writing regex, display an error
+					manager.set_status_error (e.message, "search");
 					return;
 				}
 			}
