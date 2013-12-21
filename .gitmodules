@@ -1,0 +1,4 @@
+[submodule "web"]
+	path = web
+	url = git@github.com:vanubi/vanubi.git
+	branch = gh-pages
