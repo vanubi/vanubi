@@ -1,0 +1,29 @@
+body {
+	background: #151515 url("../images/bkg.png") 0 0;
+	margin-top: 12px;
+}
+
+header > div {
+	border-bottom: 1px solid #73d216;
+	padding-bottom: 24px;
+	margin-bottom: 24px;
+	
+	background-image: url('../images/vanubi.png');
+	background-repeat: no-repeat;
+	background-size: 5.5em;
+	background-position: 20em 0;
+}
+
+header h1 {
+	color: #73d216;
+	margin: 0;
+}
+
+#downloads {
+	margin-top: 1em;
+}
+
+.btn-github .icon {
+  opacity: 0.6;
+  background: url("../images/blacktocat.png") 0 0 no-repeat;
+}
