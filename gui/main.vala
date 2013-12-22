@@ -1451,6 +1451,9 @@ namespace Vanubi {
 				case "assembly (intel)":
 				case "i386 assembly":
 					return new Indent_Asm (vbuf);
+				case "html":
+				case "xml":
+					return new Indent_Markup (vbuf);
 				case "makefile":
 					return null;
 				default:

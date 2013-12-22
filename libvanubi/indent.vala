@@ -223,10 +223,154 @@ namespace Vanubi {
 			base (buffer);
 		}
 		
+		bool is_open_tag (BufferIter iter) {
+			if (!iter.is_in_code) {
+				return false;
+			}
+			if (iter.char != '<') {
+				return false;
+			}
+			var cp = iter.copy ();
+			cp.forward_char ();
+			return cp.is_in_code && cp.char != '!' && cp.char != '/';
+		}
+		
+		bool is_close_tag (BufferIter iter) {
+			if (!iter.is_in_code) {
+				return false;
+			}
+			
+			if (iter.char == '<') {
+				var cp = iter.copy ();
+				cp.forward_char ();
+				return cp.is_in_code && cp.char != '!' && cp.char == '/';
+			} else if (iter.char == '/') {
+				var cp = iter.copy ();
+				cp.forward_char ();
+				return cp.is_in_code && cp.char == '>';
+			}
+			return false;
+		}
+		
+		int first_non_empty_prev_line (int line) {
+			// find first non-blank prev line, excluding line
+			var buf = buffer;
+			while (--line >= 0 && buf.empty_line (line));
+			return line;
+		}
+		
+		// counts closed parens in front of a line
+		int count_closed (int line) {
+			var buf = buffer;
+			var closed = 0;
+			var iter = buf.line_start (line);
+			while (!iter.eol) {
+				var c = iter.char;
+				if (is_close_tag (iter)) {
+					closed++;
+				} else if (!c.isspace ()) {
+					break;
+				}
+				iter.forward_char ();
+			}
+			return closed;
+		}
+		
+		// counts unclosed parens in a line
+		int count_unclosed (int line) {
+			var buf = buffer;
+			var unclosed = 0;
+			var iter = buf.line_start (line);
+			while (!iter.eol) {
+				if (is_open_tag (iter)) {
+					unclosed++;
+				} else if (is_close_tag (iter)) {
+					if (unclosed > 0) {
+						unclosed--;
+					}
+				}
+				iter.forward_char ();
+			}
+			return unclosed;
+		}
+		
+		// returns the iter for the opened paren for which there's a given unbalance
+		BufferIter unclosed_paren (int line, int unbalance) {
+			var buf = buffer;
+			// find line that is semantically opening the paren
+			int balance = 0;
+			var iter = buf.line_start (line);
+			var paren_iter = iter;
+			while (true) {
+				if (is_open_tag (iter)) {
+					balance++;
+					if (balance == unbalance) {
+						paren_iter = iter.copy ();
+					}
+				} else if (is_close_tag (iter)) {
+					balance--;
+				}
+				if (iter.eol) {
+					if (balance == unbalance) {
+						return paren_iter;
+					}
+					line = first_non_empty_prev_line (line);
+					if (line < 0) {
+						// not found
+						return iter;
+					}
+					iter = buf.line_start (line);
+				} else {
+					iter.forward_char ();
+				}
+			}
+		}
+		
 		public override void indent (BufferIter indent_iter) {
 			var buf = buffer;
 			
+			var line = indent_iter.line;
+			if (line == 0) {
+				buf.set_indent (line, 0);
+				return;
+			}
 			
+			var new_indent = 0;
+			var tab_width = buf.tab_width;
+			
+			var prev_line = first_non_empty_prev_line (line);
+			if (prev_line < 0) {
+				buf.set_indent (line, 0);
+				return;
+			}
+
+			// indent
+			var unclosed = count_unclosed (prev_line);
+			if (unclosed == 0) {
+				var paren_iter = unclosed_paren (prev_line, 0);
+				new_indent = buf.get_indent (paren_iter.line);
+			} else if (unclosed > 0) {
+				var paren_iter = unclosed_paren (prev_line, unclosed);
+				if (!paren_iter.eol) {
+					paren_iter.forward_char ();
+				}
+				paren_iter.forward_spaces ();
+				if (paren_iter.line != prev_line || paren_iter.eol || paren_iter.line > prev_line) {
+					new_indent = buf.get_indent (paren_iter.line) + unclosed * tab_width;
+				} else {
+					new_indent = paren_iter.effective_line_offset-1;
+				}
+			}		 
+		
+			// unindent
+			var closed = count_closed (line);
+			if (closed > 0) {
+				unclosed = count_unclosed (line);
+				var paren_iter = unclosed_paren (line, unclosed);
+				new_indent = buf.get_indent (paren_iter.line);
+			}
+
+			buf.set_indent (line, new_indent);
 		}
 	}
 	
