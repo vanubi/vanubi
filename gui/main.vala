@@ -820,7 +820,7 @@ namespace Vanubi {
 					}
 			});
 			bar.aborted.connect (() => { abort (editor); });
-			add_overlay (bar, OverlayMode.PANE_BOTTOM);
+			add_overlay (bar, OverlayMode.FIXED);
 			bar.show ();
 			bar.grab_focus ();
 		}
