@@ -25,16 +25,19 @@ namespace Vanubi {
 
 	public abstract class Indent {
 		public Buffer buffer { get; protected set; }
+		
+		public Indent (Buffer buffer) {
+			this.buffer = buffer;
+		}
+
 		public abstract void indent (BufferIter iter);
 	}
 
 	public class Indent_C : Indent {
-		Buffer buf;
-
-		public Indent_C (Buffer buf) {
-			this.buffer = this.buf = buf;
+		public Indent_C (Buffer buffer) {
+			base (buffer);
 		}
-
+		
 		bool is_char (BufferIter iter) {
 			if (!iter.is_in_code) {
 				return false;
@@ -63,12 +66,14 @@ namespace Vanubi {
 		
 		int first_non_empty_prev_line (int line) {
 			// find first non-blank prev line, excluding line
+			var buf = buffer;
 			while (--line >= 0 && buf.empty_line (line));
 			return line;
 		}
 
 		// counts closed parens in front of a line
 		int count_closed (int line) {
+			var buf = buffer;
 			var closed = 0;
 			var iter = buf.line_start (line);
 			while (!iter.eol) {
@@ -85,6 +90,7 @@ namespace Vanubi {
 		
 		// counts unclosed parens in a line
 		int count_unclosed (int line) {
+			var buf = buffer;
 			var unclosed = 0;
 			var iter = buf.line_start (line);
 			while (!iter.eol) {
@@ -102,6 +108,7 @@ namespace Vanubi {
 		
 		// returns the iter for the opened paren for which there's a given unbalance
 		BufferIter unclosed_paren (int line, int unbalance) {
+			var buf = buffer;
 			// find line that is semantically opening the paren
 			int balance = 0;
 			var iter = buf.line_start (line);
@@ -132,6 +139,8 @@ namespace Vanubi {
 		}
 
 		public override void indent (BufferIter indent_iter) {
+			var buf = buffer;
+			
 			var line = indent_iter.line;
 			if (line == 0) {
 				buf.set_indent (line, 0);
@@ -209,14 +218,26 @@ namespace Vanubi {
 		}
 	}
 
-	public class Indent_Asm : Indent {
-		Buffer buf;
-
-		public Indent_Asm (Buffer buf) {
-			this.buffer = this.buf = buf;
+	public class Indent_Markup : Indent {
+		public Indent_Markup (Buffer buffer) {
+			base (buffer);
 		}
-
+		
 		public override void indent (BufferIter indent_iter) {
+			var buf = buffer;
+			
+			
+		}
+	}
+	
+	public class Indent_Asm : Indent {
+		public Indent_Asm (Buffer buffer) {
+			base (buffer);
+		}
+		
+		public override void indent (BufferIter indent_iter) {
+			var buf = buffer;
+			
 			var line = indent_iter.line;
 			
 			// indent everything to tab_width except for labels
