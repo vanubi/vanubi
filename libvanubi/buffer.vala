@@ -73,8 +73,8 @@ namespace Vanubi {
 			this.buffer = buffer;
 		}
 
-		public abstract void forward_char ();
-		public abstract void backward_char ();
+		public abstract BufferIter forward_char ();
+		public abstract BufferIter backward_char ();
 		public abstract bool is_in_code { get; }
 		public abstract int line_offset { get; }
 		public abstract int line { get; }
@@ -83,12 +83,48 @@ namespace Vanubi {
 		public abstract unichar char { get; }
 		public abstract BufferIter copy ();
 
-		public virtual void forward_spaces () {
+		/* Forwards a copy of the iter until the whole string is consumed, otherwise returns the original iter.
+		 * Works on a line only */
+		public virtual BufferIter forward_string (string str) {
+			var cp = copy ();
+			var cnt = str.length;
+			for (var i=0; i < cnt; i++) {
+				if (cp.eol) {
+					return this;
+				}
+				if (cp.char != str[i]) {
+					return this;
+				}
+				cp.forward_char ();
+			}
+			return cp;
+		}
+		
+		/* Backwards a copy of the iter until the whole reverse string is consumed, otherwise returns the original iter
+		 * Works on a line only */
+		public virtual BufferIter backward_string (string str) {
+			var cp = copy ();
+			var cnt = str.length;
+			for (var i=cnt-1; i >= 0; i--) {
+				if (cp.sol) {
+					return this;
+				}
+				cp.backward_char ();
+				if (cp.char != str[i]) {
+					return this;
+				}
+			}
+			return cp;
+		}
+		
+		public virtual BufferIter forward_spaces () {
 			while (!eol && char.isspace()) forward_char ();
+			return this;
 		}																					
 
-		public virtual void backward_spaces () {
+		public virtual BufferIter backward_spaces () {
 			while (!sol && char.isspace()) backward_char ();
+			return this;
 		}
 
 		public virtual int effective_line_offset {
@@ -200,22 +236,23 @@ namespace Vanubi {
 			}
 		}
 
-		public override void forward_char () requires (valid) {
+		public override BufferIter forward_char () requires (valid) {
 			if (eol) {
 				if (_line >= buf.lines.length-1) {
-					return;
+					return this;
 				}
 				_line++;
 				_line_offset = 0;
 			} else {
 				_line_offset++;
 			}
+			return this;
 		}
 
-		public override void backward_char () requires (valid) {
+		public override BufferIter backward_char () requires (valid) {
 			if (_line_offset == 0) {
 				if (_line == 0) {
-					return;
+					return this;
 				}
 				_line--;
 				unowned string l = buf.lines[_line];
@@ -223,6 +260,7 @@ namespace Vanubi {
 			} else {
 				_line_offset--;
 			}
+			return this;
 		}
 
 		public override bool is_in_code {

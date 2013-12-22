@@ -1502,7 +1502,11 @@ namespace Vanubi {
 					break;
 				case "makefile":
 				case "python":
-					comment_engine = new Comment_Hash (vbuf);;
+					comment_engine = new Comment_Hash (vbuf);
+					break;
+				case "html":
+				case "xml":
+					comment_engine = new Comment_Markup (vbuf);
 					break;
 				case "lua":
 					comment_engine = new Comment_Lua (vbuf);;
@@ -1518,7 +1522,7 @@ namespace Vanubi {
 								      selection_start.get_line_offset ());
 				var iter_end = vbuf.line_at_offset (selection_end.get_line (),
 								      selection_end.get_line_offset ());
-				comment_engine.comment (iter_start, iter_end);
+				comment_engine.toggle_comment (iter_start, iter_end);
 			}
 		}
 

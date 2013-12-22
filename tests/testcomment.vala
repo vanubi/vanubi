@@ -7,25 +7,25 @@ using Vanubi;
 void comment_default (Buffer buffer, int line) {
 	var commenter = new Comment_Default (buffer);
 	var iter = buffer.line_start (line);
-	commenter.comment (iter, iter);
+	commenter.toggle_comment (iter, iter);
 }
 
 void comment_hash (Buffer buffer, int line) {
 	var commenter = new Comment_Hash (buffer);
 	var iter = buffer.line_start (line);
-	commenter.comment (iter, iter);
+	commenter.toggle_comment (iter, iter);
 }
 
 void comment_asm (Buffer buffer, int line) {
 	var commenter = new Comment_Asm (buffer);
 	var iter = buffer.line_start (line);
-	commenter.comment (iter, iter);
+	commenter.toggle_comment (iter, iter);
 }
 
 void comment_lua (Buffer buffer, int line) {
 	var commenter = new Comment_Lua (buffer);
 	var iter = buffer.line_start (line);
-	commenter.comment (iter, iter);
+	commenter.toggle_comment (iter, iter);
 }
 
 void test_default () {
@@ -52,12 +52,12 @@ foo bar
 ");
 	var commenter = new Comment_Default (buffer);
 
-	commenter.comment (buffer.line_start (1), buffer.line_start (3));
+	commenter.toggle_comment (buffer.line_start (1), buffer.line_start (3));
 	assert (/\/\* .+ \*\//.match(buffer.line_text (1)));
 	assert (buffer.line_text (2) == "/* \\/* asd asd *\\/ */\n");
 	assert (buffer.line_text (3) == "   \n");
 
-	commenter.comment (buffer.line_start (1), buffer.line_start (3));
+	commenter.toggle_comment (buffer.line_start (1), buffer.line_start (3));
 	assert (buffer.line_text (1) == "foo bar\n");
 	assert (buffer.line_text (2) == "/* asd asd */\n");
 	assert (buffer.line_text (3) == "   \n");
@@ -81,11 +81,11 @@ foo bar
 ");
 	var commenter = new Comment_Hash (buffer);
 
-	commenter.comment (buffer.line_start (1), buffer.line_start (2));
+	commenter.toggle_comment (buffer.line_start (1), buffer.line_start (2).forward_char ());
 	assert (buffer.line_text (1) == "# foo bar\n");
 	assert (buffer.line_text (2) == "# # asd asd\n");
 
-	commenter.comment (buffer.line_start (1), buffer.line_start (2));
+	commenter.toggle_comment (buffer.line_start (1), buffer.line_start (2).forward_char ());
 	assert (buffer.line_text (1) == "foo bar\n");
 	assert (buffer.line_text (2) == "# asd asd\n");
 }
@@ -108,11 +108,11 @@ foo bar
 ");
 	var commenter = new Comment_Asm (buffer);
 
-	commenter.comment (buffer.line_start (1), buffer.line_start (2));
+	commenter.toggle_comment (buffer.line_start (1), buffer.line_start (2).forward_char ());
 	assert (buffer.line_text (1) == "; foo bar\n");
 	assert (buffer.line_text (2) == "; ; asd asd\n");
 
-	commenter.comment (buffer.line_start (1), buffer.line_start (2));
+	commenter.toggle_comment (buffer.line_start (1), buffer.line_start (2).forward_char ());
 	assert (buffer.line_text (1) == "foo bar\n");
 	assert (buffer.line_text (2) == "; asd asd\n");
 }
@@ -135,13 +135,29 @@ foo bar
 ");
 	var commenter = new Comment_Lua (buffer);
 
-	commenter.comment (buffer.line_start (1), buffer.line_start (2));
+	commenter.toggle_comment (buffer.line_start (1), buffer.line_start (2).forward_char ());
 	assert (buffer.line_text (1) == "-- foo bar\n");
 	assert (buffer.line_text (2) == "-- -- asd asd\n");
 
-	commenter.comment (buffer.line_start (1), buffer.line_start (2));
+	commenter.toggle_comment (buffer.line_start (1), buffer.line_start (2).forward_char ());
 	assert (buffer.line_text (1) == "foo bar\n");
 	assert (buffer.line_text (2) == "-- asd asd\n");
+}
+
+void test_markup_region () {
+	var buffer = new StringBuffer.from_text ("
+foo bar
+<!-- asd asd -->
+");
+	var commenter = new Comment_Markup (buffer);
+	
+	commenter.toggle_comment (buffer.line_start (1), buffer.line_start(2).forward_char ());
+	assert (buffer.line_text (1) == "<!-- foo bar -->\n");
+	assert (buffer.line_text (2) == "<!-- <!-- asd asd --> -->\n");
+
+	commenter.toggle_comment (buffer.line_start (1), buffer.line_start (2).forward_char ());
+	assert (buffer.line_text (1) == "foo bar\n");
+	assert (buffer.line_text (2) == "<!-- asd asd -->\n");
 }
 
 int main (string[] args) {
@@ -155,6 +171,7 @@ int main (string[] args) {
 	Test.add_func ("/comment/asm-region", test_asm_region);
 	Test.add_func ("/comment/lua", test_lua);
 	Test.add_func ("/comment/lua-region", test_lua_region);
+	Test.add_func ("/comment/markup", test_markup_region);
 
 	return Test.run ();
 }

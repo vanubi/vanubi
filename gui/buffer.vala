@@ -120,12 +120,14 @@ namespace Vanubi.UI {
 			this.iter = iter;
 		}
 
-		public override void forward_char () {
+		public override Vanubi.BufferIter forward_char () {
 			iter.forward_char ();
+			return this;
 		}
 
-		public override void backward_char () {
+		public override Vanubi.BufferIter backward_char () {
 			iter.backward_char ();
+			return this;
 		}
 
 		public override bool is_in_code {

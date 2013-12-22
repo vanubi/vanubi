@@ -24,7 +24,8 @@ namespace Vanubi {
 		protected abstract int count_commented_lines (int start_line, int end_line);
 		protected abstract void comment_line (int line);
 		protected abstract void decomment_line (int line);
-		public virtual void comment (BufferIter start_iter, BufferIter end_iter) {
+		
+		public virtual void toggle_comment (BufferIter start_iter, BufferIter end_iter) {
 			var start_line = start_iter.line;
 			var end_line = end_iter.line;
 			var tot_lines = (end_line - start_line) + 1;
@@ -262,4 +263,69 @@ namespace Vanubi {
 			}
 		}
 	}
+	
+	public class Comment_Markup : Comment {
+		Buffer buf;
+
+		public Comment_Markup (Buffer buf) {
+			this.buf = buf;
+		}
+
+		protected override bool is_line_commented (int line) {
+			return /^<!--.*-->$/.match (buf.line_text (line).strip ());
+		}
+
+		protected override int count_commented_lines (int start_line, int end_line) {
+			var count = 0;
+			for (var i=start_line; i<=end_line; i++) {
+				if (is_line_commented (i) || buf.empty_line(i)) {
+					count++;
+				}
+			}
+			return count;
+		}
+
+		protected void escape_line (int line) {
+			// no escape for now
+		}
+
+		protected void unescape_line (int line) {
+			// no unescape for now
+		}
+
+		protected override void comment_line (int line) {
+			if (buf.empty_line (line)) {
+				return;
+			}
+
+			if (is_line_commented (line)) {
+				escape_line (line);
+			}
+			var start_iter = buf.line_start (line);
+			start_iter.forward_spaces ();
+			buf.insert (start_iter, "<!-- ");
+			var end_iter = buf.line_end (start_iter.line);
+			buf.insert (end_iter, " -->");
+		}
+
+		protected override void decomment_line (int line) {
+			if (buf.empty_line (line)) {
+				return;
+			}
+			if (is_line_commented (line)) {
+				var iter = buf.line_start (line);
+				iter.forward_spaces ();
+				var del_iter = iter.forward_string ("<!-- ");
+				buf.delete (iter, del_iter);
+				
+				iter = buf.line_end (line);
+				iter.backward_spaces ();
+				iter.forward_char(); /* Must point after '>' */
+				del_iter = iter.backward_string (" -->");
+				buf.delete (del_iter, iter);
+				unescape_line (line);
+			}
+		}
+	}
+
 }
