@@ -1,6 +1,6 @@
-(function () {
-		var $ = jQuery.noConflict(true);
+(function ($,_) {
 		Vares = {};
+		Vares.root = ".";
 		
 		Vares.pattern_match = function (pattern, haystack) {
 			var rank = 0;
@@ -91,4 +91,26 @@
 			result.sort (function (a,b) { return a.score-b.score; });
 			return result;
 		};
-} ());
+		
+		Vares.fetch_topics = function () {
+			return $.ajax ({url: Vares.root+"/topics.html", dataType: "text"});
+		};
+		
+		Vares.index_topics = function (idx, html) {
+			var h = $("<div>"+html+"</div>");
+			var topics = h.find(".topic-preview");
+			
+			for (var i=0; i < topics.length; i++) {
+				var topic = topics[i];
+				var keywords = $.grep ($(topic).attr("data-keywords").split (" "), _.identity);
+				idx.index (topic, keywords);
+			}
+		};
+			
+		Vares.init = function () {
+			Vares.docs_index = new Vares.Index ();
+			Vares.fetch_topics ().then (_.partial (Vares.index_topics, Vares.docs_index));
+		};
+} ($,_));
+
+Vares.init ();
