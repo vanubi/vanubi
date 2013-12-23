@@ -1365,7 +1365,7 @@ namespace Vanubi {
 			buf.get_iter_at_line (out start, insert.get_line());
 			
 			var end = start;
-			while (start.get_line() == end.get_line()) {
+			while (!end.is_end () && start.get_line() == end.get_line()) {
 				end.forward_char ();
 			}
 
