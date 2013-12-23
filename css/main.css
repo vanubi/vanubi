@@ -30,7 +30,7 @@ header h1 {
 
 .topic-preview {
 	display: inline-block;
-	min-width: 30%;
+	width: 30%;
 	height: 6em;
 	font-size: 12px;
 	background: black;
@@ -51,4 +51,9 @@ header h1 {
 
 .topic-preview caption {
 	color: gray;
+}
+
+#search form {
+	max-width: 95%;
+	margin: 0 auto;
 }
