@@ -24,6 +24,31 @@ header h1 {
 }
 
 .btn-github .icon {
-  opacity: 0.6;
-  background: url("../images/blacktocat.png") 0 0 no-repeat;
+	opacity: 0.6;
+	background: url("../images/blacktocat.png") 0 0 no-repeat;
+}
+
+.topic-preview {
+	display: inline-block;
+	min-width: 30%;
+	height: 6em;
+	font-size: 12px;
+	background: black;
+	margin: 1% 1% 1% 1%;
+	padding: 1em 1em 1em 1em;
+}
+
+.topic-preview:hover {
+	background-color: green;
+}
+
+.topic-preview h2 {
+	font-size: 1.5em;
+	display: block;
+	padding: 0;
+	margin: 0 0 0.5em;
+}
+
+.topic-preview caption {
+	color: gray;
 }
