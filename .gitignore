@@ -54,3 +54,5 @@ tests/testcomment
 test-driver
 tests/testcharset
 docs/manual.html
+web/
+tests/testmarks
