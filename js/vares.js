@@ -89,28 +89,64 @@
 			}
 			
 			result.sort (function (a,b) { return a.score-b.score; });
-			return result;
+			return _.map (result, function (e) { return e.doc; });
 		};
 		
 		Vares.fetch_topics = function () {
 			return $.ajax ({url: Vares.root+"/topics.html", dataType: "text"});
 		};
 		
-		Vares.index_topics = function (idx, html) {
-			var h = $("<div>"+html+"</div>");
-			var topics = h.find(".topic-preview");
-			
+		Vares.index_topics = function (idx) {
+			var topics = $(".topic-preview");
 			for (var i=0; i < topics.length; i++) {
 				var topic = topics[i];
 				var keywords = $.grep ($(topic).attr("data-keywords").split (" "), _.identity);
 				idx.index (topic, keywords);
 			}
 		};
+		
+		Vares.get_all_topics = function () {
+			return _.map (Vares.docs_index.documents, function (d) { return d.doc; });
+		};
+		
+		Vares.get_topic_by_id = function (id) {
+			return _.find (Vares.get_all_topics (), function (d) { return $(d).attr ("data-id") == id; });
+		};
+		
+		Vares.set_displayed_topics = function (topics) {
+			var old_ids = $(".topic-preview").map (function (_,e) { return $(e).attr("data-id"); });
+			var new_ids = _.map (topics, function (e) { return $(e).attr("data-id"); });
+			var to_hide = _.map (_.difference (old_ids, new_ids), Vares.get_topic_by_id);
+			var to_show = _.map (_.difference (new_ids, old_ids), Vares.get_topic_by_id);
 			
+			_.each (to_hide, function (e) { $(e).fadeOut (); });
+			_.each (to_show, function (e) { $(e).fadeIn (); });
+		};
+		
+		Vares.set_topics_html = function (html) {
+			$("#topics").html (html);
+			return html;
+		};
+		
+		Vares.get_search_query = function () {
+			return $("#search input").val ();
+		};
+		
+		Vares.search_changed = function () {
+			var query = Vares.get_search_query ();
+			var matches = Vares.docs_index.search (query);
+			if (query.trim() == "") {
+				matches = Vares.get_all_topics ();
+			}
+			Vares.set_displayed_topics (matches);
+		};
+		
 		Vares.init = function () {
 			Vares.docs_index = new Vares.Index ();
-			Vares.fetch_topics ().then (_.partial (Vares.index_topics, Vares.docs_index));
+			Vares.fetch_topics ().then (Vares.set_topics_html).then (_.partial (Vares.index_topics, Vares.docs_index));
+			
+			$("#search input").keyup (Vares.search_changed).on ('changed', Vares.search_changed);
 		};
 } ($,_));
 
-Vares.init ();
+Vares.init();
