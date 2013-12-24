@@ -42,6 +42,7 @@ header h1 {
 	background: black;
 	margin: 1% 1% 1% 1%;
 	padding: 1em 1em 1em 1em;
+	border: 1px solid black;
 }
 
 .topic-preview:hover {

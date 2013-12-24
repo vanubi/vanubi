@@ -119,8 +119,8 @@
 			var to_hide = _.map (_.difference (old_ids, new_ids), Vares.get_topic_by_id);
 			var to_show = _.map (_.difference (new_ids, old_ids), Vares.get_topic_by_id);
 			
-			_.each (to_hide, function (e) { $(e).css ("opacity", 0).css ("width", 0); });
-			_.each (to_show, function (e) { $(e).css ("width", "30%").css ("opacity", 100); });
+			$("#topics").html("");
+			$("#topics").append (to_show);
 		};
 		
 		Vares.set_topics_html = function (html) {
