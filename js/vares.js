@@ -58,7 +58,7 @@
 				var has_mismatch = false;
 				for (var j=0; j < words.length; j++) {
 					var qword = words[j].trim ();
-					if (qword.length == 0 || Vares.Index.stopwords.indexOf (qword) >= 0) {
+					if (qword.length == 0 || (words.length > 1 && Vares.Index.stopwords.indexOf (qword) >= 0)) {
 						continue;
 					}
 					
@@ -119,8 +119,8 @@
 			var to_hide = _.map (_.difference (old_ids, new_ids), Vares.get_topic_by_id);
 			var to_show = _.map (_.difference (new_ids, old_ids), Vares.get_topic_by_id);
 			
-			_.each (to_hide, function (e) { $(e).fadeOut (); });
-			_.each (to_show, function (e) { $(e).fadeIn (); });
+			_.each (to_hide, function (e) { $(e).css ("opacity", 0).css ("width", 0); });
+			_.each (to_show, function (e) { $(e).css ("width", "30%").css ("opacity", 100); });
 		};
 		
 		Vares.set_topics_html = function (html) {
