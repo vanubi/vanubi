@@ -92,21 +92,8 @@
 			return _.map (result, function (e) { return e.doc; });
 		};
 		
-		Vares.fetch_topic_previews = function () {
-			return $.ajax ({url: Vares.root+"/topics.html", dataType: "text"});
-		};
-		
-		Vares.fetch_topics = function () {
-			return $.ajax ({url: Vares.root+"/doc.html", dataType: "text"});
-		};
-		
-		Vares.index_topic_previews = function (idx) {
-			var topics = $(".topic-preview");
-			for (var i=0; i < topics.length; i++) {
-				var topic = topics[i];
-				var keywords = $.grep ($(topic).attr("data-keywords").split (" "), _.identity);
-				idx.index (topic, keywords);
-			}
+		Vares.fetch_docs = function () {
+			return $.ajax ({url: Vares.root+"/manual.html", dataType: "text"});
 		};
 		
 		Vares.get_all_topic_previews = function () {
@@ -127,26 +114,45 @@
 			$("#topic-previews").append (to_show);
 		};
 		
-		Vares.set_topic_previews_html = function (html) {
-			$("#topic-previews").html (html);
+		Vares.setup_topic_previews = function () {
+			$("#topics h2").each (function (el) {
+					var id = $(this).attr("id");
+					var title = $(this).text();
+					var caption = $(this).parent().find(".title").text ();
+					var html = '<div class="btn topic-preview" data-id="'+id+'">'+
+					'<h2>'+title+'</h2>'+
+					'<caption>'+caption+'</caption>'+
+					'</div>';
+					$("#topic-previews").append (html);
+					
+					var preview = $(".topic-preview[data-id='"+id+"']")[0];					
+					var keywords = $(this).parent().find(".vareskeywords").text ();
+					keywords = $.grep (keywords.split (" "), _.identity);
+					Vares.docs_index.index (preview, keywords);
+			});
+
 			$(document).on ("click", ".topic-preview", function (p) { Vares.open_topic ($(this).attr("data-id")); });
+		};	
+		
+		Vares.setup_docs = function (html) {
+			var docs = $("<div>"+html+"</div>");
+			docs.find(".sect1").hide ();
+			$("#topics").html (docs);
+			
+			Vares.setup_topic_previews ();
+			
 			return html;
 		};
 		
 		Vares.open_topic = function (id) {
 			$("#topic-previews").slideUp ();
-			$("#topics div[data-id='"+id+"']").fadeIn (200);
+			$("#topics h2[id='"+id+"']").parent(".sect1").fadeIn (200);
 		};
 		
 		Vares.open_topic_previews = function () {
-			$("#topics div:visible").fadeOut (200);
+			$("#topics div.sect1:visible").fadeOut (200);
 			$("#topic-previews").slideDown ();
 		}
-		
-		Vares.set_topics_html = function (html) {
-			$("#topics").html (html);
-			return html;
-		};
 		
 		Vares.get_search_query = function () {
 			return $("#search input").val ();
@@ -165,8 +171,7 @@
 		
 		Vares.init = function () {
 			Vares.docs_index = new Vares.Index ();
-			Vares.fetch_topic_previews().then (Vares.set_topic_previews_html).then (_.partial (Vares.index_topic_previews, Vares.docs_index));
-			Vares.fetch_topics().then (Vares.set_topics_html);
+			Vares.fetch_docs().then(Vares.setup_docs);
 			$("#search input").keyup (Vares.search_changed).on ('changed', Vares.search_changed);
 			$("#search form").submit (Vares.search_changed);
 		};

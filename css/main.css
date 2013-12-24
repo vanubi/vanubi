@@ -1,3 +1,7 @@
+html {
+	overflow-y: scroll;
+}
+
 body {
 	background: #151515 url("../images/bkg.png") 0 0;
 	margin-top: 12px;
@@ -44,8 +48,8 @@ header h1 {
 	padding: 1em 1em 1em 1em;
 	border: 1px solid black;
 	
-	transition: all 0.2s;
-	-webkit-transition: all 0.2s;
+	transition: background 0.2s;
+	-webkit-transition: background 0.2s;
 }
 
 .topic-preview:hover {
@@ -68,7 +72,7 @@ header h1 {
 	margin: 0 auto;
 }
 
-.topic {
+#topics {
 	max-width: 95%;
 	margin: 0 auto;
 }
