@@ -1,6 +1,14 @@
 = Vanubi Manual
 
+== Download & Installation
+keywords:[download installation build make clone]
+.Download the latest release of Vanubi, build it and launch it
+
+Install
+
 == Key/mouse bindings
+keywords:[keys keybindings mousebindings mouse]
+.Basics of key and mouse bindings
 
 Most of programming in Vanubi happens on the keyword. It's important to have meaningful key bindings. In this regard, Vanubi inherits some of Emacs key bindings.
 Key bindings are made up of one or multiple key combinations: for example `C-x C-s` has to be interpreted as press `Ctrl+x` then press `Ctrl+s`, or keep `Ctrl+x` pressed then press `s`.
@@ -9,6 +17,7 @@ Pressing them at the same time is not needed, the important thing is to press ke
 Currently supported modifiers are Shift (S-) and Ctrl (C-). Note that `C-x k`, `C-x C-k` and `C-k` and three different key bindings.
 
 == Commands
+keywords:[commands help control]
 
 Vanubi is controlled by commands issued by the user. A command might be activated by a key binding, a mouse action, or programmatically by invoking a command using `C-h` (the help command).
 Not all commands have key bindings, however by using `C-h` it gets very handy to run unusual commands.
