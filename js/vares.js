@@ -158,14 +158,20 @@
 			return $("#search input").val ();
 		};
 		
-		Vares.search_changed = function () {
+		Vares.search_changed = function (e) {			
 			Vares.open_topic_previews ();
 			var query = Vares.get_search_query ();
 			var matches = Vares.docs_index.search (query);
 			if (query.trim() == "") {
 				matches = Vares.get_all_topic_previews ();
 			}
-			Vares.set_displayed_topic_previews (matches);
+			if (e.which == 13 && matches.length > 0) {
+				// open the first match
+				Vares.open_topic ($(matches[0]).attr("data-id"));
+			} else {
+				Vares.set_displayed_topic_previews (matches);
+			}
+			
 			return false;
 		};
 		
