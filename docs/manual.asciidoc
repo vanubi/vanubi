@@ -1,10 +1,20 @@
 = Vanubi Manual
 
 == Download & Installation
-keywords:[download installation build make clone]
+keywords:[downloads installation building make clone]
 .Download the latest release of Vanubi, build it and launch it
 
-Install
+[source,sh]
+-------
+# apt-get install autotools-dev libtool valac libgtksourceview-3.0-dev libvte-2.90-dev
+$ git clone http://github.com/vanubi/vanubi.git
+$ cd vanubi
+$ ./autogen.sh
+$ make
+$ gui/vanubi
+-------
+
+Installation is not yet supported. Vanubi is only tested on Linux systems.
 
 == Key/mouse bindings
 keywords:[keys keybindings mousebindings mouse]
@@ -17,17 +27,22 @@ Pressing them at the same time is not needed, the important thing is to press ke
 Currently supported modifiers are Shift (S-) and Ctrl (C-). Note that `C-x k`, `C-x C-k` and `C-k` and three different key bindings.
 
 == Commands
-keywords:[commands help control]
+keywords:[commands help controls]
+.Get help, run commands and learn key bindings
 
 Vanubi is controlled by commands issued by the user. A command might be activated by a key binding, a mouse action, or programmatically by invoking a command using `C-h` (the help command).
 Not all commands have key bindings, however by using `C-h` it gets very handy to run unusual commands.
 
 == Fuzzy search
+keywords:[fuzzy searching]
+.Find and match anything with intelligent search
 
 All of the matching and search components of Vanubi use fuzzy search when possible. Fuzzy search means you can type only part of the text, and it will match and sort documents accordingly.
 For example the query 'fb' will match 'foobar'. Sorting takes in consideration how and where the query pattern matches the document to obtain the best result.
 
 == Dealing with files
+keywords:[opening save saving files scratch]
+.Open, save and find files in your projects
 
 At start you are prompted to edit `*scratch*`. This is not relative to any particular file, it exists as a temporary buffer for your own notetaking.
 
@@ -39,7 +54,9 @@ You can save a new or existing file being edited using `save-file` (`C-x C-s`). 
 
 If a file has been edited elsewhere and you want to reload it, it is possible with `reload-file`.
 
-== Buffers or views or editors
+== Manage opened files
+keywords:[buffers views editors files switch tabs]
+.Switch between opened files, split views and more
 
 A buffer (or editor) is a view of a file being edited. It is possible to split buffers horizontally or vertically (search for such commands with `C-h`).
 This allows you to open two views for the same file.
@@ -49,6 +66,8 @@ You can switch between files within a view using `switch-buffer` (`C-x b`). Note
 To close a buffer you can issue `kill-buffer` with `C-x k`. If the closed buffer was the last visible buffer for a file, the file will be removed from Vanubi and won't be visible when switching buffers anymore.
 
 == Shell terminals
+keywords:[compilation shell build projects errors]
+.Open a compilation shell, build your project and jump to errors
 
 Currently shell terminals can be opened with `compile-shell`. It will open a shell intended for compilation, though it's a general purpose shell.
 Each file has its own shell, and the current working directory is saved for that file so that when you reopen Vanubi, the shell will initially open on your last working directory.
@@ -56,6 +75,8 @@ Each file has its own shell, and the current working directory is saved for that
 Vanubi will parse the output of compilation and try to guess possible errors. You can navigate through errors with `next-error` (`C-'`) and `prev-error` (`C-0`).
 
 == Pipe-shell commands
+keywords:[pipelining shell commands execution]
+.Pipe text to a shell command and do powerful things
 
 Pipe-shell commands allow you to pipe the current contents (being saved or not) to a command, and do something with the output of the command.
 Additionally, `%f`, `%s` and `%e` are replaced with the filename, selection start and selection end respectively in the shell command.
@@ -64,16 +85,22 @@ In particular, `pipe-shell-replace` allows you to create complex scripts to edit
 While `pipe-shell-clipboard` allows you to call commands like `pastebinit` to share part or the whole buffer, or `asciidoc -b html5 - > tmp.html && xdg-open tmp.html` to render an asciidoc in your browser.
 
 == Sessions
+keywords:[sessions restore restoring]
+.Save your workspace and restore it later with sessions
 
 Vala keeps track of opened files and the current location of your cursor, and saves this information in the `default` session. After opening Vanubi, you can restore the last session with `restore-session`.
 It is possible to save a named session with `save-session`, which you can later open with `restore-session` by specifying the name of the session.
 
 == Marks
+keywords:[marks marking jumping code places]
+.Mark your places in the code and jump between locations
 
 Vanubi keeps a stack of marks among files that are set by the user, and are never implicitly set.
 You can set a mark on the current location with `mark` (`C-m`). You can go to the last mark set with `prev-mark` (`C-,`). Marks are added to a stack, so you can go back to previously set marks, and go forward with `next-mark` (`C-.`), until no more marks are available.
 
-== Vade language
+== Vade scripting language
+keywords:[vade language programming scripting scripts]
+.Embed simple expressions anywhere to do useful tasks
 
 Vade is a simple language for writing expressions in Vanubi.
 

@@ -28,6 +28,16 @@ AC_PROG_INSTALL
 AC_PROG_LIBTOOL
 AM_PROG_VALAC(0.20.0)
 
+AC_CHECK_PROG([ASCIIDOC], [asciidoc], [asciidoc])
+AC_ARG_WITH([asciidoc],
+  [AS_HELP_STRING([--with-asciidoc], [Use asciidoc to generate the documentation.])],
+  [case "$withval" in
+    yes) test -z "$asciidoc" && AC_MSG_ERROR([asciidoc not found.]) ;;
+    no) asciidoc="" ;;
+    *)   AC_MSG_ERROR([Bad value ${withval} for --with-asciidoc.]) ;;
+   esac])
+AM_CONDITIONAL([HAVE_ASCIIDOC], [test -n "$ASCIIDOC"])
+
 PACKAGE_SUFFIX=-0.1
 AC_SUBST(PACKAGE_SUFFIX)
 
@@ -118,6 +128,7 @@ AC_SUBST(VANUBI_LIBS)
 AC_CONFIG_FILES([
 		Makefile
 		libvanubi/Makefile
+		docs/Makefile
 		gui/Makefile
 		tests/Makefile
 ])
