@@ -1464,7 +1464,6 @@ namespace Vanubi {
 		
 		void on_indent (Editor ed) {
 			var indent_engine = get_indent_engine (ed);
-			var vbuf = indent_engine.buffer;
 			var buf = (SourceBuffer) ed.view.buffer;
 
 			if (indent_engine == null) {
@@ -1475,6 +1474,7 @@ namespace Vanubi {
 				ed.view.scroll_mark_onscreen (buf.get_insert ());
 				buf.end_user_action ();
 			} else {
+				var vbuf = indent_engine.buffer;
 				// indent every selected line
 				var min_line = int.min (selection_start.get_line(), selection_end.get_line());
 				var max_line = int.max (selection_start.get_line(), selection_end.get_line());
