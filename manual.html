@@ -1,8 +1,20 @@
 <div class="sect1">
 <h2 id="_download_amp_installation">Download &amp; Installation</h2>
 <div class="sectionbody">
-<div class="vareskeywords" style='display:none;'>download installation build make clone</div>
-<div class="paragraph"><div class="title">Download the latest release of Vanubi, build it and launch it</div><p>Install</p></div>
+<div class="vareskeywords" style='display:none;'>downloads installation building make clone</div>
+<div class="listingblock">
+<div class="title">Download the latest release of Vanubi, build it and launch it</div>
+<div class="content"><!-- Generator: GNU source-highlight 3.1.6
+by Lorenzo Bettini
+http://www.lorenzobettini.it
+http://www.gnu.org/software/src-highlite -->
+<pre><tt><span style="font-style: italic"><span style="color: #9A1900"># apt-get install autotools-dev libtool valac libgtksourceview-3.0-dev libvte-2.90-dev</span></span>
+$ git clone http<span style="color: #990000">:</span>//github<span style="color: #990000">.</span>com/vanubi/vanubi<span style="color: #990000">.</span>git
+$ cd vanubi
+$ <span style="color: #990000">.</span>/autogen<span style="color: #990000">.</span>sh
+$ make
+$ gui/vanubi</tt></pre></div></div>
+<div class="paragraph"><p>Installation is not yet supported. Vanubi is only tested on Linux systems.</p></div>
 </div>
 </div>
 <div class="sect1">
@@ -18,22 +30,24 @@ Pressing them at the same time is not needed, the important thing is to press ke
 <div class="sect1">
 <h2 id="_commands">Commands</h2>
 <div class="sectionbody">
-<div class="vareskeywords" style='display:none;'>commands help control</div>
-<div class="paragraph"><p>Vanubi is controlled by commands issued by the user. A command might be activated by a key binding, a mouse action, or programmatically by invoking a command using <span class="monospaced">C-h</span> (the help command).
+<div class="vareskeywords" style='display:none;'>commands help controls</div>
+<div class="paragraph"><div class="title">Get help, run commands and learn key bindings</div><p>Vanubi is controlled by commands issued by the user. A command might be activated by a key binding, a mouse action, or programmatically by invoking a command using <span class="monospaced">C-h</span> (the help command).
 Not all commands have key bindings, however by using <span class="monospaced">C-h</span> it gets very handy to run unusual commands.</p></div>
 </div>
 </div>
 <div class="sect1">
 <h2 id="_fuzzy_search">Fuzzy search</h2>
 <div class="sectionbody">
-<div class="paragraph"><p>All of the matching and search components of Vanubi use fuzzy search when possible. Fuzzy search means you can type only part of the text, and it will match and sort documents accordingly.
+<div class="vareskeywords" style='display:none;'>fuzzy searching</div>
+<div class="paragraph"><div class="title">Find and match anything with intelligent search</div><p>All of the matching and search components of Vanubi use fuzzy search when possible. Fuzzy search means you can type only part of the text, and it will match and sort documents accordingly.
 For example the query <em>fb</em> will match <em>foobar</em>. Sorting takes in consideration how and where the query pattern matches the document to obtain the best result.</p></div>
 </div>
 </div>
 <div class="sect1">
 <h2 id="_dealing_with_files">Dealing with files</h2>
 <div class="sectionbody">
-<div class="paragraph"><p>At start you are prompted to edit <span class="monospaced">*scratch*</span>. This is not relative to any particular file, it exists as a temporary buffer for your own notetaking.</p></div>
+<div class="vareskeywords" style='display:none;'>opening save saving files scratch</div>
+<div class="paragraph"><div class="title">Open, save and find files in your projects</div><p>At start you are prompted to edit <span class="monospaced">*scratch*</span>. This is not relative to any particular file, it exists as a temporary buffer for your own notetaking.</p></div>
 <div class="paragraph"><p>You can open a file for reading or create a new file with <span class="monospaced">open-file</span> (<span class="monospaced">C-x C-f</span>). You can type only part of the file and Vanubi will fuzzy search through file names.
 It is also possible to fuzzy search through sub directories. For example <em>/u/b</em> will match all sub directories like <span class="monospaced">/usr/bin</span>, <span class="monospaced">/usr/sbin</span>, <span class="monospaced">/run/dbus</span>, <span class="monospaced">/usr/lib</span>, etc.
 The tidle (<span class="monospaced">~</span>) is expand to the user home directory.</p></div>
@@ -42,9 +56,10 @@ The tidle (<span class="monospaced">~</span>) is expand to the user home directo
 </div>
 </div>
 <div class="sect1">
-<h2 id="_buffers_or_views_or_editors">Buffers or views or editors</h2>
+<h2 id="_manage_opened_files">Manage opened files</h2>
 <div class="sectionbody">
-<div class="paragraph"><p>A buffer (or editor) is a view of a file being edited. It is possible to split buffers horizontally or vertically (search for such commands with <span class="monospaced">C-h</span>).
+<div class="vareskeywords" style='display:none;'>buffers views editors files switch tabs</div>
+<div class="paragraph"><div class="title">Switch between opened files, split views and more</div><p>A buffer (or editor) is a view of a file being edited. It is possible to split buffers horizontally or vertically (search for such commands with <span class="monospaced">C-h</span>).
 This allows you to open two views for the same file.</p></div>
 <div class="paragraph"><p>You can switch between files within a view using <span class="monospaced">switch-buffer</span> (<span class="monospaced">C-x b</span>). Note that the first file in the switch buffer completion is the last file you edited in that view. That allows you to quickly switch between two files repeatedly within the same view, and to keep focus on the files you are recently editing.</p></div>
 <div class="paragraph"><p>To close a buffer you can issue <span class="monospaced">kill-buffer</span> with <span class="monospaced">C-x k</span>. If the closed buffer was the last visible buffer for a file, the file will be removed from Vanubi and won&#8217;t be visible when switching buffers anymore.</p></div>
@@ -53,7 +68,8 @@ This allows you to open two views for the same file.</p></div>
 <div class="sect1">
 <h2 id="_shell_terminals">Shell terminals</h2>
 <div class="sectionbody">
-<div class="paragraph"><p>Currently shell terminals can be opened with <span class="monospaced">compile-shell</span>. It will open a shell intended for compilation, though it&#8217;s a general purpose shell.
+<div class="vareskeywords" style='display:none;'>compilation shell build projects errors</div>
+<div class="paragraph"><div class="title">Open a compilation shell, build your project and jump to errors</div><p>Currently shell terminals can be opened with <span class="monospaced">compile-shell</span>. It will open a shell intended for compilation, though it&#8217;s a general purpose shell.
 Each file has its own shell, and the current working directory is saved for that file so that when you reopen Vanubi, the shell will initially open on your last working directory.</p></div>
 <div class="paragraph"><p>Vanubi will parse the output of compilation and try to guess possible errors. You can navigate through errors with <span class="monospaced">next-error</span> (<span class="monospaced">C-'</span>) and <span class="monospaced">prev-error</span> (<span class="monospaced">C-0</span>).</p></div>
 </div>
@@ -61,7 +77,8 @@ Each file has its own shell, and the current working directory is saved for that
 <div class="sect1">
 <h2 id="_pipe_shell_commands">Pipe-shell commands</h2>
 <div class="sectionbody">
-<div class="paragraph"><p>Pipe-shell commands allow you to pipe the current contents (being saved or not) to a command, and do something with the output of the command.
+<div class="vareskeywords" style='display:none;'>pipelining shell commands execution</div>
+<div class="paragraph"><div class="title">Pipe text to a shell command and do powerful things</div><p>Pipe-shell commands allow you to pipe the current contents (being saved or not) to a command, and do something with the output of the command.
 Additionally, <span class="monospaced">%f</span>, <span class="monospaced">%s</span> and <span class="monospaced">%e</span> are replaced with the filename, selection start and selection end respectively in the shell command.</p></div>
 <div class="paragraph"><p>In particular, <span class="monospaced">pipe-shell-replace</span> allows you to create complex scripts to edit the current edited buffer as you wish.
 While <span class="monospaced">pipe-shell-clipboard</span> allows you to call commands like <span class="monospaced">pastebinit</span> to share part or the whole buffer, or <span class="monospaced">asciidoc -b html5 - &gt; tmp.html &amp;&amp; xdg-open tmp.html</span> to render an asciidoc in your browser.</p></div>
@@ -70,21 +87,24 @@ While <span class="monospaced">pipe-shell-clipboard</span> allows you to call co
 <div class="sect1">
 <h2 id="_sessions">Sessions</h2>
 <div class="sectionbody">
-<div class="paragraph"><p>Vala keeps track of opened files and the current location of your cursor, and saves this information in the <span class="monospaced">default</span> session. After opening Vanubi, you can restore the last session with <span class="monospaced">restore-session</span>.
+<div class="vareskeywords" style='display:none;'>sessions restore restoring</div>
+<div class="paragraph"><div class="title">Save your workspace and restore it later with sessions</div><p>Vala keeps track of opened files and the current location of your cursor, and saves this information in the <span class="monospaced">default</span> session. After opening Vanubi, you can restore the last session with <span class="monospaced">restore-session</span>.
 It is possible to save a named session with <span class="monospaced">save-session</span>, which you can later open with <span class="monospaced">restore-session</span> by specifying the name of the session.</p></div>
 </div>
 </div>
 <div class="sect1">
 <h2 id="_marks">Marks</h2>
 <div class="sectionbody">
-<div class="paragraph"><p>Vanubi keeps a stack of marks among files that are set by the user, and are never implicitly set.
+<div class="vareskeywords" style='display:none;'>marks marking jumping code places</div>
+<div class="paragraph"><div class="title">Mark your places in the code and jump between locations</div><p>Vanubi keeps a stack of marks among files that are set by the user, and are never implicitly set.
 You can set a mark on the current location with <span class="monospaced">mark</span> (<span class="monospaced">C-m</span>). You can go to the last mark set with <span class="monospaced">prev-mark</span> (<span class="monospaced">C-,</span>). Marks are added to a stack, so you can go back to previously set marks, and go forward with <span class="monospaced">next-mark</span> (<span class="monospaced">C-.</span>), until no more marks are available.</p></div>
 </div>
 </div>
 <div class="sect1">
-<h2 id="_vade_language">Vade language</h2>
+<h2 id="_vade_scripting_language">Vade scripting language</h2>
 <div class="sectionbody">
-<div class="paragraph"><p>Vade is a simple language for writing expressions in Vanubi.</p></div>
+<div class="vareskeywords" style='display:none;'>vade language programming scripting scripts</div>
+<div class="paragraph"><div class="title">Embed simple expressions anywhere to do useful tasks</div><p>Vade is a simple language for writing expressions in Vanubi.</p></div>
 <div class="sect2">
 <h3 id="_syntax">Syntax</h3>
 <div class="sect3">

@@ -118,7 +118,7 @@
 			$("#topics h2").each (function (el) {
 					var id = $(this).attr("id");
 					var title = $(this).text();
-					var caption = $(this).parent().find(".title").text ();
+					var caption = $(this).parent().find(".title:first").text ();
 					var html = '<div class="btn topic-preview" data-id="'+id+'">'+
 					'<h2>'+title+'</h2>'+
 					'<caption>'+caption+'</caption>'+
