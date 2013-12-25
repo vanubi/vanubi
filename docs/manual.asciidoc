@@ -55,7 +55,7 @@ You can save a new or existing file being edited using `save-file` (`C-x C-s`). 
 If a file has been edited elsewhere and you want to reload it, it is possible with `reload-file`.
 
 == Manage opened files
-keywords:[buffers views editors files switch tabs]
+keywords:[buffers views editors files switch tabs manage]
 .Switch between opened files, split views and more
 
 A buffer (or editor) is a view of a file being edited. It is possible to split buffers horizontally or vertically (search for such commands with `C-h`).
@@ -67,7 +67,7 @@ To close a buffer you can issue `kill-buffer` with `C-x k`. If the closed buffer
 
 == Shell terminals
 keywords:[compilation shell build projects errors]
-.Open a compilation shell, build your project and jump to errors
+.Open a shell, build your project and jump to errors
 
 Currently shell terminals can be opened with `compile-shell`. It will open a shell intended for compilation, though it's a general purpose shell.
 Each file has its own shell, and the current working directory is saved for that file so that when you reopen Vanubi, the shell will initially open on your last working directory.
