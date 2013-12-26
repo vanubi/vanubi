@@ -1,0 +1,589 @@
+/* Shared CSS for AsciiDoc xhtml11 and html5 backends */
+
+/* Title font. */
+#topics h1, #topics h2, #topics h3, #topics h4, #topics h5, #topics h6,
+#topics div.title, #topics caption.title,
+#topics thead, #topics p.table.header,
+#topics #toctitle,
+#topics #author, #topics #revnumber, #topics #revdate, #topics #revremark,
+#topics #footer {
+  font-family: Arial,Helvetica,sans-serif;
+}
+
+#topics  {
+  margin: 1em 5% 1em 5%;
+}
+
+#topics a {
+  color: blue;
+  text-decoration: underline;
+}
+#topics a:visited {
+  color: fuchsia;
+}
+
+#topics em {
+  font-style: italic;
+  color: navy;
+}
+
+#topics strong {
+  font-weight: bold;
+  color: #083194;
+}
+
+#topics h1, #topics h2, #topics h3, #topics h4, #topics h5, #topics h6 {
+  color: #527bbd;
+  /* margin-top: 1.2em; */
+  margin-bottom: 0;
+  line-height: 1.3;
+}
+
+#topics h1, #topics h2, #topics h3 {
+  border-bottom: 2px solid silver;
+}
+#topics h2 {
+  /* padding-top: 0.5em; */
+}
+#topics h3 {
+  float: left;
+}
+#topics h3 + * {
+  clear: left;
+}
+#topics h5 {
+  font-size: 1.0em;
+}
+
+#topics div.sectionbody {
+  margin-left: 0;
+}
+
+#topics hr {
+  border: 1px solid silver;
+}
+
+#topics p {
+  margin-top: 0.5em;
+  margin-bottom: 0.5em;
+}
+
+#topics ul, #topics ol, #topics li > p {
+  margin-top: 0;
+}
+#topics ul > li     { color: #aaa; }
+#topics ul > li > * { color: black; }
+
+#topics pre {
+  padding: 0;
+  margin: 0;
+}
+
+#topics #author {
+  color: #527bbd;
+  font-weight: bold;
+  font-size: 1.1em;
+}
+#topics #email {
+}
+#topics #revnumber, #revdate, #revremark {
+}
+
+#topics #footer {
+  font-size: small;
+  border-top: 2px solid silver;
+  padding-top: 0.5em;
+  margin-top: 4.0em;
+}
+#topics #footer-text {
+  float: left;
+  padding-bottom: 0.5em;
+}
+#topics #footer-badges {
+  float: right;
+  padding-bottom: 0.5em;
+}
+
+#topics #preamble {
+  margin-top: 1.5em;
+  margin-bottom: 1.5em;
+}
+#topics div.imageblock, #topics div.exampleblock, #topics div.verseblock,
+#topics div.quoteblock, #topics div.literalblock, #topics div.listingblock, #topics div.sidebarblock,
+#topics div.admonitionblock {
+  margin-top: 1.0em;
+  margin-bottom: 1.5em;
+}
+#topics div.admonitionblock {
+  margin-top: 2.0em;
+  margin-bottom: 2.0em;
+  margin-right: 10%;
+  color: #606060;
+}
+
+#topics div.content { /* Block element content. */
+  padding: 0;
+}
+
+/* Block element titles. */
+#topics div.title, #topics caption.title {
+  color: #527bbd;
+  font-weight: bold;
+  text-align: left;
+  margin-top: 0.2em;
+  margin-bottom: 1.0em;
+}
+#topics div.title + * {
+  margin-top: 0;
+}
+
+#topics td div.title:first-child {
+  margin-top: 0.0em;
+}
+#topics div.content div.title:first-child {
+  margin-top: 0.0em;
+}
+#topics div.content + div.title {
+  margin-top: 0.0em;
+}
+
+#topics div.sidebarblock > div.content {
+  background: #ffffee;
+  border: 1px solid #dddddd;
+  border-left: 4px solid #f0f0f0;
+  padding: 0.5em;
+}
+
+#topics div.listingblock > div.content {
+  border: 1px solid #dddddd;
+  border-left: 5px solid #f0f0f0;
+  background: #f8f8f8;
+  padding: 0.5em;
+}
+
+#topics div.quoteblock, #topics div.verseblock {
+  padding-left: 1.0em;
+  margin-left: 1.0em;
+  margin-right: 10%;
+  border-left: 5px solid #f0f0f0;
+  color: #777777;
+}
+
+#topics div.quoteblock > div.attribution {
+  padding-top: 0.5em;
+  text-align: right;
+}
+
+#topics div.verseblock > pre.content {
+  font-family: inherit;
+  font-size: inherit;
+}
+#topics div.verseblock > div.attribution {
+  padding-top: 0.75em;
+  text-align: left;
+}
+/* DEPRECATED: Pre version 8.2.7 verse style literal block. */
+#topics div.verseblock + div.attribution {
+  text-align: left;
+}
+
+#topics div.admonitionblock .icon {
+  vertical-align: top;
+  font-size: 1.1em;
+  font-weight: bold;
+  text-decoration: underline;
+  color: #527bbd;
+  padding-right: 0.5em;
+}
+#topics div.admonitionblock td.content {
+  padding-left: 0.5em;
+  border-left: 3px solid #dddddd;
+}
+
+#topics div.exampleblock > div.content {
+  border-left: 3px solid #dddddd;
+  padding-left: 0.5em;
+}
+
+#topics div.imageblock div.content { padding-left: 0; }
+#topics span.image img { border-style: none; }
+#topics a.image:visited { color: white; }
+
+#topics dl {
+  margin-top: 0.8em;
+  margin-bottom: 0.8em;
+}
+#topics dt {
+  margin-top: 0.5em;
+  margin-bottom: 0;
+  font-style: normal;
+  color: navy;
+}
+#topics dd > *:first-child {
+  margin-top: 0.1em;
+}
+
+#topics ul, #topics ol {
+    list-style-position: outside;
+}
+#topics ol.arabic {
+  list-style-type: decimal;
+}
+#topics ol.loweralpha {
+  list-style-type: lower-alpha;
+}
+#topics ol.upperalpha {
+  list-style-type: upper-alpha;
+}
+#topics ol.lowerroman {
+  list-style-type: lower-roman;
+}
+#topics ol.upperroman {
+  list-style-type: upper-roman;
+}
+
+#topics div.compact ul, #topics div.compact ol,
+#topics div.compact p, #topics div.compact p,
+#topics div.compact div, #topics div.compact div {
+  margin-top: 0.1em;
+  margin-bottom: 0.1em;
+}
+
+#topics tfoot {
+  font-weight: bold;
+}
+#topics td > div.verse {
+  white-space: pre;
+}
+
+#topics div.hdlist {
+  margin-top: 0.8em;
+  margin-bottom: 0.8em;
+}
+#topics div.hdlist tr {
+  padding-bottom: 15px;
+}
+#topics dt.hdlist1.strong, #topics td.hdlist1.strong {
+  font-weight: bold;
+}
+#topics td.hdlist1 {
+  vertical-align: top;
+  font-style: normal;
+  padding-right: 0.8em;
+  color: navy;
+}
+#topics td.hdlist2 {
+  vertical-align: top;
+}
+#topics div.hdlist.compact tr {
+  margin: 0;
+  padding-bottom: 0;
+}
+
+#topics .comment {
+  background: yellow;
+}
+
+#topics .footnote, #topics .footnoteref {
+  font-size: 0.8em;
+}
+
+#topics span.footnote, #topics span.footnoteref {
+  vertical-align: super;
+}
+
+#topics #footnotes {
+  margin: 20px 0 20px 0;
+  padding: 7px 0 0 0;
+}
+
+#topics #footnotes div.footnote {
+  margin: 0 0 5px 0;
+}
+
+#topics #footnotes hr {
+  border: none;
+  border-top: 1px solid silver;
+  height: 1px;
+  text-align: left;
+  margin-left: 0;
+  width: 20%;
+  min-width: 100px;
+}
+
+#topics div.colist td {
+  padding-right: 0.5em;
+  padding-bottom: 0.3em;
+  vertical-align: top;
+}
+#topics div.colist td img {
+  margin-top: 0.3em;
+}
+
+#topics @media print {
+  #footer-badges { display: none; }
+}
+
+#topics #toc {
+  margin-bottom: 2.5em;
+}
+
+#topics #toctitle {
+  color: #527bbd;
+  font-size: 1.1em;
+  font-weight: bold;
+  margin-top: 1.0em;
+  margin-bottom: 0.1em;
+}
+
+#topics div.toclevel1, #topics div.toclevel2, #topics div.toclevel3, #topics div.toclevel4 {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+#topics div.toclevel2 {
+  margin-left: 2em;
+  font-size: 0.9em;
+}
+#topics div.toclevel3 {
+  margin-left: 4em;
+  font-size: 0.9em;
+}
+#topics div.toclevel4 {
+  margin-left: 6em;
+  font-size: 0.9em;
+}
+
+#topics span.aqua { color: aqua; }
+#topics span.black { color: black; }
+#topics span.blue { color: blue; }
+#topics span.fuchsia { color: fuchsia; }
+#topics span.gray { color: gray; }
+#topics span.green { color: green; }
+#topics span.lime { color: lime; }
+#topics span.maroon { color: maroon; }
+#topics span.navy { color: navy; }
+#topics span.olive { color: olive; }
+#topics span.purple { color: purple; }
+#topics span.red { color: red; }
+#topics span.silver { color: silver; }
+#topics span.teal { color: teal; }
+#topics span.white { color: white; }
+#topics span.yellow { color: yellow; }
+
+#topics span.aqua-background { background: aqua; }
+#topics span.black-background { background: black; }
+#topics span.blue-background { background: blue; }
+#topics span.fuchsia-background { background: fuchsia; }
+#topics span.gray-background { background: gray; }
+#topics span.green-background { background: green; }
+#topics span.lime-background { background: lime; }
+#topics span.maroon-background { background: maroon; }
+#topics span.navy-background { background: navy; }
+#topics span.olive-background { background: olive; }
+#topics span.purple-background { background: purple; }
+#topics span.red-background { background: red; }
+#topics span.silver-background { background: silver; }
+#topics span.teal-background { background: teal; }
+#topics span.white-background { background: white; }
+#topics span.yellow-background { background: yellow; }
+
+#topics span.big { font-size: 2em; }
+#topics span.small { font-size: 0.6em; }
+
+#topics span.underline { text-decoration: underline; }
+#topics span.overline { text-decoration: overline; }
+#topics span.line-through { text-decoration: line-through; }
+
+
+/*
+ * xhtml11 specific
+ *
+ * */
+
+#topics tt {
+  font-family: monospace;
+  font-size: inherit;
+  color: navy;
+}
+
+#topics div.tableblock {
+  margin-top: 1.0em;
+  margin-bottom: 1.5em;
+}
+#topics div.tableblock > table {
+  border: 3px solid #527bbd;
+}
+#topics thead, #topics p.table.header {
+  font-weight: bold;
+  color: #527bbd;
+}
+#topics p.table {
+  margin-top: 0;
+}
+/* Because the table frame attribute is overriden by CSS in most browsers. */
+#topics div.tableblock > table[frame="void"] {
+  border-style: none;
+}
+#topics div.tableblock > table[frame="hsides"] {
+  border-left-style: none;
+  border-right-style: none;
+}
+#topics div.tableblock > table[frame="vsides"] {
+  border-top-style: none;
+  border-bottom-style: none;
+}
+
+
+/*
+ * html5 specific
+ *
+ * */
+
+#topics .monospaced {
+  font-family: monospace;
+  font-size: inherit;
+  color: navy;
+}
+
+#topics table.tableblock {
+  margin-top: 1.0em;
+  margin-bottom: 1.5em;
+}
+#topics thead, #topics p.tableblock.header {
+  font-weight: bold;
+  color: #527bbd;
+}
+#topics p.tableblock {
+  margin-top: 0;
+}
+#topics table.tableblock {
+  border-width: 3px;
+  border-spacing: 0px;
+  border-style: solid;
+  border-color: #527bbd;
+  border-collapse: collapse;
+}
+#ŧopics th.tableblock, #topics td.tableblock {
+  border-width: 1px;
+  padding: 4px;
+  border-style: solid;
+  border-color: #527bbd;
+}
+
+#topics table.tableblock.frame-topbot {
+  border-left-style: hidden;
+  border-right-style: hidden;
+}
+#topics table.tableblock.frame-sides {
+  border-top-style: hidden;
+  border-bottom-style: hidden;
+}
+#topics table.tableblock.frame-none {
+  border-style: hidden;
+}
+
+#topics th.tableblock.halign-left, #topics td.tableblock.halign-left {
+  text-align: left;
+}
+#topics th.tableblock.halign-center, #topics td.tableblock.halign-center {
+  text-align: center;
+}
+#topics th.tableblock.halign-right, #topics td.tableblock.halign-right {
+  text-align: right;
+}
+
+#topics th.tableblock.valign-top, #topics td.tableblock.valign-top {
+  vertical-align: top;
+}
+#topics th.tableblock.valign-middle, #topics td.tableblock.valign-middle {
+  vertical-align: middle;
+}
+#topics th.tableblock.valign-bottom, #topics td.tableblock.valign-bottom {
+  vertical-align: bottom;
+}
+
+
+/*
+ * manpage specific
+ *
+ * */
+
+body.manpage h1 {
+  padding-top: 0.5em;
+  padding-bottom: 0.5em;
+  border-top: 2px solid silver;
+  border-bottom: 2px solid silver;
+}
+body.manpage h2 {
+  border-style: none;
+}
+body.manpage div.sectionbody {
+  margin-left: 3em;
+}
+
+@media print {
+  body.manpage div#toc { display: none; }
+}
+
+
+/*
+ * Theme specific overrides of the preceding (asciidoc.css) CSS.
+ *
+ */
+#topics {
+  font-size: 17px;
+  color: #d3d7cf;
+  line-height: 1.3em;
+}
+#topics h1, #topics h2, #topics h3, #topics h4, #topics h5, #topics h6,
+#topics div.title, #topics caption.title,
+#topics thead, #topics p.table.header,
+#topics #toctitle,
+#topics #author, #topics #revnumber, #topics #revdate, #topics #revremark,
+#topics #footer {
+  font-weight: normal;
+  border-bottom-width: 0;
+  color: #babdb6;
+}
+#topics div.title, #topics caption.title { color: #596673; font-weight: bold; }
+#topics h1 { font-size: 240%; }
+#topics h2 { font-size: 180%; }
+#topics h3 { font-size: 150%; }
+#topics h4 { font-size: 130%; }
+#topics h5 { font-size: 115%; }
+#topics h6 { font-size: 100%; }
+#topics #header h1 { margin-top: 0; }
+#topics #toc {
+  color: #444444;
+  line-height: 1.5;
+  padding-top: 1.5em;
+}
+#topics #toctitle {
+  font-size: 20px;
+}
+#topics #toc a {
+    border-bottom: 1px dotted #999999;
+    color: #444444 !important;
+    text-decoration: none !important;
+}
+#topics #toc a:hover {
+    border-bottom: 1px solid #6D4100;
+    color: #6D4100 !important;
+    text-decoration: none !important;
+}
+#topics div.toclevel1 { margin-top: 0.2em; font-size: 16px; }
+#topics div.toclevel2 { margin-top: 0.15em; font-size: 14px; }
+#topics em, #topics dt, #topics td.hdlist1 { color: black; }
+#topics strong { color: #3E4349; }
+#topics a { color: #004B6B; text-decoration: none; border-bottom: 1px dotted #004B6B; }
+#topics a:visited { color: #615FA0; border-bottom: 1px dotted #615FA0; }
+#topics a:hover { color: #6D4100; border-bottom: 1px solid #6D4100; }
+#topics div.tableblock > table, #topics table.tableblock { border: 3px solid #E8E8E8; }
+#topics th.tableblock, #topics td.tableblock { border: 1px solid #E8E8E8; }
+#topics ul > li > * { color: #3E4349; }
+#topics pre, #topics tt, #topics .monospaced { font-family: Consolas,Menlo,'Deja Vu Sans Mono','Bitstream Vera Sans Mono',monospace; }
+#topics tt, #topics .monospaced { font-size: 0.9em; color: #729fcf; }
+#topics div.exampleblock > div.content, #topics div.sidebarblock > div.content, #topics div.listingblock > div.content { border-width: 0 0 0 3px; border-color: #E8E8E8; }
+#topics div.verseblock { border-left-width: 0; margin-left: 3em; }
+#topics div.quoteblock { border-left-width: 3px; margin-left: 0; margin-right: 0;}
+#topics div.admonitionblock td.content { border-left: 3px solid #E8E8E8; }
