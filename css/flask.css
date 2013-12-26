@@ -573,7 +573,7 @@ body.manpage div.sectionbody {
 }
 #topics div.toclevel1 { margin-top: 0.2em; font-size: 16px; }
 #topics div.toclevel2 { margin-top: 0.15em; font-size: 14px; }
-#topics em, #topics dt, #topics td.hdlist1 { color: black; }
+#topics em, #topics dt, #topics td.hdlist1 { color: #e9b96e; }
 #topics strong { color: #3E4349; }
 #topics a { color: #004B6B; text-decoration: none; border-bottom: 1px dotted #004B6B; }
 #topics a:visited { color: #615FA0; border-bottom: 1px dotted #615FA0; }
