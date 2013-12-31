@@ -39,6 +39,7 @@ namespace Vanubi {
 		TextIter selection_start;
 		TextIter selection_end;
 
+		bool zen_mode = false;
 		bool saving_on_quit = false;
 		
 		[Signal (detailed = true)]
@@ -372,6 +373,13 @@ namespace Vanubi {
 			bind_command ({ Key (',', Gdk.ModifierType.CONTROL_MASK) }, "prev-mark");
 			index_command ("prev-mark", "Go to the previously saved position");
 			execute_command["prev-mark"].connect (on_goto_mark);
+			
+			bind_command ({ Key (Gdk.Key.F11, 0) }, "full-screen");
+			index_command ("full-screen", "Full-screen mode");
+			execute_command["full-screen"].connect (on_zen_mode);
+			
+			index_command ("zen-mode", "Put yourself in meditation mode");
+			execute_command["zen-mode"].connect (on_zen_mode);
 
 			// setup empty buffer
 			unowned Editor ed = get_available_editor (null);
@@ -1891,6 +1899,16 @@ namespace Vanubi {
 				ed.view.move_cursor (MovementStep.VISUAL_POSITIONS, 1, false);
 			} else {
 				ed.view.move_cursor (MovementStep.VISUAL_POSITIONS, -1, false);
+			}
+		}
+		
+		void on_zen_mode (Editor editor) {
+			if (!zen_mode) {
+				zen_mode = true;
+				this.get_window().fullscreen();
+			} else {
+				zen_mode = false;
+				this.get_window().unfullscreen();
 			}
 		}
 	}
