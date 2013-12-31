@@ -1,10 +1,13 @@
+:source-highlighter: pygments
+
 = Vanubi Manual
 
 == Download & Installation
 keywords:[downloads installation building make clone]
 .Download the latest release of Vanubi, build it and launch it
 
-[source,sh]
+[source,console]
+:args: -O style=native,noclasses
 -------
 # apt-get install autotools-dev libtool valac libgtksourceview-3.0-dev libvte-2.90-dev
 $ git clone http://github.com/vanubi/vanubi.git
@@ -112,7 +115,8 @@ In Vade everything is an expression, and each expression evaluates to a value.
 
 An expression is a sequence of sub expressions separated by `;`.
 
-[source,bison]
+[source,javascript]
+:args: -O style=native,noclasses
 -------
 expr1 ; expr2; ...; exprN
 -------
@@ -120,6 +124,7 @@ expr1 ; expr2; ...; exprN
 Expressions can be `if` expressions, with an optional `else` branch:
 	
 [source,javascript]
+:args: -O style=native,noclasses
 -------
 if (condition) true_expr else false_expr
 -------
@@ -127,6 +132,7 @@ if (condition) true_expr else false_expr
 Usual assignment, arithmetic and relational expressions are supported. Assignment is done with `=` as follows:
 	
 [source,javascript]
+:args: -O style=native,noclasses
 -------
 identifier = value
 -------
@@ -134,6 +140,7 @@ identifier = value
 If an expression is a function (like `concat`) it is possible to call such a function with arguments separated by `,` as follows:
 
 [source,javascript]
+:args: -O style=native,noclasses
 -------
 concat(arg1, ..., argN)
 -------
@@ -141,6 +148,7 @@ concat(arg1, ..., argN)
 You can define your own functions as follows:
 
 [source,javascript]
+:args: -O style=native,noclasses
 -------
 func = { param1 param2 | body }
 func_without_params = { body }
@@ -152,7 +160,7 @@ That is, enclosing an expression between braces will create an anonymous functio
 
 Below a BNF-like description of the language.
 
-[source,bison]
+[source,text]
 ----------
 expr = seq
 seq = nonseq [ ';' seq-expr ]
@@ -196,6 +204,7 @@ An expression made up of a sequence of expressions (`expr1; ..., exprN`) will ev
 The expression below will evaluate to `10`:
 	
 [source,javascript]
+:args: -O style=native,noclasses
 ----------
 a = 4; b = 6; a+b
 ----------
@@ -210,6 +219,7 @@ Referencing a non-existant register will evaluate to an empty string (or 0 if us
 The expression below will evaluate to `1`:
 	
 [source,javascript]
+:args: -O style=native,noclasses
 ----------
 ++foo
 ----------
@@ -233,6 +243,7 @@ Parameters of function will define a local register in the function scope, hidin
 The expression below will evaluate to `5` (not `7`) because `b` is zero in the parent scope:
 
 [source,javascript]
+:args: -O style=native,noclasses
 ------
 a = 3; f = { b = 2; a = a+b }; f(); a+b
 ------
