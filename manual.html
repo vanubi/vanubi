@@ -4,16 +4,13 @@
 <div class="vareskeywords" style='display:none;'>downloads installation building make clone</div>
 <div class="listingblock">
 <div class="title">Download the latest release of Vanubi, build it and launch it</div>
-<div class="content"><!-- Generator: GNU source-highlight 3.1.6
-by Lorenzo Bettini
-http://www.lorenzobettini.it
-http://www.gnu.org/software/src-highlite -->
-<pre><tt><span style="font-style: italic"><span style="color: #9A1900"># apt-get install autotools-dev libtool valac libgtksourceview-3.0-dev libvte-2.90-dev</span></span>
-$ git clone http<span style="color: #990000">:</span>//github<span style="color: #990000">.</span>com/vanubi/vanubi<span style="color: #990000">.</span>git
-$ cd vanubi
-$ <span style="color: #990000">.</span>/autogen<span style="color: #990000">.</span>sh
-$ make
-$ gui/vanubi</tt></pre></div></div>
+<div class="content"><div class="highlight" style="background: #202020"><pre style="line-height: 125%"><span style="color: #aaaaaa">#</span> apt-get install autotools-dev libtool valac libgtksourceview-3.0-dev libvte-2.90-dev
+<span style="color: #aaaaaa">$</span> git clone http://github.com/vanubi/vanubi.git
+<span style="color: #aaaaaa">$</span> <span style="color: #24909d">cd </span>vanubi
+<span style="color: #aaaaaa">$</span> ./autogen.sh
+<span style="color: #aaaaaa">$</span> make
+<span style="color: #aaaaaa">$</span> gui/vanubi
+</pre></div></div></div>
 <div class="paragraph"><p>Installation is not yet supported. Vanubi is only tested on Linux systems.</p></div>
 </div>
 </div>
@@ -112,76 +109,58 @@ You can set a mark on the current location with <span class="monospaced">mark</s
 <div class="paragraph"><p>In Vade everything is an expression, and each expression evaluates to a value.</p></div>
 <div class="paragraph"><p>An expression is a sequence of sub expressions separated by <span class="monospaced">;</span>.</p></div>
 <div class="listingblock">
-<div class="content"><!-- Generator: GNU source-highlight 3.1.6
-by Lorenzo Bettini
-http://www.lorenzobettini.it
-http://www.gnu.org/software/src-highlite -->
-<pre><tt><span style="font-weight: bold"><span style="color: #000080">expr1</span></span> <span style="color: #990000">;</span> expr2<span style="color: #990000">;</span> <span style="color: #990000">...;</span> exprN</tt></pre></div></div>
+<div class="content"><div class="highlight" style="background: #202020"><pre style="line-height: 125%"><span style="color: #d0d0d0">expr1</span> <span style="color: #d0d0d0">;</span> <span style="color: #d0d0d0">expr2;</span> <span style="color: #d0d0d0">...;</span> <span style="color: #d0d0d0">exprN</span>
+</pre></div></div></div>
 <div class="paragraph"><p>Expressions can be <span class="monospaced">if</span> expressions, with an optional <span class="monospaced">else</span> branch:</p></div>
 <div class="listingblock">
-<div class="content"><!-- Generator: GNU source-highlight 3.1.6
-by Lorenzo Bettini
-http://www.lorenzobettini.it
-http://www.gnu.org/software/src-highlite -->
-<pre><tt><span style="font-weight: bold"><span style="color: #0000FF">if</span></span> <span style="color: #990000">(</span>condition<span style="color: #990000">)</span> true_expr <span style="font-weight: bold"><span style="color: #0000FF">else</span></span> false_expr</tt></pre></div></div>
+<div class="content"><div class="highlight" style="background: #202020"><pre style="line-height: 125%"><span style="color: #6ab825; font-weight: bold">if</span> <span style="color: #d0d0d0">(condition)</span> <span style="color: #d0d0d0">true_expr</span> <span style="color: #6ab825; font-weight: bold">else</span> <span style="color: #d0d0d0">false_expr</span>
+</pre></div></div></div>
 <div class="paragraph"><p>Usual assignment, arithmetic and relational expressions are supported. Assignment is done with <span class="monospaced">=</span> as follows:</p></div>
 <div class="listingblock">
-<div class="content"><!-- Generator: GNU source-highlight 3.1.6
-by Lorenzo Bettini
-http://www.lorenzobettini.it
-http://www.gnu.org/software/src-highlite -->
-<pre><tt>identifier <span style="color: #990000">=</span> value</tt></pre></div></div>
+<div class="content"><div class="highlight" style="background: #202020"><pre style="line-height: 125%"><span style="color: #d0d0d0">identifier</span> <span style="color: #d0d0d0">=</span> <span style="color: #d0d0d0">value</span>
+</pre></div></div></div>
 <div class="paragraph"><p>If an expression is a function (like <span class="monospaced">concat</span>) it is possible to call such a function with arguments separated by <span class="monospaced">,</span> as follows:</p></div>
 <div class="listingblock">
-<div class="content"><!-- Generator: GNU source-highlight 3.1.6
-by Lorenzo Bettini
-http://www.lorenzobettini.it
-http://www.gnu.org/software/src-highlite -->
-<pre><tt><span style="font-weight: bold"><span style="color: #000000">concat</span></span><span style="color: #990000">(</span>arg1<span style="color: #990000">,</span> <span style="color: #990000">...,</span> argN<span style="color: #990000">)</span></tt></pre></div></div>
+<div class="content"><div class="highlight" style="background: #202020"><pre style="line-height: 125%"><span style="color: #d0d0d0">concat(arg1,</span> <span style="color: #d0d0d0">...,</span> <span style="color: #d0d0d0">argN)</span>
+</pre></div></div></div>
 <div class="paragraph"><p>You can define your own functions as follows:</p></div>
 <div class="listingblock">
-<div class="content"><!-- Generator: GNU source-highlight 3.1.6
-by Lorenzo Bettini
-http://www.lorenzobettini.it
-http://www.gnu.org/software/src-highlite -->
-<pre><tt>func <span style="color: #990000">=</span> <span style="color: #FF0000">{</span> param1 param2 <span style="color: #990000">|</span> body <span style="color: #FF0000">}</span>
-func_without_params <span style="color: #990000">=</span> <span style="color: #FF0000">{</span> body <span style="color: #FF0000">}</span></tt></pre></div></div>
+<div class="content"><div class="highlight" style="background: #202020"><pre style="line-height: 125%"><span style="color: #d0d0d0">func</span> <span style="color: #d0d0d0">=</span> <span style="color: #d0d0d0">{</span> <span style="color: #d0d0d0">param1</span> <span style="color: #d0d0d0">param2</span> <span style="color: #d0d0d0">|</span> <span style="color: #d0d0d0">body</span> <span style="color: #d0d0d0">}</span>
+<span style="color: #d0d0d0">func_without_params</span> <span style="color: #d0d0d0">=</span> <span style="color: #d0d0d0">{</span> <span style="color: #d0d0d0">body</span> <span style="color: #d0d0d0">}</span>
+</pre></div></div></div>
 <div class="paragraph"><p>That is, enclosing an expression between braces will create an anonymous function.</p></div>
 </div>
 <div class="sect3">
 <h4 id="_formal_syntax">Formal syntax</h4>
 <div class="paragraph"><p>Below a BNF-like description of the language.</p></div>
 <div class="listingblock">
-<div class="content"><!-- Generator: GNU source-highlight 3.1.6
-by Lorenzo Bettini
-http://www.lorenzobettini.it
-http://www.gnu.org/software/src-highlite -->
-<pre><tt><span style="font-weight: bold"><span style="color: #000080">expr</span></span> <span style="color: #990000">=</span> seq
-<span style="font-weight: bold"><span style="color: #000080">seq</span></span> <span style="color: #990000">=</span> nonseq <span style="color: #990000">[</span> '<span style="color: #990000">;</span>' seq<span style="color: #990000">-</span>expr <span style="color: #990000">]</span>
-<span style="font-weight: bold"><span style="color: #000080">nonseq</span></span> <span style="color: #990000">=</span> binary <span style="color: #990000">|</span> if
+<div class="content"><div class="highlight" style="background: #202020"><pre style="line-height: 125%">expr = seq
+seq = nonseq [ &#39;;&#39; seq-expr ]
+nonseq = binary | if
 
-<span style="font-weight: bold"><span style="color: #000080">if</span></span> <span style="color: #990000">=</span> 'if' '<span style="color: #990000">(</span>' expr '<span style="color: #990000">)</span>' primary <span style="color: #990000">[</span> 'else' primary <span style="color: #990000">]</span>
+if = &#39;if&#39; &#39;(&#39; expr &#39;)&#39; primary [ &#39;else&#39; primary ]
 
-<span style="font-weight: bold"><span style="color: #000080">primary</span></span> <span style="color: #990000">=</span> assign
-<span style="font-weight: bold"><span style="color: #000080">assign</span></span> <span style="color: #990000">=</span> rel <span style="color: #990000">[</span> <span style="color: #990000">(</span>'<span style="color: #990000">=</span>'<span style="color: #990000">|</span>'<span style="color: #990000">+=</span>'<span style="color: #990000">|</span>'<span style="color: #990000">-=</span>'<span style="color: #990000">|</span>'<span style="color: #990000">*=</span>'<span style="color: #990000">|</span>'<span style="color: #990000">/=</span>'<span style="color: #990000">)</span> assign <span style="color: #990000">]</span>
-<span style="font-weight: bold"><span style="color: #000080">rel</span></span> <span style="color: #990000">=</span> add <span style="color: #990000">[</span> <span style="color: #990000">(</span>'<span style="color: #990000">==</span>'<span style="color: #990000">|</span>'<span style="color: #990000">!=</span>'<span style="color: #990000">|</span>'<span style="color: #990000">&gt;</span>'<span style="color: #990000">|</span>'<span style="color: #990000">&gt;=</span>'<span style="color: #990000">|</span>'<span style="color: #990000">&lt;</span>'<span style="color: #990000">|</span>'<span style="color: #990000">&lt;=</span>'<span style="color: #990000">)</span> rel <span style="color: #990000">]</span>
-<span style="font-weight: bold"><span style="color: #000080">add</span></span> <span style="color: #990000">=</span> mul <span style="color: #990000">[</span> <span style="color: #990000">(</span>'<span style="color: #990000">+</span>'<span style="color: #990000">|</span>'<span style="color: #990000">-</span>'<span style="color: #990000">)</span> add <span style="color: #990000">]</span>
-<span style="font-weight: bold"><span style="color: #000080">mul</span></span> <span style="color: #990000">=</span> unary <span style="color: #990000">[</span> <span style="color: #990000">(</span>'<span style="color: #990000">*</span>'<span style="color: #990000">|</span>'<span style="color: #990000">/</span>'<span style="color: #990000">)</span> mul <span style="color: #990000">]</span>
-<span style="font-weight: bold"><span style="color: #000080">unary</span></span> <span style="color: #990000">=</span> simple <span style="color: #990000">|</span> <span style="color: #990000">(</span>'<span style="color: #990000">-</span>'<span style="color: #990000">,</span>'<span style="color: #990000">++</span>'<span style="color: #990000">,</span>'<span style="color: #990000">--</span>'<span style="color: #990000">)</span> simple
+primary = assign
+assign = rel [ (&#39;=&#39;|&#39;+=&#39;|&#39;-=&#39;|&#39;*=&#39;|&#39;/=&#39;) assign ]
+rel = add [ (&#39;==&#39;|&#39;!=&#39;|&#39;&gt;&#39;|&#39;&gt;=&#39;|&#39;&lt;&#39;|&#39;&lt;=&#39;) rel ]
+add = mul [ (&#39;+&#39;|&#39;-&#39;) add ]
+mul = unary [ (&#39;*&#39;|&#39;/&#39;) mul ]
+unary = simple | (&#39;-&#39;,&#39;++&#39;,&#39;--&#39;) simple
 
-<span style="font-weight: bold"><span style="color: #000080">simple</span></span> <span style="color: #990000">=</span> simple<span style="color: #990000">-</span>init <span style="color: #990000">[</span> simple<span style="color: #990000">-</span>access <span style="color: #990000">]*</span>
-<span style="font-weight: bold"><span style="color: #000080">simple-init</span></span> <span style="color: #990000">=</span> identifier <span style="color: #990000">[</span> <span style="color: #990000">(</span>'<span style="color: #990000">++</span>'<span style="color: #990000">|</span>'<span style="color: #990000">--</span>'<span style="color: #990000">)</span> <span style="color: #990000">]</span> <span style="color: #990000">|</span> function <span style="color: #990000">|</span> '<span style="color: #990000">(</span>' nonseq '<span style="color: #990000">)</span>' <span style="color: #990000">|</span> literal
-<span style="font-weight: bold"><span style="color: #000080">simple-access</span></span> <span style="color: #990000">=</span> '<span style="color: #990000">.</span>' identifier <span style="color: #990000">|</span> call
-<span style="font-weight: bold"><span style="color: #000080">call</span></span> <span style="color: #990000">=</span> '<span style="color: #990000">(</span>' <span style="color: #990000">[</span> arguments <span style="color: #990000">]</span> '<span style="color: #990000">)</span>'
-<span style="font-weight: bold"><span style="color: #000080">arguments</span></span> <span style="color: #990000">=</span> nonseq <span style="color: #990000">[</span> '<span style="color: #990000">,</span>' nonseq <span style="color: #990000">]*</span>
+simple = simple-init [ simple-access ]*
+simple-init = identifier [ (&#39;++&#39;|&#39;--&#39;) ] | function | &#39;(&#39; nonseq &#39;)&#39; | literal
+simple-access = &#39;.&#39; identifier | call
+call = &#39;(&#39; [ arguments ] &#39;)&#39;
+arguments = nonseq [ &#39;,&#39; nonseq ]*
 
-<span style="font-weight: bold"><span style="color: #000080">function</span></span> <span style="color: #990000">=</span> '{' <span style="color: #990000">[</span> parameters '<span style="color: #990000">|</span>' <span style="color: #990000">]</span> expr '}'
-<span style="font-weight: bold"><span style="color: #000080">parameters</span></span> <span style="color: #990000">=</span> identifier <span style="color: #990000">[</span> ' ' identifier <span style="color: #990000">]*</span>
+function = &#39;{&#39; [ parameters &#39;|&#39; ] expr &#39;}&#39;
+parameters = identifier [ &#39; &#39; identifier ]*
 
-<span style="font-weight: bold"><span style="color: #000080">identifier</span></span> <span style="color: #990000">=</span> ALPHA <span style="color: #990000">[</span> ALPHANUM <span style="color: #990000">]*</span>
-<span style="font-weight: bold"><span style="color: #000080">literal</span></span> <span style="color: #990000">=</span> num <span style="color: #990000">|</span> string
-<span style="font-weight: bold"><span style="color: #000080">num</span></span> <span style="color: #990000">=</span> DIGIT<span style="color: #990000">*</span> <span style="color: #990000">[</span> '<span style="color: #990000">.</span>' DIGIT<span style="color: #990000">*</span> <span style="color: #990000">]</span>
-<span style="font-weight: bold"><span style="color: #000080">string</span></span> <span style="color: #990000">=</span> <span style="color: #FF0000">"'"</span> escaped<span style="color: #990000">-</span>string <span style="color: #FF0000">"'"</span></tt></pre></div></div>
+identifier = ALPHA [ ALPHANUM ]*
+literal = num | string
+num = DIGIT* [ &#39;.&#39; DIGIT* ]
+string = &quot;&#39;&quot; escaped-string &quot;&#39;&quot;
+</pre></div></div></div>
 </div>
 </div>
 <div class="sect2">
@@ -194,11 +173,8 @@ http://www.gnu.org/software/src-highlite -->
 <div class="content">
 <div class="paragraph"><p>The expression below will evaluate to <span class="monospaced">10</span>:</p></div>
 <div class="listingblock">
-<div class="content"><!-- Generator: GNU source-highlight 3.1.6
-by Lorenzo Bettini
-http://www.lorenzobettini.it
-http://www.gnu.org/software/src-highlite -->
-<pre><tt>a <span style="color: #990000">=</span> <span style="color: #993399">4</span><span style="color: #990000">;</span> b <span style="color: #990000">=</span> <span style="color: #993399">6</span><span style="color: #990000">;</span> a<span style="color: #990000">+</span>b</tt></pre></div></div>
+<div class="content"><div class="highlight" style="background: #202020"><pre style="line-height: 125%"><span style="color: #d0d0d0">a</span> <span style="color: #d0d0d0">=</span> <span style="color: #3677a9">4</span><span style="color: #d0d0d0">;</span> <span style="color: #d0d0d0">b</span> <span style="color: #d0d0d0">=</span> <span style="color: #3677a9">6</span><span style="color: #d0d0d0">;</span> <span style="color: #d0d0d0">a+b</span>
+</pre></div></div></div>
 </div></div>
 <div class="paragraph"><p>Referencing a non-existant register will evaluate to an empty string (or 0 if used as a number).</p></div>
 <div class="exampleblock">
@@ -206,11 +182,8 @@ http://www.gnu.org/software/src-highlite -->
 <div class="content">
 <div class="paragraph"><p>The expression below will evaluate to <span class="monospaced">1</span>:</p></div>
 <div class="listingblock">
-<div class="content"><!-- Generator: GNU source-highlight 3.1.6
-by Lorenzo Bettini
-http://www.lorenzobettini.it
-http://www.gnu.org/software/src-highlite -->
-<pre><tt><span style="color: #990000">++</span>foo</tt></pre></div></div>
+<div class="content"><div class="highlight" style="background: #202020"><pre style="line-height: 125%"><span style="color: #d0d0d0">++foo</span>
+</pre></div></div></div>
 </div></div>
 <div class="paragraph"><p>In the Vanubi editor, a <span class="monospaced">base scope</span> is created and all top-level expressions will share the same scope. Therefore a register assigned in an expression will then be reusable within the application when evaluating another expression at a later time.</p></div>
 <div class="paragraph"><p>Functions in Vade run in a scope which is created starting from the scope in which they are defined (<span class="monospaced">parent scope</span>).
@@ -239,11 +212,8 @@ Parameters of function will define a local register in the function scope, hidin
 <div class="content">
 <div class="paragraph"><p>The expression below will evaluate to <span class="monospaced">5</span> (not <span class="monospaced">7</span>) because <span class="monospaced">b</span> is zero in the parent scope:</p></div>
 <div class="listingblock">
-<div class="content"><!-- Generator: GNU source-highlight 3.1.6
-by Lorenzo Bettini
-http://www.lorenzobettini.it
-http://www.gnu.org/software/src-highlite -->
-<pre><tt>a <span style="color: #990000">=</span> <span style="color: #993399">3</span><span style="color: #990000">;</span> f <span style="color: #990000">=</span> <span style="color: #FF0000">{</span> b <span style="color: #990000">=</span> <span style="color: #993399">2</span><span style="color: #990000">;</span> a <span style="color: #990000">=</span> a<span style="color: #990000">+</span>b <span style="color: #FF0000">}</span><span style="color: #990000">;</span> <span style="font-weight: bold"><span style="color: #000000">f</span></span><span style="color: #990000">();</span> a<span style="color: #990000">+</span>b</tt></pre></div></div>
+<div class="content"><div class="highlight" style="background: #202020"><pre style="line-height: 125%"><span style="color: #d0d0d0">a</span> <span style="color: #d0d0d0">=</span> <span style="color: #3677a9">3</span><span style="color: #d0d0d0">;</span> <span style="color: #d0d0d0">f</span> <span style="color: #d0d0d0">=</span> <span style="color: #d0d0d0">{</span> <span style="color: #d0d0d0">b</span> <span style="color: #d0d0d0">=</span> <span style="color: #3677a9">2</span><span style="color: #d0d0d0">;</span> <span style="color: #d0d0d0">a</span> <span style="color: #d0d0d0">=</span> <span style="color: #d0d0d0">a+b</span> <span style="color: #d0d0d0">};</span> <span style="color: #d0d0d0">f();</span> <span style="color: #d0d0d0">a+b</span>
+</pre></div></div></div>
 </div></div>
 </div>
 </div>

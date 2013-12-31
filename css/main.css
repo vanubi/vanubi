@@ -76,3 +76,8 @@ header h1 {
 	max-width: 95%;
 	margin: 0 auto;
 }
+
+pre {
+	border: none;
+	border-radius: 0;
+}
