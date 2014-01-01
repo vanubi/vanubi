@@ -1,3 +1,4 @@
+
 /*
  *  Copyright © 2011-2014 Luca Bruno
  *
@@ -206,12 +207,12 @@ namespace Vanubi {
 
 			bind_command ({ 
 				Key (Gdk.Key.l, Gdk.ModifierType.CONTROL_MASK) }, "next-editor");
-			index_command ("next-editor", "Move to the next buffer", "cycle");
+			index_command ("next-editor", "Move to the next buffer", "cycle right");
 			execute_command["next-editor"].connect (on_switch_editor);
 
 			bind_command ({ 
 				Key (Gdk.Key.j, Gdk.ModifierType.CONTROL_MASK) }, "prev-editor");
-			index_command ("prev-editor", "Move to the previous buffer", "cycle");
+			index_command ("prev-editor", "Move to the previous buffer", "cycle left");
 			execute_command["prev-editor"].connect (on_switch_editor);
 
 			bind_command ({
@@ -225,19 +226,23 @@ namespace Vanubi {
 					Key (Gdk.Key.x, Gdk.ModifierType.CONTROL_MASK),
 						Key (Gdk.Key.@1, Gdk.ModifierType.CONTROL_MASK)},
 				"join");
-			index_command ("join", "Collapse two buffers into one", "join");
+			index_command ("join", "Collapse two buffers into one");
 			execute_command["join"].connect (on_join);
 
 			bind_command ({ Key (Gdk.Key.n, Gdk.ModifierType.CONTROL_MASK) }, "forward-line");
+			index_command ("forward-line", "Move the cursor one line forward");
 			execute_command["forward-line"].connect (on_forward_backward_line);
 
 			bind_command ({	Key (Gdk.Key.p, Gdk.ModifierType.CONTROL_MASK) }, "backward-line");
+			index_command ("backward-line", "Move the cursor one line backward");
 			execute_command["backward-line"].connect (on_forward_backward_line);
 			
 			bind_command ({ Key (Gdk.Key.f, Gdk.ModifierType.CONTROL_MASK) }, "forward-char");
+			index_command ("forward-char", "Move the cursor one character forward");
 			execute_command["forward-char"].connect (on_forward_backward_char);
 			
 			bind_command ({ Key (Gdk.Key.b, Gdk.ModifierType.CONTROL_MASK) }, "backward-char");
+			index_command ("backward-char", "Move the cursor one character backward");
 			execute_command["backward-char"].connect (on_forward_backward_char);
 
 			bind_command ({ Key (Gdk.Key.s, Gdk.ModifierType.CONTROL_MASK) }, "search-forward");
@@ -283,10 +288,12 @@ namespace Vanubi {
 
 			bind_command ({ Key (Gdk.Key.e, Gdk.ModifierType.CONTROL_MASK) }, "end-line");
 			bind_command ({ Key (Gdk.Key.End, 0) }, "end-line");
+			index_command ("end-line", "Move the cursor to the end of the line");
 			execute_command["end-line"].connect (on_end_line);
 
 			bind_command ({ Key (Gdk.Key.a, Gdk.ModifierType.CONTROL_MASK) }, "start-line");
 			bind_command ({ Key (Gdk.Key.Home, 0) }, "start-line");
+			index_command ("start-line", "Move the cursor to the start of the line");
 			execute_command["start-line"].connect (on_start_line);
 			
 			bind_command ({ Key (Gdk.Key.Down, Gdk.ModifierType.CONTROL_MASK) }, "move-block-down");

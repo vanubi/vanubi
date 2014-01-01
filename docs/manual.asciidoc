@@ -9,7 +9,7 @@ keywords:[downloads installation building make clone]
 [source,console]
 :args: -O style=native,noclasses
 -------
-# apt-get install autotools-dev libtool valac libgtksourceview-3.0-dev libvte-2.90-dev
+# apt-get install autotools-dev libtool valac libgtksourceview-3.0-dev libvte-2.90-dev libwnck-3-dev
 $ git clone http://github.com/vanubi/vanubi.git
 $ cd vanubi
 $ ./autogen.sh
@@ -18,6 +18,8 @@ $ gui/vanubi
 -------
 
 Installation is not yet supported. Vanubi is only tested on Linux systems.
+
+Make sure to have the most recent Vala compiler at your disposal.
 
 == Key/mouse bindings
 keywords:[keys keybindings mousebindings mouse]
@@ -29,12 +31,85 @@ Pressing them at the same time is not needed, the important thing is to press ke
 
 Currently supported modifiers are Shift (S-) and Ctrl (C-). Note that `C-x k`, `C-x C-k` and `C-k` and three different key bindings.
 
+== Ideas and principles
+keywords:[ideas principles todos questions answers]
+.Rationale and mindset behind the project
+
+Principles:
+	
+- Simple, complete, keyboard based, intelligent, unobtrusive, well integrated
+- Implement what you really use, not what you don't use
+- Implement what you expect, not what other editors do
+- Implement what you really need, not what you think you need
+- Monolithic, no plugins, things must just work and be consistent
+- Must be complete, yet fast to open a single file for editing
+- File/directory-based settings, not project-based
+- Intelligent defaults based on the current opened file context
+- Easy to use contextual help... we can't remember all the keybindings
+- Semantic support for languages similar to eclipse but much less invasive, and faster from the user perspective
+ 
+Ideas:
+	
+- Transparently open remote files on your local editor
+- Code fold / Comment fold
+- Support GDB, Hexdump, GPG, Patch/Diff, Git, Git-bz and a bunch of other tools
+- Integrate with libinfinity for real-time collaborative editing
+
 == Commands
 keywords:[commands help controls]
 .Get help, run commands and learn key bindings
 
 Vanubi is controlled by commands issued by the user. A command might be activated by a key binding, a mouse action, or programmatically by invoking a command using `C-h` (the help command).
 Not all commands have key bindings, however by using `C-h` it gets very handy to run unusual commands.
+
+== List of basic commands
+keywords:[commands keyboard mouse bindings keybindings basics]
+.Basic key and mouse binings along with command names
+
+Below a list of basic keyboard bindings with relative commands to get started:
+
+[frame="topbot",cols="9monospaced,20,70",options="header"]
+|==================
+| Combo | Command | Action
+|C-h|-|			   Most important: search for commands and configure the editor
+|C-x C-c|quit|          Quit vanubi  
+|C-g     |-|         Abort  
+|ESC      |-|        Abort  
+|C-x C-f   |open-file|       Open file  
+|C-x C-s    |close-file|      Save file  
+|C-x b       |switch-buffer|     Switch buffer  
+|C-x k        |kill-buffer|    Kill buffer  
+|C-x 1         |join-all|   Join all the splits  
+|C-x C-1|join|          Join the current split only  
+|C-x 2   |split-add-bottom|         Split horizontally (one editor up, one down)  
+|C-x 3    |split-add-right|        Split vertically (one editor left, one right)  
+|TAB       |indent|       Indent current line  
+|C-TAB |tab| Insert a tab character
+|F9         |compile-shell|      Run compile shell
+|C-c C-c     |comment-region|     Comment a region  
+|C-n           |forward-line|   Go to next line  
+|C-p            |backward-line|  Go to previous line  
+|C-k    |kill-line-right|          Delete line contents on the right of the cursor
+|C-x C-k|kill-line| Delete the current line
+|C-e     |end-line|         Go to the end of line  
+|C-a      |start-line|        Go to the head of line  
+|C-space   |select-all|       Select all text  
+|C-l        |next-editor|      Iterate the editors on the right  
+|C-j         |prev-editor|     Iterate the editors on the left  
+|C-s          |search-forward|    Search forward  
+|C-r           |search-backward|   Search backward  
+|C-d|delete-char-forward|              Delete the char next to the cursor
+|Alt+down       |-|  Swap current row with the row below  
+|Alt+up          |-| Swap current row with the row above    
+|==================
+
+Mouse bindings:
+
+[frame="topbot",cols="9monospaced,70",options="header"]
+|==================
+| Combo | Action
+|C-scroll| Increase/decrease the font size
+|==================
 
 == Fuzzy search
 keywords:[fuzzy searching]
@@ -61,7 +136,7 @@ If a file has been edited elsewhere and you want to reload it, it is possible wi
 keywords:[buffers views editors files switch tabs manage]
 .Switch between opened files, split views and more
 
-A buffer (or editor) is a view of a file being edited. It is possible to split buffers horizontally or vertically (search for such commands with `C-h`).
+A buffer (or editor) is a view of a file being edited. It is possible to split buffers horizontally with `split-add-bottom` (`C-x 2`) or or vertically with `split-add-right` (`C-x 3`).
 This allows you to open two views for the same file.
 
 You can switch between files within a view using `switch-buffer` (`C-x b`). Note that the first file in the switch buffer completion is the last file you edited in that view. That allows you to quickly switch between two files repeatedly within the same view, and to keep focus on the files you are recently editing.
