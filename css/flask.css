@@ -580,7 +580,7 @@ body.manpage div.sectionbody {
 #topics a:hover { color: #6D4100; border-bottom: 1px solid #6D4100; }
 #topics div.tableblock > table, #topics table.tableblock { border: 3px solid #E8E8E8; }
 #topics th.tableblock, #topics td.tableblock { border: 1px solid #E8E8E8; }
-#topics ul > li > * { color: #3E4349; }
+#topics ul > li > * { color: #C0C0C0; }
 #topics pre, #topics tt, #topics .monospaced { font-family: Consolas,Menlo,'Deja Vu Sans Mono','Bitstream Vera Sans Mono',monospace; }
 #topics tt, #topics .monospaced { font-size: 0.9em; color: #729fcf; }
 #topics div.exampleblock > div.content, #topics div.sidebarblock > div.content, #topics div.listingblock > div.content { border-width: 0 0 0 3px; border-color: #E8E8E8; }
