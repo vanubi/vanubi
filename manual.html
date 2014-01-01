@@ -4,7 +4,7 @@
 <div class="vareskeywords" style='display:none;'>downloads installation building make clone</div>
 <div class="listingblock">
 <div class="title">Download the latest release of Vanubi, build it and launch it</div>
-<div class="content"><div class="highlight" style="background: #202020"><pre style="line-height: 125%"><span style="color: #aaaaaa">#</span> apt-get install autotools-dev libtool valac libgtksourceview-3.0-dev libvte-2.90-dev
+<div class="content"><div class="highlight" style="background: #202020"><pre style="line-height: 125%"><span style="color: #aaaaaa">#</span> apt-get install autotools-dev libtool valac libgtksourceview-3.0-dev libvte-2.90-dev libwnck-3-dev
 <span style="color: #aaaaaa">$</span> git clone http://github.com/vanubi/vanubi.git
 <span style="color: #aaaaaa">$</span> <span style="color: #24909d">cd </span>vanubi
 <span style="color: #aaaaaa">$</span> ./autogen.sh
@@ -12,6 +12,7 @@
 <span style="color: #aaaaaa">$</span> gui/vanubi
 </pre></div></div></div>
 <div class="paragraph"><p>Installation is not yet supported. Vanubi is only tested on Linux systems.</p></div>
+<div class="paragraph"><p>Make sure to have the most recent Vala compiler at your disposal.</p></div>
 </div>
 </div>
 <div class="sect1">
@@ -25,11 +26,287 @@ Pressing them at the same time is not needed, the important thing is to press ke
 </div>
 </div>
 <div class="sect1">
+<h2 id="_ideas_and_principles">Ideas and principles</h2>
+<div class="sectionbody">
+<div class="vareskeywords" style='display:none;'>ideas principles todos questions answers</div>
+<div class="paragraph"><div class="title">Rationale and mindset behind the project</div><p>Principles:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+Simple, complete, keyboard based, intelligent, unobtrusive, well integrated
+</p>
+</li>
+<li>
+<p>
+Implement what you really use, not what you don&#8217;t use
+</p>
+</li>
+<li>
+<p>
+Implement what you expect, not what other editors do
+</p>
+</li>
+<li>
+<p>
+Implement what you really need, not what you think you need
+</p>
+</li>
+<li>
+<p>
+Monolithic, no plugins, things must just work and be consistent
+</p>
+</li>
+<li>
+<p>
+Must be complete, yet fast to open a single file for editing
+</p>
+</li>
+<li>
+<p>
+File/directory-based settings, not project-based
+</p>
+</li>
+<li>
+<p>
+Intelligent defaults based on the current opened file context
+</p>
+</li>
+<li>
+<p>
+Easy to use contextual help&#8230; we can&#8217;t remember all the keybindings
+</p>
+</li>
+<li>
+<p>
+Semantic support for languages similar to eclipse but much less invasive, and faster from the user perspective
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>Ideas:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+Transparently open remote files on your local editor
+</p>
+</li>
+<li>
+<p>
+Code fold / Comment fold
+</p>
+</li>
+<li>
+<p>
+Support GDB, Hexdump, GPG, Patch/Diff, Git, Git-bz and a bunch of other tools
+</p>
+</li>
+<li>
+<p>
+Integrate with libinfinity for real-time collaborative editing
+</p>
+</li>
+</ul></div>
+</div>
+</div>
+<div class="sect1">
 <h2 id="_commands">Commands</h2>
 <div class="sectionbody">
 <div class="vareskeywords" style='display:none;'>commands help controls</div>
 <div class="paragraph"><div class="title">Get help, run commands and learn key bindings</div><p>Vanubi is controlled by commands issued by the user. A command might be activated by a key binding, a mouse action, or programmatically by invoking a command using <span class="monospaced">C-h</span> (the help command).
 Not all commands have key bindings, however by using <span class="monospaced">C-h</span> it gets very handy to run unusual commands.</p></div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_list_of_basic_commands">List of basic commands</h2>
+<div class="sectionbody">
+<div class="vareskeywords" style='display:none;'>commands keyboard mouse bindings keybindings basics</div>
+<div class="paragraph"><div class="title">Basic key and mouse binings along with command names</div><p>Below a list of basic keyboard bindings with relative commands to get started:</p></div>
+<table class="tableblock frame-topbot grid-all"
+style="
+width:100%;
+">
+<col style="width:9%;">
+<col style="width:20%;">
+<col style="width:70%;">
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top" > Combo </th>
+<th class="tableblock halign-left valign-top" > Command </th>
+<th class="tableblock halign-left valign-top" > Action</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top" ><p class="tableblock monospaced">C-h</p></td>
+<td class="tableblock halign-left valign-top" ><p class="tableblock">-</p></td>
+<td class="tableblock halign-left valign-top" ><p class="tableblock">Most important: search for commands and configure the editor</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" ><p class="tableblock monospaced">C-x C-c</p></td>
+<td class="tableblock halign-left valign-top" ><p class="tableblock">quit</p></td>
+<td class="tableblock halign-left valign-top" ><p class="tableblock">Quit vanubi</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" ><p class="tableblock monospaced">C-g</p></td>
+<td class="tableblock halign-left valign-top" ><p class="tableblock">-</p></td>
+<td class="tableblock halign-left valign-top" ><p class="tableblock">Abort</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" ><p class="tableblock monospaced">ESC</p></td>
+<td class="tableblock halign-left valign-top" ><p class="tableblock">-</p></td>
+<td class="tableblock halign-left valign-top" ><p class="tableblock">Abort</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" ><p class="tableblock monospaced">C-x C-f</p></td>
+<td class="tableblock halign-left valign-top" ><p class="tableblock">open-file</p></td>
+<td class="tableblock halign-left valign-top" ><p class="tableblock">Open file</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" ><p class="tableblock monospaced">C-x C-s</p></td>
+<td class="tableblock halign-left valign-top" ><p class="tableblock">close-file</p></td>
+<td class="tableblock halign-left valign-top" ><p class="tableblock">Save file</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" ><p class="tableblock monospaced">C-x b</p></td>
+<td class="tableblock halign-left valign-top" ><p class="tableblock">switch-buffer</p></td>
+<td class="tableblock halign-left valign-top" ><p class="tableblock">Switch buffer</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" ><p class="tableblock monospaced">C-x k</p></td>
+<td class="tableblock halign-left valign-top" ><p class="tableblock">kill-buffer</p></td>
+<td class="tableblock halign-left valign-top" ><p class="tableblock">Kill buffer</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" ><p class="tableblock monospaced">C-x 1</p></td>
+<td class="tableblock halign-left valign-top" ><p class="tableblock">join-all</p></td>
+<td class="tableblock halign-left valign-top" ><p class="tableblock">Join all the splits</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" ><p class="tableblock monospaced">C-x C-1</p></td>
+<td class="tableblock halign-left valign-top" ><p class="tableblock">join</p></td>
+<td class="tableblock halign-left valign-top" ><p class="tableblock">Join the current split only</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" ><p class="tableblock monospaced">C-x 2</p></td>
+<td class="tableblock halign-left valign-top" ><p class="tableblock">split-add-bottom</p></td>
+<td class="tableblock halign-left valign-top" ><p class="tableblock">Split horizontally (one editor up, one down)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" ><p class="tableblock monospaced">C-x 3</p></td>
+<td class="tableblock halign-left valign-top" ><p class="tableblock">split-add-right</p></td>
+<td class="tableblock halign-left valign-top" ><p class="tableblock">Split vertically (one editor left, one right)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" ><p class="tableblock monospaced">TAB</p></td>
+<td class="tableblock halign-left valign-top" ><p class="tableblock">indent</p></td>
+<td class="tableblock halign-left valign-top" ><p class="tableblock">Indent current line</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" ><p class="tableblock monospaced">C-TAB</p></td>
+<td class="tableblock halign-left valign-top" ><p class="tableblock">tab</p></td>
+<td class="tableblock halign-left valign-top" ><p class="tableblock">Insert a tab character</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" ><p class="tableblock monospaced">F9</p></td>
+<td class="tableblock halign-left valign-top" ><p class="tableblock">compile-shell</p></td>
+<td class="tableblock halign-left valign-top" ><p class="tableblock">Run compile shell</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" ><p class="tableblock monospaced">C-c C-c</p></td>
+<td class="tableblock halign-left valign-top" ><p class="tableblock">comment-region</p></td>
+<td class="tableblock halign-left valign-top" ><p class="tableblock">Comment a region</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" ><p class="tableblock monospaced">C-n</p></td>
+<td class="tableblock halign-left valign-top" ><p class="tableblock">forward-line</p></td>
+<td class="tableblock halign-left valign-top" ><p class="tableblock">Go to next line</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" ><p class="tableblock monospaced">C-p</p></td>
+<td class="tableblock halign-left valign-top" ><p class="tableblock">backward-line</p></td>
+<td class="tableblock halign-left valign-top" ><p class="tableblock">Go to previous line</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" ><p class="tableblock monospaced">C-k</p></td>
+<td class="tableblock halign-left valign-top" ><p class="tableblock">kill-line-right</p></td>
+<td class="tableblock halign-left valign-top" ><p class="tableblock">Delete line contents on the right of the cursor</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" ><p class="tableblock monospaced">C-x C-k</p></td>
+<td class="tableblock halign-left valign-top" ><p class="tableblock">kill-line</p></td>
+<td class="tableblock halign-left valign-top" ><p class="tableblock">Delete the current line</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" ><p class="tableblock monospaced">C-e</p></td>
+<td class="tableblock halign-left valign-top" ><p class="tableblock">end-line</p></td>
+<td class="tableblock halign-left valign-top" ><p class="tableblock">Go to the end of line</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" ><p class="tableblock monospaced">C-a</p></td>
+<td class="tableblock halign-left valign-top" ><p class="tableblock">start-line</p></td>
+<td class="tableblock halign-left valign-top" ><p class="tableblock">Go to the head of line</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" ><p class="tableblock monospaced">C-space</p></td>
+<td class="tableblock halign-left valign-top" ><p class="tableblock">select-all</p></td>
+<td class="tableblock halign-left valign-top" ><p class="tableblock">Select all text</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" ><p class="tableblock monospaced">C-l</p></td>
+<td class="tableblock halign-left valign-top" ><p class="tableblock">next-editor</p></td>
+<td class="tableblock halign-left valign-top" ><p class="tableblock">Iterate the editors on the right</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" ><p class="tableblock monospaced">C-j</p></td>
+<td class="tableblock halign-left valign-top" ><p class="tableblock">prev-editor</p></td>
+<td class="tableblock halign-left valign-top" ><p class="tableblock">Iterate the editors on the left</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" ><p class="tableblock monospaced">C-s</p></td>
+<td class="tableblock halign-left valign-top" ><p class="tableblock">search-forward</p></td>
+<td class="tableblock halign-left valign-top" ><p class="tableblock">Search forward</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" ><p class="tableblock monospaced">C-r</p></td>
+<td class="tableblock halign-left valign-top" ><p class="tableblock">search-backward</p></td>
+<td class="tableblock halign-left valign-top" ><p class="tableblock">Search backward</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" ><p class="tableblock monospaced">C-d</p></td>
+<td class="tableblock halign-left valign-top" ><p class="tableblock">delete-char-forward</p></td>
+<td class="tableblock halign-left valign-top" ><p class="tableblock">Delete the char next to the cursor</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" ><p class="tableblock monospaced">Alt+down</p></td>
+<td class="tableblock halign-left valign-top" ><p class="tableblock">-</p></td>
+<td class="tableblock halign-left valign-top" ><p class="tableblock">Swap current row with the row below</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top" ><p class="tableblock monospaced">Alt+up</p></td>
+<td class="tableblock halign-left valign-top" ><p class="tableblock">-</p></td>
+<td class="tableblock halign-left valign-top" ><p class="tableblock">Swap current row with the row above</p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph"><p>Mouse bindings:</p></div>
+<table class="tableblock frame-topbot grid-all"
+style="
+width:100%;
+">
+<col style="width:11%;">
+<col style="width:88%;">
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top" > Combo </th>
+<th class="tableblock halign-left valign-top" > Action</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top" ><p class="tableblock monospaced">C-scroll</p></td>
+<td class="tableblock halign-left valign-top" ><p class="tableblock">Increase/decrease the font size</p></td>
+</tr>
+</tbody>
+</table>
 </div>
 </div>
 <div class="sect1">
@@ -56,7 +333,7 @@ The tidle (<span class="monospaced">~</span>) is expand to the user home directo
 <h2 id="_manage_opened_files">Manage opened files</h2>
 <div class="sectionbody">
 <div class="vareskeywords" style='display:none;'>buffers views editors files switch tabs manage</div>
-<div class="paragraph"><div class="title">Switch between opened files, split views and more</div><p>A buffer (or editor) is a view of a file being edited. It is possible to split buffers horizontally or vertically (search for such commands with <span class="monospaced">C-h</span>).
+<div class="paragraph"><div class="title">Switch between opened files, split views and more</div><p>A buffer (or editor) is a view of a file being edited. It is possible to split buffers horizontally with <span class="monospaced">split-add-bottom</span> (<span class="monospaced">C-x 2</span>) or or vertically with <span class="monospaced">split-add-right</span> (<span class="monospaced">C-x 3</span>).
 This allows you to open two views for the same file.</p></div>
 <div class="paragraph"><p>You can switch between files within a view using <span class="monospaced">switch-buffer</span> (<span class="monospaced">C-x b</span>). Note that the first file in the switch buffer completion is the last file you edited in that view. That allows you to quickly switch between two files repeatedly within the same view, and to keep focus on the files you are recently editing.</p></div>
 <div class="paragraph"><p>To close a buffer you can issue <span class="monospaced">kill-buffer</span> with <span class="monospaced">C-x k</span>. If the closed buffer was the last visible buffer for a file, the file will be removed from Vanubi and won&#8217;t be visible when switching buffers anymore.</p></div>
