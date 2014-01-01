@@ -73,5 +73,9 @@ namespace Vanubi {
 			add (view);
 			show_all ();
 		}
+		
+		public override void grab_focus () {
+			view.grab_focus ();
+		}
 	}
 }
