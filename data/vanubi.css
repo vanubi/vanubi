@@ -35,8 +35,12 @@ VanubiBar GtkEntry {
 	padding: 2px 3px 2px 3px;
 }
 
-VanubiBar GtkEntry.error {
+VanubiAboutBar GtkEntry.error {
 	background: #720000;
+}
+
+VanubiBar GtkTextView {
+	background: #000000;
 }
 
 VanubiCompletionBarCompletionBox GtkLabel {

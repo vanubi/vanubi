@@ -25,6 +25,7 @@ vanubi_VALASOURCES = \
 	main.vala \
 	searchbar.vala \
 	shellbar.vala \
+	aboutbar.vala \
 	util.vala \
 	$(NULL)
 

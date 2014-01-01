@@ -380,6 +380,9 @@ namespace Vanubi {
 			
 			index_command ("zen-mode", "Put yourself in meditation mode");
 			execute_command["zen-mode"].connect (on_zen_mode);
+			
+			index_command ("about", "About");
+			execute_command["about"].connect (on_about);
 
 			// setup empty buffer
 			unowned Editor ed = get_available_editor (null);
@@ -1910,6 +1913,18 @@ namespace Vanubi {
 				zen_mode = false;
 				this.get_window().unfullscreen();
 			}
+		}
+		
+		void on_about (Editor editor) {
+			var bar = new AboutBar ();
+			bar.aborted.connect (() => {
+					main_box.remove (bar);
+					main_box.add (editors_grid);
+					editor.grab_focus ();
+			});
+			main_box.remove (editors_grid);
+			main_box.add (bar);
+			bar.grab_focus ();
 		}
 	}
 
