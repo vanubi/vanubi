@@ -1,4 +1,5 @@
 :source-highlighter: pygments
+:idprefix:
 
 = Vanubi Manual
 
