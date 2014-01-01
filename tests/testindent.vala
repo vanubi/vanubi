@@ -4,17 +4,6 @@
 
 using Vanubi;
 
-unowned string text = "
-foo (
-	bar (
-
-";
-
-StringBuffer setup () {
-	var buffer = new StringBuffer.from_text (text);
-	return buffer;
-}
-
 void assert_indent (Indent indenter, Buffer buffer, int line, int indent) {
 	var iter = buffer.line_start (line);
 	indenter.indent (iter);
@@ -38,62 +27,6 @@ void assert_indent_asm (Buffer buffer, int line, int indent) {
 void assert_indent_shell (Buffer buffer, int line, int indent) {
 	var indenter = new Indent_C (buffer);
 	assert_indent (indenter, buffer, line, indent);
-}
-
-void test_simple () {
-	var buffer = setup ();
-	assert (buffer.text == text);
-
-	var iter = buffer.line_start (0);
-	iter.forward_char ();
-	assert (iter.line == 1);
-	assert (iter.char == 'f');
-	iter.forward_char ();
-	assert (iter.char == 'o');
-	assert (iter.line_offset == 1);
-	assert (buffer.get_indent (1) == 0);
-}
-
-void test_insert_delete () {
-	var buffer = setup ();
-	// set indent to 8 (2 tabs)
-	var iter = buffer.line_start (1);
-	buffer.set_indent (1, 8);
-
-	iter = buffer.line_start (1);
-	assert (iter.char == '\t');
-	iter.forward_char ();
-	assert (iter.char == '\t');
-	iter.forward_char ();
-	assert (iter.char == 'f');
-	assert (buffer.get_indent (1) == 8);
-
-	// set indent to 4 (1 tab)
-	buffer.set_indent (1, 4);
-
-	iter = buffer.line_start (1);
-	assert (iter.char == '\t');
-	iter.forward_char ();
-	assert (iter.char == 'f');
-	assert (buffer.get_indent (1) == 4);
-
-	// delete 0 chars
-	iter = buffer.line_start (1);
-	var iter2 = iter.copy ();
-	buffer.delete (iter, iter2);
-	assert (buffer.get_indent (1) == 4);
-
-	// delete 1 char
-	iter2.forward_char ();
-	assert (iter2.line_offset == iter.line_offset+1);
-	buffer.delete (iter, iter2);
-	assert (buffer.get_indent (1) == 0);
-	assert (iter.line_offset == iter2.line_offset);
-
-	// insert
-	buffer.insert (iter, "\t");
-	assert (iter.line_offset == 1);
-	assert (buffer.get_indent (1) == 4);
 }
 
 void test_lang_c () {
@@ -228,8 +161,6 @@ fi
 int main (string[] args) {
 	Test.init (ref args);
 
-	Test.add_func ("/indent/simple", test_simple);
-	Test.add_func ("/indent/insert_delete", test_insert_delete);
 	Test.add_func ("/indent/lang_c", test_lang_c);
 	Test.add_func ("/indent/lang_asm", test_lang_asm);
 	Test.add_func ("/indent/lang_shell", test_lang_shell);

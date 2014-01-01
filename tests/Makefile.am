@@ -13,6 +13,7 @@ AM_VALAFLAGS = \
 	$(NULL)
 
 test_programs = \
+	testbuffer 	\
 	testcharset	\
 	testfiles	\
 	testindent	\
@@ -23,6 +24,7 @@ test_programs = \
 	testvade	\
 	$(NULL)
 
+testbuffer_SOURCES = testbuffer.vala
 testcharset_SOURCES = testcharset.vala
 testfiles_SOURCES = testfiles.vala
 testindent_SOURCES = testindent.vala

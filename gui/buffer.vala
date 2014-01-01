@@ -74,9 +74,15 @@ namespace Vanubi.UI {
 			return new BufferIter (this, iter);
 		}
 		
-		public override Vanubi.BufferIter line_at_offset (int line, int line_offset) {
+		public override Vanubi.BufferIter line_at_char (int line, int line_offset) {
 			Gtk.TextIter iter;
 			buf.get_iter_at_line_offset (out iter, line, line_offset);
+			return new BufferIter (this, iter);
+		}
+		
+		public override Vanubi.BufferIter line_at_byte (int line, int line_offset) {
+			Gtk.TextIter iter;
+			buf.get_iter_at_line_index (out iter, line, line_offset);
 			return new BufferIter (this, iter);
 		}
 
@@ -130,6 +136,16 @@ namespace Vanubi.UI {
 			return this;
 		}
 
+		public override Vanubi.BufferIter forward_line () {
+			iter.forward_line ();
+			return this;
+		}
+		
+		public override Vanubi.BufferIter backward_line () {
+			iter.backward_line ();
+			return this;
+		}
+		
 		public override bool is_in_code {
 			get {
 				var buf = (Gtk.SourceBuffer) iter.get_buffer ();
@@ -140,6 +156,19 @@ namespace Vanubi.UI {
 					}
 				}
 				return true;
+			}
+		}
+		
+		public override bool is_in_comment {
+			get {
+				var buf = (Gtk.SourceBuffer) iter.get_buffer ();
+				var classes = buf.get_context_classes_at_iter (iter);
+				foreach (var cls in classes) {
+					if (cls == "comment") {
+						return true;
+					}
+				}
+				return false;
 			}
 		}
 
@@ -158,6 +187,12 @@ namespace Vanubi.UI {
 		public override bool eol {
 			get {
 				return iter.ends_line ();
+			}
+		}
+		
+		public override bool eof {
+			get {
+				return iter.is_end ();
 			}
 		}
 

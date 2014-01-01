@@ -1,5 +1,5 @@
 /*
- *  Copyright © 2011-2013 Luca Bruno
+ *  Copyright © 2011-2014 Luca Bruno
  *
  *  This file is part of Vanubi.
  *
@@ -138,5 +138,51 @@ namespace Vanubi {
 		var res = yield read_all_async (is, cancellable);
 		is.close ();
 		return res;
+	}
+	
+	static Regex update_copyright_year_regex = null;
+	
+	// Returns true if any copyright year has been replaced
+	public bool update_copyright_year (Buffer buf) {
+		if (update_copyright_year_regex == null) {
+			update_copyright_year_regex = new Regex ("Copyright.*(\\d\\d\\d\\d)", RegexCompileFlags.OPTIMIZE | RegexCompileFlags.CASELESS);
+		}
+		var year = new DateTime.now_local ().get_year ();
+		var replace_string = @"\\g<1>$(year)";
+		
+		var iter = buf.line_start (0);
+		// find the first comment in the first 10 lines of the file and replace the copyright year
+		while (!iter.eof && iter.line < 10) {
+			while (!iter.is_in_comment && !iter.eof && iter.line < 10) iter.forward_char ();
+			if (iter.is_in_comment) {
+				// found a line with a comment
+				var text = buf.line_text (iter.line);
+				
+				MatchInfo info;
+				if (update_copyright_year_regex.match (text, 0, out info)) {
+					var cur_year = info.fetch (1);
+					if (cur_year == year.to_string ()) {
+						// already up-to-date
+						return false;
+					}
+					
+					int pos;
+					info.fetch_pos (1, out pos, null);
+					iter = buf.line_at_byte (iter.line, pos);
+					var end = buf.line_at_byte (iter.line, pos+4);
+					buf.delete (iter, end);
+					buf.insert (iter, year.to_string ());
+					return true;
+				}
+				
+				while (!iter.eol) iter.forward_char ();
+				if (iter.eof) {
+					break;
+				}
+				iter.forward_char ();
+			}
+		}
+		
+		return false;
 	}
 }

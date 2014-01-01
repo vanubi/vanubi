@@ -1,5 +1,5 @@
 /*
- *  Copyright © 2011-2013 Luca Bruno
+ *  Copyright © 2011-2014 Luca Bruno
  *
  *  This file is part of Vanubi.
  *
@@ -22,7 +22,8 @@ namespace Vanubi {
 		public virtual IndentMode indent_mode { get; set; default = IndentMode.TABS; }
 		public abstract BufferIter line_start (int line);
 		public abstract BufferIter line_end (int line);
-		public abstract BufferIter line_at_offset (int line, int line_offset);
+		public abstract BufferIter line_at_char (int line, int line_offset);
+		public abstract BufferIter line_at_byte (int line, int line_offset);
 		public abstract void insert (BufferIter iter, string text);
 		public abstract void delete (BufferIter start, BufferIter end);
 		public abstract string line_text (int line);
@@ -75,10 +76,14 @@ namespace Vanubi {
 
 		public abstract BufferIter forward_char ();
 		public abstract BufferIter backward_char ();
+		public abstract BufferIter forward_line ();
+		public abstract BufferIter backward_line ();
 		public abstract bool is_in_code { get; }
+		public abstract bool is_in_comment { get; }
 		public abstract int line_offset { get; }
 		public abstract int line { get; }
 		public abstract bool eol { get; }
+		public abstract bool eof { get; }
 		public abstract bool sol { get; }
 		public abstract unichar char { get; }
 		public abstract BufferIter copy ();
@@ -154,6 +159,7 @@ namespace Vanubi {
 	public class StringBuffer : Buffer {
 		internal string[] lines;
 		internal int timestamp;
+		public bool force_in_comment;
 
 		public StringBuffer (owned string[] lines) {
 			this.lines = (owned) lines;
@@ -181,15 +187,23 @@ namespace Vanubi {
 		}
 
 		public override BufferIter line_start (int line) {
+			line = int.min (line, lines.length-1);
 			return new StringBufferIter (this, line, 0);
 		}
 
 		public override BufferIter line_end (int line) {
+			line = int.max (0, line);
 			unowned string l = lines[line];
 			return new StringBufferIter (this, line, l.length-1);
 		}
 		
-		public override BufferIter line_at_offset (int line, int line_offset) {
+		// assume latin1
+		public override BufferIter line_at_char (int line, int line_offset) {
+			return new StringBufferIter (this, line, line_offset);
+		}
+		
+		// assume latin1
+		public override BufferIter line_at_byte (int line, int line_offset) {
 			return new StringBufferIter (this, line, line_offset);
 		}
 
@@ -263,10 +277,27 @@ namespace Vanubi {
 			return this;
 		}
 
+		public override BufferIter forward_line () requires (valid) {
+			_line = int.min (buf.lines.length-1, _line+1);
+			return this;
+		}
+		
+		public override BufferIter backward_line () requires (valid) {
+			_line = int.max (0, _line-1);
+			return this;
+		}
+		
 		public override bool is_in_code {
 			get {
 				// assume no strings and no comments for the tests
-				return true;
+				return !buf.force_in_comment;
+			}
+		}
+		
+		public override bool is_in_comment {
+			get {
+				// assume no comments for the tests
+				return buf.force_in_comment;
 			}
 		}
 
@@ -289,6 +320,14 @@ namespace Vanubi {
 				warn_if_fail (valid);
 				unowned string l = buf.lines[line];
 				return line_offset >= l.length-1;
+			}
+		}
+		
+		public override bool eof {
+			get {
+				warn_if_fail (valid);
+				unowned string l = buf.lines[line];
+				return line == buf.lines.length-1 && line_offset >= l.length-1;
 			}
 		}
 

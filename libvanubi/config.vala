@@ -65,8 +65,8 @@ namespace Vanubi {
 			}
 		}
 
-		public void set_group_int (string group, string key, int size) {
-			backend.set_integer (group, key, size);
+		public void set_group_int (string group, string key, int value) {
+			backend.set_integer (group, key, value);
 		}
 
 		public string? get_group_string (string group, string key, string? default = null) {
@@ -89,6 +89,10 @@ namespace Vanubi {
 			} catch (Error e) {
 				return default;
 			}
+		}
+		
+		public void set_group_bool (string group, string key, bool value) {
+			backend.set_boolean (group, key, value);
 		}
 		
 		public void remove_group_key (string group, string key) {
@@ -136,6 +140,14 @@ namespace Vanubi {
 		
 		public void set_global_int (string key, int value) {
 			set_group_int ("Global", key, value);
+		}
+		
+		public bool get_global_bool (string key, bool default = false) {
+			return get_group_bool ("Global", key, default);
+		}
+		
+		public void set_global_bool (string key, bool value) {
+			set_group_bool ("Global", key, value);
 		}
 
 		/* Session */

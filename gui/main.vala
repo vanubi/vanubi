@@ -1,5 +1,5 @@
 /*
- *  Copyright © 2011-2013 Luca Bruno
+ *  Copyright © 2011-2014 Luca Bruno
  *
  *  This file is part of Vanubi.
  *
@@ -380,6 +380,12 @@ namespace Vanubi {
 			
 			index_command ("zen-mode", "Put yourself in meditation mode");
 			execute_command["zen-mode"].connect (on_zen_mode);
+			
+			index_command ("update-copyright-year", "Update copyright year of the current file");
+			execute_command["update-copyright-year"].connect (on_update_copyright_year);
+			
+			index_command ("toggle-autoupdate-copyright-year", "Auto update copyright year of modified files");
+			execute_command["toggle-autoupdate-copyright-year"].connect (on_toggle_autoupdate_copyright_year);
 
 			// setup empty buffer
 			unowned Editor ed = get_available_editor (null);
@@ -952,6 +958,10 @@ namespace Vanubi {
 		async void save_file (Editor editor) {
 			var buf = editor.view.buffer;
 			if (editor.file != null && buf.get_modified ()) {
+				if (conf.get_global_bool ("autoupdate_copyright_year")) {
+					execute_command["update-copyright-year"] (editor, "autoupdate-copyright-year");
+				}
+				
 				TextIter start, end;
 				buf.get_start_iter (out start);
 				buf.get_end_iter (out end);
@@ -1526,9 +1536,9 @@ namespace Vanubi {
 			}
 
 			if (comment_engine != null) {
-				var iter_start = vbuf.line_at_offset (selection_start.get_line (),
+				var iter_start = vbuf.line_at_char (selection_start.get_line (),
 								      selection_start.get_line_offset ());
-				var iter_end = vbuf.line_at_offset (selection_end.get_line (),
+				var iter_end = vbuf.line_at_char (selection_end.get_line (),
 								      selection_end.get_line_offset ());
 				comment_engine.toggle_comment (iter_start, iter_end);
 			}
@@ -1910,6 +1920,22 @@ namespace Vanubi {
 				zen_mode = false;
 				this.get_window().unfullscreen();
 			}
+		}
+		
+		void on_update_copyright_year (Editor editor, string command) {
+			var vbuf = new UI.Buffer ((SourceView) editor.view);
+			if (update_copyright_year (vbuf)) {
+				set_status ("Copyright year has been updated");
+			} else if (command != "autoupdate-copyright-year") {
+				set_status ("No copyright year to update");
+			}
+		}
+		
+		void on_toggle_autoupdate_copyright_year (Editor editor) {
+			var autoupdate_copyright_year = !conf.get_global_bool ("autoupdate_copyright_year");
+			conf.set_global_bool ("autoupdate_copyright_year", autoupdate_copyright_year);
+			
+			set_status (autoupdate_copyright_year ? "Enabled" : "Disabled");
 		}
 	}
 
