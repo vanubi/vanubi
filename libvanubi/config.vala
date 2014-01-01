@@ -1,5 +1,5 @@
 /*
- *  Copyright © 2011-2013 Luca Bruno
+ *  Copyright © 2011-2014 Luca Bruno
  *
  *  This file is part of Vanubi.
  *
@@ -30,13 +30,13 @@ namespace Vanubi {
 		public FileCluster cluster;
 
 		[CCode (cname = "VERSION", cheader_filename = "config.h")]
-		extern const string VANUBI_VERSION;
+		public extern const string VANUBI_VERSION;
 		
 		[CCode (cname = "PACKAGE_URL", cheader_filename = "config.h")]
-		extern const string VANUBI_WEBSITE;
+		public extern const string VANUBI_WEBSITE;
 		
 		[CCode (cname = "PACKAGE_BUGREPORT", cheader_filename = "config.h")]
-		extern const string VANUBI_BUGREPORT_URL;
+		public extern const string VANUBI_BUGREPORT_URL;
 		
 		public Configuration () {
 			cluster = new FileCluster (this);

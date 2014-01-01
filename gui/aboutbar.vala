@@ -1,5 +1,5 @@
 /*
- *  Copyright © 2011-2013 Rocco Folino
+ *  Copyright © 2014 Rocco Folino
  *
  *  This file is part of Vanubi.
  *
@@ -37,7 +37,7 @@ namespace Vanubi {
 	     
                             Vanubi Programming editor
 
-            "All editors suck. This one just sucks less." -mutt, circa 1995
+            "All editors suck. This one just sucks less." -mutt like, circa 1995
 
 
 
