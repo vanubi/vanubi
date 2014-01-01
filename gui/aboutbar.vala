@@ -25,24 +25,34 @@ namespace Vanubi {
 		
 		string text = """
 		
+                                                                              |                          :o/                     
+                                                                              |                        :soss  `//                
+                                                                              |                      `+sody/ -ss+                
+                                                                              |                      ooommy:-shs-                
+                                                                              |                     /s+mmmy+shho                 
+                                                                              |                    .s+ymmmyshmy:                 
+                                                                              |                    /s/mmmmdhmds                  
+                      --[ Vanubi Programming editor ]--                       |                    +o+mmmmmmmho                  
+                                                                              |                    +oommmmmmmy/                  
+     "All editors suck. This one just sucks less." -mutt like, circa 1995     |                  -oo+ymmmmmmmyo.                 
+                                                                              |               `:oooymNNNNNNNNmdyo.               
+                                                                              |             `/soohNNNNNNNNNNNNNNdy/`             
+                                                                              |           `/sosdNNNNNNNNNNNNNNNNNNdy/`           
+                                                                              |         `/sosmNNNNNNNNNNNNNNNNNNNNNNdyo:.        
+                                                                              |       `/sosmNNNNNNNNNNNmmmmmmmmmNNNNNNmdhs/.     
+                                                                              |     `/sosmNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNds:    
+                                                                              |    .ooomNNNNNNNNNNNNNNNNNNNmmddmmNNNNNNmdhs:`    
+                                                                              |    :s+shmNNNNNNNNNNNNNNNNNy+:---/+osooo/-.       
+                                                                              |     `:ooooosyhdmNNNNNNNNNms`                     
+                                                                              |         .-:/+ooooshmNMMMMds`                     
+                  ** Vanubi is licensed under GPLv3+ **                       |                `-/oooyNMMds`                     
+                                                                              |                    -+o+hMds`                     
+                                                                              |                      :sosho                      
+                                                                              |                       `oos/                      
+                                                                              |                         /o`                     
+ >>> v%s | %s
+""".printf (Configuration.VANUBI_VERSION, Configuration.VANUBI_WEBSITE);
 
-    ##     ##    ###    ##    ## ##     ## ########  #### 
-    ##     ##   ## ##   ###   ## ##     ## ##     ##  ##  
-    ##     ##  ##   ##  ####  ## ##     ## ##     ##  ##  
-    ##     ## ##     ## ## ## ## ##     ## ########   ##  
-     ##   ##  ######### ##  #### ##     ## ##     ##  ##  
-      ## ##   ##     ## ##   ### ##     ## ##     ##  ##  
-       ###    ##     ## ##    ##  #######  ########  ####              
-	     
-	     
-                            Vanubi Programming editor
-
-            "All editors suck. This one just sucks less." -mutt like, circa 1995
-
-
-
-  version: %s
-  website: %s""".printf (Configuration.VANUBI_VERSION, Configuration.VANUBI_WEBSITE);
 		public AboutBar () {
 			expand = true;
 			view = new TextView();
@@ -50,21 +60,18 @@ namespace Vanubi {
 			view.buffer.text = text;
 			view.expand = true;
 			view.cursor_visible = false;
-			view.key_press_event.connect (on_key_press_event);
-			
+			view.key_press_event.connect ((e) => {
+					aborted ();
+					return true;
+			});
+			view.button_press_event.connect ((e) => {
+					aborted ();
+					return true;
+			});
 			var system_size = view.style.font_desc.get_size () / Pango.SCALE;
 			view.override_font (Pango.FontDescription.from_string ("Monospace %d".printf (system_size)));
-			
 			add (view);
 			show_all ();
-		}
-		
-		public override void grab_focus () {
-			view.grab_focus ();
-		}
-		
-		protected override bool on_key_press_event (Gdk.EventKey e) {
-			return base.on_key_press_event (e);
 		}
 	}
 }
