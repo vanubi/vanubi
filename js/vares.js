@@ -1,4 +1,4 @@
-(function ($,_) {
+(function (document,window,$,_) {
 		Vares = {};
 		Vares.root = ".";
 		
@@ -147,18 +147,24 @@
 		Vares.open_topic = function (id) {
 			$("#topic-previews").slideUp ();
 			$("#topics h2[id='"+id+"']").parent(".sect1").fadeIn (200);
+			document.location.hash = "#doc_"+id;
 		};
 		
 		Vares.open_topic_previews = function () {
 			$("#topics div.sect1:visible").fadeOut (200);
 			$("#topic-previews").slideDown ();
+			document.location.hash = "";
 		}
 		
 		Vares.get_search_query = function () {
 			return $("#search input").val ();
 		};
 		
-		Vares.search_changed = function (e) {			
+		Vares.search_changed = function (e) {
+			if (e.ctrlKey || e.keyCode == 17) {
+				return;
+			}
+			
 			Vares.open_topic_previews ();
 			var query = Vares.get_search_query ();
 			var matches = Vares.docs_index.search (query);
@@ -174,13 +180,26 @@
 			
 			return false;
 		};
+
+		Vares.open_topic_by_hash = function (hash) {
+			if (hash != "" && hash[0] == "#") {
+				hash = hash.substring (1);
+			}
+			if (hash == "") {
+				return;
+			}
+			
+			var topicid = hash.substring (4); // doc_
+			$("#topic-previews").hide ();
+			$("#topics h2[id='"+topicid+"']").parent(".sect1").show ();
+		};
 		
 		Vares.init = function () {
 			Vares.docs_index = new Vares.Index ();
-			Vares.fetch_docs().then(Vares.setup_docs);
-			$("#search input").keyup (Vares.search_changed).on ('changed', Vares.search_changed);
+			Vares.fetch_docs().then (Vares.setup_docs).then (_.partial (Vares.open_topic_by_hash, document.location.hash));
+			$("#search input").focus().keyup (Vares.search_changed).on ('changed', Vares.search_changed);
 			$("#search form").submit (Vares.search_changed);
 		};
-} ($,_));
+} (document,window,$,_));
 
 Vares.init();
