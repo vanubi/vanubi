@@ -29,6 +29,15 @@ namespace Vanubi {
 		Cancellable saving_cancellable;
 		public FileCluster cluster;
 
+		[CCode (cname = "VERSION", cheader_filename = "config.h")]
+		extern const string VANUBI_VERSION;
+		
+		[CCode (cname = "PACKAGE_URL", cheader_filename = "config.h")]
+		extern const string VANUBI_WEBSITE;
+		
+		[CCode (cname = "PACKAGE_BUGREPORT", cheader_filename = "config.h")]
+		extern const string VANUBI_BUGREPORT_URL;
+		
 		public Configuration () {
 			cluster = new FileCluster (this);
 			

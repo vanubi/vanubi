@@ -386,6 +386,9 @@ namespace Vanubi {
 			
 			index_command ("toggle-autoupdate-copyright-year", "Auto update copyright year of modified files");
 			execute_command["toggle-autoupdate-copyright-year"].connect (on_toggle_autoupdate_copyright_year);
+			
+			index_command ("about", "About");
+			execute_command["about"].connect (on_about);
 
 			// setup empty buffer
 			unowned Editor ed = get_available_editor (null);
@@ -1936,6 +1939,18 @@ namespace Vanubi {
 			conf.set_global_bool ("autoupdate_copyright_year", autoupdate_copyright_year);
 			
 			set_status (autoupdate_copyright_year ? "Enabled" : "Disabled");
+		}
+		
+		void on_about (Editor editor) {
+			var bar = new AboutBar ();
+			bar.aborted.connect (() => {
+					main_box.remove (bar);
+					main_box.add (editors_grid);
+					editor.grab_focus ();
+			});
+			main_box.remove (editors_grid);
+			main_box.add (bar);
+			bar.grab_focus ();
 		}
 	}
 
