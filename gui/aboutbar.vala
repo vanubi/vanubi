@@ -41,8 +41,8 @@ namespace Vanubi {
 
 
 
-  version: 0.0.3.0
-  website: http://github.com/vanubi/vanubi""";
+  version: %s
+  website: %s""".printf (Configuration.VANUBI_VERSION, Configuration.VANUBI_WEBSITE);
 		public AboutBar () {
 			expand = true;
 			view = new TextView();
