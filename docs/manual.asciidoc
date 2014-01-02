@@ -130,6 +130,7 @@ It is also possible to fuzzy search through sub directories. For example '/u/b' 
 The tidle (`~`) is expand to the user home directory.
 
 You can save a new or existing file being edited using `save-file` (`C-x C-s`). The file will be overwritten if it already exists.
+There is also the command `save-as-file` to save the current buffer as another file. This command has no default keybinding, but you can easily access it with `C-h`.
 
 If a file has been edited elsewhere and you want to reload it, it is possible with `reload-file`.
 

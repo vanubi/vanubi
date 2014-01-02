@@ -1,4 +1,3 @@
-
 /*
  *  Copyright © 2011-2014 Luca Bruno
  *
@@ -125,6 +124,12 @@ namespace Vanubi {
 				"save-file");
 			index_command ("save-file", "Save or create the file of the current buffer");
 			execute_command["save-file"].connect (on_save_file);
+			
+			index_command ("save-as-file", "Save the current buffer to another file but stay on this buffer");
+			execute_command["save-as-file"].connect (on_save_as_file);
+
+			index_command ("save-as-file-and-open", "Save the current buffer to another file and open the file");
+			execute_command["save-as-file-and-open"].connect (on_save_as_file);
 
 			bind_command ({
 					Key (Gdk.Key.x, Gdk.ModifierType.CONTROL_MASK),
@@ -962,12 +967,33 @@ namespace Vanubi {
 		}
 
 		void on_save_file (Editor editor) {
-			save_file.begin (editor);
+			if (editor.file == null) {
+				// save scratch buffer to another file
+				execute_command["save-as-file-and-open"] (editor, "save-as-file-and-open");
+			} else {
+				save_file.begin (editor);
+			}
 		}
 		
-		async void save_file (Editor editor) {
+		void on_save_as_file (Editor editor, string command) {
+			var bar = new FileBar (editor.file);
+			bar.activate.connect ((f) => {
+					abort (editor);
+					save_file (editor, File.new_for_path (f), command == "save-as-file-and-open");
+			});
+			bar.aborted.connect (() => { abort (editor); });
+			add_overlay (bar);
+			bar.show ();
+			bar.grab_focus ();
+		}
+		
+		async void save_file (Editor editor, File? as_file = null, bool open_as_file = false) {
 			var buf = editor.view.buffer;
-			if (editor.file != null && buf.get_modified ()) {
+			if (as_file == null) {
+				as_file = editor.file;
+			}
+
+			if (as_file != null && buf.get_modified ()) {
 				if (conf.get_global_bool ("autoupdate_copyright_year")) {
 					execute_command["update-copyright-year"] (editor, "autoupdate-copyright-year");
 				}
@@ -976,10 +1002,18 @@ namespace Vanubi {
 				buf.get_start_iter (out start);
 				buf.get_end_iter (out end);
 				string text = buf.get_text (start, end, false);
+								
 				try {
-					yield editor.file.replace_contents_async (text.data, null, true, FileCreateFlags.NONE, null, null);
-					buf.set_modified (false);
-					editor.reset_external_changed ();
+					yield as_file.replace_contents_async (text.data, null, true, FileCreateFlags.NONE, null, null);
+					if (as_file.equal (editor.file)) {
+						buf.set_modified (false);
+						editor.reset_external_changed ();
+					} else {
+						set_status ("Saved as %s".printf (as_file.get_path ()));
+						if (open_as_file) {
+							open_file (editor, as_file);
+						}
+					}
 				} catch (Error e) {
 					set_status_error (e.message);
 				}
