@@ -7,7 +7,7 @@ body {
 	margin-top: 12px;
 }
 
-header > div {
+header > div > div {
 	border-bottom: 1px solid #73d216;
 	padding-bottom: 24px;
 	margin-bottom: 24px;
@@ -16,6 +16,25 @@ header > div {
 	background-repeat: no-repeat;
 	background-size: 5.5em;
 	background-position: 20em 0;
+}
+
+#ekoj:before {
+	content: "Programming Editor";
+}
+
+#ekoj:hover:before {
+	content: "rotidE gnimmargorP";
+}
+
+#slogan {
+	padding-top: 3em;
+	color: #555753;
+	font-style: italic;
+	font-weight: bold;
+}
+
+#slogan:hover {
+	color: #f984ef;
 }
 
 header h1 {
