@@ -1,0 +1,3 @@
+#!/bin/sh
+
+ssh -R 62517:localhost:62518 $@

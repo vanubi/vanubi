@@ -83,7 +83,7 @@ namespace Vanubi {
 		ThreadPool.set_max_unused_threads (2);
 	}
 
-	public async G run_in_thread<G> (owned TaskFunc<G> func) throws Error {
+	public async G run_in_thread<G> (owned TaskFunc<G> func, int io_priority = GLib.Priority.DEFAULT) throws Error {
 		initialize_thread_pool ();
 		SourceFunc resume = run_in_thread.callback;
 		Error err = null;
@@ -95,7 +95,7 @@ namespace Vanubi {
 				} catch (Error e) {
 					err = e;
 				}
-				Idle.add ((owned) resume);
+				Idle.add_full (io_priority, (owned) resume);
 				return null;
 		}));
 		yield;
@@ -104,7 +104,7 @@ namespace Vanubi {
 		}
 		return result;
 	}
-	
+
 	public async uint8[] read_all_async (InputStream is, Cancellable? cancellable = null) throws Error {
 		uint8[] res = new uint8[1024];
 		ssize_t offset = 0;
