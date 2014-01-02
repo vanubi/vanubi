@@ -31,6 +31,8 @@ header > div > div {
 	color: #555753;
 	font-style: italic;
 	font-weight: bold;
+	transition: all 0.2s ease-in-out;
+	-webkit-transition: all 0.2s ease-in-out;
 }
 
 #slogan:hover {
