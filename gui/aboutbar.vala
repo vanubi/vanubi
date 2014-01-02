@@ -20,8 +20,47 @@
 using Gtk;
 
 namespace Vanubi {
+	private class AboutView : SourceView {
+		public AboutView () {
+			set_editable (false);
+			expand = true;
+			cursor_visible = false;
+			var system_size = style.font_desc.get_size () / Pango.SCALE;
+			override_font (Pango.FontDescription.from_string ("Monospace %d".printf (system_size)));
+		}
+		
+		public async void colorize_text () {
+			TextTag tag = buffer.create_tag("fg_green", foreground: "#00CC00");
+			TextIter start, end;
+			
+			for (var i=0; i<buffer.get_line_count (); i++) {
+				buffer.get_iter_at_line_offset (out start, i, 0);
+				while (start.get_char () != '|') {
+					start.forward_char ();
+					if (start.ends_line ()) {
+						break;
+					}
+				}
+				
+				if (start.ends_line ()) {
+					continue;
+				}
+				
+				start.forward_char (); /* Skip '|' */
+				
+				/* Go to the end of line */
+				end = start;
+				while (!end.ends_line ()) {
+					end.forward_char ();
+				}
+				
+				buffer.apply_tag (tag, start, end);
+			}
+		}
+	}
+	
 	public class AboutBar : Bar {
-		TextView view;
+		AboutView view;
 		
 		string text = """
 		
@@ -50,16 +89,13 @@ namespace Vanubi {
                                                                               |                      :sosho                      
                                                                               |                       `oos/                      
                                                                               |                         /o`                     
- >>> v%s | %s
+   v%s --- %s
 """.printf (Configuration.VANUBI_VERSION, Configuration.VANUBI_WEBSITE);
 
 		public AboutBar () {
 			expand = true;
-			view = new TextView();
-			view.set_editable (false);
+			view = new AboutView();
 			view.buffer.text = text;
-			view.expand = true;
-			view.cursor_visible = false;
 			view.key_press_event.connect ((e) => {
 					aborted ();
 					return true;
@@ -68,8 +104,7 @@ namespace Vanubi {
 					aborted ();
 					return true;
 			});
-			var system_size = view.style.font_desc.get_size () / Pango.SCALE;
-			view.override_font (Pango.FontDescription.from_string ("Monospace %d".printf (system_size)));
+			view.colorize_text ();
 			add (view);
 			show_all ();
 		}
