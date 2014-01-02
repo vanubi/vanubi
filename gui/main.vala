@@ -572,8 +572,8 @@ namespace Vanubi {
 			assert_not_reached ();
 		}
 
-		public void open_file (Editor editor, File file, bool focus = true) {
-			open_location.begin (editor, new Location<void*> (file), focus);
+		public async void open_file (Editor editor, File file, bool focus = true) {
+			yield open_location (editor, new Location<void*> (file), focus);
 		}
 		
 		public async void open_location (Editor editor, Location location, bool focus = true) {
@@ -871,12 +871,12 @@ namespace Vanubi {
 						File? focused_file = session.location != null ? session.location.file : null;
 						foreach (var file in session.files.data) {
 							if (focused_file == null || !file.equal (focused_file)) {
-								open_file (editor, file, false);
+								open_file.begin (editor, file, false);
 							}
 						}
 
 						if (session.location != null) {
-							open_location (editor, session.location);
+							open_location.begin (editor, session.location);
 						}
 					}
 			});
@@ -958,7 +958,7 @@ namespace Vanubi {
 			var bar = new FileBar (editor.file);
 			bar.activate.connect ((f) => {
 					abort (editor);
-					open_file (editor, File.new_for_path (f));
+					open_file.begin (editor, File.new_for_path (f));
 				});
 			bar.aborted.connect (() => { abort (editor); });
 			add_overlay (bar);
@@ -992,31 +992,38 @@ namespace Vanubi {
 			if (as_file == null) {
 				as_file = editor.file;
 			}
+			
+			if (as_file == null) {
+				return;
+			}
+			
+			if (!(buf.get_modified () || !as_file.equal (editor.file))) {
+				// should not save anything
+				return;
+			}
 
-			if (as_file != null && buf.get_modified ()) {
-				if (conf.get_global_bool ("autoupdate_copyright_year")) {
-					execute_command["update-copyright-year"] (editor, "autoupdate-copyright-year");
-				}
+			if (conf.get_global_bool ("autoupdate_copyright_year")) {
+				execute_command["update-copyright-year"] (editor, "autoupdate-copyright-year");
+			}
 				
-				TextIter start, end;
-				buf.get_start_iter (out start);
-				buf.get_end_iter (out end);
-				string text = buf.get_text (start, end, false);
+			TextIter start, end;
+			buf.get_start_iter (out start);
+			buf.get_end_iter (out end);
+			string text = buf.get_text (start, end, false);
 								
-				try {
-					yield as_file.replace_contents_async (text.data, null, true, FileCreateFlags.NONE, null, null);
-					if (as_file.equal (editor.file)) {
-						buf.set_modified (false);
-						editor.reset_external_changed ();
-					} else {
-						set_status ("Saved as %s".printf (as_file.get_path ()));
-						if (open_as_file) {
-							open_file (editor, as_file);
-						}
+			try {
+				yield as_file.replace_contents_async (text.data, null, true, FileCreateFlags.NONE, null, null);
+				if (as_file.equal (editor.file)) {
+					buf.set_modified (false);
+					editor.reset_external_changed ();
+				} else {
+					set_status ("Saved as %s".printf (as_file.get_path ()));
+					if (open_as_file) {
+						yield open_file (editor, as_file);
 					}
-				} catch (Error e) {
-					set_status_error (e.message);
 				}
+			} catch (Error e) {
+				set_status_error (e.message);
 			}
 		}
 
@@ -2086,7 +2093,7 @@ namespace Vanubi {
 				win = new_window ();
 			}
 			var manager = (Manager) win.get_child ();
-			manager.open_file (manager.get_first_visible_editor (), files[0]);
+			manager.open_file.begin (manager.get_first_visible_editor (), files[0]);
 			win.present ();
 		}
 
