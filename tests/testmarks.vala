@@ -10,11 +10,12 @@ void test_marks () {
 	assert (marks.prev_mark () == null);
 	assert (marks.next_mark () == null);
 	
+	// single element must always be available
 	marks.mark (loc1);
-	assert (marks.next_mark () == null);
+	assert (marks.next_mark () == loc1);
 	assert (marks.prev_mark () == loc1);
-	assert (marks.prev_mark () == null);
-	assert (marks.next_mark () == null);
+	assert (marks.prev_mark () == loc1);
+	assert (marks.next_mark () == loc1);
 	
 	marks.mark (loc2);
 	assert (marks.next_mark () == null);

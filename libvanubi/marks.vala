@@ -1,5 +1,5 @@
 /*
- *  Copyright © 2013 Luca Bruno
+ *  Copyright © 2014 Luca Bruno
  *
  *  This file is part of Vanubi.
  *
@@ -41,6 +41,12 @@
 				 return null;
 			 }
 			 
+			 if (stack.next == null) {
+				 // single element
+				 current = stack;
+				 return current.data;
+			 }
+			 
 			 if (current != null && current.prev == null) {
 				 return null;
 			 }
@@ -58,6 +64,12 @@
 		 }
 		 
 		 public Location? next_mark () {
+			 if (stack != null && stack.next == null) {
+				 // single element
+				 current = stack;
+				 return current.data;
+			 }
+			 
 			 if (stack == null || current == null) {
 				 return null;
 			 }
