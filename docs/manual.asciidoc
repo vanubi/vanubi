@@ -65,7 +65,7 @@ Not all commands have key bindings, however by using `C-h` it gets very handy to
 
 == List of basic commands
 keywords:[commands keyboard mouse bindings keybindings basics]
-.Basic key and mouse binings along with command names
+.Basic key and mouse bindings along with command names
 
 Below a list of basic keyboard bindings with relative commands to get started:
 
@@ -127,7 +127,7 @@ At start you are prompted to edit `*scratch*`. This is not relative to any parti
 
 You can open a file for reading or create a new file with `open-file` (`C-x C-f`). You can type only part of the file and Vanubi will fuzzy search through file names.
 It is also possible to fuzzy search through sub directories. For example '/u/b' will match all sub directories like `/usr/bin`, `/usr/sbin`, `/run/dbus`, `/usr/lib`, etc.
-The tidle (`~`) is expand to the user home directory.
+The tidle (`~`) is expanded to the user home directory.
 
 You can save a new or existing file being edited using `save-file` (`C-x C-s`). The file will be overwritten if it already exists.
 There is also the command `save-as-file` to save the current buffer as another file. This command has no default keybinding, but you can easily access it with `C-h`.
@@ -168,7 +168,7 @@ While `pipe-shell-clipboard` allows you to call commands like `pastebinit` to sh
 keywords:[sessions restore restoring]
 .Save your workspace and restore it later with sessions
 
-Vala keeps track of opened files and the current location of your cursor, and saves this information in the `default` session. After opening Vanubi, you can restore the last session with `restore-session`.
+Vanubi keeps track of opened files and the current location of your cursor, and saves this information in the `default` session. After reopening the editor, you can restore the last session with `restore-session`.
 It is possible to save a named session with `save-session`, which you can later open with `restore-session` by specifying the name of the session.
 
 == Marks
