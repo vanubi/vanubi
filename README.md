@@ -1,7 +1,7 @@
 Vanubi Programming Editor
 ==========================
 
-"All editors suck. This one just sucks less." -mutt, circa 1995
+"All editors suck. This one just sucks less." -mutt like, circa 1995
 
 Install:
 
