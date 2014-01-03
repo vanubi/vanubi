@@ -19,6 +19,9 @@
 
 namespace Vanubi {
 	public class RemoteFile : Object, File {
+		public RemoteFile (IOStream stream) {
+		}
+		
 		public GLib.FileOutputStream append_to (GLib.FileCreateFlags flags, GLib.Cancellable? cancellable = null) throws GLib.Error {
 			return null;
 		}	
@@ -164,6 +167,7 @@ namespace Vanubi {
 			throw new IOError.NOT_SUPPORTED ("");
 		}
 		
+		#if VALA_0_22
 		public bool measure_disk_usage (GLib.FileMeasureFlags flags, GLib.Cancellable? cancellable, [CCode (delegate_target_pos = 3.5)] GLib.FileMeasureProgressCallback? progress_callback, out uint64 disk_usage, out uint64 num_dirs, out uint64 num_files) throws GLib.Error {
 			throw new IOError.NOT_SUPPORTED ("");
 		}
@@ -171,6 +175,7 @@ namespace Vanubi {
 		public async bool measure_disk_usage_async (GLib.FileMeasureFlags flags, int io_priority, GLib.Cancellable? cancellable, GLib.FileMeasureProgressCallback? progress_callback, out uint64 disk_usage, out uint64 num_dirs, out uint64 num_files) throws GLib.Error {
 			throw new IOError.NOT_SUPPORTED ("");
 		}
+		#endif
 						
 		public GLib.FileMonitor monitor (GLib.FileMonitorFlags flags, GLib.Cancellable? cancellable = null) throws GLib.Error {
 			throw new IOError.NOT_SUPPORTED ("");

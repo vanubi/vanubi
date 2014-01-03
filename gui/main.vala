@@ -2004,7 +2004,7 @@ namespace Vanubi {
 
 	public class Application : Gtk.Application {
 		public Application () {
-			Object(application_id: "org.vanubi", flags: ApplicationFlags.HANDLES_OPEN);
+			Object (application_id: "org.vanubi", flags: ApplicationFlags.HANDLES_OPEN);
 		}
 
 		Window new_window () {
