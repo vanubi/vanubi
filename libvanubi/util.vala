@@ -20,21 +20,19 @@
 namespace Vanubi {
 	public delegate G TaskFunc<G> () throws Error;
 
-	public class Location<D> {
+	public class Location : Object {
 		public File? file;
 		public int start_line;
 		public int start_column;
 		public int end_line;
 		public int end_column;
-		public D data;
 		
-		public Location (owned File? file, int start_line = -1, int start_column = -1, int end_line = -1, int end_column = -1, owned D? data = null) {
+		public Location (owned File? file, int start_line = -1, int start_column = -1, int end_line = -1, int end_column = -1) {
 			this.file = (owned) file;
 			this.start_line = start_line;
 			this.start_column = start_column;
 			this.end_line = end_line;
 			this.end_column = end_column;
-			this.data = (owned) data;
 		}
 		
 		public string to_string () {

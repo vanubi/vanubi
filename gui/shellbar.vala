@@ -202,7 +202,8 @@ namespace Vanubi {
 								}
 								
 								var msg = info.fetch_named ("msg").strip ();
-								var loc = new Location<string> (file, start_line, start_column, end_line, end_column, msg);
+								var loc = new Location (file, start_line, start_column, end_line, end_column);
+								loc.set_data ("error-message", (owned) msg);
 								manager.error_locations.append (loc);
 								manager.set_status ("Found %u errors".printf (manager.error_locations.length ()), "errors");
 							}

@@ -307,9 +307,9 @@ namespace Vanubi {
 		public Location get_location () {
 			TextIter iter;
 			view.buffer.get_iter_at_mark (out iter, view.buffer.get_insert ());
-			var loc = new Location<void*> (file,
-										   iter.get_line (),
-										   iter.get_line_offset ());
+			var loc = new Location (file,
+									iter.get_line (),
+									iter.get_line_offset ());
 			return loc;
 		}
 		

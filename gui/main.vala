@@ -573,7 +573,7 @@ namespace Vanubi {
 		}
 
 		public async void open_file (Editor editor, File file, bool focus = true) {
-			yield open_location (editor, new Location<void*> (file), focus);
+			yield open_location (editor, new Location (file), focus);
 		}
 		
 		public async void open_location (Editor editor, Location location, bool focus = true) {
@@ -1666,7 +1666,7 @@ namespace Vanubi {
 				var loc = current_error.data;
 				if (loc.file.query_exists ()) {
 					open_location.begin (editor, loc);
-					set_status_error (loc.data);
+					set_status_error (loc.get_data ("error-message"));
 				} else {
 					set_status_error ("File %s not found".printf (loc.file.get_path ()));
 				}
@@ -1932,7 +1932,7 @@ namespace Vanubi {
 			var bar = new ShellBar (this, editor);
 			bar.aborted.connect (() => {
 					abort (editor);
-				});
+			});
 			if (cmd == "compile-shell") {
 				add_overlay (bar, OverlayMode.PANE_BOTTOM);
 			} else if (cmd == "compile-shell-left") {

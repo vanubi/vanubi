@@ -179,9 +179,9 @@ namespace Vanubi {
 			if (backend.has_group (group)) {
 				if (has_group_key (group, "focused_file")) {
 					var file = File.new_for_uri (get_group_string (group, "focused_file"));
-					session.location = new Location<void*> (file,
-															get_group_int (group, "focused_line"),
-															get_group_int (group, "focused_column"));
+					session.location = new Location (file,
+													 get_group_int (group, "focused_line"),
+													 get_group_int (group, "focused_column"));
 				}
 				foreach (var key in get_group_keys (group)) {
 					if (key.has_prefix ("file")) {
