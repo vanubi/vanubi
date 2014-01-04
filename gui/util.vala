@@ -43,8 +43,8 @@ namespace Vanubi {
 		return res.str;
 	}
 	
-	public TextMark get_mark_for_location (Location loc, TextBuffer buf) {
-		weak TextMark? mark = loc.get_data ("text-mark");
+	public weak TextMark get_start_mark_for_location (Location loc, TextBuffer buf) {
+		weak TextMark? mark = loc.get_data ("start-mark");
 		if (mark != null) {
 			return mark;
 		}
@@ -60,9 +60,36 @@ namespace Vanubi {
 		}
 
 		mark = buf.create_mark (null, iter, false);
-		loc.set_data ("text-mark", mark);
-		mark.weak_ref (() => { loc.set_data ("text-mark", null); });
+		loc.set_data ("start-mark", mark);
+		mark.weak_ref (() => { loc.set_data ("start-mark", null); });
 
+		return mark;
+	}
+	
+	public TextMark get_end_mark_for_location (Location loc, TextBuffer buf) {
+		weak TextMark? mark = loc.get_data ("end-mark");
+		if (mark != null) {
+			return mark;
+		}
+		
+		var start_mark = get_start_mark_for_location (loc, buf);
+		TextIter iter;
+		if (loc.start_line >= 0 && loc.end_line >= 0) {
+			buf.get_iter_at_mark (out iter, start_mark);
+			if (loc.end_column >= 0) {
+				iter.forward_chars (loc.end_column);
+			} else {
+				iter.forward_chars (loc.start_column);
+			}
+			
+			mark = buf.create_mark (null, iter, false);
+		} else {
+			mark = start_mark;
+		}
+		
+		loc.set_data ("end-mark", mark);
+		mark.weak_ref (() => { loc.set_data ("end-mark", null); });
+		
 		return mark;
 	}
 }

@@ -888,6 +888,7 @@ namespace Vanubi {
 		
 		void on_mark (Editor editor) {
 			var loc = editor.get_location ();
+			get_start_mark_for_location (loc, editor.view.buffer); // create a TextMark
 			marks.mark (loc);
 			set_status ("Mark saved", "marks");
 		}

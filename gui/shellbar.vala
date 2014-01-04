@@ -1,5 +1,5 @@
 /*
- *  Copyright © 2011-2012 Luca Bruno
+ *  Copyright © 2011-2014 Luca Bruno
  *
  *  This file is part of Vanubi.
  *
@@ -204,6 +204,8 @@ namespace Vanubi {
 								var msg = info.fetch_named ("msg").strip ();
 								var loc = new Location (file, start_line, start_column, end_line, end_column);
 								loc.set_data ("error-message", (owned) msg);
+								get_start_mark_for_location (loc, editor.view.buffer); // create a TextMark
+								get_end_mark_for_location (loc, editor.view.buffer); // create a TextMark
 								manager.error_locations.append (loc);
 								manager.set_status ("Found %u errors".printf (manager.error_locations.length ()), "errors");
 							}

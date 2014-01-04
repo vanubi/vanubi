@@ -319,25 +319,17 @@ namespace Vanubi {
 			TextIter start_iter;
 			var buf = view.buffer;
 			if (location.start_line >= 0) {
-				var mark = get_mark_for_location (location, buf);
+				var mark = get_start_mark_for_location (location, buf);
 				buf.get_iter_at_mark (out start_iter, mark);
 			} else {
 				return false;
 			}
-					
-			if (location.end_line >= 0){
-				TextIter end_iter = start_iter;
-				buf.get_iter_at_line (out end_iter, location.end_line);
-				if (location.end_column >= 0) {
-					end_iter.forward_chars (location.end_column);
-				} else {
-					end_iter.forward_chars (location.start_column);
-				}
-				buf.select_range (start_iter, end_iter);
-			} else {
-				buf.place_cursor (start_iter);
-			}
-					
+
+			TextIter end_iter;
+			var mark = get_start_mark_for_location (location, buf);
+			buf.get_iter_at_mark (out end_iter, mark);
+			buf.select_range (start_iter, end_iter);
+	
 			update_old_selection ();
 			
 			return true;
