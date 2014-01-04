@@ -13,7 +13,7 @@ AC_INIT([vanubi],
         [vanubi_version],
         [http://github.com/vanubi/vanubi/issues],
         [vanubi],
-        [http://github.com/vanubi/vanubi])
+        [http://vanubi.github.io/vanubi])
 
 AC_CONFIG_HEADER([config.h])
 AC_CONFIG_MACRO_DIR([m4])
