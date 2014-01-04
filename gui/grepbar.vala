@@ -1,5 +1,5 @@
 /*
- *  Copyright © 2013 Luca Bruno
+ *  Copyright © 2014 Luca Bruno
  *
  *  This file is part of Vanubi.
  *
@@ -264,6 +264,16 @@ namespace Vanubi {
 						view.buffer.get_start_iter (out iter);
 						view.buffer.place_cursor (iter);
 					}
+				}
+				
+				// delete the last line if it's empty
+				TextIter start_iter, end_iter;
+				view.buffer.get_end_iter (out end_iter);
+				view.buffer.get_iter_at_line (out start_iter, end_iter.get_line ());
+				var text = view.buffer.get_text (start_iter, end_iter, false);
+				if (text.strip () == "") {
+					start_iter.backward_char ();
+					view.buffer.delete (ref start_iter, ref end_iter);
 				}
 			} catch (Error e) {
 			} finally {
