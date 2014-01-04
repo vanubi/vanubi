@@ -19,51 +19,59 @@
 
 namespace Vanubi {
 	public class RemoteFile : Object, File {
-		public RemoteFile (IOStream stream) {
+		static int next_instance_index = 0;
+		static int next_operation_index = 0;
+		
+		IOStream stream;
+		File fake_file;
+		int instance_index;
+		
+		public RemoteFile (IOStream stream, string path) {
+			this.stream = stream;
+			this.fake_file = File.new_for_path (path);
+			instance_index = ++next_instance_index;
 		}
 		
 		public GLib.FileOutputStream append_to (GLib.FileCreateFlags flags, GLib.Cancellable? cancellable = null) throws GLib.Error {
-			return null;
+			throw new IOError.NOT_SUPPORTED ("");
 		}	
 
 		public bool copy (GLib.File destination, GLib.FileCopyFlags flags, GLib.Cancellable? cancellable = null, GLib.FileProgressCallback? progress_callback = null) throws GLib.Error {
-			return false;
+			throw new IOError.NOT_SUPPORTED ("");
 		}
 
 		public GLib.FileOutputStream create (GLib.FileCreateFlags flags, GLib.Cancellable? cancellable = null) throws GLib.Error {
-			return null;
+			throw new IOError.NOT_SUPPORTED ("");
 		}
 		
 		public GLib.FileIOStream create_readwrite (GLib.FileCreateFlags flags, GLib.Cancellable? cancellable = null) throws GLib.Error {
-			return null;
+			throw new IOError.NOT_SUPPORTED ("");
 		}
 
-		// Async versions just run in a thread
+		public bool @delete (GLib.Cancellable? cancellable = null) throws GLib.Error {
+			throw new IOError.NOT_SUPPORTED ("");
+		}
 
 		public async FileOutputStream append_to_async (FileCreateFlags flags, int io_priority = Priority.DEFAULT, Cancellable? cancellable = null) throws Error {
-			return yield run_in_thread<FileOutputStream> (() => append_to (flags, cancellable), io_priority);
+			throw new IOError.NOT_SUPPORTED ("");
 		}
 			
 		
 		public async bool copy_async (GLib.File destination, GLib.FileCopyFlags flags, int io_priority = GLib.Priority.DEFAULT, GLib.Cancellable? cancellable = null, GLib.FileProgressCallback? progress_callback = null) throws GLib.Error {
-			return yield run_in_thread<bool> (() => copy (destination, flags, cancellable, progress_callback), io_priority);
+			throw new IOError.NOT_SUPPORTED ("");
 		}
 				
 		public async GLib.FileOutputStream create_async (GLib.FileCreateFlags flags, int io_priority = GLib.Priority.DEFAULT, GLib.Cancellable? cancellable = null) throws GLib.Error {
-			return yield run_in_thread<FileOutputStream> (() => create (flags, cancellable), io_priority);
+			throw new IOError.NOT_SUPPORTED ("");
 		}
 				
 		public async GLib.FileIOStream create_readwrite_async (GLib.FileCreateFlags flags, int io_priority = GLib.Priority.DEFAULT, GLib.Cancellable? cancellable = null) throws GLib.Error {
-			return yield run_in_thread<FileIOStream> (() => create_readwrite (flags, cancellable), io_priority);
-		}
-		
-		public bool @delete (GLib.Cancellable? cancellable = null) throws GLib.Error {
-			return false;
+			throw new IOError.NOT_SUPPORTED ("");
 		}
 		
 		[CCode (vfunc_name = "delete_file_async")]
 		public async bool delete_async (int io_priority = GLib.Priority.DEFAULT, GLib.Cancellable? cancellable = null) throws GLib.Error {
-			return yield run_in_thread<bool> (() => @delete (cancellable), io_priority);
+			throw new IOError.NOT_SUPPORTED ("");
 		}
 		
 		public GLib.File dup () {
@@ -84,7 +92,7 @@ namespace Vanubi {
 		}
 		
 		public async GLib.FileEnumerator enumerate_children_async (string attributes, GLib.FileQueryInfoFlags flags, int io_priority = GLib.Priority.DEFAULT, GLib.Cancellable? cancellable = null) throws GLib.Error {
-			return yield run_in_thread<FileEnumerator> (() => enumerate_children (attributes, flags, cancellable), io_priority);
+			throw new IOError.NOT_SUPPORTED ("");
 		}
 		
 		public bool equal (GLib.File file2) {
@@ -116,23 +124,23 @@ namespace Vanubi {
 		}
 		
 		public string get_parse_name () {
-			return "";
+			return null;
 		}
 		
 		public string? get_path () {
-			return "";
+			return null;
 		}
 		
 		public string? get_relative_path (GLib.File descendant) {
-			return "";
+			return null;
 		}
 		
 		public string get_uri () {
-			return "";
+			return null;
 		}
 		
 		public string get_uri_scheme () {
-			return "";
+			return null;
 		}
 		
 		public bool has_parent (GLib.File? parent) {
@@ -160,7 +168,7 @@ namespace Vanubi {
 		}
 		
 		public async bool make_directory_async (int io_priority = GLib.Priority.DEFAULT, GLib.Cancellable? cancellable = null) throws GLib.Error {
-			return yield run_in_thread<bool> (() => make_directory (cancellable), io_priority);
+			throw new IOError.NOT_SUPPORTED ("");
 		}
 		
 		public bool make_symbolic_link (string symlink_value, GLib.Cancellable? cancellable = null) throws GLib.Error {
@@ -202,11 +210,11 @@ namespace Vanubi {
 		}
 		
 		public GLib.FileIOStream open_readwrite (GLib.Cancellable? cancellable = null) throws GLib.Error {
-			return null;
+			throw new IOError.NOT_SUPPORTED ("");
 		}
 		
 		public async GLib.FileIOStream open_readwrite_async (int io_priority = GLib.Priority.DEFAULT, GLib.Cancellable? cancellable = null) throws GLib.Error {
-			return yield run_in_thread<FileIOStream> (() => open_readwrite (cancellable), io_priority);
+			throw new IOError.NOT_SUPPORTED ("");
 		}
 
 		public async bool poll_mountable (GLib.Cancellable? cancellable = null) throws GLib.Error {
@@ -226,7 +234,7 @@ namespace Vanubi {
 		}
 		
 		public GLib.FileType query_file_type (GLib.FileQueryInfoFlags flags, GLib.Cancellable? cancellable = null) {
-			return FileType.UNKNOWN;
+			return 0;
 		}
 		
 		public GLib.FileInfo query_filesystem_info (string attributes, GLib.Cancellable? cancellable = null) throws GLib.Error {
@@ -242,7 +250,7 @@ namespace Vanubi {
 		}
 		
 		public async GLib.FileInfo query_info_async (string attributes, GLib.FileQueryInfoFlags flags, int io_priority = GLib.Priority.DEFAULT, GLib.Cancellable? cancellable = null) throws GLib.Error {
-			return yield run_in_thread<FileInfo> (() => query_info (attributes, flags, cancellable), io_priority);
+			throw new IOError.NOT_SUPPORTED ("");
 		}
 		
 		public GLib.FileAttributeInfoList query_settable_attributes (GLib.Cancellable? cancellable = null) throws GLib.Error {
@@ -254,35 +262,35 @@ namespace Vanubi {
 		}
 						
 		public GLib.FileInputStream read (GLib.Cancellable? cancellable = null) throws GLib.Error {
-			return null;
+			throw new IOError.NOT_SUPPORTED ("");
 		}
 		
 		public async GLib.FileInputStream read_async (int io_priority = GLib.Priority.DEFAULT, GLib.Cancellable? cancellable = null) throws GLib.Error {
-			return yield run_in_thread<FileInputStream> (() => read (cancellable), io_priority);
+			throw new IOError.NOT_SUPPORTED ("");
 		}
 		
 		public unowned GLib.FileInputStream read_fn (GLib.Cancellable? cancellable = null) throws GLib.Error {
-			return null;
+			throw new IOError.NOT_SUPPORTED ("");
 		}
 		
 		public GLib.FileOutputStream replace (string? etag, bool make_backup, GLib.FileCreateFlags flags, GLib.Cancellable? cancellable = null) throws GLib.Error {
-			return null;
+			throw new IOError.NOT_SUPPORTED ("");
 		}
 		
 		public async GLib.FileOutputStream replace_async (string? etag, bool make_backup, GLib.FileCreateFlags flags, int io_priority = GLib.Priority.DEFAULT, GLib.Cancellable? cancellable = null) throws GLib.Error {
-			return yield run_in_thread<FileOutputStream> (() => replace (etag, make_backup, flags, cancellable), io_priority);
+			throw new IOError.NOT_SUPPORTED ("");
 		}
 
 		public GLib.FileIOStream replace_readwrite (string? etag, bool make_backup, GLib.FileCreateFlags flags, GLib.Cancellable? cancellable = null) throws GLib.Error {
-			return null;
+			throw new IOError.NOT_SUPPORTED ("");
 		}
 		
 		public async GLib.FileIOStream replace_readwrite_async (string? etag, bool make_backup, GLib.FileCreateFlags flags, int io_priority = GLib.Priority.DEFAULT, GLib.Cancellable? cancellable = null) throws GLib.Error {
-			return yield run_in_thread<FileIOStream> (() => replace_readwrite (etag, make_backup, flags, cancellable), io_priority);
+			throw new IOError.NOT_SUPPORTED ("");
 		}
 			
 		public GLib.File resolve_relative_path (string relative_path) {
-			return null;
+			throw new IOError.NOT_SUPPORTED ("");
 		}
 		
 		public bool set_attribute (string attribute, GLib.FileAttributeType type, void* value_p, GLib.FileQueryInfoFlags flags, GLib.Cancellable? cancellable = null) throws GLib.Error {
@@ -302,7 +310,7 @@ namespace Vanubi {
 		}
 		
 		public async GLib.File set_display_name_async (string display_name, int io_priority = GLib.Priority.DEFAULT, GLib.Cancellable? cancellable = null) throws GLib.Error {
-			return yield run_in_thread<File> (() => set_display_name (display_name, cancellable), io_priority);
+			throw new IOError.NOT_SUPPORTED ("");
 		}
 			
 		public async bool start_mountable (GLib.DriveStartFlags flags, GLib.MountOperation? start_operation, GLib.Cancellable? cancellable = null) throws GLib.Error {
