@@ -6,7 +6,7 @@ if len (sys.argv) < 2:
 	sys.exit (1);
 
 path = os.path.abspath (sys.argv[1])
-port = 62518;
+port = 62517;
 
 try:
 	s = os.stat (path)

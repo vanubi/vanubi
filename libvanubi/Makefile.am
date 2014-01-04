@@ -22,6 +22,7 @@ libvanubi_la_VALASOURCES = \
 	marks.vala	\
 	matching.vala 	\
 	rfs.vala		\
+	rfserver.vala	\
 	search.vala 	\
 	util.vala		\
 	vade/ast.vala	\
