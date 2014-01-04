@@ -1,5 +1,5 @@
 /*
- *  Copyright © 2013 Luca Bruno
+ *  Copyright © 2014 Luca Bruno
  *
  *  This file is part of Vanubi.
  *
@@ -41,5 +41,28 @@ namespace Vanubi {
 		}
 		res.truncate (res.len - 1);
 		return res.str;
+	}
+	
+	public TextMark get_mark_for_location (Location loc, TextBuffer buf) {
+		weak TextMark? mark = loc.get_data ("text-mark");
+		if (mark != null) {
+			return mark;
+		}
+		
+		TextIter iter;
+		if (loc.start_line >= 0) {
+			buf.get_iter_at_line (out iter, loc.start_line);
+			if (loc.start_column >= 0) {
+				iter.forward_chars (loc.start_column);
+			}
+		} else {
+			buf.get_start_iter (out iter);
+		}
+
+		mark = buf.create_mark (null, iter, false);
+		loc.set_data ("text-mark", mark);
+		mark.weak_ref (() => { loc.set_data ("text-mark", null); });
+
+		return mark;
 	}
 }

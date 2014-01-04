@@ -1,5 +1,5 @@
 /*
- *  Copyright © 2011-2013 Luca Bruno
+ *  Copyright © 2011-2014 Luca Bruno
  *
  *  This file is part of Vanubi.
  *
@@ -319,10 +319,8 @@ namespace Vanubi {
 			TextIter start_iter;
 			var buf = view.buffer;
 			if (location.start_line >= 0) {
-				buf.get_iter_at_line (out start_iter, location.start_line);
-				if (location.start_column > 0) {
-					start_iter.forward_chars (location.start_column);
-				}
+				var mark = get_mark_for_location (location, buf);
+				buf.get_iter_at_mark (out start_iter, mark);
 			} else {
 				return false;
 			}
