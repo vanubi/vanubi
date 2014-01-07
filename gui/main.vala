@@ -293,13 +293,18 @@ namespace Vanubi {
 
 			bind_command ({ Key (Gdk.Key.e, Gdk.ModifierType.CONTROL_MASK) }, "end-line");
 			bind_command ({ Key (Gdk.Key.End, 0) }, "end-line");
+			bind_command ({ Key (Gdk.Key.End, Gdk.ModifierType.SHIFT_MASK) }, "end-line-select");
 			index_command ("end-line", "Move the cursor to the end of the line");
+			index_command ("end-line-select", "Move the cursor to the end of the line, extending the selection");
 			execute_command["end-line"].connect (on_end_line);
+			execute_command["end-line-select"].connect (on_end_line);
 
 			bind_command ({ Key (Gdk.Key.a, Gdk.ModifierType.CONTROL_MASK) }, "start-line");
 			bind_command ({ Key (Gdk.Key.Home, 0) }, "start-line");
-			index_command ("start-line", "Move the cursor to the start of the line");
+			bind_command ({ Key (Gdk.Key.Home, Gdk.ModifierType.SHIFT_MASK) }, "start-line-select");
+			index_command ("start-line", "Move the cursor to the start of the line, extending the selection");
 			execute_command["start-line"].connect (on_start_line);
+			execute_command["start-line-select"].connect (on_start_line);
 			
 			bind_command ({ Key (Gdk.Key.Down, Gdk.ModifierType.CONTROL_MASK) }, "move-block-down");
 			execute_command["move-block-down"].connect (on_move_block);
@@ -1376,51 +1381,65 @@ namespace Vanubi {
 			} while (line.strip() != "");
 		}
 
-		void on_start_line(Editor ed) {
+		void on_start_line (Editor ed, string cmd) {
+			var extend_select = cmd.has_suffix ("select");
+			
+			/* Save the current cursor */
 			var buf = ed.view.buffer;
 			TextIter initial;
 			buf.get_iter_at_mark (out initial, buf.get_insert ());
 			
-			/* Cursor at the start of the line */
-			ed.view.move_cursor (MovementStep.DISPLAY_LINE_ENDS, -1, false);
+			/* Move cursor at the start of the visual line */
+			ed.view.move_cursor (MovementStep.DISPLAY_LINE_ENDS, -1, extend_select);
+
 			TextIter current;
 			buf.get_iter_at_mark (out current, buf.get_insert ());
-
 			if (initial.equal (current)) {
-				// Already at the start of the visual line, go to the real start of the line
-				ed.view.buffer.get_iter_at_line (out current, initial.get_line ());
-				ed.view.buffer.place_cursor (current);
-			} else {
-				// Find the first non-space of the line
-				while (current.get_char().isspace ()) {
-					current.forward_char ();
-				}
-				// Move cursor only if initial position is after the first non-space char
-				if (current.get_line_offset() < initial.get_line_offset ()) {
-					ed.view.buffer.place_cursor (current);
+				/* Already at the start of the visual line */
+				ed.view.move_cursor (MovementStep.PARAGRAPH_ENDS, -1, extend_select);
+			}
+
+			buf.get_iter_at_mark (out current, buf.get_insert ());
+			/* Find the first non-space of the line */
+			while (current.get_char().isspace ()) {
+				current.forward_char ();
+			}
+			
+			TextIter cursor;
+			buf.get_iter_at_mark (out cursor, buf.get_insert ());
+			if (current.get_offset() < initial.get_offset ()) {
+				/* Move to the first non-space char */
+				while (cursor.get_offset() < current.get_offset()) {
+					ed.view.move_cursor (MovementStep.LOGICAL_POSITIONS, 1, extend_select);
+					cursor.forward_char ();
 				}
 			}
 			
 			ed.view.scroll_mark_onscreen (buf.get_insert ());
 		}
 
-		void on_end_line(Editor ed) {
-			/* Put the cursor at the end of line */
+		void on_end_line (Editor ed, string cmd) {
+			var extend_select = cmd.has_suffix ("select");
+			
+			/* Save the original position of the cursor */
 			var buf = ed.view.buffer;
 			TextIter initial;
 			buf.get_iter_at_mark (out initial, buf.get_insert ());
 			
-			ed.view.move_cursor (MovementStep.DISPLAY_LINE_ENDS, 1, false);
+			/* Move to the visual end of the line */
+			ed.view.move_cursor (MovementStep.DISPLAY_LINE_ENDS, 1, extend_select);
 			
 			TextIter current;
 			buf.get_iter_at_mark (out current, buf.get_insert ());
 
+			/* Gtk stops at just one char :( */
+			if (extend_select && !current.ends_line ()) {
+				ed.view.move_cursor (MovementStep.LOGICAL_POSITIONS, 1, extend_select);
+			}
+
 			if (initial.equal (current)) {
-				// try going really to the end of the line
-				while (!current.ends_line ()) {
-					current.forward_char ();
-				}
-				buf.place_cursor (current);
+				/* Already at the visual end, move to the logical end */
+				ed.view.move_cursor (MovementStep.PARAGRAPH_ENDS, 1, extend_select);
 			}
 			ed.view.scroll_mark_onscreen (buf.get_insert ());
 		}
