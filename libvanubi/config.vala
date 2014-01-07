@@ -192,6 +192,19 @@ namespace Vanubi {
 			return session;
 		}
 		
+		public string[] get_sessions () {
+			// return with "default" session as first session
+			var res = new string[]{"default"};
+			var groups = backend.get_groups ();
+			foreach (unowned string group in groups) {
+				if (group != "session:default" && group.has_prefix ("session:")) {
+					res += group.substring ("session:".length);
+				}
+			}
+			
+			return res;
+		}
+		
 		/* Editor */
 		public int get_editor_int (string key, int default = 0) {
 			return get_group_int ("Editor", key, default);

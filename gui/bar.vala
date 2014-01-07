@@ -1,5 +1,5 @@
 /*
- *  Copyright © 2011-2013 Luca Bruno
+ *  Copyright © 2011-2014 Luca Bruno
  *
  *  This file is part of Vanubi.
  *
@@ -111,17 +111,18 @@ namespace Vanubi {
 	class EditorInfoBar : Grid {
 	}
 
-	class SwitchBufferBar<G> : CompletionBar<G> {
-		Annotated[] choices;
+	class SimpleCompletionBar<G> : CompletionBar<G> {
+		protected Annotated[] choices;
 
-		public SwitchBufferBar (Annotated[] choices) {
-			this.choices = choices;
+		public SimpleCompletionBar (owned Annotated[] choices, string default = "") {
+			this.choices = (owned) choices;
+			entry.set_text (default);
 		}
 
 		protected override async Annotated[]? complete (string pattern, out string common_choice, Cancellable cancellable) {
 			common_choice = pattern;
 			if (pattern[0] == '\0') {
-				// needed for keeping the order of the file lru
+				// needed for keeping the order of original choices
 				return choices;
 			}
 			
@@ -146,6 +147,28 @@ namespace Vanubi {
 			var res = (owned)matches.data;
 			matches.data.length = 0; // recent vala bug fix
 			return res;
+		}
+	}
+	
+	class SwitchBufferBar : SimpleCompletionBar<File> {
+		public SwitchBufferBar (owned Annotated[] choices) {
+			base ((owned) choices);
+		}
+	}
+	
+	class SessionCompletionBar : SimpleCompletionBar<string> {
+		public SessionCompletionBar (owned Annotated[] choices) {
+			base ((owned) choices, "default");
+		}
+		
+		protected override async Annotated[]? complete (string pattern, out string common_choice, Cancellable cancellable) {
+			if (pattern == "default") {
+				// like empty
+				common_choice = pattern;
+				return choices;
+			}
+			
+			return yield base.complete (pattern, out common_choice, cancellable);
 		}
 	}
 }

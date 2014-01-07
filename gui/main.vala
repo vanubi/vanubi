@@ -598,7 +598,7 @@ namespace Vanubi {
 				}
 				
 				if (ed.set_location (location)) {
-					Idle.add (() => { ed.view.scroll_to_mark (ed.view.buffer.get_insert (), 0, true, 0.5, 0.5); return false; });
+					Idle.add_full (Priority.HIGH, () => { ed.view.scroll_to_mark (ed.view.buffer.get_insert (), 0, true, 0.5, 0.5); return false; });
 				}
 				
 				if (focus) {
@@ -634,7 +634,7 @@ namespace Vanubi {
 				}
 				if (!(location.start_line == 0 && location.start_column == 0)) {
 					if (ed.set_location (location)) {
-						Idle.add (() => { ed.view.scroll_to_mark (buf.get_insert (), 0, true, 0.5, 0.5); return false; });
+						Idle.add_full (Priority.HIGH, () => { ed.view.scroll_to_mark (buf.get_insert (), 0, true, 0.5, 0.5); return false; });
 					}
 				}
 			} catch (IOError.CANCELLED e) {
@@ -845,9 +845,16 @@ namespace Vanubi {
 		}
 
 		void on_save_session (Editor editor) {
-			var bar = new EntryBar ();
-			bar.activate.connect ((name) => {
+			var sessions = conf.get_sessions ();
+			var annotated = new Annotated<string>[0];
+			foreach (unowned string session in sessions) {
+				annotated += new Annotated<string> (session, session);
+			}
+			
+			var bar = new SessionCompletionBar ((owned) annotated);
+			bar.activate.connect (() => {
 					abort (editor);
+					var name = bar.get_choice ();
 					if (name != "") {
 						save_session (editor, name);
 						set_status ("Session %s saved".printf (name), "sessions");
@@ -859,31 +866,43 @@ namespace Vanubi {
 			bar.grab_focus ();
 		}
 		
+		
+		async void restore_session (Editor editor, string name) {
+			Session session;
+			if (name == "default") {
+				session = last_session;
+			} else {
+				session = conf.get_session (name);
+			}
+			
+			if (session == null) {
+				set_status ("Session not found", "sessions");
+			} else {
+				/* Load the first file */
+				if (session.location != null) {
+					yield open_location (editor, session.location);
+				}
+				
+				File? focused_file = session.location != null ? session.location.file : null;
+				foreach (var file in session.files.data) {
+					if (focused_file == null || !file.equal (focused_file)) {
+						open_file.begin (editor, file, false);
+					}
+				}
+			}
+		}
+		
 		void on_restore_session (Editor editor) {
-			var bar = new EntryBar ("default");
+			var sessions = conf.get_sessions ();
+			var annotated = new Annotated<string>[0];
+			foreach (unowned string session in sessions) {
+				annotated += new Annotated<string> (session, session);
+			}
+			
+			var bar = new SessionCompletionBar ((owned) annotated);
 			bar.activate.connect ((name) => {
 					abort (editor);
-					Session session;
-					if (name == "default") {
-						session = last_session;
-					} else {
-						session = conf.get_session (name);
-					}
-					
-					if (session == null) {
-						set_status ("Session not found", "sessions");
-					} else {
-						File? focused_file = session.location != null ? session.location.file : null;
-						foreach (var file in session.files.data) {
-							if (focused_file == null || !file.equal (focused_file)) {
-								open_file.begin (editor, file, false);
-							}
-						}
-
-						if (session.location != null) {
-							open_location.begin (editor, session.location);
-						}
-					}
+					restore_session.begin (editor, name);
 			});
 			bar.aborted.connect (() => { abort (editor); });
 			add_overlay (bar, OverlayMode.FIXED);
@@ -1618,7 +1637,7 @@ namespace Vanubi {
 
 		void on_switch_buffer (Editor editor) {
 			var sp = short_paths (editor.editor_container.get_files ());
-			var bar = new SwitchBufferBar<File> (sp);
+			var bar = new SwitchBufferBar ((owned) sp);
 			bar.activate.connect (() => {
 					abort (editor);
 					var file = bar.get_choice();
