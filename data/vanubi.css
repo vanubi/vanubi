@@ -35,6 +35,10 @@ VanubiBar GtkEntry {
 	padding: 2px 3px 2px 3px;
 }
 
+VanubiBar GtkEntry:selected {
+	background: #001522;
+}
+
 VanubiBar GtkEntry.error {
 	background: #720000;
 }

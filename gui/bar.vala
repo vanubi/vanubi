@@ -120,8 +120,8 @@ namespace Vanubi {
 		protected Annotated[] choices;
 
 		public SimpleCompletionBar (owned Annotated[] choices, string default = "") {
+			base (default);
 			this.choices = (owned) choices;
-			entry.set_text (default);
 		}
 
 		protected override async Annotated[]? complete (string pattern, out string common_choice, Cancellable cancellable) {
