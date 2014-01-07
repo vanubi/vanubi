@@ -41,9 +41,6 @@ namespace Vanubi {
 		public override void grab_focus () {
 			base.grab_focus ();
 			on_changed ();
-			if (entry.get_text () != "") {
-				entry.move_cursor (MovementStep.BUFFER_ENDS, 1, false);
-			}
 		}
 
 		protected virtual async Annotated<File>[]? complete (string pattern, out string common_choice, Cancellable cancellable) {

@@ -28,6 +28,13 @@ namespace Vanubi {
 			entry.set_text(base_directory);
 		}
 
+		public override void grab_focus () {
+			base.grab_focus ();
+			if (entry.get_text () != "") {
+				entry.move_cursor (MovementStep.BUFFER_ENDS, 1, false);
+			}
+		}
+		
 		protected override async Annotated<File>[]? complete (string pattern, out string common_choice, Cancellable cancellable) {
 			common_choice = pattern;
 			var absolute_pattern = absolute_path (base_directory, pattern);

@@ -83,6 +83,9 @@ namespace Vanubi {
 			column_homogeneous = true;
 			
 			entry = new Entry ();
+			if (initial != null) {
+				entry.text = initial;
+			}
 			entry.set_activates_default (true);
 			entry.expand = false;
 			entry.activate.connect (on_activate);
@@ -93,8 +96,7 @@ namespace Vanubi {
 			
 			if (initial != null && initial != "") {
 				Idle.add_full (Priority.HIGH, () => {
-						entry.text = initial;
-						entry.move_cursor (MovementStep.LOGICAL_POSITIONS, initial.length, true); // select text
+						changed (initial);
 						return false;
 				});
 			}
