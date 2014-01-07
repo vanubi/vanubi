@@ -189,7 +189,7 @@ namespace Vanubi {
 			Object (base_stream: base_stream);
 		}
 		
-		public async void ensure_filled (ssize_t size, int io_priority = Priority.DEFAULT, Cancellable? cancellable = null) throws IOError {
+		public async void ensure_filled (ssize_t size, int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) throws IOError {
 			if (get_available () < size) {
 				var res = yield fill_async (size, io_priority, cancellable);
 				if (res <= 0) {
@@ -198,17 +198,17 @@ namespace Vanubi {
 			}
 		}
 		
-		public async int32 read_int32_async (int io_priority = Priority.DEFAULT, Cancellable? cancellable = null) throws IOError {
+		public async int32 read_int32_async (int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) throws IOError {
 			yield ensure_filled ((ssize_t) sizeof (int32));
 			return read_int32 (cancellable);
 		}
 		
-		public async int32 read_byte_async (int io_priority = Priority.DEFAULT, Cancellable? cancellable = null) throws IOError {
+		public async int32 read_byte_async (int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) throws IOError {
 			yield ensure_filled ((ssize_t) sizeof (uint8));
 			return read_byte (cancellable);
 		}
 		
-		public async string read_zero_terminated_string (int io_priority = Priority.DEFAULT, Cancellable? cancellable = null) throws IOError {
+		public async string read_zero_terminated_string (int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) throws IOError {
 			return yield read_upto_async ("\0", 1, io_priority, cancellable, null);
 		}
 	}
