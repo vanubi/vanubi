@@ -166,7 +166,8 @@ namespace Vanubi {
 		Cancellable cancellable;
 		File base_path;
 		
-		public GrepBar (Manager manager, Configuration conf, File base_path) {
+		public GrepBar (Manager manager, Configuration conf, File base_path, string default = "") {
+			base (default);
 			this.manager = manager;
 			this.base_path = base_path;
 			entry.expand = false;

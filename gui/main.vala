@@ -59,6 +59,7 @@ namespace Vanubi {
 		uint status_timeout;
 		string status_context;
 		MarkManager marks = new MarkManager ();
+		string last_grep_string = "";
 		
 		Session last_session;
 
@@ -1722,7 +1723,7 @@ namespace Vanubi {
 			var git_command = conf.get_global_string ("git_command", "git");
 			InputStream? stream = null;
 			
-			var bar = new GrepBar (this, conf, repo_dir);
+			var bar = new GrepBar (this, conf, repo_dir, last_grep_string);
 			bar.activate.connect (() => {
 					abort (editor);
 					var loc = bar.location;
@@ -1731,6 +1732,7 @@ namespace Vanubi {
 					}
 			});
 			bar.changed.connect ((pat) => {
+					last_grep_string = pat;
 					clear_status ("grep");
 					
 					if (stream != null) {
