@@ -63,8 +63,8 @@ namespace Vanubi {
 		public string str;
 		public G? obj;
 
-		public Annotated (owned string str, G? obj) {
-			this.obj = obj;
+		public Annotated (owned string str, owned G? obj) {
+			this.obj = (owned) obj;
 			this.str = (owned) str;
 		}
 	}

@@ -28,7 +28,8 @@ namespace Vanubi {
 		bool navigated = false;
 		bool has_changed = true;
 
-		public CompletionBar () {
+		public CompletionBar (string default = "") {
+			base (default);
 		}
 
 		~Bar () {
