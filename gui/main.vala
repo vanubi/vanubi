@@ -1570,6 +1570,7 @@ namespace Vanubi {
 				case "i386 assembly":
 					comment_engine = new Comment_Asm (vbuf);
 					break;
+				case "sh":
 				case "makefile":
 				case "python":
 					comment_engine = new Comment_Hash (vbuf);
