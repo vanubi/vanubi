@@ -853,9 +853,8 @@ namespace Vanubi {
 			}
 			
 			var bar = new SessionCompletionBar ((owned) annotated);
-			bar.activate.connect (() => {
+			bar.activate.connect ((name) => {
 					abort (editor);
-					var name = bar.get_choice ();
 					if (name != "") {
 						save_session (editor, name);
 						set_status ("Session %s saved".printf (name), "sessions");
@@ -901,9 +900,12 @@ namespace Vanubi {
 			}
 			
 			var bar = new SessionCompletionBar ((owned) annotated);
-			bar.activate.connect ((name) => {
+			bar.activate.connect (() => {
 					abort (editor);
-					restore_session.begin (editor, name);
+					var name = bar.get_choice ();
+					if (name != "") {
+						restore_session.begin (editor, name);
+					}
 			});
 			bar.aborted.connect (() => { abort (editor); });
 			add_overlay (bar, OverlayMode.FIXED);
