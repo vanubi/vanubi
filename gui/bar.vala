@@ -83,9 +83,6 @@ namespace Vanubi {
 			column_homogeneous = true;
 			
 			entry = new Entry ();
-			if (initial != null) {
-				entry.set_text (initial);
-			}
 			entry.set_activates_default (true);
 			entry.expand = false;
 			entry.activate.connect (on_activate);
@@ -93,6 +90,14 @@ namespace Vanubi {
 			entry.key_press_event.connect (on_key_press_event);
 			add (entry);
 			show_all ();
+			
+			if (initial != null && initial != "") {
+				Idle.add_full (Priority.HIGH, () => {
+						entry.text = initial;
+						entry.move_cursor (MovementStep.LOGICAL_POSITIONS, initial.length, true); // select text
+						return false;
+				});
+			}
 		}
 
 		public override void grab_focus () {
