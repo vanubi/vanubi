@@ -130,6 +130,7 @@ AC_CONFIG_FILES([
 		libvanubi/Makefile
 		docs/Makefile
 		gui/Makefile
+		data/Makefile
 		tests/Makefile
 ])
 

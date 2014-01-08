@@ -1,10 +1,10 @@
 using Vanubi;
 
 void test_marks () {
-	var loc1 = new Location<void*> (null);
-	var loc2 = new Location<void*> (null);
-	var loc3 = new Location<void*> (null);
-	var loc4 = new Location<void*> (null);
+	var loc1 = new Location (null);
+	var loc2 = new Location (null);
+	var loc3 = new Location (null);
+	var loc4 = new Location (null);
 	
 	var marks = new MarkManager ();
 	assert (marks.prev_mark () == null);

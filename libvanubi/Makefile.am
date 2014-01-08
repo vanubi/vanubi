@@ -21,7 +21,6 @@ libvanubi_la_VALASOURCES = \
 	keys.vala \
 	marks.vala	\
 	matching.vala 	\
-	rfs.vala		\
 	rfserver.vala	\
 	search.vala 	\
 	util.vala		\

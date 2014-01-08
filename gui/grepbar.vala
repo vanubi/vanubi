@@ -25,7 +25,7 @@ namespace Vanubi {
 		public GrepView (Configuration conf) {
 			Object (buffer: new GrepBuffer ());
 			var sm = new SourceStyleSchemeManager();
-			sm.set_search_path({absolute_path("", "~/.vanubi/styles/"), "./data/styles/"});
+			sm.set_search_path (get_styles_search_path ());
 			var st = sm.get_scheme (conf.get_editor_string ("style", "zen-grep"));
 		
 			if (st != null) { /* Use default if not found */

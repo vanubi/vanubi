@@ -1,6 +1,6 @@
 ACLOCAL_AMFLAGS = -I m4
 
-SUBDIRS = libvanubi gui tests docs
+SUBDIRS = libvanubi gui data tests docs
 
 dist-hook: gen-ChangeLog
 	echo $(VERSION) > $(distdir)/.tarball-version

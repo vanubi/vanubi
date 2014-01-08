@@ -5,6 +5,7 @@ AM_CPPFLAGS = \
 	-I$(top_srcdir)/libvanubi \
 	-I$(top_srcdir)/gui/keybinder \
 	-DWNCK_I_KNOW_THIS_IS_UNSTABLE \
+	-DDATADIR=\""$(datadir)"\" \
 	$(VANUBI_CFLAGS) \
 	$(NULL)
 
