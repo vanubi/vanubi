@@ -2058,12 +2058,17 @@ namespace Vanubi {
 			var slm = SourceLanguageManager.get_default();
 			var search_path = slm.get_search_path();
 			search_path += "./data/languages/";	     
+			search_path += Configuration.VANUBI_DATADIR + "/vanubi/languages";
 			slm.set_search_path (search_path);
 			
 			try {
 				provider.load_from_path ("./data/vanubi.css");
 			} catch (Error e) {
-				warning ("Could not load vanubi css: %s", e.message);
+				try {
+					provider.load_from_path (Configuration.VANUBI_DATADIR + "/vanubi/css/vanubi.css");
+				} catch (Error e) {
+					warning ("Could not load vanubi css: %s", e.message);
+				}
 			}
 			StyleContext.add_provider_for_screen (Gdk.Screen.get_default(), provider, STYLE_PROVIDER_PRIORITY_USER);
 
@@ -2102,7 +2107,11 @@ namespace Vanubi {
 			try {
 				win.icon = new Gdk.Pixbuf.from_file("./data/vanubi.png");
 			} catch (Error e) {
-				warning ("Could not load vanubi icon: %s", e.message);
+				try {
+					win.icon = new Gdk.Pixbuf.from_file(Configuration.VANUBI_DATADIR + "/vanubi/logo/vanubi.png");
+				} catch (Error e) {
+					warning ("Could not load vanubi icon: %s", e.message);
+				}
 			}
 
 			manager.quit.connect (() => { remove_window (win); win.destroy (); });

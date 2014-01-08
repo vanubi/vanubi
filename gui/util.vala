@@ -92,4 +92,8 @@ namespace Vanubi {
 		
 		return mark;
 	}
+	
+	public string[] get_styles_search_path () {
+		return {absolute_path("", "~/.vanubi/styles/"), "./data/styles/", Configuration.VANUBI_DATADIR + "/vanubi/styles/"};
+	}
 }

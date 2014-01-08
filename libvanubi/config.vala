@@ -38,6 +38,9 @@ namespace Vanubi {
 		[CCode (cname = "PACKAGE_BUGREPORT", cheader_filename = "config.h")]
 		public extern const string VANUBI_BUGREPORT_URL;
 		
+		[CCode (cname = "DATADIR", cheader_filename = "config.h")]
+		public extern const string VANUBI_DATADIR;
+
 		public Configuration () {
 			cluster = new FileCluster (this);
 			
