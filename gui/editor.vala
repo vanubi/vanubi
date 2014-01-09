@@ -406,10 +406,11 @@ namespace Vanubi {
 			var buf = view.buffer;
 			buf.get_iter_at_mark (out insert, buf.get_insert ());
 			int line = insert.get_line ();
+			
 			TextIter iter;
 			buf.get_iter_at_line (out iter, line);
 			int column = 0;
-			while (!iter.equal (insert)) {
+			while (iter.get_offset () < insert.get_offset ()) {
 				if (iter.get_char () == '\t') {
 					column += (int) view.tab_width;
 				} else {
