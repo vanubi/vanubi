@@ -1565,6 +1565,8 @@ namespace Vanubi {
 				case "html":
 				case "xml":
 					return new Indent_Markup (vbuf);
+				case "lua":
+					return new Indent_Lua (vbuf);
 				case "makefile":
 					return null;
 				default:
