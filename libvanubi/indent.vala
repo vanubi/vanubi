@@ -400,30 +400,14 @@ namespace Vanubi {
 			base (buffer);
 		}
 		
-		bool is_char (BufferIter iter) {
-			if (!iter.is_in_code) {
-				return false;
-			}
-			var cp = iter.copy ();
-			cp.backward_char ();
-			if (cp.char == '\'') {
-				cp = iter.copy ();
-				cp.forward_char ();
-				if (cp.char == '\'') {
-					return true;
-				}
-			}
-			return false;
-		}
-		
 		bool is_open_paren (BufferIter iter) {
 			var c = iter.char;
-			return (c == '{' || c == '[' || c == '(') && iter.is_in_code && !is_char (iter);
+			return (c == '{' || c == '[' || c == '(') && iter.is_in_code;
 		}
 		
 		bool is_close_paren (BufferIter iter) {
 			var c = iter.char;
-			return (c == '}' || c == ']' || c == ')') && iter.is_in_code && !is_char (iter);
+			return (c == '}' || c == ']' || c == ')') && iter.is_in_code;
 		}
 		
 		int first_non_empty_prev_line (int line) {
