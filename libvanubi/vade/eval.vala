@@ -20,19 +20,36 @@
 namespace Vanubi.Vade {
 	public class EvalVisitor : Visitor {
 		Value value;
+		public Value error; // make it publicy accessible to get the original error
 		Scope scope;
 		Cancellable cancellable;
 		
-		public async Value eval (Scope scope, Expression expr, Cancellable cancellable) {
+		public async Value eval (Scope scope, Expression expr, Cancellable cancellable) throws IOError.CANCELLED, VError.EVAL_ERROR {
 			this.scope = scope;
 			this.cancellable = cancellable;
 			yield expr.visit (this);
+			
+			if (is_cancelled ()) {
+				throw new IOError.CANCELLED ("Evaluation has been cancelled");
+			}
+
+			if (is_error ()) {
+				throw new VError.EVAL_ERROR (error.str);
+			}
 			return value;
 		}
 		
 		/* Always check this function before running a loop or side effects */
 		public bool is_cancelled () {
 			return cancellable.is_cancelled ();
+		}
+		
+		public bool is_error () {
+			return error != null;
+		}
+		
+		public bool should_return () {
+			return is_cancelled () || is_error ();
 		}
 		
 		public override async void visit_string_literal (StringLiteral lit) {
@@ -45,6 +62,10 @@ namespace Vanubi.Vade {
 		
 		public override async void visit_binary_expression (BinaryExpression expr) {
 			yield expr.left.visit (this);
+			if (should_return ()) {
+				return;
+			}
+
 			var vleft = value;
 			switch (expr.op) {
 			case BinaryOperator.ADD:
@@ -106,7 +127,7 @@ namespace Vanubi.Vade {
 		
 		public override async void visit_unary_expression (UnaryExpression expr) {
 			yield expr.inner.visit (this);
-			if (is_cancelled ()) {
+			if (should_return ()) {
 				return;
 			}
 
@@ -142,6 +163,10 @@ namespace Vanubi.Vade {
 		
 		public override async void visit_postfix_expression (PostfixExpression expr) {
 			yield expr.inner.visit (this);
+			if (should_return ()) {
+				return;
+			}
+
 			var num = value.num;
 			Value newval;
 			switch (expr.op) {
@@ -155,28 +180,33 @@ namespace Vanubi.Vade {
 				assert_not_reached ();
 			}
 			
-			if (is_cancelled ()) {
-				return;
-			}
 			scope[((MemberAccess) expr.inner).id] = newval;
 		}
 		
 		public override async void visit_seq_expression (SeqExpression expr) {
 			yield expr.inner.visit (this);
+			if (should_return ()) {
+				return;
+			}
+
 			yield expr.next.visit (this);
 		}
 		
 		public override async void visit_assign_expression (AssignExpression expr) {
 			yield expr.right.visit (this);
-
-			if (is_cancelled ()) {
+			if (should_return ()) {
 				return;
 			}
+
 			scope[((MemberAccess) expr.left).id] = value;
 		}
 		
 		public override async void visit_if_expression (IfExpression expr) {
 			yield expr.condition.visit (this);
+			if (should_return ()) {
+				return;
+			}
+
 			if (value.bool) {
 				yield expr.true_expr.visit (this);
 			} else {
@@ -190,22 +220,53 @@ namespace Vanubi.Vade {
 		
 		public override async void visit_call_expression (CallExpression expr) {
 			yield expr.inner.visit (this);
+			if (should_return ()) {
+				return;
+			}
 
 			var func = value;
 			
 			Value[] args = new Value[expr.arguments.length];
 			for (var i=0; i < args.length; i++) {
 				yield expr.arguments[i].visit (this);
+				if (should_return ()) {
+					return;
+				}
 				args[i] = value;
 			}
 			
 			if (func.type == Value.Type.FUNCTION) {
-				if (is_cancelled ()) {
-					return;
-				}
 				var innerscope = new Scope (func.func_scope);
 				value = yield func.func.eval (innerscope, args, cancellable);
 			}
+		}
+		
+		public override async void visit_try_expression (TryExpression expr) {
+			yield expr.try_expr.visit (this);
+			if (is_error () && expr.catch_expr != null) {
+				var oldvar = scope.get_local (expr.error_variable);
+				scope.set_local (expr.error_variable, error);
+
+				error = null; // error catched
+				yield expr.catch_expr.visit (this);
+				scope.set_local (expr.error_variable, oldvar);
+			}
+			
+			if (expr.finally_expr != null) {
+				var old_error = error;
+				error = null; // ensure we run the finally statement
+				yield expr.finally_expr.visit (this);
+				error = old_error;
+			}
+		}
+		
+		public override async void visit_throw_expression (ThrowExpression expr) {
+			yield expr.inner.visit (this);
+			if (should_return ()) {
+				return;
+			}
+			
+			error = value;
 		}
 	}
 }

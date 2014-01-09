@@ -30,6 +30,8 @@ namespace Vanubi.Vade {
 		public virtual async void visit_if_expression (IfExpression expr) { }
 		public virtual async void visit_function_expression (FunctionExpression expr) { }
 		public virtual async void visit_call_expression (CallExpression expr) { }
+		public virtual async void visit_try_expression (TryExpression expr) { }
+		public virtual async void visit_throw_expression (ThrowExpression expr) { }
 	}
 	
 	public abstract class Expression {
@@ -259,6 +261,67 @@ namespace Vanubi.Vade {
 			return @"$inner($(b.str))";
 		}
 	}
+	
+	[Immutable]
+	public class TryExpression : Expression {
+		public Expression try_expr;
+		public Expression catch_expr;
+		public Expression finally_expr;
+		public string error_variable;
+		
+		public TryExpression (Expression try_expr, Expression? catch_expr, string? error_variable, Expression? finally_expr) {
+			this.try_expr = try_expr;
+			this.catch_expr = catch_expr;
+			this.error_variable = error_variable;
+			this.finally_expr = finally_expr;
+		}
+		
+		public override async void visit (Visitor v) {
+			yield v.visit_try_expression (this);
+		}
+		
+		public override string to_string () {
+			var b = new StringBuilder ();
+			b.append ("try (");
+			b.append (try_expr.to_string ());
+			b.append (")");
+			
+			if (catch_expr != null) {
+				b.append ("catch ");
+				b.append (error_variable);
+				b.append (" (");
+				b.append (catch_expr.to_string ());
+				b.append (")");
+			}
+			
+			if (finally_expr != null) {
+				b.append ("finally (");
+				b.append (finally_expr.to_string ());
+				b.append (")");
+			}
+			
+			return b.str;
+		}
+	}		
+
+	[Immutable]
+	public class ThrowExpression : Expression {
+		public Expression inner;
+		
+		public ThrowExpression (Expression inner) {
+			this.inner = inner;
+		}
+		
+		public override async void visit (Visitor v) {
+			yield v.visit_throw_expression (this);
+		}
+		
+		public override string to_string () {
+			return @"throw $inner";
+		}
+	}
+
+	/* Operators */
 	
 	public enum PostfixOperator {
 		INC,

@@ -21,7 +21,7 @@
 namespace Vanubi.Vade {
 	// Concatenate two or more strings
 	public class NativeConcat : Function {
-		public override async Value eval (Scope scope, Value[]? arguments, Cancellable cancellable) {
+		public override async Value eval (Scope scope, Value[]? arguments, Cancellable cancellable) throws Error {
 			var b = new StringBuilder ();
 			foreach (var val in arguments) {
 				b.append (val.str);

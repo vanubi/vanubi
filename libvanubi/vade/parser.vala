@@ -106,7 +106,51 @@ namespace Vanubi.Vade {
 		}
 		
 		public Expression parse_nonseq_expression () throws VError {
-			var expr = parse_if_expression ();
+			var expr = parse_try_expression ();
+			return expr;
+		}
+		
+		public Expression parse_try_expression () throws VError {
+			Expression expr;
+			if (cur.type == TType.ID && cur.str == "try") {
+				next ();
+				Expression try_expr, catch_expr = null, finally_expr = null;
+				string error_variable = null;
+				try_expr = parse_expression ();
+				
+				if (cur.type == TType.ID && cur.str == "catch") {
+					next ();
+					error_variable = parse_identifier ();
+					catch_expr = parse_expression ();
+				}
+				
+				if (cur.type == TType.ID && cur.str == "finally") {
+					next () ;
+					finally_expr = parse_expression ();
+				}
+				
+				if (catch_expr == null && finally_expr == null) {
+					throw new VError.SYNTAX_ERROR ("No catch or finally clause in try expression at pos %d in '%s'",
+												   lex.pos,
+												   lex.code);
+				}
+				
+				expr = new TryExpression (try_expr, catch_expr, error_variable, finally_expr);
+			} else {
+				expr = parse_throw_expression ();
+			}
+			return expr;
+		}
+		
+		public Expression parse_throw_expression () throws VError {
+			Expression expr;
+			if (cur.type == TType.ID && cur.str == "throw") {
+				next ();
+				var inner = parse_if_expression ();
+				expr = new ThrowExpression (inner);
+			} else {
+				expr = parse_if_expression ();
+			}
 			return expr;
 		}
 		

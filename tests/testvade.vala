@@ -60,12 +60,21 @@ void test_parser () {
 	assert_expr ("foo; bar; baz={ a b | foo }; end", "foo; bar; baz = { a b | foo }; end");
 }
 
-
-
-void assert_eval (Scope scope, string code, Vade.Value expect) {
+Vade.Value eval (Scope scope, string code) throws Error {
 	var parser = new Parser.for_string (code);
 	var expr = parser.parse_expression ();
 	var val = scope.eval_sync (expr);
+	return val;
+}
+
+void assert_eval (Scope scope, string code, Vade.Value expect) {
+	Vade.Value val;
+	try {
+		val = eval (scope, code);
+	} catch (Error e) {
+		error (e.message);
+	}
+	
 	if (!val.equal (expect)) {
 		message (@"Expect $expect got $val");
 	}
@@ -97,16 +106,10 @@ void test_eval () {
 	assert_eval (scope, "if (2>3) 4 else (bar++; bar)", new Vade.Value.for_num (1));
 }
 
-
-
-
 void test_native_functions () {
 	var scope = Vade.create_base_scope ();
 	assert_eval (scope, "a='foo'; concat(a, 'bar', 'baz')", new Vade.Value.for_string ("foobarbaz"));
 }
-
-
-
 
 void assert_embed (Scope scope, string code, Vade.Value expect) {
 	var parser = new Parser.for_string (code);
@@ -124,7 +127,17 @@ void test_embedded () {
 	assert_embed (scope, "\\$(1+2)", new Vade.Value.for_string ("$(1+2)"));
 	assert_embed (scope, "$(1+2) foo $(foo++) $(foo)", new Vade.Value.for_string ("3 foo  1"));
 }
+
+void test_exceptions () {
+	var scope = Vade.create_base_scope ();
+	try {
+		eval (scope, "throw 'foo'");
+	} catch (Error e) {
+		assert (e.message == "foo");
+	}
 	
+	assert_eval (scope, "try (throw 'foo') catch e (err=e) finally (fin=err); concat(err, fin)", new Vade.Value.for_string ("foofoo"));
+}
 int main (string[] args) {
 	Test.init (ref args);
 
@@ -133,6 +146,7 @@ int main (string[] args) {
 	Test.add_func ("/vade/eval", test_eval);
 	Test.add_func ("/vade/native", test_native_functions);
 	Test.add_func ("/vade/embedded", test_embedded);
+	Test.add_func ("/vade/exceptions", test_exceptions);
 
 	return Test.run ();
 }
