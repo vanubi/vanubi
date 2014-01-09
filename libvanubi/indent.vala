@@ -521,10 +521,9 @@ namespace Vanubi {
 			var prev_indent = buf.get_indent (prev_line);
 			
 			var prev_text = buf.line_text (prev_line).strip ();
-			if (prev_text.has_suffix (" do") || prev_text.has_suffix (" then") || prev_text == "else") {
+			if (prev_text.has_suffix (" do") || prev_text.has_suffix (" then") || prev_text == "else" || prev_text.has_prefix ("function ")) {
 				new_indent = prev_indent + tab_width;
 				buf.set_indent (line, new_indent);
-				return;
 			}
 			
 			// indent
