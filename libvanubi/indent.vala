@@ -555,7 +555,7 @@ namespace Vanubi {
 			
 			// end
 			var text = buf.line_text(line).strip ();
-			if (text == "end") {
+			if (text == "end" || text == "else") {
 				new_indent -= tab_width;
 			}
 			
