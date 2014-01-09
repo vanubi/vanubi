@@ -119,6 +119,7 @@ namespace Vanubi {
 			if (shell == null) {
 				shell = "/bin/bash";
 			}
+			
 			try {
 				string[] argv;
 				Shell.parse_argv (shell, out argv);
@@ -132,7 +133,6 @@ namespace Vanubi {
 				mouse_match (term, """^.+error:""");
 				mouse_match (term, """^.+warning:""");
 				mouse_match (term, """^.+info:""");
-
 			} catch (Error e) {
 				warning (e.message);
 			}
@@ -184,12 +184,12 @@ namespace Vanubi {
 								if (start_line_str.length > 0) {
 									start_line = int.parse (start_line_str)-1;
 									if (start_column_str.length > 0) {
-										start_column = int.parse (start_column_str);
+										start_column = int.parse (start_column_str)-1;
 									}
 									if (end_line_str.length > 0) {
 										end_line = int.parse (end_line_str)-1;
 										if (end_column_str.length > 0) {
-											end_column = int.parse (end_column_str);
+											end_column = int.parse (end_column_str)-1;
 										}
 									}
 								}
@@ -204,8 +204,13 @@ namespace Vanubi {
 								var msg = info.fetch_named ("msg").strip ();
 								var loc = new Location (file, start_line, start_column, end_line, end_column);
 								loc.set_data ("error-message", (owned) msg);
-								get_start_mark_for_location (loc, editor.view.buffer); // create a TextMark
-								get_end_mark_for_location (loc, editor.view.buffer); // create a TextMark
+								
+								// create marks for all editors of that file
+								manager.each_file_editor (file, (ed) => {
+										get_start_mark_for_location (loc, ed.view.buffer); // create a TextMark
+										get_end_mark_for_location (loc, ed.view.buffer); // create a TextMark
+										return false; // buffer is shared among editors
+								});
 								manager.error_locations.append (loc);
 								manager.set_status ("Found %u errors".printf (manager.error_locations.length ()), "errors");
 							}

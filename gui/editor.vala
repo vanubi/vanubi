@@ -316,8 +316,9 @@ namespace Vanubi {
 		// Returns true if location changed
 		public bool set_location (Location location) {
 			// set specific location
-			TextIter start_iter;
 			var buf = view.buffer;
+
+			TextIter start_iter;
 			if (location.start_line >= 0) {
 				var mark = get_start_mark_for_location (location, buf);
 				buf.get_iter_at_mark (out start_iter, mark);
@@ -326,7 +327,7 @@ namespace Vanubi {
 			}
 
 			TextIter end_iter;
-			var mark = get_start_mark_for_location (location, buf);
+			var mark = get_end_mark_for_location (location, buf);
 			buf.get_iter_at_mark (out end_iter, mark);
 			buf.select_range (start_iter, end_iter);
 	

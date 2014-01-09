@@ -661,10 +661,10 @@ namespace Vanubi {
 		/* File/Editor/etc. COMBINATORS */
 		
 		// return false to quit the loop
-		delegate bool Operation<G> (G object);
+		public delegate bool Operation<G> (G object);
 		
 		// iterate all files and perform the given operation on each of them
-		bool each_file (Operation<File?> op, bool include_scratch = true) {
+		public bool each_file (Operation<File?> op, bool include_scratch = true) {
 			if (include_scratch) {
 				if (!op (null)) { // *scratch*
 					return false;
@@ -679,13 +679,17 @@ namespace Vanubi {
 		}
 		
 		// iterate all editors of a given file and perform the given operation on each of them
-		bool each_file_editor (File? file, Operation<Editor> op) {
+		public bool each_file_editor (File? file, Operation<Editor> op) {
 			unowned GenericArray<Editor> editors;
 			if (file == null) {
 				editors = scratch_editors;
 			} else {
 				editors = file.get_data ("editors");
 			}	
+			if (editors == null) {
+				return true;
+			}
+			
 			foreach (unowned Editor ed in editors.data) {
 				if (!op (ed)) {
 					return false;
@@ -694,7 +698,7 @@ namespace Vanubi {
 			return true;
 		}
 		
-		bool each_editor (Operation<Editor> op, bool include_scratch = true) {
+		public bool each_editor (Operation<Editor> op, bool include_scratch = true) {
 			return each_file ((f) => {
 					return each_file_editor (f, (ed) => {
 							return op (ed);
@@ -703,7 +707,7 @@ namespace Vanubi {
 		}
 		
 		// iterate all editor containers and perform the given operation on each of them
-		bool each_editor_container (Operation<EditorContainer> op) {
+		public bool each_editor_container (Operation<EditorContainer> op) {
 			return each_editor ((ed) => {
 					var container = ed.get_parent() as EditorContainer;
 					if (container != null) {
@@ -716,7 +720,7 @@ namespace Vanubi {
 		}
 		
 		// iterate lru of all EditorContainer and perform the given operation on each of them
-		bool each_lru (Operation<FileLRU> op) {
+		public bool each_lru (Operation<FileLRU> op) {
 			return each_editor_container ((c) => {
 					return !op (c.lru);
 			});
@@ -1007,7 +1011,7 @@ namespace Vanubi {
 			var bar = new FileBar (editor.file);
 			bar.activate.connect ((f) => {
 					abort (editor);
-					save_file (editor, File.new_for_path (f), command == "save-as-file-and-open");
+					save_file.begin (editor, File.new_for_path (f), command == "save-as-file-and-open");
 			});
 			bar.aborted.connect (() => { abort (editor); });
 			add_overlay (bar);
@@ -1305,7 +1309,7 @@ namespace Vanubi {
 				var output = yield pipe_shell (ed);
 				
 				var stream = new MemoryInputStream.from_data ((owned) output, GLib.free);
-				ed.replace_contents (stream);
+				yield ed.replace_contents (stream);
 				
 				TextIter iter;
 				var buf = ed.view.buffer;
@@ -1752,20 +1756,29 @@ namespace Vanubi {
 					}
 					
 					int stdout, stderr;
-					Process.spawn_async_with_pipes (repo_dir.get_path(),
-													{git_command, "grep", "-inI", "--color", pat},
-													null,
-													SpawnFlags.SEARCH_PATH,
-													null, null, null, out stdout, out stderr);
+					try {
+						Process.spawn_async_with_pipes (repo_dir.get_path(),
+														{git_command, "grep", "-inI", "--color", pat},
+														null,
+														SpawnFlags.SEARCH_PATH,
+														null, null, null, out stdout, out stderr);
+					} catch (Error e) {
+						set_status_error (e.message, "grep");
+						return;
+					}
 					stream = new UnixInputStream (stdout, true);
 					bar.stream = stream;
 					
 					read_all_async.begin (new UnixInputStream (stderr, true), null, (s,r) => {
-							var res = read_all_async.end (r);
-							var err = (string) res;
-							err = err.strip ();
-							if (err != "") {
-								set_status_error (err, "grep");
+							try {
+								var res = read_all_async.end (r);
+								var err = (string) res;
+								err = err.strip ();
+								if (err != "") {
+									set_status_error (err, "grep");
+								}
+							} catch (Error e) {
+								set_status_error (e.message, "grep");
 							}
 					});
 			});

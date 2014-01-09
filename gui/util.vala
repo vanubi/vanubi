@@ -43,8 +43,8 @@ namespace Vanubi {
 		return res.str;
 	}
 	
-	public weak TextMark get_start_mark_for_location (Location loc, TextBuffer buf) {
-		weak TextMark? mark = loc.get_data ("start-mark");
+	public unowned TextMark get_start_mark_for_location (Location loc, TextBuffer buf) {
+		unowned TextMark? mark = loc.get_data ("start-mark");
 		if (mark != null) {
 			return mark;
 		}
