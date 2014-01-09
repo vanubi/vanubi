@@ -31,6 +31,14 @@ namespace Vanubi {
 		}
 
 		public abstract void indent (BufferIter iter);
+		
+		// utils
+		protected int first_non_empty_prev_line (int line) {
+			// find first non-blank prev line, excluding line
+			var buf = buffer;
+			while (--line >= 0 && buf.empty_line (line));
+			return line;
+		}
 	}
 
 	public class Indent_C : Indent {
@@ -64,13 +72,6 @@ namespace Vanubi {
 			return (c == '}' || c == ']' || c == ')') && iter.is_in_code && !is_char (iter);
 		}
 		
-		int first_non_empty_prev_line (int line) {
-			// find first non-blank prev line, excluding line
-			var buf = buffer;
-			while (--line >= 0 && buf.empty_line (line));
-			return line;
-		}
-
 		// counts closed parens in front of a line
 		int count_closed (int line) {
 			var buf = buffer;
@@ -252,13 +253,6 @@ namespace Vanubi {
 			return false;
 		}
 		
-		int first_non_empty_prev_line (int line) {
-			// find first non-blank prev line, excluding line
-			var buf = buffer;
-			while (--line >= 0 && buf.empty_line (line));
-			return line;
-		}
-		
 		// counts closed parens in front of a line
 		int count_closed (int line) {
 			var buf = buffer;
@@ -410,13 +404,6 @@ namespace Vanubi {
 			return (c == '}' || c == ']' || c == ')') && iter.is_in_code;
 		}
 		
-		int first_non_empty_prev_line (int line) {
-			// find first non-blank prev line, excluding line
-			var buf = buffer;
-			while (--line >= 0 && buf.empty_line (line));
-			return line;
-		}
-
 		// counts closed parens in front of a line
 		int count_closed (int line) {
 			var buf = buffer;
