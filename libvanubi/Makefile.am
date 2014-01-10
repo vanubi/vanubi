@@ -24,12 +24,13 @@ libvanubi_la_VALASOURCES = \
 	rfserver.vala	\
 	search.vala 	\
 	util.vala		\
-	vade/ast.vala	\
-	vade/eval.vala	\
-	vade/lexer.vala	\
+	git.vala		\
+	vade/ast.vala		\
+	vade/eval.vala		\
+	vade/lexer.vala		\
 	vade/parser.vala	\
 	vade/runtime.vala	\
-	vade/scope.vala	\
+	vade/scope.vala		\
 	$(NULL)
 
 libvanubi@PACKAGE_SUFFIX@_la_SOURCES = \
