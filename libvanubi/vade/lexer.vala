@@ -192,7 +192,7 @@ namespace Vanubi.Vade {
 			case '\'':
 				pos++;
 				var b = new StringBuilder ();
-				while (char != '\'') {
+				while (pos < len && char != '\'') {
 					if (char == '\\') {
 						b.append_c (char);
 						pos++;
@@ -202,6 +202,9 @@ namespace Vanubi.Vade {
 						b.append_c (char);
 						pos++;
 					}
+				}
+				if (pos >= len) {
+					throw new VError.SYNTAX_ERROR ("Unterminated string literal");
 				}
 				pos++;
 				var tok = Token (TType.STRING, orig, pos);

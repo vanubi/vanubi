@@ -109,6 +109,8 @@ void test_eval () {
 void test_native_functions () {
 	var scope = Vade.create_base_scope ();
 	assert_eval (scope, "a='foo'; concat(a, 'bar', 'baz')", new Vade.Value.for_string ("foobarbaz"));
+	assert_eval (scope, "lower('FoO')", new Vade.Value.for_string ("foo"));
+	assert_eval (scope, "upper('fOo')", new Vade.Value.for_string ("FOO"));
 }
 
 void assert_embed (Scope scope, string code, Vade.Value expect) {

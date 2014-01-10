@@ -34,11 +34,39 @@ namespace Vanubi.Vade {
 		}
 	}
 	
+	public class NativeLower : Function {
+		public override async Value eval (Scope scope, Value[]? arguments, Cancellable cancellable) throws Error {
+			if (arguments.length > 0) {
+				return new Value.for_string (arguments[0].str.down ());
+			}
+			return new Value ();
+		}
+		
+		public override string to_string () {
+			return "lower(s)";
+		}
+	}
+	
+	public class NativeUpper : Function {
+		public override async Value eval (Scope scope, Value[]? arguments, Cancellable cancellable) throws Error {
+			if (arguments.length > 0) {
+				return new Value.for_string (arguments[0].str.up ());
+			}
+			return new Value ();
+		}
+		
+		public override string to_string () {
+			return "upper(s)";
+		}
+	}
+	
 	public Scope create_base_scope () {
 		// create a scope with native functions and constants
 		var scope = new Scope (null);
 		
 		scope["concat"] = new Value.for_function (new NativeConcat (), scope);
+		scope["lower"] = new Value.for_function (new NativeLower (), scope);
+		scope["upper"] = new Value.for_function (new NativeUpper (), scope);
 		
 		return scope;
 	}

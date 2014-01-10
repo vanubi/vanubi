@@ -63,6 +63,11 @@ namespace Vanubi.Vade {
 		public Function func;
 		public unowned Scope func_scope;
 		
+		public Value () {
+			this.type = Type.STRING;
+			this.str = "";
+		}
+		
 		public Value.for_string (owned string str) {
 			this.type = Type.STRING;
 			this.str = (owned) str;
