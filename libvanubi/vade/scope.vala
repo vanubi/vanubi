@@ -50,14 +50,193 @@ namespace Vanubi.Vade {
 			}
 		}
 	}
-
-	public interface Object : GLib.Object {
-		public abstract Value? get_member (string name);
-		public abstract void set_member (string name, Value? val);
+	
+	public abstract class Value {
+		public abstract double? num { owned get; }
+		public abstract bool @bool { get; }
+		public abstract string? str { owned get; }
+		
+		public int? @int {
+			owned get {
+				var n = num;
+				if (num == null) {
+					return null;
+				}
+				return (int) n;
+			}
+		}
+		
+		public virtual Value? get_member (string name) { return null; }
+		public void set_member (string name, Value? val) { }
+		
+		public abstract bool equal (Value v);
 		public abstract string to_string ();
 	}
 	
-	public class UserObject : GLib.Object, Vade.Object {
+	[Immutable]
+	public class NullValue : Value {
+		public static NullValue _instance;
+		
+		public static NullValue instance {
+			get {
+				if (_instance != null) {
+					_instance = new NullValue ();
+				}
+				return _instance;
+			}
+		}
+		
+		public override double? num {
+			owned get {
+				return 0;
+			}
+		}
+		
+		public override bool @bool {
+			get {
+				return false;
+			}
+		}
+		
+		public override string? str {
+			owned get {
+				return null;
+			}
+		}
+
+		public override bool equal (Value v) {
+			return this == v;
+		}
+		
+		public override string to_string () {
+			return "null";
+		}
+	}
+	
+	[Immutable]
+	public class StringValue : Value {
+		string val;
+		
+		public StringValue (string val) {
+			this.val = val;
+		}
+		
+		public override double? num {
+			owned get {
+				return double.parse (str);
+			}
+		}
+		
+		public override bool @bool {
+			get {
+				return val != "";
+			}
+		}
+		
+		public override string? str {
+			owned get {
+				return val;
+			}
+		}
+
+		public override bool equal (Value v) {
+			if (v is NumValue || v is StringValue) {
+				return str == v.str;
+			}
+			return false;
+		}
+		
+		public override string to_string () {
+			return str;
+		}
+	}
+	
+	[Immutable]
+	public class NumValue : Value {
+		double val;
+		
+		public NumValue (double val) {
+			this.val = val;
+		}
+		
+		public NumValue.for_bool (bool b) {
+			this.val = b ? 1 : 0;
+		}
+		
+		public override double? num {
+			owned get {
+				return val;
+			}
+		}
+		
+		public override bool @bool {
+			get {
+				return val != 0;
+			}
+		}
+		
+		public override string? str {
+			owned get {
+				return val.to_string ();
+			}
+		}
+
+		public override bool equal (Value v) {
+			if (v is NumValue) {
+				return num == v.num;
+			} else if (v is StringValue) {
+				return str == v.str;
+			} else {
+				return false;
+			}
+		}
+		
+		public override string to_string () {
+			return str;
+		}
+	}
+	
+	[Immutable]
+	public class FunctionValue : Value {
+		public Function func;
+		public unowned Scope scope;
+		
+		public FunctionValue (owned Function func, Scope scope) {
+			this.func = (owned) func;
+			this.scope = scope;
+		}
+		
+		public override double? num {
+			owned get {
+				return null;
+			}
+		}
+		
+		public override bool @bool {
+			get {
+				return true;
+			}
+		}
+		
+		public override string? str {
+			owned get {
+				return null;
+			}
+		}
+
+		public override bool equal (Value v) {
+			if (v is NumValue || v is StringValue) {
+				return str == v.str;
+			}
+			return false;
+		}
+		
+		public override string to_string () {
+			return func.to_string ();
+		}
+	}
+	
+	public class UserObject : Value {
 		HashTable<string, Value> members = new HashTable<string, Value> (str_hash, str_equal);
 	
 		public Value? get_member (string name) {
@@ -72,7 +251,30 @@ namespace Vanubi.Vade {
 			}
 		}
 		
-		public string to_string () {
+		public override double? num {
+			owned get {
+				return null;
+			}
+		}
+		
+		public override bool @bool {
+			get {
+				return members.size() > 0;
+			}
+		}
+		
+		public override string? str {
+			owned get {
+				return null;
+			}
+		}
+
+		public override bool equal (Value v) {
+			// TODO:
+			return false;
+		}
+		
+		public override string to_string () {
 			var b = new StringBuilder ();
 			b.append ("{ ");
 			bool first = true;
@@ -91,84 +293,7 @@ namespace Vanubi.Vade {
 			return b.str;
 		}
 	}
-	
-	[Immutable]
-	public class Value {
-		public enum Type {
-			STRING,
-			FUNCTION,
-			OBJECT
-		}
-		
-		public Type type;
-		public string str;
-		public Function func;
-		public Object obj;
-		public unowned Scope func_scope;
-		
-		public Value () {
-			this.type = Type.STRING;
-			this.str = "";
-		}
-		
-		public Value.for_string (owned string str) {
-			this.type = Type.STRING;
-			this.str = (owned) str;
-		}
-		
-		public Value.for_object (owned Object obj) {
-			this.type = Type.OBJECT;
-			this.obj = (owned) obj;
-		}
-		
-		public Value.for_num (double num) {
-			this.type = Type.STRING;
-			this.str = "%g".printf (num);
-		}
 
-		public Value.for_bool (bool b) {
-			this.type = Type.STRING;
-			this.str = ((int) b).to_string ();
-		}
-		
-		public Value.for_function (Function func, Scope scope) {
-			this.type = Type.FUNCTION;
-			this.func = func;
-			this.func_scope = scope;
-		}
-
-		public double num {
-			get {
-				return double.parse (str);
-			}
-		}
-		
-		public bool @bool {
-			get {
-				return @int != 0;
-			}
-		}
-
-		public int @int {
-			get {
-				return (int) num;
-			}
-		}
-		
-		public bool equal (Value v) {
-			return str == v.str;
-		}
-		
-		public string to_string () {
-			if (type == Type.FUNCTION) {
-				return func.to_string ();
-			} else if (type == Type.OBJECT) {
-				return obj.to_string ();
-			}
-			return str;
-		}
-	}
-	
 	[Immutable]
 	public class Scope {
 		public HashTable<string, Value> registers = new HashTable<string, Value> (str_hash, str_equal);

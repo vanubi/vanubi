@@ -26,7 +26,7 @@ namespace Vanubi.Vade {
 			foreach (var val in arguments) {
 				b.append (val.str);
 			}
-			return new Value.for_string ((owned) b.str);
+			return new StringValue ((owned) b.str);
 		}
 		
 		public override string to_string () {
@@ -38,10 +38,10 @@ namespace Vanubi.Vade {
 		public override async Value eval (Scope scope, Value[]? arguments, out Value? error, Cancellable cancellable) {
 			error = null;
 			if (arguments.length > 0) {
-				return new Value.for_string (arguments[0].str.down ());
+				return new StringValue (arguments[0].str.down ());
 			} else {
-				error = new Value.for_string ("1 argument required");
-				return new Value ();
+				error = new StringValue ("1 argument required");
+				return new NullValue ();
 			}
 		}
 		
@@ -53,10 +53,10 @@ namespace Vanubi.Vade {
 	public class NativeUpper : Function {
 		public override async Value eval (Scope scope, Value[]? arguments, out Value? error, Cancellable cancellable) {
 			if (arguments.length > 0) {
-				return new Value.for_string (arguments[0].str.up ());
+				return new StringValue (arguments[0].str.up ());
 			} else {
-				error = new Value.for_string ("1 argument required");
-				return new Value ();
+				error = new StringValue ("1 argument required");
+				return new NullValue ();
 			}
 		}
 		
@@ -69,9 +69,9 @@ namespace Vanubi.Vade {
 		// create a scope with native functions and constants
 		var scope = new Scope (null);
 		
-		scope["concat"] = new Value.for_function (new NativeConcat (), scope);
-		scope["lower"] = new Value.for_function (new NativeLower (), scope);
-		scope["upper"] = new Value.for_function (new NativeUpper (), scope);
+		scope["concat"] = new FunctionValue (new NativeConcat (), scope);
+		scope["lower"] = new FunctionValue (new NativeLower (), scope);
+		scope["upper"] = new FunctionValue (new NativeUpper (), scope);
 		
 		return scope;
 	}

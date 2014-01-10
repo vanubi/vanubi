@@ -53,11 +53,11 @@ namespace Vanubi.Vade {
 		}
 		
 		public override async void visit_string_literal (StringLiteral lit) {
-			value = new Value.for_string (lit.str.compress ());
+			value = new StringValue (lit.str.compress ());
 		}
 		
 		public override async void visit_num_literal (NumLiteral lit) {
-			value = new Value.for_num (lit.num);
+			value = new NumValue (lit.num);
 		}
 		
 		public override async void visit_binary_expression (BinaryExpression expr) {
@@ -70,54 +70,54 @@ namespace Vanubi.Vade {
 			switch (expr.op) {
 			case BinaryOperator.ADD:
 				yield expr.right.visit (this);
-				value = new Value.for_num (vleft.num+value.num);
+				value = new NumValue (vleft.num+value.num);
 				break;
 			case BinaryOperator.SUB:
 				yield expr.right.visit (this);
-				value = new Value.for_num (vleft.num-value.num);
+				value = new NumValue (vleft.num-value.num);
 				break;
 			case BinaryOperator.MUL:
 				yield expr.right.visit (this);
-				value = new Value.for_num (vleft.num*value.num);
+				value = new NumValue (vleft.num*value.num);
 				break;
 			case BinaryOperator.DIV:
 				yield expr.right.visit (this);
-				value = new Value.for_num (vleft.num/value.num);
+				value = new NumValue (vleft.num/value.num);
 				break;
 			case BinaryOperator.GT:
 				yield expr.right.visit (this);
-				value = new Value.for_bool (vleft.num>value.num);
+				value = new NumValue.for_bool (vleft.num>value.num);
 				break;
 			case BinaryOperator.GE:
 				yield expr.right.visit (this);
-				value = new Value.for_bool (vleft.num>=value.num);
+				value = new NumValue.for_bool (vleft.num>=value.num);
 				break;
 			case BinaryOperator.LT:
 				yield expr.right.visit (this);
-				value = new Value.for_bool (vleft.num<value.num);
+				value = new NumValue.for_bool (vleft.num<value.num);
 				break;
 			case BinaryOperator.LE:
 				yield expr.right.visit (this);
-				value = new Value.for_bool (vleft.num<=value.num);
+				value = new NumValue.for_bool (vleft.num<=value.num);
 				break;
 			case BinaryOperator.EQ:
 				yield expr.right.visit (this);
-				value = new Value.for_bool (vleft.str==value.str);
+				value = new NumValue.for_bool (vleft.str==value.str);
 				break;
 			case BinaryOperator.AND:
 				if (vleft.bool) {
 					yield expr.right.visit (this);
-					value = new Value.for_bool (value.bool);
+					value = new NumValue.for_bool (value.bool);
 				} else {
-					value = new Value.for_bool (false);
+					value = new NumValue.for_bool (false);
 				}
 				break;
 			case BinaryOperator.OR:
 				if (vleft.bool) {
-					value = new Value.for_bool (true);
+					value = new NumValue.for_bool (true);
 				} else {
 					yield expr.right.visit (this);
-					value = new Value.for_bool (value.bool);
+					value = new NumValue.for_bool (value.bool);
 				}
 				break;
 			default:
@@ -131,17 +131,23 @@ namespace Vanubi.Vade {
 				return;
 			}
 
-			var num = value.num;
+			var mnum = value.num;
+			if (mnum == null) {
+				error = new StringValue ("Cannot convert to number: %s".printf (value.to_string ()));
+				return;
+			}
+			var num = (!) mnum;
+			
 			switch (expr.op) {
 			case UnaryOperator.NEGATE:
-				value = new Value.for_num (-num);
+				value = new NumValue (-num);
 				break;
 			case UnaryOperator.INC:
-				value = new Value.for_num (num+1);
+				value = new NumValue (num+1);
 				scope[((MemberAccess) expr.inner).id] = value;
 				break;
 			case UnaryOperator.DEC:
-				value = new Value.for_num (num-1);
+				value = new NumValue (num-1);
 				scope[((MemberAccess) expr.inner).id] = value;
 				break;
 			default:
@@ -153,11 +159,19 @@ namespace Vanubi.Vade {
 			if (expr.inner == null) {
 				var val = scope[expr.id];
 				if (val == null) {
-					val = new Value.for_string ("");
+					val = new StringValue ("");
 				}
 				value = val;
 			} else {
-				yield expr.visit (this);
+				yield expr.inner.visit (this);
+				if (should_return ()) {
+					return;
+				}
+				
+				value = value.get_member (expr.id);
+				if (value == null) {
+					value = new Vade.NullValue ();
+				}
 			}
 		}
 		
@@ -171,10 +185,10 @@ namespace Vanubi.Vade {
 			Value newval;
 			switch (expr.op) {
 			case PostfixOperator.INC:
-				newval = new Value.for_num (num+1);
+				newval = new NumValue (num+1);
 				break;
 			case PostfixOperator.DEC:
-				newval = new Value.for_num (num-1);
+				newval = new NumValue (num-1);
 				break;
 			default:
 				assert_not_reached ();
@@ -193,12 +207,33 @@ namespace Vanubi.Vade {
 		}
 		
 		public override async void visit_assign_expression (AssignExpression expr) {
-			yield expr.right.visit (this);
-			if (should_return ()) {
+			var access = expr.left as MemberAccess;
+			if (access == null) {
+				// FIXME: check in the parser
+				error = new Vade.StringValue ("Invalid access to %s".printf (expr.to_string ()));
 				return;
 			}
+			
+			if (access.inner != null) {
+				yield access.inner.visit (this);
+				if (should_return ()) {
+					return;
+				}
+				
+				yield expr.right.visit (this);
+				if (should_return ()) {
+					return;
+				}
+				
+				value.set_member (access.id, value);
+			} else {
+				yield expr.right.visit (this);
+				if (should_return ()) {
+					return;
+				}
 
-			scope[((MemberAccess) expr.left).id] = value;
+				scope[access.id] = value;
+			}
 		}
 		
 		public override async void visit_if_expression (IfExpression expr) {
@@ -215,7 +250,7 @@ namespace Vanubi.Vade {
 		}
 		
 		public override async void visit_function_expression (FunctionExpression expr) {
-			value = new Value.for_function (expr.func, scope);
+			value = new FunctionValue (expr.func, scope);
 		}
 		
 		public override async void visit_call_expression (CallExpression expr) {
@@ -224,7 +259,7 @@ namespace Vanubi.Vade {
 				return;
 			}
 
-			var func = value;
+			var func = value as FunctionValue;
 			
 			Value[] args = new Value[expr.arguments.length];
 			for (var i=0; i < args.length; i++) {
@@ -235,8 +270,8 @@ namespace Vanubi.Vade {
 				args[i] = value;
 			}
 			
-			if (func.type == Value.Type.FUNCTION) {
-				var innerscope = new Scope (func.func_scope);
+			if (func != null) {
+				var innerscope = new Scope (func.scope);
 				value = yield func.func.eval (innerscope, args, out error, cancellable);
 			}
 		}
