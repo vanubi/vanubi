@@ -97,7 +97,7 @@ namespace Vanubi.Vade {
 		
 		public Expression parse_seq_expression () throws VError {
 			var expr = parse_nonseq_expression ();
-			if (cur.type == TType.SEMICOMMA) {
+			if (cur.type == TType.SEMICOLON) {
 				next ();
 				var next = parse_seq_expression ();
 				expr = new SeqExpression (expr, next);
@@ -360,12 +360,39 @@ namespace Vanubi.Vade {
 			var rollback = lex.pos;
 			next ();
 			
+			ObjectLiteral obj = null;
 			string[] parameters = null;
 			if (cur.type == TType.ID) {
 				while (cur.type == TType.ID) {
 					parameters += cur.str;
 					next ();
 				}
+			} else if (cur.type == TType.STRING) {
+				obj = new ObjectLiteral ();
+				while (cur.type == TType.STRING) {
+					var key = cur.str;
+					next ();
+					if (cur.type != TType.COLON) {
+						lex.pos = rollback;
+						obj = null;
+						next ();
+						break;
+					}
+					
+					next ();
+					var expr = parse_if_expression ();
+					obj.set_member (key, expr);
+				}
+				
+				if (cur.type != TType.CLOSE_BRACE) {
+					lex.pos = rollback;
+					obj = null;
+					next ();
+				}
+			}
+			
+			if (obj != null) {
+				return obj;
 			}
 			
 			bool is_function = cur.type == TType.BIT_OR;
@@ -374,13 +401,21 @@ namespace Vanubi.Vade {
 			}
 			next ();
 			
-			var expr = parse_expression ();
-			expect (TType.CLOSE_BRACE);
-			next ();
+			Expression expr;
+			if (!is_function && cur.type == TType.CLOSE_BRACE) {
+				// empty object
+				expr = new ObjectLiteral ();
+				next ();
+			} else {
+				expr = parse_expression ();
+				expect (TType.CLOSE_BRACE);
+				next ();
 			
-			if (is_function) {
-				expr = new FunctionExpression (new UserFunction (parameters, expr));
+				if (is_function) {
+					expr = new FunctionExpression (new UserFunction (parameters, expr));
+				}
 			}
+			
 			return expr;
 		}
 

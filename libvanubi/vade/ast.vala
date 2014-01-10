@@ -21,6 +21,7 @@ namespace Vanubi.Vade {
 	public class Visitor {
 		public virtual async void visit_string_literal (StringLiteral lit) { }
 		public virtual async void visit_num_literal (NumLiteral lit) { }
+		public virtual async void visit_object_literal (ObjectLiteral lit) { }
 		public virtual async void visit_binary_expression (BinaryExpression expr) { }
 		public virtual async void visit_unary_expression (UnaryExpression expr) { }
 		public virtual async void visit_member_access (MemberAccess expr) { }
@@ -318,6 +319,37 @@ namespace Vanubi.Vade {
 		
 		public override string to_string () {
 			return @"throw $inner";
+		}
+	}
+
+	[Immutable]
+	public class ObjectLiteral : Expression {
+		public HashTable<string, Expression> members = new HashTable<string, Expression> (str_hash, str_equal);
+		
+		public override async void visit (Visitor v) {
+			yield v.visit_object_literal (this);
+		}
+		
+		public void set_member (string name, Expression expr) {
+			members[name] = expr;
+		}
+		
+		public override string to_string () {
+			var b = new StringBuilder ();
+			b.append ("{ ");
+			bool first = true;
+			foreach (unowned string name in members.get_keys ()) {
+				if (!first) {
+					b.append (", ");
+				}
+				b.append ("'");
+				b.append (name.escape ("\""));
+				b.append ("': ");
+				b.append (members[name].to_string ());
+				first = false;
+			}
+			b.append (" }");
+			return b.str;
 		}
 	}
 

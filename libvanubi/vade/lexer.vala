@@ -26,7 +26,8 @@ namespace Vanubi.Vade {
 		OPEN_SQUARE,
 		CLOSE_SQUARE,
 		COMMA,
-		SEMICOMMA,
+		COLON,
+		SEMICOLON,
 		PLUS,
 		MINUS,
 		INC,
@@ -151,9 +152,12 @@ namespace Vanubi.Vade {
 			case ',':
 				pos++;
 				return Token (TType.COMMA, orig, 1);
+			case ':':
+				pos++;
+				return Token (TType.COLON, orig, 1);
 			case ';':
 				pos++;
-				return Token (TType.SEMICOMMA, orig, 1);
+				return Token (TType.SEMICOLON, orig, 1);
 			case '&':
 				pos++;
 				if (char == '&') {

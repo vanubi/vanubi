@@ -51,16 +51,59 @@ namespace Vanubi.Vade {
 		}
 	}
 
+	public interface Object : GLib.Object {
+		public abstract Value? get_member (string name);
+		public abstract void set_member (string name, Value? val);
+		public abstract string to_string ();
+	}
+	
+	public class UserObject : GLib.Object, Vade.Object {
+		HashTable<string, Value> members = new HashTable<string, Value> (str_hash, str_equal);
+	
+		public Value? get_member (string name) {
+			return members[name];
+		}
+		
+		public void set_member (string name, Value? val) {
+			if (val == null) {
+				members.remove (name);
+			} else {
+				members[name] = val;
+			}
+		}
+		
+		public string to_string () {
+			var b = new StringBuilder ();
+			b.append ("{ ");
+			bool first = true;
+			foreach (unowned string name in members.get_keys ()) {
+				if (!first) {
+					b.append (", ");
+				}
+				b.append ("'");
+				b.append (name.escape ("\""));
+				b.append ("': ");
+				b.append (members[name].to_string ());
+				first = false;
+			}
+			b.append (" }");
+			
+			return b.str;
+		}
+	}
+	
 	[Immutable]
 	public class Value {
 		public enum Type {
 			STRING,
-			FUNCTION
+			FUNCTION,
+			OBJECT
 		}
 		
 		public Type type;
 		public string str;
 		public Function func;
+		public Object obj;
 		public unowned Scope func_scope;
 		
 		public Value () {
@@ -71,6 +114,11 @@ namespace Vanubi.Vade {
 		public Value.for_string (owned string str) {
 			this.type = Type.STRING;
 			this.str = (owned) str;
+		}
+		
+		public Value.for_object (owned Object obj) {
+			this.type = Type.OBJECT;
+			this.obj = (owned) obj;
 		}
 		
 		public Value.for_num (double num) {
@@ -113,7 +161,9 @@ namespace Vanubi.Vade {
 		
 		public string to_string () {
 			if (type == Type.FUNCTION) {
-				return func.to_string();
+				return func.to_string ();
+			} else if (type == Type.OBJECT) {
+				return obj.to_string ();
 			}
 			return str;
 		}
