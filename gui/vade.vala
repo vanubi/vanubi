@@ -53,13 +53,38 @@ namespace Vanubi.UI {
 		}
 		
 		public override string to_string () {
-			return "upper(msg, [category])";
+			return "set_status (msg, [category])";
+		}
+	}
+	
+	public class NativeSetStatusError : NativeFunction {
+		unowned Manager manager;
+		
+		public NativeSetStatusError (Manager manager) {
+			this.manager = manager;
+		}
+		
+		public override async Vade.Value eval (Scope scope, Vade.Value[]? a, out Vade.Value? error, Cancellable cancellable) {
+			var msg = get_string (a, 0);
+			if (msg == null) {
+				error = new StringValue ("1 argument required");
+				return NullValue.instance;
+			}
+			var cat = get_string (a, 1);
+			manager.set_status_error (msg, cat);
+			
+			return NullValue.instance;
+		}
+		
+		public override string to_string () {
+			return "set_status_error (msg, [category])";
 		}
 	}
 	
 	public Scope fill_manager_scope (Scope scope, Manager manager) {
 		Vade.fill_scope (scope);
 		fill_vade_member (scope, manager, "set_status", () => new NativeSetStatus (manager));
+		fill_vade_member (scope, manager, "set_status_error", () => new NativeSetStatusError (manager));
 		return scope;
 	}
 }

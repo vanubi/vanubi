@@ -36,7 +36,7 @@ namespace Vanubi.Vade {
 		}
 		
 		public override string to_string () {
-			return "concat(s1, ...)";
+			return "concat (str1, ...)";
 		}
 	}
 	
@@ -53,7 +53,7 @@ namespace Vanubi.Vade {
 		}
 		
 		public override string to_string () {
-			return "lower(s)";
+			return "lower (str)";
 		}
 	}
 	
@@ -69,7 +69,7 @@ namespace Vanubi.Vade {
 		}
 		
 		public override string to_string () {
-			return "upper(s)";
+			return "upper (str)";
 		}
 	}
 	
