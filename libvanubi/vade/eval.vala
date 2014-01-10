@@ -237,7 +237,7 @@ namespace Vanubi.Vade {
 			
 			if (func.type == Value.Type.FUNCTION) {
 				var innerscope = new Scope (func.func_scope);
-				value = yield func.func.eval (innerscope, args, cancellable);
+				value = yield func.func.eval (innerscope, args, out error, cancellable);
 			}
 		}
 		

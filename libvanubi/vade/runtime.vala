@@ -21,7 +21,7 @@
 namespace Vanubi.Vade {
 	// Concatenate two or more strings
 	public class NativeConcat : Function {
-		public override async Value eval (Scope scope, Value[]? arguments, Cancellable cancellable) throws Error {
+		public override async Value eval (Scope scope, Value[]? arguments, out Value? error, Cancellable cancellable) {
 			var b = new StringBuilder ();
 			foreach (var val in arguments) {
 				b.append (val.str);
@@ -35,11 +35,14 @@ namespace Vanubi.Vade {
 	}
 	
 	public class NativeLower : Function {
-		public override async Value eval (Scope scope, Value[]? arguments, Cancellable cancellable) throws Error {
+		public override async Value eval (Scope scope, Value[]? arguments, out Value? error, Cancellable cancellable) {
+			error = null;
 			if (arguments.length > 0) {
 				return new Value.for_string (arguments[0].str.down ());
+			} else {
+				error = new Value.for_string ("1 argument required");
+				return new Value ();
 			}
-			return new Value ();
 		}
 		
 		public override string to_string () {
@@ -48,11 +51,13 @@ namespace Vanubi.Vade {
 	}
 	
 	public class NativeUpper : Function {
-		public override async Value eval (Scope scope, Value[]? arguments, Cancellable cancellable) throws Error {
+		public override async Value eval (Scope scope, Value[]? arguments, out Value? error, Cancellable cancellable) {
 			if (arguments.length > 0) {
 				return new Value.for_string (arguments[0].str.up ());
+			} else {
+				error = new Value.for_string ("1 argument required");
+				return new Value ();
 			}
-			return new Value ();
 		}
 		
 		public override string to_string () {
