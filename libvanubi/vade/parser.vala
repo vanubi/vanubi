@@ -116,17 +116,17 @@ namespace Vanubi.Vade {
 				next ();
 				Expression try_expr, catch_expr = null, finally_expr = null;
 				string error_variable = null;
-				try_expr = parse_expression ();
+				try_expr = parse_primary_expression ();
 				
 				if (cur.type == TType.ID && cur.str == "catch") {
 					next ();
 					error_variable = parse_identifier ();
-					catch_expr = parse_expression ();
+					catch_expr = parse_primary_expression ();
 				}
 				
 				if (cur.type == TType.ID && cur.str == "finally") {
 					next () ;
-					finally_expr = parse_expression ();
+					finally_expr = parse_primary_expression ();
 				}
 				
 				if (catch_expr == null && finally_expr == null) {
@@ -146,7 +146,7 @@ namespace Vanubi.Vade {
 			Expression expr;
 			if (cur.type == TType.ID && cur.str == "throw") {
 				next ();
-				var inner = parse_if_expression ();
+				var inner = parse_primary_expression ();
 				expr = new ThrowExpression (inner);
 			} else {
 				expr = parse_if_expression ();
@@ -159,11 +159,7 @@ namespace Vanubi.Vade {
 			if (cur.type == TType.ID && cur.str == "if") {
 				next ();
 				
-				expect (TType.OPEN_PAREN);
-				next ();
-				var cond = parse_expression ();
-				expect (TType.CLOSE_PAREN);
-				next ();
+				var cond = parse_primary_expression ();
 				
 				var true_expr = parse_primary_expression ();
 				

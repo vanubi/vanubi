@@ -113,7 +113,7 @@ void test_eval () {
 }
 
 void test_native_functions () {
-	var scope = Vade.create_base_scope ();
+	var scope = Vade.fill_scope (new Scope (null));
 	assert_eval (scope, "a='foo'; concat(a, 'bar', 'baz')", new Vade.StringValue ("foobarbaz"));
 	assert_eval (scope, "lower('FoO')", new Vade.StringValue ("foo"));
 	assert_eval (scope, "upper('fOo')", new Vade.StringValue ("FOO"));
@@ -130,14 +130,14 @@ void assert_embed (Scope scope, string code, Vade.Value expect) {
 }
 
 void test_embedded () {
-	var scope = Vade.create_base_scope ();
+	var scope = Vade.fill_scope (new Scope (null));
 	assert_embed (scope, "$(1+2)", new Vade.NumValue (3));
 	assert_embed (scope, "\\$(1+2)", new Vade.StringValue ("$(1+2)"));
 	assert_embed (scope, "$(1+2) foo $(foo++) $(foo)", new Vade.StringValue ("3 foo 0 1"));
 }
 
 void test_exceptions () {
-	var scope = Vade.create_base_scope ();
+	var scope = Vade.fill_scope (new Scope (null));
 	try {
 		eval (scope, "throw 'foo'");
 	} catch (Error e) {
