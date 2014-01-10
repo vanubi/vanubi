@@ -97,7 +97,7 @@ void test_eval () {
 	higher.set_local ("foo", new Vade.Value.for_num (14));
 	assert_eval (higher, "++foo", new Vade.Value.for_num (15));
 	assert_eval (scope, "foo", new Vade.Value.for_num (2));
-	assert_eval (scope, "a = 3; f = { nonex = 2; a = a+nonex }; f(); a+nonex", new Vade.Value.for_num (5));
+	assert_eval (scope, "a = 3; f = {| nonex = 2; a = a+nonex }; f(); a+nonex", new Vade.Value.for_num (5));
 
 	// user defined functions
 	assert_eval (scope, "f1={a|a+2}; f2={x|x*2}; f1(3)+f2(4)", new Vade.Value.for_num (13));

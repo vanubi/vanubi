@@ -366,20 +366,21 @@ namespace Vanubi.Vade {
 					parameters += cur.str;
 					next ();
 				}
-				if (cur.type != TType.BIT_OR) {
-					parameters = null;
-					lex.pos = rollback;
-					next ();
-				} else {
-					next ();
-				}
 			}
+			
+			bool is_function = cur.type == TType.BIT_OR;
+			if (!is_function) {
+				lex.pos = rollback;
+			}
+			next ();
 			
 			var expr = parse_expression ();
 			expect (TType.CLOSE_BRACE);
 			next ();
 			
-			expr = new FunctionExpression (new UserFunction (parameters, expr));
+			if (is_function) {
+				expr = new FunctionExpression (new UserFunction (parameters, expr));
+			}
 			return expr;
 		}
 
