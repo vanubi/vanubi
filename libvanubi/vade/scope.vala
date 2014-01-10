@@ -43,7 +43,7 @@ namespace Vanubi.Vade {
 		
 		public override string to_string () {
 			if (parameters.length == 0) {
-				return @"{ $body }";
+				return @"{| $body }";
 			} else {
 				var pars = string.joinv (" ", parameters);
 				return @"{ $pars | $body }";

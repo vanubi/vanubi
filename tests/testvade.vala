@@ -58,6 +58,7 @@ void test_parser () {
 	assert_expr ("foo; bar = baz", "foo; bar = baz");
 	assert_expr ("a=1;b=2;if (a>b) c=5 else c=3", "a = 1; b = 2; if ((a > b)) c = 5 else c = 3");
 	assert_expr ("foo; bar; baz={ a b | foo }; end", "foo; bar; baz = { a b | foo }; end");
+	assert_expr ("{|foo}", "{| foo }");
 }
 
 Vade.Value eval (Scope scope, string code) throws Error {
