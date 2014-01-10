@@ -24,7 +24,7 @@ namespace Vanubi {
 		DEL,
 		MOD
 	}
-	
+
 	public class Git {
 		unowned Configuration config;
 		
@@ -76,13 +76,13 @@ namespace Vanubi {
 					int new_size = (hunks.fetch (4) == "") ? 1 : int.parse (hunks.fetch (4));
 					
 					if (old_size == 0) {
-						for (var j=start; j<=(start + new_size); j++) {
+						for (var j=start; j<(start + new_size); j++) {
 							table.insert (j, DiffType.ADD);
 						}
 					} else if (new_size == 0) {
 						table.insert (start + 1, DiffType.DEL);
 					} else {
-						for (var j=start; j<=(start + new_size); j++) {
+						for (var j=start; j<(start + new_size); j++) {
 							table.insert (j, DiffType.MOD);
 						}
 					}
