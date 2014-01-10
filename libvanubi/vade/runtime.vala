@@ -19,11 +19,17 @@
 
 // Runtime system functions for Vade
 namespace Vanubi.Vade {
+	public abstract class NativeFunction : Function {
+		protected string? get_string (Value[]? a, int n) {
+			return n < a.length ? a[n].str : null;
+		}
+	}
+	
 	// Concatenate two or more strings
 	public class NativeConcat : Function {
-		public override async Value eval (Scope scope, Value[]? arguments, out Value? error, Cancellable cancellable) {
+		public override async Value eval (Scope scope, Value[]? a, out Value? error, Cancellable cancellable) {
 			var b = new StringBuilder ();
-			foreach (var val in arguments) {
+			foreach (var val in a) {
 				b.append (val.str);
 			}
 			return new StringValue ((owned) b.str);
@@ -34,15 +40,16 @@ namespace Vanubi.Vade {
 		}
 	}
 	
-	public class NativeLower : Function {
-		public override async Value eval (Scope scope, Value[]? arguments, out Value? error, Cancellable cancellable) {
+	public class NativeLower : NativeFunction {
+		public override async Value eval (Scope scope, Value[]? a, out Value? error, Cancellable cancellable) {
 			error = null;
-			if (arguments.length > 0) {
-				return new StringValue (arguments[0].str.down ());
-			} else {
+			var s = get_string (a, 0);
+			if (s == null) {
 				error = new StringValue ("1 argument required");
 				return NullValue.instance;
 			}
+			
+			return new StringValue (s.down ());
 		}
 		
 		public override string to_string () {
@@ -50,14 +57,15 @@ namespace Vanubi.Vade {
 		}
 	}
 	
-	public class NativeUpper : Function {
-		public override async Value eval (Scope scope, Value[]? arguments, out Value? error, Cancellable cancellable) {
-			if (arguments.length > 0) {
-				return new StringValue (arguments[0].str.up ());
-			} else {
+	public class NativeUpper : NativeFunction {
+		public override async Value eval (Scope scope, Value[]? a, out Value? error, Cancellable cancellable) {
+			var s = get_string (a, 0);
+			if (s == null) {
 				error = new StringValue ("1 argument required");
 				return NullValue.instance;
 			}
+			
+			return new StringValue (s.up ());
 		}
 		
 		public override string to_string () {
@@ -65,10 +73,7 @@ namespace Vanubi.Vade {
 		}
 	}
 	
-	public Scope create_base_scope () {
-		// create a scope with native functions and constants
-		var scope = new Scope (null);
-		
+	public Scope fill_scope (Scope scope) {
 		scope["concat"] = new FunctionValue (new NativeConcat (), scope);
 		scope["lower"] = new FunctionValue (new NativeLower (), scope);
 		scope["upper"] = new FunctionValue (new NativeUpper (), scope);

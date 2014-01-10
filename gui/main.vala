@@ -67,7 +67,7 @@ namespace Vanubi {
 			conf = new Configuration ();
 			orientation = Orientation.VERTICAL;
 			keymanager = new KeyManager<Editor> (conf, on_command);
-			base_scope = Vade.create_base_scope ();
+			base_scope = UI.fill_manager_scope (new Vade.Scope (null), this);
 			last_session = conf.get_session ();
 
 			// placeholder for the editors grid
