@@ -290,12 +290,16 @@ namespace Vanubi.Vade {
 			Expression expr = null;
 			switch (cur.type) {
 			case TType.ID:
-				expr = parse_member_access (null);			
-				switch (cur.type) {
-				case TType.INC:
-				case TType.DEC:
-					expr = parse_postfix_expression (expr);
-					break;
+				if (cur.str == "null") {
+					expr = new NullLiteral ();
+				} else {
+					expr = parse_member_access (null);			
+					switch (cur.type) {
+					case TType.INC:
+					case TType.DEC:
+						expr = parse_postfix_expression (expr);
+						break;
+					}
 				}
 				break;
 			case TType.OPEN_BRACE:
@@ -384,15 +388,14 @@ namespace Vanubi.Vade {
 					obj.set_member (key, expr);
 				}
 				
-				if (cur.type != TType.CLOSE_BRACE) {
+				if (cur.type == TType.CLOSE_BRACE) {
+					next ();
+					return obj;
+				} else {
 					lex.pos = rollback;
 					obj = null;
 					next ();
 				}
-			}
-			
-			if (obj != null) {
-				return obj;
 			}
 			
 			bool is_function = cur.type == TType.BIT_OR;

@@ -22,6 +22,7 @@ namespace Vanubi.Vade {
 		public virtual async void visit_string_literal (StringLiteral lit) { }
 		public virtual async void visit_num_literal (NumLiteral lit) { }
 		public virtual async void visit_object_literal (ObjectLiteral lit) { }
+		public virtual async void visit_null_literal (NullLiteral lit) { }
 		public virtual async void visit_binary_expression (BinaryExpression expr) { }
 		public virtual async void visit_unary_expression (UnaryExpression expr) { }
 		public virtual async void visit_member_access (MemberAccess expr) { }
@@ -71,6 +72,20 @@ namespace Vanubi.Vade {
 		
 		public override string to_string () {
 			return "'"+str+"'";
+		}
+	}
+	
+	[Immutable]
+	public class NullLiteral : Expression {
+		public NullLiteral () {
+		}
+		
+		public override async void visit (Visitor v) {
+			yield v.visit_null_literal (this);
+		}
+		
+		public override string to_string () {
+			return "null";
 		}
 	}
 		

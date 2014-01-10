@@ -67,7 +67,7 @@ namespace Vanubi.Vade {
 		}
 		
 		public virtual Value? get_member (string name) { return null; }
-		public void set_member (string name, Value? val) { }
+		public virtual void set_member (string name, Value? val) { }
 		
 		public abstract bool equal (Value v);
 		public abstract string to_string ();
@@ -79,7 +79,7 @@ namespace Vanubi.Vade {
 		
 		public static NullValue instance {
 			get {
-				if (_instance != null) {
+				if (_instance == null) {
 					_instance = new NullValue ();
 				}
 				return _instance;
@@ -239,11 +239,11 @@ namespace Vanubi.Vade {
 	public class UserObject : Value {
 		HashTable<string, Value> members = new HashTable<string, Value> (str_hash, str_equal);
 	
-		public Value? get_member (string name) {
+		public override Value? get_member (string name) {
 			return members[name];
 		}
 		
-		public void set_member (string name, Value? val) {
+		public override void set_member (string name, Value? val) {
 			if (val == null) {
 				members.remove (name);
 			} else {

@@ -85,7 +85,7 @@ void assert_eval (Scope scope, string code, Vade.Value expect) {
 
 void test_eval () {
 	var scope = new Scope (null);
-	assert_eval (scope, "foo++", new Vade.StringValue (""));
+	assert_eval (scope, "foo++", new Vade.NumValue (0));
 	assert_eval (scope, "foo+3", new Vade.NumValue (4));
 	assert_eval (scope, "a=b=3; c=4; d=a+b+c", new Vade.NumValue (10));
 	assert_eval (scope, "a=1;b=2;if (a>b) c=5 else c=3", new Vade.NumValue (3));
@@ -106,6 +106,10 @@ void test_eval () {
 	
 	// conditions
 	assert_eval (scope, "if (2>3) 4 else (bar++; bar)", new Vade.NumValue (1));
+	
+	// objects
+	assert_eval (scope, "a = {'foo': 'bar'}; a.foo", new StringValue ("bar"));
+	assert_eval (scope, "a = {'foo': 'bar'}; a.foo = 'baz'; a.foo", new StringValue ("baz"));
 }
 
 void test_native_functions () {
@@ -129,7 +133,7 @@ void test_embedded () {
 	var scope = Vade.create_base_scope ();
 	assert_embed (scope, "$(1+2)", new Vade.NumValue (3));
 	assert_embed (scope, "\\$(1+2)", new Vade.StringValue ("$(1+2)"));
-	assert_embed (scope, "$(1+2) foo $(foo++) $(foo)", new Vade.StringValue ("3 foo  1"));
+	assert_embed (scope, "$(1+2) foo $(foo++) $(foo)", new Vade.StringValue ("3 foo 0 1"));
 }
 
 void test_exceptions () {

@@ -41,7 +41,7 @@ namespace Vanubi.Vade {
 				return new StringValue (arguments[0].str.down ());
 			} else {
 				error = new StringValue ("1 argument required");
-				return new NullValue ();
+				return NullValue.instance;
 			}
 		}
 		
@@ -56,7 +56,7 @@ namespace Vanubi.Vade {
 				return new StringValue (arguments[0].str.up ());
 			} else {
 				error = new StringValue ("1 argument required");
-				return new NullValue ();
+				return NullValue.instance;
 			}
 		}
 		

@@ -60,6 +60,23 @@ namespace Vanubi.Vade {
 			value = new NumValue (lit.num);
 		}
 		
+		public override async void visit_object_literal (ObjectLiteral lit) {
+			var obj = new UserObject ();
+			foreach (unowned string name in lit.members.get_keys ()) {
+				yield lit.members[name].visit (this);
+				if (should_return ()) {
+					return;
+				}
+				
+				obj.set_member (name, value);
+			}
+			value = obj;
+		}
+		
+		public override async void visit_null_literal (NullLiteral lit) {
+			value = NullValue.instance;
+		}
+		
 		public override async void visit_binary_expression (BinaryExpression expr) {
 			yield expr.left.visit (this);
 			if (should_return ()) {
@@ -159,7 +176,7 @@ namespace Vanubi.Vade {
 			if (expr.inner == null) {
 				var val = scope[expr.id];
 				if (val == null) {
-					val = new StringValue ("");
+					val = NullValue.instance;
 				}
 				value = val;
 			} else {
@@ -170,7 +187,7 @@ namespace Vanubi.Vade {
 				
 				value = value.get_member (expr.id);
 				if (value == null) {
-					value = new Vade.NullValue ();
+					value = NullValue.instance;
 				}
 			}
 		}
@@ -182,6 +199,12 @@ namespace Vanubi.Vade {
 			}
 
 			var num = value.num;
+			if (num == null) {
+				error = new StringValue ("Cannot convert to number: %s".printf (value.to_string ()));
+				return;
+			}
+			value = new NumValue (num);
+			
 			Value newval;
 			switch (expr.op) {
 			case PostfixOperator.INC:
@@ -219,13 +242,14 @@ namespace Vanubi.Vade {
 				if (should_return ()) {
 					return;
 				}
+				var left = value;
 				
 				yield expr.right.visit (this);
 				if (should_return ()) {
 					return;
 				}
 				
-				value.set_member (access.id, value);
+				left.set_member (access.id, value);
 			} else {
 				yield expr.right.visit (this);
 				if (should_return ()) {
