@@ -106,6 +106,7 @@ void test_eval () {
 	
 	// conditions
 	assert_eval (scope, "if (2>3) 4 else (bar++; bar)", new Vade.NumValue (1));
+	assert_eval (scope, "if 3>2 4 else {bar++; bar}", new Vade.NumValue (4));
 	
 	// objects
 	assert_eval (scope, "a = {'foo': 'bar'}; a.foo", new StringValue ("bar"));
