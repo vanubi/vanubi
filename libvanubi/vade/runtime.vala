@@ -28,6 +28,8 @@ namespace Vanubi.Vade {
 	// Concatenate two or more strings
 	public class NativeConcat : Function {
 		public override async Value eval (Scope scope, Value[]? a, out Value? error, Cancellable cancellable) {
+			error = null;
+			
 			var b = new StringBuilder ();
 			foreach (var val in a) {
 				b.append (val.str);
@@ -59,6 +61,8 @@ namespace Vanubi.Vade {
 	
 	public class NativeUpper : NativeFunction {
 		public override async Value eval (Scope scope, Value[]? a, out Value? error, Cancellable cancellable) {
+			error = null;
+			
 			var s = get_string (a, 0);
 			if (s == null) {
 				error = new StringValue ("1 argument required");
@@ -76,9 +80,9 @@ namespace Vanubi.Vade {
 	public Scope create_base_scope (Scope? parent = null) {
 		var scope = new Scope (parent, true);
 		
-		scope.set_local ("concat", new FunctionValue (new NativeConcat (), scope));
-		scope.set_local ("lower", new FunctionValue (new NativeLower (), scope));
-		scope.set_local ("upper", new FunctionValue (new NativeUpper (), scope));
+		scope.set_local ("concat", new FunctionValue (new NativeConcat (), null));
+		scope.set_local ("lower", new FunctionValue (new NativeLower (), null));
+		scope.set_local ("upper", new FunctionValue (new NativeUpper (), null));
 		
 		return scope;
 	}

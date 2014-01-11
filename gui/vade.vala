@@ -20,17 +20,13 @@
 using Vanubi.Vade;
  
 namespace Vanubi.UI {
-	public void fill_vade_member (Scope scope, Object o, string name, ThreadFunc<Function> cb) {
-		var key = "vade_"+name;
-		unowned Vade.Value? val = o.get_data (key);
-		if (val == null) {
-			var func = cb ();
-			var oval = new FunctionValue (func, scope);
-			val = oval;
-			o.set_data (key, (owned) oval); // make the object own the value
+	public abstract class NativeFunction : Vade.NativeFunction {
+		protected Editor? get_editor (Vade.Value[]? a, int n) {
+			if (n < a.length && a[n] is NativeEditor) {
+				return ((NativeEditor) a[n]).editor;
+			}
+			return null;
 		}
-
-		scope.set_local (name, val);
 	}
 	
 	public class NativeSetStatus : NativeFunction {
@@ -41,6 +37,8 @@ namespace Vanubi.UI {
 		}
 		
 		public override async Vade.Value eval (Scope scope, Vade.Value[]? a, out Vade.Value? error, Cancellable cancellable) {
+			error = null;
+			
 			var msg = get_string (a, 0);
 			if (msg == null) {
 				error = new StringValue ("1 argument required");
@@ -65,6 +63,8 @@ namespace Vanubi.UI {
 		}
 		
 		public override async Vade.Value eval (Scope scope, Vade.Value[]? a, out Vade.Value? error, Cancellable cancellable) {
+			error = null;
+			
 			var msg = get_string (a, 0);
 			if (msg == null) {
 				error = new StringValue ("1 argument required");
@@ -81,6 +81,53 @@ namespace Vanubi.UI {
 		}
 	}
 
+	public class NativeEditor : NativeObject {
+		public unowned Editor editor;
+		
+		public NativeEditor (Editor editor) {
+			this.editor = editor;
+		}
+		
+		public override string to_string () {
+			return "Editor";
+		}
+	}
+	
+	public class NativeCommand : NativeFunction {
+		unowned Manager manager;
+		
+		public NativeCommand (Manager manager) {
+			this.manager = manager;
+		}
+		
+		public override async Vade.Value eval (Scope scope, Vade.Value[]? a, out Vade.Value? error, Cancellable cancellable) {
+			error = null;
+			
+			var cmd = get_string (a, 0);
+			if (cmd == null) {
+				error = new StringValue ("1 argument required");
+				return NullValue.instance;
+			}
+			
+			var editor = get_editor (a, 1);
+			if (editor == null) {
+				editor = get_editor_from_scope (scope);
+			}
+			if (editor == null) {
+				error = new StringValue ("no editor to run the command on in this context");
+				return NullValue.instance;
+			}
+			
+			manager.execute_command[cmd](editor, cmd);
+			
+			return NullValue.instance;
+		}
+		
+		public override string to_string () {
+			return "command (name, [editor])";
+		}
+	}
+	
 	public unowned Scope get_manager_scope (Manager manager) {
 		unowned Scope scope = manager.get_data ("vade_scope");
 		if (scope == null) {
@@ -88,8 +135,9 @@ namespace Vanubi.UI {
 			scope = sc;
 			manager.set_data ("vade_scope", (owned) sc);
 			
-			scope.set_local ("set_status", new FunctionValue (new NativeSetStatus (manager), scope));
-			scope.set_local ("set_status_error", new FunctionValue (new NativeSetStatusError (manager), scope));
+			scope.set_local ("set_status", new FunctionValue (new NativeSetStatus (manager), null));
+			scope.set_local ("set_status_error", new FunctionValue (new NativeSetStatusError (manager), null));
+			scope.set_local ("command", new FunctionValue (new NativeCommand (manager), null));
 		}
 			
 		return scope;
@@ -101,8 +149,18 @@ namespace Vanubi.UI {
 			var sc = new Scope (get_manager_scope (editor.manager), true);
 			scope = sc;
 			editor.set_data ("vade_scope", (owned) sc);
+			
+			scope.set_local ("editor", new NativeEditor (editor));
 		}
 		
 		return scope;
+	}
+	
+	public Editor? get_editor_from_scope (Scope scope) {
+		var val = scope["editor"] as NativeEditor;
+		if (val != null) {
+			return val.editor;
+		}
+		return null;
 	}
 }

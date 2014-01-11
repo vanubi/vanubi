@@ -34,6 +34,7 @@ namespace Vanubi.Vade {
 		}
 		
 		public override async Value eval (Scope scope, Value[]? arguments, out Value? error, Cancellable cancellable) {
+			error = null;
 			for (var i=0; i < int.min(parameters.length, arguments.length); i++) {
 				scope.set_local (parameters[i], arguments[i]);
 			}
@@ -199,9 +200,9 @@ namespace Vanubi.Vade {
 	[Immutable]
 	public class FunctionValue : Value {
 		public Function func;
-		public unowned Scope scope;
+		public unowned Scope? scope;
 		
-		public FunctionValue (owned Function func, Scope scope) {
+		public FunctionValue (owned Function func, Scope? scope) {
 			this.func = (owned) func;
 			this.scope = scope;
 		}
@@ -271,7 +272,7 @@ namespace Vanubi.Vade {
 
 		public override bool equal (Value v) {
 			// TODO:
-			return false;
+			return this == v;
 		}
 		
 		public override string to_string () {
@@ -291,6 +292,48 @@ namespace Vanubi.Vade {
 			b.append (" }");
 			
 			return b.str;
+		}
+	}
+	
+	public abstract class NativeObject : Value {
+		class HashTable<string, Value> vtable;
+		
+		class construct {
+			vtable = new HashTable<string, Value> (str_hash, str_equal);
+		}
+		
+		public override Value? get_member (string name) {
+			var vmemb = vtable[name];
+			if (vmemb != null) {
+				return vmemb;
+			}
+			return null;
+		}
+		
+		public override void set_member (string name, Value? val) {
+		}
+		
+		public override double? num {
+			owned get {
+				return null;
+			}
+		}
+		
+		public override bool @bool {
+			get {
+				return true;
+			}
+		}
+		
+		public override string? str {
+			owned get {
+				return null;
+			}
+		}
+
+		public override bool equal (Value v) {
+			// TODO:
+			return this == v;
 		}
 	}
 
@@ -337,6 +380,7 @@ namespace Vanubi.Vade {
 		
 		public void set (string name, Value val) {
 			if (parent == null) {
+				// ignore passthrough
 				registers[name] = val;
 			} else {
 				if (!passthrough && (name in registers || !(name in parent))) {

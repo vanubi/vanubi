@@ -295,8 +295,10 @@ namespace Vanubi.Vade {
 			}
 			
 			if (func != null) {
-				var innerscope = new Scope (func.scope, false);
+				var innerscope = new Scope (func.scope ?? scope, false);
 				value = yield func.func.eval (innerscope, args, out error, cancellable);
+			} else {
+				value = NullValue.instance;
 			}
 		}
 		
