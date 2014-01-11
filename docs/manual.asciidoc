@@ -26,7 +26,7 @@ Make sure to have the most recent Vala compiler at your disposal.
 keywords:[keys keybindings mousebindings mouse]
 .Basics of key and mouse bindings
 
-Most of programming in Vanubi happens on the keyword. It's important to have meaningful key bindings. In this regard, Vanubi inherits some of Emacs key bindings.
+Most of programming in Vanubi happens on the keyboard. It's important to have meaningful key bindings. In this regard, Vanubi inherits some of Emacs key bindings.
 Key bindings are made up of one or multiple key combinations: for example `C-x C-s` has to be interpreted as press `Ctrl+x` then press `Ctrl+s`, or keep `Ctrl+x` pressed then press `s`.
 Pressing them at the same time is not needed, the important thing is to press keys in the correct order.
 
@@ -228,10 +228,10 @@ You can define your own functions as follows:
 :args: -O style=native,noclasses
 -------
 func = { param1 param2 | body }
-func_without_params = { body }
+func_without_params = {| body }
 -------
 
-That is, enclosing an expression between braces will create an anonymous function.
+That is, enclosing an expression between braces plus `|` will create an anonymous function.
 
 ==== Formal syntax
 
@@ -325,7 +325,7 @@ The expression below will evaluate to `5` (not `7`) because `b` is zero in the p
 [source,javascript]
 :args: -O style=native,noclasses
 ------
-a = 3; f = { b = 2; a = a+b }; f(); a+b
+a = 3; f = {| b = 2; a = a+b }; f(); a+b
 ------
 
 ==========
