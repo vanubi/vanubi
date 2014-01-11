@@ -67,7 +67,7 @@ AC_SUBST(GLIB_PREFIX)
 AC_ARG_VAR(top_srcdir, "Top source directory")
 
 VALA_CHECK_MODULES(LIBVANUBI, [gio-2.0 gio-unix-2.0])
-LIBVANUBI_VALAFLAGS="$LIBVANUBI_VALAFLAGS --target-glib 2.32"
+LIBVANUBI_VALAFLAGS="$LIBVANUBI_VALAFLAGS --target-glib 2.32 --enable-experimental"
 LIBVANUBI_CFLAGS="$LIBVANUBI_CFLAGS -w"
 LIBVANUBI_LIBS="$LIBVANUBI_LIBS"
 
@@ -77,6 +77,7 @@ PKG_CHECK_MODULES(GTK_3_10, [gtk+-3.0 >= 3.10],
 				  [VANUBI_VALAFLAGS="$VANUBI_VALAFLAGS -D GTK_3_10"],
 				  [echo '*** Recommended version of gtk+-3.0 is at least 3.10'])
 VALA_CHECK_PACKAGES([posix], [VANUBI_VALAFLAGS="$VANUBI_VALAFLAGS --pkg posix"])
+VANUBI_VALAFLAGS="$VANUBI_VALAFLAGS --target-glib 2.32 --enable-experimental"
 VANUBI_CFLAGS="$VANUBI_CFLAGS -w"
 
 AM_CONDITIONAL(ENABLE_GLIB_TEST, [test "x$enable_glibtest" = "xyes"])

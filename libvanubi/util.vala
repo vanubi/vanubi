@@ -146,7 +146,6 @@ namespace Vanubi {
 			update_copyright_year_regex = new Regex ("Copyright.*(\\d\\d\\d\\d)", RegexCompileFlags.OPTIMIZE | RegexCompileFlags.CASELESS);
 		}
 		var year = new DateTime.now_local ().get_year ();
-		var replace_string = @"\\g<1>$(year)";
 		
 		var iter = buf.line_start (0);
 		// find the first comment in the first 10 lines of the file and replace the copyright year
