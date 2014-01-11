@@ -20,7 +20,7 @@
 using Vte;
 using Gtk;
 
-namespace Vanubi {
+namespace Vanubi.UI {
 	public class ShellBar : Bar {
 		unowned Manager manager;
 		Terminal term;

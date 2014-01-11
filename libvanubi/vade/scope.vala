@@ -298,9 +298,11 @@ namespace Vanubi.Vade {
 	public class Scope {
 		public HashTable<string, Value> registers = new HashTable<string, Value> (str_hash, str_equal);
 		public Scope? parent;
+		public bool passthrough;
 		
-		public Scope (Scope? parent) {
+		public Scope (Scope? parent, bool passthrough) {
 			this.parent = parent;
+			this.passthrough = passthrough;
 		}
 		
 		public void set_local (string name, Value? val) {
@@ -337,7 +339,7 @@ namespace Vanubi.Vade {
 			if (parent == null) {
 				registers[name] = val;
 			} else {
-				if (name in registers || !(name in parent)) {
+				if (!passthrough && (name in registers || !(name in parent))) {
 					registers[name] = val;
 				} else {
 					parent[name] = val;
@@ -349,6 +351,18 @@ namespace Vanubi.Vade {
 			var ev = new EvalVisitor ();
 			var ret = yield ev.eval (this, expr, cancellable);
 			return ret;
+		}
+
+		public async Value eval_string (string sexpr, Cancellable cancellable) throws Error {
+			var parser = new Vade.Parser.for_string (sexpr);
+			var expr = parser.parse_expression ();
+			return yield eval (expr, cancellable);
+		}
+		
+		public async Value eval_embedded (string sexpr, Cancellable cancellable) throws Error {
+			var parser = new Vade.Parser.for_string (sexpr);
+			var expr = parser.parse_embedded ();
+			return yield eval (expr, cancellable);
 		}
 		
 		public Value eval_sync (Expression expr) throws Error {

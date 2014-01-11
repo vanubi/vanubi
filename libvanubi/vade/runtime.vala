@@ -73,10 +73,12 @@ namespace Vanubi.Vade {
 		}
 	}
 	
-	public Scope fill_scope (Scope scope) {
-		scope["concat"] = new FunctionValue (new NativeConcat (), scope);
-		scope["lower"] = new FunctionValue (new NativeLower (), scope);
-		scope["upper"] = new FunctionValue (new NativeUpper (), scope);
+	public Scope create_base_scope (Scope? parent = null) {
+		var scope = new Scope (parent, true);
+		
+		scope.set_local ("concat", new FunctionValue (new NativeConcat (), scope));
+		scope.set_local ("lower", new FunctionValue (new NativeLower (), scope));
+		scope.set_local ("upper", new FunctionValue (new NativeUpper (), scope));
 		
 		return scope;
 	}

@@ -19,7 +19,7 @@
 
 using Gtk;
 
-namespace Vanubi {
+namespace Vanubi.UI {
 	public class StatusBar : Label {
 	}
 	
@@ -50,7 +50,7 @@ namespace Vanubi {
 		public Configuration conf;
 		public StringSearchIndex command_index;
 		public StringSearchIndex lang_index;
-		public Vade.Scope base_scope; // Scope for Vade expressions
+		public Vade.Scope base_scope; // Scope for user global variables
 		public List<Location<string>> error_locations = new List<Location> ();
 		public unowned List<Location<string>> current_error = null;
 		EventBox main_box;
@@ -67,7 +67,7 @@ namespace Vanubi {
 			conf = new Configuration ();
 			orientation = Orientation.VERTICAL;
 			keymanager = new KeyManager<Editor> (conf, on_command);
-			base_scope = UI.fill_manager_scope (new Vade.Scope (null), this);
+			base_scope = Vade.create_base_scope ();
 			last_session = conf.get_session ();
 
 			// placeholder for the editors grid
@@ -1694,7 +1694,7 @@ namespace Vanubi {
 			try {
 				var parser = new Vade.Parser.for_string (code);
 				var expr = parser.parse_expression ();
-				var val = yield base_scope.eval (expr, new Cancellable ());
+				var val = yield get_editor_scope(editor).eval (expr, new Cancellable ());
 				set_status (val.str);
 			} catch (Error e) {
 				set_status_error (e.message);
@@ -1993,7 +1993,7 @@ namespace Vanubi {
 				mode = SearchBar.Mode.REPLACE_BACKWARD;
 			}
 			is_regex = command.has_suffix ("-regexp");
-			var bar = new SearchBar (this, base_scope, editor, mode, is_regex, last_search_string, last_replace_string);
+			var bar = new SearchBar (this, editor, mode, is_regex, last_search_string, last_replace_string);
 			bar.activate.connect (() => {
 				last_search_string = bar.text;
 				if (command.has_prefix ("replace")) {
@@ -2113,7 +2113,7 @@ namespace Vanubi {
 			}
 			StyleContext.add_provider_for_screen (Gdk.Screen.get_default(), provider, STYLE_PROVIDER_PRIORITY_USER);
 
-			var manager = new Vanubi.Manager ();
+			var manager = new Manager ();
 
 			var win = new ApplicationWindow (this);
 			win.title = "Vanubi";

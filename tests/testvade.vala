@@ -84,7 +84,7 @@ void assert_eval (Scope scope, string code, Vade.Value expect) {
 }
 
 void test_eval () {
-	var scope = new Scope (null);
+	var scope = new Scope (null, false);
 	assert_eval (scope, "foo++", new Vade.NumValue (0));
 	assert_eval (scope, "foo+3", new Vade.NumValue (4));
 	assert_eval (scope, "a=b=3; c=4; d=a+b+c", new Vade.NumValue (10));
@@ -92,7 +92,7 @@ void test_eval () {
 	assert_eval (scope, "'foo\\'bar'", new Vade.StringValue ("foo'bar"));
 	
 	// captured/local scope
-	var higher = new Scope (scope);
+	var higher = new Scope (scope, false);
 	assert_eval (higher, "++foo", new Vade.NumValue (2));
 	assert (higher.get_local ("foo") == null);
 	assert_eval (scope, "foo", new Vade.NumValue (2));
@@ -114,7 +114,7 @@ void test_eval () {
 }
 
 void test_native_functions () {
-	var scope = Vade.fill_scope (new Scope (null));
+	var scope = Vade.create_base_scope ();
 	assert_eval (scope, "a='foo'; concat(a, 'bar', 'baz')", new Vade.StringValue ("foobarbaz"));
 	assert_eval (scope, "lower('FoO')", new Vade.StringValue ("foo"));
 	assert_eval (scope, "upper('fOo')", new Vade.StringValue ("FOO"));
@@ -131,14 +131,14 @@ void assert_embed (Scope scope, string code, Vade.Value expect) {
 }
 
 void test_embedded () {
-	var scope = Vade.fill_scope (new Scope (null));
+	var scope = Vade.create_base_scope ();
 	assert_embed (scope, "$(1+2)", new Vade.NumValue (3));
 	assert_embed (scope, "\\$(1+2)", new Vade.StringValue ("$(1+2)"));
 	assert_embed (scope, "$(1+2) foo $(foo++) $(foo)", new Vade.StringValue ("3 foo 0 1"));
 }
 
 void test_exceptions () {
-	var scope = Vade.fill_scope (new Scope (null));
+	var scope = Vade.create_base_scope ();
 	try {
 		eval (scope, "throw 'foo'");
 	} catch (Error e) {

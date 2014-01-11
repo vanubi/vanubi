@@ -19,7 +19,7 @@
 
 using Gtk;
 
-namespace Vanubi {
+namespace Vanubi.UI {
 	class HelpBar : EntryBar {
 		public enum Type {
 			COMMAND,

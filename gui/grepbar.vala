@@ -20,7 +20,7 @@
 using Vte;
 using Gtk;
 
-namespace Vanubi {
+namespace Vanubi.UI {
 	public class GrepView : SourceView {
 		public GrepView (Configuration conf) {
 			Object (buffer: new GrepBuffer ());

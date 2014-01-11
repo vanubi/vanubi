@@ -19,7 +19,7 @@
 
 using Gtk;
 
-namespace Vanubi {
+namespace Vanubi.UI {
 	public class SearchBar : EntryBar {
 		public enum Mode {
 			SEARCH_FORWARD,
@@ -42,15 +42,13 @@ namespace Vanubi {
 		bool is_regex = false;
 		string matching_string; // keep alive for regex
 		MatchInfo current_match;
-		Vade.Scope? scope; // scope in which to execute Vade expressions, or null to avoid parsing expressions
 		Cancellable cancellable;
 
-		public SearchBar (Manager manager, Vade.Scope? scope, Editor editor, Mode mode, bool is_regex, string search_initial = "", string replace_initial = "") {
+		public SearchBar (Manager manager, Editor editor, Mode mode, bool is_regex, string search_initial = "", string replace_initial = "") {
 			base (search_initial);
 			this.manager = manager;
 			this.editor = editor;
 			this.mode = mode;
-			this.scope = scope;
 			this.is_regex = is_regex;
 			
 			if (mode == Mode.REPLACE_FORWARD || mode == Mode.REPLACE_BACKWARD) {
@@ -143,15 +141,13 @@ namespace Vanubi {
 			var insensitive = p.down () == p;
 			
 			// Eval pattern expression
-			if (scope != null) {
-				try {
-					var parser = new Vade.Parser.for_string (p);
-					var expr = parser.parse_embedded ();
-					var value = yield scope.eval (expr, cur_cancellable);
-					p = value.str;
-				} catch (Error e) {
-					// do not parse in case of any error during parsing or evaluating the expression
-				}
+			try {
+				var parser = new Vade.Parser.for_string (p);
+				var expr = parser.parse_embedded ();
+				var value = yield get_editor_scope(editor).eval (expr, cur_cancellable);
+				p = value.str;
+			} catch (Error e) {
+				// do not parse in case of any error during parsing or evaluating the expression
 			}
 			
 			Regex regex = null;
@@ -268,7 +264,7 @@ namespace Vanubi {
 			try {
 				var parser = new Vade.Parser.for_string (r);
 				var expr = parser.parse_embedded ();
-				var value = yield scope.eval (expr, cur_cancellable);
+				var value = yield get_editor_scope(editor).eval (expr, cur_cancellable);
 				r = value.str;
 			} catch (Error e) {
 				// do not parse in case of any error during parsing or evaluating the expression

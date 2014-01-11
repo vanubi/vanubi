@@ -80,11 +80,29 @@ namespace Vanubi.UI {
 			return "set_status_error (msg, [category])";
 		}
 	}
-	
-	public Scope fill_manager_scope (Scope scope, Manager manager) {
-		Vade.fill_scope (scope);
-		fill_vade_member (scope, manager, "set_status", () => new NativeSetStatus (manager));
-		fill_vade_member (scope, manager, "set_status_error", () => new NativeSetStatusError (manager));
+
+	public unowned Scope get_manager_scope (Manager manager) {
+		unowned Scope scope = manager.get_data ("vade_scope");
+		if (scope == null) {
+			var sc = new Scope (manager.base_scope, true);
+			scope = sc;
+			manager.set_data ("vade_scope", (owned) sc);
+			
+			scope.set_local ("set_status", new FunctionValue (new NativeSetStatus (manager), scope));
+			scope.set_local ("set_status_error", new FunctionValue (new NativeSetStatusError (manager), scope));
+		}
+			
+		return scope;
+	}
+
+	public unowned Scope get_editor_scope (Editor editor) {
+		unowned Scope scope = editor.get_data ("vade_scope");
+		if (scope == null) {
+			var sc = new Scope (get_manager_scope (editor.manager), true);
+			scope = sc;
+			editor.set_data ("vade_scope", (owned) sc);
+		}
+		
 		return scope;
 	}
 }

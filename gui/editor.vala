@@ -19,7 +19,7 @@
 
 using Gtk;
 
-namespace Vanubi {
+namespace Vanubi.UI {
 	public class EditorView : SourceView {
 #if 0
 		TextTag caret_text_tag;
@@ -137,7 +137,7 @@ namespace Vanubi {
 	}
 	
 	public class Editor : Grid {
-		weak Manager manager;
+		public weak Manager manager;
 		Configuration conf;
 		public File file { get; private set; }
 		public SourceView view { get; private set; }
@@ -236,6 +236,8 @@ namespace Vanubi {
 			restart_monitor ();
 		}
 
+		
+		
 		void restart_monitor () {
 			if (monitor != null) {
 				monitor.changed.disconnect (on_external_changed);
