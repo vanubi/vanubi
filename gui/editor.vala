@@ -246,15 +246,23 @@ namespace Vanubi.UI {
 			if (file != null) {
 			   	/* XXX: use FileMonitorFlags.WATCH_HARD_LINKS with valac >= 0.20.2 */
 				file.set_data<TimeVal?> ("editing_mtime", get_mtime ());
-				monitor = file.monitor (FileMonitorFlags.NONE);
-				monitor.changed.connect (on_external_changed);
+				try {
+					monitor = file.monitor (FileMonitorFlags.NONE);
+					monitor.changed.connect (on_external_changed);
+				} catch (Error e) {
+					manager.set_status_error (e.message);
+				}
 			}
 		}
 		
 		public TimeVal? get_mtime () {
 			if (file != null && file.query_exists ()) {
-				var info = file.query_info (FileAttribute.TIME_MODIFIED, FileQueryInfoFlags.NONE);
-				return info.get_modification_time ();
+				try {
+					var info = file.query_info (FileAttribute.TIME_MODIFIED, FileQueryInfoFlags.NONE);
+					return info.get_modification_time ();
+				} catch (Error e) {
+					return null;
+				}
 			}
 			return null;
 		}

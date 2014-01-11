@@ -29,7 +29,7 @@ namespace Vanubi.UI {
 			override_font (Pango.FontDescription.from_string ("Monospace %d".printf (system_size)));
 		}
 		
-		public async void colorize_text () {
+		public void colorize_text () {
 			TextTag tag = buffer.create_tag("fg_green", foreground: "#00CC00");
 			TextIter start, end;
 			
