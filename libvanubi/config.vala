@@ -195,6 +195,11 @@ namespace Vanubi {
 			return session;
 		}
 		
+		public void delete_session (string name) {
+			var group = "session:"+name;
+			remove_group (group);
+		}
+		
 		public string[] get_sessions () {
 			// return with "default" session as first session
 			var res = new string[]{"default"};

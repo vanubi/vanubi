@@ -380,6 +380,9 @@ namespace Vanubi {
 			index_command ("restore-session", "Open the files of the last session");
 			execute_command["restore-session"].connect (on_restore_session);
 			
+			index_command ("delete-session", "Remove an existing session");
+			execute_command["delete-session"].connect (on_delete_session);
+			
 			bind_command ({ Key (Gdk.Key.m, Gdk.ModifierType.CONTROL_MASK) }, "mark");
 			index_command ("mark", "Save the current location to the stack of positions");
 			execute_command["mark"].connect (on_mark);
@@ -909,6 +912,29 @@ namespace Vanubi {
 					var name = bar.get_choice ();
 					if (name != "") {
 						restore_session.begin (editor, name);
+					}
+			});
+			bar.aborted.connect (() => { abort (editor); });
+			add_overlay (bar, OverlayMode.FIXED);
+			bar.show ();
+			bar.grab_focus ();
+		}
+		
+		void on_delete_session (Editor editor) {
+			var sessions = conf.get_sessions ();
+			var annotated = new Annotated<string>[0];
+			foreach (unowned string session in sessions) {
+				annotated += new Annotated<string> (session, session);
+			}
+			
+			var bar = new SessionCompletionBar ((owned) annotated);
+			bar.activate.connect (() => {
+					abort (editor);
+					var name = bar.get_choice ();
+					if (name != "") {
+						conf.delete_session (name);
+						conf.save.begin ();
+						set_status ("Session %s deleted".printf (name), "sessions");
 					}
 			});
 			bar.aborted.connect (() => { abort (editor); });
