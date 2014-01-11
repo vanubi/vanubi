@@ -20,7 +20,7 @@
 using Vte;
 using Gtk;
 
-namespace Vanubi {
+namespace Vanubi.UI {
 	public string key_to_string (Key key) {
 		var res = "";
 		if (Gdk.ModifierType.CONTROL_MASK in (Gdk.ModifierType) key.modifiers) {

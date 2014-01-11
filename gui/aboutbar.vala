@@ -19,7 +19,7 @@
 
 using Gtk;
 
-namespace Vanubi {
+namespace Vanubi.UI {
 	private class AboutView : SourceView {
 		public AboutView () {
 			set_editable (false);

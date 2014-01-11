@@ -1,26 +1,26 @@
-VanubiEditorView {
+VanubiUIEditorView {
 	-GtkWidget-cursor-aspect-ratio: 0.1;
 	-GtkWidget-cursor-color: white;
 }
 
-VanubiEditorView.caret:selected {
+VanubiUIEditorView.caret:selected {
 	color: black;
 	background-color: white;
 }
 
-VanubiEditorInfoBar {
+VanubiUIEditorInfoBar {
 	background: #1b2e35;
 }
 
-VanubiEditorInfoBar GtkLabel {
+VanubiUIEditorInfoBar GtkLabel {
 	color: #babdb6;
 }
 
-VanubiEditorInfoBar.nonfocused {
+VanubiUIEditorInfoBar.nonfocused {
 	background: black;
 }
 
-VanubiEditorInfoBar.nonfocused GtkLabel {
+VanubiUIEditorInfoBar.nonfocused GtkLabel {
 	color: #555753;
 }
 
@@ -28,56 +28,56 @@ VanubiEditorInfoBar.nonfocused GtkLabel {
 	font-weight: bold;
 }
 
-VanubiBar GtkEntry {
+VanubiUIBar GtkEntry {
 	color: white;
 	border: 1px solid #204a87;
 	background: black;
 	padding: 2px 3px 2px 3px;
 }
 
-VanubiBar GtkEntry:selected {
+VanubiUIBar GtkEntry:selected {
 	background: #001522;
 }
 
-VanubiBar GtkEntry.error {
+VanubiUIBar GtkEntry.error {
 	background: #720000;
 }
 
-VanubiAboutBar GtkTextView {
+VanubiUIAboutBar GtkTextView {
 	background: #000000;
 }
 
-VanubiCompletionBarCompletionBox GtkLabel {
+VanubiUICompletionBarCompletionBox GtkLabel {
 	padding: 2px 6px 2px 6px;
 	color: white;
 }
 
-VanubiGrepView {
+VanubiUIGrepView {
 	background: black;
 	color: white;
 }
 
-VanubiManager {
+VanubiUIManager {
 	background: black;
 	color: white;
 }
 
-VanubiManager VanubiCompletionBarCompletionBox {
+VanubiUIManager VanubiUICompletionBarCompletionBox {
 	background: black;
 	color: white;
 }
 
-VanubiManager VanubiStatusBar {
+VanubiUIManager VanubiUIStatusBar {
 	color: #729fcf;
 	background: black;
 	font-weight: bold;
 }
 
-VanubiManager GtkEventBox {
+VanubiUIManager GtkEventBox {
     background: black;
 }
 
-VanubiManager VanubiStatusBar.error {
+VanubiUIManager VanubiUIStatusBar.error {
 	color: red;
 }
 

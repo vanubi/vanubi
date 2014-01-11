@@ -19,7 +19,7 @@
 
 using Gtk;
 
-namespace Vanubi {
+namespace Vanubi.UI {
 	public class Grid : Gtk.Grid {
 		public override bool draw (Cairo.Context cr) {
 			Allocation alloc;

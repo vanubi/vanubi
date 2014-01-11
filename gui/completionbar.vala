@@ -19,7 +19,7 @@
 
 using Gtk;
 
-namespace Vanubi {
+namespace Vanubi.UI {
 	class CompletionBar<G> : EntryBar {
 		protected string original_pattern;
 		string? common_choice;

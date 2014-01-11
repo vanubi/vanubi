@@ -19,7 +19,7 @@
 
 using Gtk;
 
-namespace Vanubi {
+namespace Vanubi.UI {
 	class FileBar : CompletionBar<File> {
 		string base_directory;
 
