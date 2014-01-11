@@ -185,7 +185,7 @@ namespace Vanubi.Vade {
 					return;
 				}
 				
-				value = value.get_member (expr.id);
+				value = value.get_instance_member (expr.id);
 				if (value == null) {
 					value = NullValue.instance;
 				}

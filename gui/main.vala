@@ -1690,14 +1690,18 @@ namespace Vanubi.UI {
 			bar.grab_focus ();
 		}
 
-		async void do_eval_expression (Editor editor, string code) {
+		async void eval_expression (Editor editor, string code) {
 			try {
 				var parser = new Vade.Parser.for_string (code);
 				var expr = parser.parse_expression ();
 				var val = yield get_editor_scope(editor).eval (expr, new Cancellable ());
-				set_status (val.str);
+				if (val != null) {
+					set_status (val.to_string (), "eval");
+				} else {
+					clear_status ("eval");
+				}
 			} catch (Error e) {
-				set_status_error (e.message);
+				set_status_error (e.message, "eval");
 			}
 		}
 		
@@ -1706,7 +1710,7 @@ namespace Vanubi.UI {
 			bar.activate.connect ((code) => {
 					abort (editor);
 					last_vade_code = code;
-					do_eval_expression.begin (editor, code);
+					eval_expression.begin (editor, code);
 			});
 			bar.aborted.connect (() => { abort (editor); });
 			add_overlay (bar);

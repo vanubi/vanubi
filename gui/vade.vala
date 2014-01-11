@@ -18,6 +18,7 @@
  */
 
 using Vanubi.Vade;
+using Gtk;
  
 namespace Vanubi.UI {
 	public abstract class NativeFunction : Vade.NativeFunction {
@@ -41,7 +42,7 @@ namespace Vanubi.UI {
 			
 			var msg = get_string (a, 0);
 			if (msg == null) {
-				error = new StringValue ("1 argument required");
+				error = new StringValue ("argument 1 must be a string");
 				return NullValue.instance;
 			}
 			var cat = get_string (a, 1);
@@ -67,7 +68,7 @@ namespace Vanubi.UI {
 			
 			var msg = get_string (a, 0);
 			if (msg == null) {
-				error = new StringValue ("1 argument required");
+				error = new StringValue ("argument 1 must be a string");
 				return NullValue.instance;
 			}
 			var cat = get_string (a, 1);
@@ -105,7 +106,7 @@ namespace Vanubi.UI {
 			
 			var cmd = get_string (a, 0);
 			if (cmd == null) {
-				error = new StringValue ("1 argument required");
+				error = new StringValue ("argument 1 must be a string");
 				return NullValue.instance;
 			}
 			
@@ -127,7 +128,54 @@ namespace Vanubi.UI {
 			return "command (name, [editor])";
 		}
 	}
+
+	/* CURSOR */
+
+	public class NativeCursorMoveChars : NativeFunction {
+		public override async Vade.Value eval (Scope scope, Vade.Value[]? a, out Vade.Value? error, Cancellable cancellable) {
+			error = null;
+			
+			NativeCursor cursor = a.length > 0 ? ((NativeCursor) a[0]) : null;
+			if (cursor == null) {
+				error = new StringValue ("argument 1 must be a Cursor");
+				return NullValue.instance;
+			}
+			
+			int? n = get_int (a, 1);
+			if (n == null) {
+				error = new StringValue ("argument 2 must be a number");
+				return NullValue.instance;
+			}
+			
+			cursor.move_chars (n);
+			return cursor;
+		}
+		
+		public override string to_string () {
+			return "cursor move_chars (cursor)";
+		}
+	}
 	
+	public class NativeCursor : NativeObject {
+		public unowned Editor editor;
+		
+		public NativeCursor (Editor editor) {
+			this.editor = editor;
+		}
+		
+		class construct {
+			vtable["move_chars"] =  new FunctionValue (new NativeCursorMoveChars ());
+		}
+			
+		internal void move_chars (int n) {
+			editor.view.move_cursor (MovementStep.LOGICAL_POSITIONS, n, false);
+		}
+		
+		public override string to_string () {
+			return "Cursor";
+		}
+	}
+
 	public unowned Scope get_manager_scope (Manager manager) {
 		unowned Scope scope = manager.get_data ("vade_scope");
 		if (scope == null) {
@@ -135,9 +183,9 @@ namespace Vanubi.UI {
 			scope = sc;
 			manager.set_data ("vade_scope", (owned) sc);
 			
-			scope.set_local ("set_status", new FunctionValue (new NativeSetStatus (manager), null));
-			scope.set_local ("set_status_error", new FunctionValue (new NativeSetStatusError (manager), null));
-			scope.set_local ("command", new FunctionValue (new NativeCommand (manager), null));
+			scope.set_local ("set_status", new FunctionValue (new NativeSetStatus (manager)));
+			scope.set_local ("set_status_error", new FunctionValue (new NativeSetStatusError (manager)));
+			scope.set_local ("command", new FunctionValue (new NativeCommand (manager)));
 		}
 			
 		return scope;
@@ -151,6 +199,7 @@ namespace Vanubi.UI {
 			editor.set_data ("vade_scope", (owned) sc);
 			
 			scope.set_local ("editor", new NativeEditor (editor));
+			scope.set_local ("cursor", new NativeCursor (editor));
 		}
 		
 		return scope;

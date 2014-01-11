@@ -1,21 +1,21 @@
 /*
- *  Copyright © 2013 Luca Bruno
- *
- *  This file is part of Vanubi.
- *
- *  Vanubi is free software: you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.
- *
- *  Vanubi is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License
- *  along with Vanubi.  If not, see <http://www.gnu.org/licenses/>.
- */
+*  Copyright © 2013 Luca Bruno
+*
+*  This file is part of Vanubi.
+*
+*  Vanubi is free software: you can redistribute it and/or modify
+*  it under the terms of the GNU General Public License as published by
+*  the Free Software Foundation, either version 3 of the License, or
+*  (at your option) any later version.
+*
+*  Vanubi is distributed in the hope that it will be useful,
+*  but WITHOUT ANY WARRANTY; without even the implied warranty of
+*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+*  GNU General Public License for more details.
+*
+*  You should have received a copy of the GNU General Public License
+*  along with Vanubi.  If not, see <http://www.gnu.org/licenses/>.
+*/
 
 namespace Vanubi.Vade {
 	public abstract class Function {
@@ -70,6 +70,16 @@ namespace Vanubi.Vade {
 		public virtual Value? get_member (string name) { return null; }
 		public virtual void set_member (string name, Value? val) { }
 		
+		public virtual Value? get_instance_member (string name) {
+			var v = get_member (name);
+			if (v is FunctionValue) {
+				// lift to instance method
+				var fval = (FunctionValue) v;
+				return new FunctionValue (new InstanceMethod (this, fval.func), fval.scope);
+			}
+			return v;
+		}
+		
 		public abstract bool equal (Value v);
 		public abstract string to_string ();
 	}
@@ -104,7 +114,7 @@ namespace Vanubi.Vade {
 				return null;
 			}
 		}
-
+		
 		public override bool equal (Value v) {
 			return this == v;
 		}
@@ -139,7 +149,7 @@ namespace Vanubi.Vade {
 				return val;
 			}
 		}
-
+		
 		public override bool equal (Value v) {
 			if (v is NumValue || v is StringValue) {
 				return str == v.str;
@@ -181,7 +191,7 @@ namespace Vanubi.Vade {
 				return val.to_string ();
 			}
 		}
-
+		
 		public override bool equal (Value v) {
 			if (v is NumValue) {
 				return num == v.num;
@@ -202,7 +212,7 @@ namespace Vanubi.Vade {
 		public Function func;
 		public unowned Scope? scope;
 		
-		public FunctionValue (owned Function func, Scope? scope) {
+		public FunctionValue (owned Function func, Scope? scope = null) {
 			this.func = (owned) func;
 			this.scope = scope;
 		}
@@ -224,7 +234,7 @@ namespace Vanubi.Vade {
 				return null;
 			}
 		}
-
+		
 		public override bool equal (Value v) {
 			if (v is NumValue || v is StringValue) {
 				return str == v.str;
@@ -237,9 +247,32 @@ namespace Vanubi.Vade {
 		}
 	}
 	
+	public class InstanceMethod : Function {
+		Value self;
+		Function func;
+		
+		public InstanceMethod (Value self, Function func) {
+			this.self = self;
+			this.func = func;
+		}
+		
+		public override async Value eval (Scope scope, Value[]? a, out Value? error, Cancellable cancellable) {
+			Value[] b = new Value[a.length+1];
+			b[0] = self;
+			for (var i=0; i < a.length; i++) {
+				b[i+1] = a[i];
+			}
+			return yield func.eval (scope, b, out error, cancellable);
+		}
+		
+		public override string to_string () {
+			return func.to_string ();
+		}
+	}
+	
 	public class UserObject : Value {
 		HashTable<string, Value> members = new HashTable<string, Value> (str_hash, str_equal);
-	
+		
 		public override Value? get_member (string name) {
 			return members[name];
 		}
@@ -269,9 +302,9 @@ namespace Vanubi.Vade {
 				return null;
 			}
 		}
-
+		
 		public override bool equal (Value v) {
-			// TODO:
+		// TODO:
 			return this == v;
 		}
 		
@@ -296,7 +329,7 @@ namespace Vanubi.Vade {
 	}
 	
 	public abstract class NativeObject : Value {
-		class HashTable<string, Value> vtable;
+		protected class HashTable<string, Value> vtable;
 		
 		class construct {
 			vtable = new HashTable<string, Value> (str_hash, str_equal);
@@ -304,10 +337,7 @@ namespace Vanubi.Vade {
 		
 		public override Value? get_member (string name) {
 			var vmemb = vtable[name];
-			if (vmemb != null) {
-				return vmemb;
-			}
-			return null;
+			return vmemb;
 		}
 		
 		public override void set_member (string name, Value? val) {
@@ -330,13 +360,13 @@ namespace Vanubi.Vade {
 				return null;
 			}
 		}
-
+		
 		public override bool equal (Value v) {
-			// TODO:
+		// TODO:
 			return this == v;
 		}
 	}
-
+	
 	[Immutable]
 	public class Scope {
 		public HashTable<string, Value> registers = new HashTable<string, Value> (str_hash, str_equal);
@@ -396,7 +426,7 @@ namespace Vanubi.Vade {
 			var ret = yield ev.eval (this, expr, cancellable);
 			return ret;
 		}
-
+		
 		public async Value eval_string (string sexpr, Cancellable cancellable) throws Error {
 			var parser = new Vade.Parser.for_string (sexpr);
 			var expr = parser.parse_expression ();

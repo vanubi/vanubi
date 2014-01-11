@@ -23,6 +23,10 @@ namespace Vanubi.Vade {
 		protected string? get_string (Value[]? a, int n) {
 			return n < a.length ? a[n].str : null;
 		}
+		
+		protected int? get_int (Value[]? a, int n) {
+			return n < a.length ? a[n].@int : null;
+		}
 	}
 	
 	// Concatenate two or more strings
@@ -47,7 +51,7 @@ namespace Vanubi.Vade {
 			error = null;
 			var s = get_string (a, 0);
 			if (s == null) {
-				error = new StringValue ("1 argument required");
+				error = new StringValue ("argument 1 must be a string");
 				return NullValue.instance;
 			}
 			
@@ -65,7 +69,7 @@ namespace Vanubi.Vade {
 			
 			var s = get_string (a, 0);
 			if (s == null) {
-				error = new StringValue ("1 argument required");
+				error = new StringValue ("argument 1 must be a string");
 				return NullValue.instance;
 			}
 			
@@ -80,9 +84,9 @@ namespace Vanubi.Vade {
 	public Scope create_base_scope (Scope? parent = null) {
 		var scope = new Scope (parent, true);
 		
-		scope.set_local ("concat", new FunctionValue (new NativeConcat (), null));
-		scope.set_local ("lower", new FunctionValue (new NativeLower (), null));
-		scope.set_local ("upper", new FunctionValue (new NativeUpper (), null));
+		scope.set_local ("concat", new FunctionValue (new NativeConcat ()));
+		scope.set_local ("lower", new FunctionValue (new NativeLower ()));
+		scope.set_local ("upper", new FunctionValue (new NativeUpper ()));
 		
 		return scope;
 	}
