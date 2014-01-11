@@ -363,6 +363,11 @@ namespace Vanubi.UI {
 			index_command ("repo-grep", "Search for text in repository");
 			execute_command["repo-grep"].connect (on_repo_grep);
 			
+			bind_command ({ Key (Gdk.Key.x, Gdk.ModifierType.CONTROL_MASK),
+							Key (Gdk.Key.f, 0) }, "repo-open-file");
+			index_command ("repo-open-file", "Find a file in a repository");
+			execute_command["repo-open-file"].connect (on_repo_open_file);
+			
 			index_command ("eval-expression", "Execute Vade code");
 			execute_command["eval-expression"].connect (on_eval_expression);
 			
@@ -1371,7 +1376,7 @@ namespace Vanubi.UI {
 					abort (ed);
 					last_pipe_command = command;
 					var cmd = command.replace("%f", Shell.quote(ed.file.get_path())).replace("%s", start.get_offset().to_string()).replace("%e", end.get_offset().to_string());
-					execute_shell_async.begin (ed.file, cmd, text.data, null, (s,r) => {
+					execute_shell_async.begin (ed.file.get_parent (), cmd, text.data, null, (s,r) => {
 							try {
 								output = execute_shell_async.end (r);
 								Idle.add ((owned) resume);
@@ -1772,7 +1777,7 @@ namespace Vanubi.UI {
 			});
 			bar.changed.connect ((pat) => {
 					last_grep_string = pat;
-					clear_status ("grep");
+					clear_status ("repo-grep");
 					
 					if (stream != null) {
 						try {
@@ -1793,7 +1798,7 @@ namespace Vanubi.UI {
 														SpawnFlags.SEARCH_PATH,
 														null, null, null, out stdout, out stderr);
 					} catch (Error e) {
-						set_status_error (e.message, "grep");
+						set_status_error (e.message, "repo-grep");
 						return;
 					}
 					stream = new UnixInputStream (stdout, true);
@@ -1805,10 +1810,10 @@ namespace Vanubi.UI {
 								var err = (string) res;
 								err = err.strip ();
 								if (err != "") {
-									set_status_error (err, "grep");
+									set_status_error (err, "repo-grep");
 								}
 							} catch (Error e) {
-								set_status_error (e.message, "grep");
+								set_status_error (e.message, "repo-grep");
 							}
 					});
 			});
@@ -1818,6 +1823,42 @@ namespace Vanubi.UI {
 			bar.grab_focus ();
 		}
 
+		void on_repo_open_file (Editor editor) {
+			var repo_dir = conf.cluster.get_git_repo (editor.file);
+			if (repo_dir == null) {
+				set_status ("Not in git repository");
+				return;
+			}
+			
+			var git_command = conf.get_global_string ("git_command", "git");
+			InputStream? stream = null;
+			
+			execute_shell_async.begin (repo_dir, @"$(git_command) ls-files", null, null, (s,r) => {
+					var res = (string) execute_shell_async.end (r);
+					var file_names = res.split ("\n");
+					var annotated = new Annotated<File>[file_names.length];
+					for (var i=0; i < file_names.length; i++) {
+						annotated[i] = new Annotated<File> (file_names[i], repo_dir.get_child (file_names[i]));
+					}
+					
+					var bar = new SimpleCompletionBar<File> ((owned) annotated);
+					bar.activate.connect (() => {
+							abort (editor);
+							var file = bar.get_choice();
+							if (file == editor.file) {
+								// no-op
+								return;
+							}
+							open_file.begin (editor, file);
+					});
+					bar.aborted.connect (() => { abort (editor); });
+					add_overlay (bar);
+					bar.show ();
+					bar.grab_focus ();
+			});
+		}
+
+		
 		void on_split (Editor editor, string command) {
 			// get bounding box of the editor
 			Allocation alloc;
