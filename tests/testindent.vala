@@ -29,6 +29,11 @@ void assert_indent_shell (Buffer buffer, int line, int indent) {
 	assert_indent (indenter, buffer, line, indent);
 }
 
+void assert_indent_haskell (Buffer buffer, int line, int indent) {
+	var indenter = new Indent_Haskell (buffer);
+	assert_indent (indenter, buffer, line, indent);
+}
+
 void test_lang_c () {
 	var buffer = new StringBuffer.from_text ("
 foo {
@@ -158,12 +163,41 @@ fi
 	assert_indent_shell (buffer, 5, 0);
 }
 
+void test_lang_haskell () {
+	var buffer = new StringBuffer.from_text ("
+main = do
+foo =
+case x of
+bar -> baz
+let
+a = qux
+b = hax
+
+main = do
+let a = b
+c = d
+");
+
+	var w = buffer.tab_width;
+	assert_indent_haskell (buffer, 0, 0);
+	assert_indent_haskell (buffer, 1, 0); // main = do
+	assert_indent_haskell (buffer, 2, w); // foo =
+	assert_indent_haskell (buffer, 3, w*2); // case x of
+	assert_indent_haskell (buffer, 4, w*3); // bar -> baz
+	assert_indent_haskell (buffer, 5, w*3); // let
+	assert_indent_haskell (buffer, 6, w*4); // a = qux
+	assert_indent_haskell (buffer, 7, w*4); // hax
+	assert_indent_haskell (buffer, 10, w); // let a = b
+	assert_indent_haskell (buffer, 11, w+4); // c = d
+}
+
 int main (string[] args) {
 	Test.init (ref args);
 
 	Test.add_func ("/indent/lang_c", test_lang_c);
 	Test.add_func ("/indent/lang_asm", test_lang_asm);
 	Test.add_func ("/indent/lang_shell", test_lang_shell);
+	Test.add_func ("/indent/lang_haskell", test_lang_haskell);
 
 	return Test.run ();
 }

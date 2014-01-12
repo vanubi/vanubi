@@ -1660,6 +1660,8 @@ namespace Vanubi.UI {
 					return new Indent_Markup (vbuf);
 				case "lua":
 					return new Indent_Lua (vbuf);
+				case "haskell":
+					return new Indent_Haskell (vbuf);
 				case "makefile":
 					return null;
 				default:
@@ -1716,7 +1718,8 @@ namespace Vanubi.UI {
 					comment_engine = new Comment_Markup (vbuf);
 					break;
 				case "lua":
-					comment_engine = new Comment_Lua (vbuf);;
+				case "haskell":
+					comment_engine = new Comment_Lua (vbuf);
 					break;
 				default:
 					comment_engine = new Comment_Default (vbuf);
