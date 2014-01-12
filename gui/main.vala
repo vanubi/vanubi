@@ -1375,8 +1375,10 @@ namespace Vanubi.UI {
 			bar.activate.connect ((command) => {
 					abort (ed);
 					last_pipe_command = command;
-					var cmd = command.replace("%f", Shell.quote(ed.file.get_path())).replace("%s", start.get_offset().to_string()).replace("%e", end.get_offset().to_string());
-					execute_shell_async.begin (ed.file.get_parent (), cmd, text.data, null, (s,r) => {
+					var filename = ed.file != null ? ed.file.get_path() : "*scratch*";
+					var cmd = command.replace("%f", Shell.quote(filename)).replace("%s", start.get_offset().to_string()).replace("%e", end.get_offset().to_string());
+					var dir = ed.file != null ? ed.file.get_parent() : File.new_for_path (Environment.get_current_dir ());
+					execute_shell_async.begin (dir, cmd, text.data, null, (s,r) => {
 							try {
 								output = execute_shell_async.end (r);
 								Idle.add ((owned) resume);
