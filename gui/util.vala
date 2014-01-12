@@ -33,7 +33,7 @@ namespace Vanubi.UI {
 		return res;
 	}
 
-	public string keys_to_string (Key?[] keys) {
+	public string keys_to_string (Key[] keys) {
 		var res = new StringBuilder ();
 		foreach (var key in keys) {
 			res.append (key_to_string (key));
@@ -41,6 +41,37 @@ namespace Vanubi.UI {
 		}
 		res.truncate (res.len - 1);
 		return res.str;
+	}
+
+	public Key parse_key (string key) throws Error {
+		var len = key.length;
+		uint keyval = Gdk.Key.VoidSymbol;
+		var modifiers = 0;
+		for (var i=0; i < len; i++) {
+			if (key[i] == 'C' && i+1 < len && key[i+1] == '-') {
+				modifiers |= Gdk.ModifierType.CONTROL_MASK;
+				i++;
+			} else if (key[i] == 'S' && i+1 < len && key[i+1] == '-') {
+				modifiers |= Gdk.ModifierType.SHIFT_MASK;
+				i++;
+			} else {
+				keyval = Gdk.keyval_from_name (key[i].to_string ());
+			}
+		}
+		if (keyval == Gdk.Key.VoidSymbol) {
+			throw new ConvertError.ILLEGAL_SEQUENCE ("Invalid key: "+key);
+		}
+		
+		return Key (keyval, modifiers);
+	}
+	
+	public Key[] parse_keys (string keys) throws Error {
+		var split = keys.strip().split (" ");
+		var res = new Key[0];
+		foreach (unowned string key in split) {
+			res += parse_key (key);
+		}
+		return res;
 	}
 	
 	public unowned TextMark get_start_mark_for_location (Location loc, TextBuffer buf) {

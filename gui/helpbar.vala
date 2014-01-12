@@ -1,5 +1,5 @@
 /*
- *  Copyright © 2011-2012 Luca Bruno
+ *  Copyright © 2011-2014 Luca Bruno
  *
  *  This file is part of Vanubi.
  *
@@ -29,12 +29,26 @@ namespace Vanubi.UI {
 		unowned Manager manager;
 		CompletionBox completion_box;
 		Type type;
+		
+		Label shortcut_label;
+		bool capturing = false;
+		Key[] captured_keys = null;
+		uint capture_timeout = 0;
+		string changing_command = null;
 
 		public HelpBar (Manager manager, Type type) {
 			this.manager = manager;
 			this.type = type;
 			completion_box = new CompletionBox (manager, type);
 			attach_next_to (completion_box, entry, PositionType.TOP, 1, 1);
+			
+			if (type == Type.COMMAND) {
+				shortcut_label = new Label ("<b>C-r = reset shortcut     C-c = modify shortcut</b>");
+				shortcut_label.use_markup = true;
+				shortcut_label.expand = false;
+				attach_next_to (shortcut_label, entry, PositionType.BOTTOM, 1, 1);
+			}
+			
 			show_all ();
 			search ("");
 		}
@@ -62,7 +76,111 @@ namespace Vanubi.UI {
 			}
 		}
 
+		void restart_capture_timeout () {
+			if (capture_timeout > 0) {
+				Source.remove (capture_timeout);
+			}
+			
+			// ugly :P
+			shortcut_label.set_markup ("<b>saving in 3 seconds</b>");
+			capture_timeout = Timeout.add_seconds (1, () => {
+					shortcut_label.set_markup ("<b>saving in 2 seconds</b>");
+					capture_timeout = Timeout.add_seconds (1, () => {
+							shortcut_label.set_markup ("<b>saving in 1 second</b>");
+							capture_timeout = Timeout.add_seconds (1, () => {
+									save_shortcut (changing_command);
+									capturing = false;
+									
+									capture_timeout = Timeout.add_seconds (2, () => {
+											shortcut_label.set_markup ("<b>C-r = reset shortcut     C-c = modify shortcut</b>");
+											capture_timeout = 0;
+											captured_keys = null;
+											return false;
+									});
+									return false;
+							});
+							return false;
+					});
+					return false;
+			});
+		}
+		
+		void save_shortcut (string cmd) {
+			var keys = (owned) captured_keys;
+			if (keys.length == 0) {
+				shortcut_label.set_markup ("<b>cleared shortcut for %s</b>".printf (cmd));
+				manager.keymanager.remove_binding (cmd);
+				manager.conf.remove_shortcut (cmd);
+			} else {
+				var str = keys_to_string (keys);
+				shortcut_label.set_markup ("<b>%s saved as %s</b>".printf (cmd, str));
+				manager.keymanager.rebind_command (keys, cmd);
+				manager.conf.set_shortcut (changing_command, keys_to_string (keys));
+			}
+			
+			manager.conf.save.begin ();
+			// refresh
+			search (entry.get_text ());
+		}
+
+		void reset_shortcut (string cmd) {
+			var keys = manager.get_default_shortcut (cmd);
+			if (keys.length == 0) {
+				manager.keymanager.remove_binding (cmd);
+				manager.conf.remove_shortcut (cmd);
+			} else {
+				var str = keys_to_string (keys);
+				manager.keymanager.rebind_command (keys, cmd);
+				manager.conf.set_shortcut (changing_command, keys_to_string (keys));
+			}
+			shortcut_label.set_markup ("<b>reset shortcut for %s</b>".printf (cmd));
+			
+			manager.conf.save.begin ();
+			// refresh
+			search (entry.get_text ());
+		}
+		
+		const uint[] skip_keyvals = {Gdk.Key.Control_L, Gdk.Key.Control_R, Gdk.Key.Shift_L, Gdk.Key.Shift_R};
+		
 		protected override bool on_key_press_event (Gdk.EventKey e) {
+			var modifiers = e.state & (Gdk.ModifierType.SHIFT_MASK | Gdk.ModifierType.CONTROL_MASK);
+			if (capturing) {
+				if (e.keyval == Gdk.Key.Escape || (e.keyval == Gdk.Key.g && modifiers == Gdk.ModifierType.CONTROL_MASK)) {
+					manager.set_status_error ("Cannot bind Escape or C-g");
+					capturing = false;
+					Source.remove (capture_timeout);
+					capture_timeout = 0;
+				} else if (e.keyval in skip_keyvals) {
+					// skip
+				} else {
+					captured_keys += Key (e.keyval, modifiers);
+					restart_capture_timeout ();
+				}
+				return true;
+			}
+			
+			if (e.keyval == Gdk.Key.c && modifiers == Gdk.ModifierType.CONTROL_MASK) {
+				var cmd = completion_box.get_selected_command ();
+				if (cmd == null) {
+					manager.set_status ("No command selected", "help");
+				} else {
+					changing_command = completion_box.get_selected_command ();
+					captured_keys = null;
+					capturing = true;
+					restart_capture_timeout ();
+				}
+				return true;
+			}
+
+			if (e.keyval == Gdk.Key.r && modifiers == Gdk.ModifierType.CONTROL_MASK) {
+				var cmd = completion_box.get_selected_command ();
+				if (cmd == null) {
+					manager.set_status ("No command selected", "help");
+				} else {				
+					reset_shortcut (cmd);
+				}
+			}
+			
 			if (e.keyval == Gdk.Key.Up || e.keyval == Gdk.Key.Down) {
 				completion_box.view.grab_focus ();
 				var res = completion_box.view.key_press_event (e);

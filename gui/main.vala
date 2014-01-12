@@ -62,6 +62,16 @@ namespace Vanubi.UI {
 		string last_grep_string = "";
 		
 		Session last_session;
+		
+		class KeysWrapper {
+			public Key[] keys;
+			
+			public KeysWrapper (Key[] keys) {
+				this.keys = keys;
+			}
+		}
+		
+		HashTable<string, KeysWrapper> default_shortcuts = new HashTable<string, KeysWrapper> (str_hash, str_equal);
 
 		public Manager () {
 			conf = new Configuration ();
@@ -126,6 +136,7 @@ namespace Vanubi.UI {
 			index_command ("save-file", "Save or create the file of the current buffer");
 			execute_command["save-file"].connect (on_save_file);
 			
+			bind_command (null, "save-as-file");
 			index_command ("save-as-file", "Save the current buffer to another file but stay on this buffer");
 			execute_command["save-as-file"].connect (on_save_as_file);
 
@@ -255,6 +266,7 @@ namespace Vanubi.UI {
 			index_command ("search-forward", "Search text forward incrementally");
 			execute_command["search-forward"].connect (on_search_replace);
 
+			bind_command (null, "search-forward-regexp");
 			index_command ("search-forward-regexp", "Search text forward incrementally using a regular expression");
 			execute_command["search-forward-regexp"].connect (on_search_replace);
 
@@ -270,12 +282,15 @@ namespace Vanubi.UI {
 			index_command ("replace-forward", "Replace text forward incrementally");
 			execute_command["replace-forward"].connect (on_search_replace);
 			
+			bind_command (null, "replace-backward");
 			index_command ("replace-backward", "Replace text backward incrementally");
 			execute_command["replace-backward"].connect (on_search_replace);
 			
+			bind_command (null, "replace-forward-regexp");
 			index_command ("replace-forward-regexp", "Replace text forward incrementally using a regular expression");
 			execute_command["replace-forward-regexp"].connect (on_search_replace);
 
+			bind_command (null, "replace-backward-regexp");
 			index_command ("replace-backward-regexp", "Replace text backward incrementally using a regular expression");
 			execute_command["replace-backward-regexp"].connect (on_search_replace);
 
@@ -335,9 +350,11 @@ namespace Vanubi.UI {
 			index_command ("redo", "Redo action");
 			execute_command["redo"].connect (on_redo);
 
+			bind_command (null, "set-tab-width");
 			index_command ("set-tab-width", "Tab width expressed in number of spaces, also used for indentation");
 			execute_command["set-tab-width"].connect (on_set_tab_width);
 
+			bind_command (null, "set-shell-scrollback");
 			index_command ("set-shell-scrollback", "Maximum number of scrollback lines used by the terminal");
 			execute_command["set-shell-scrollback"].connect (on_set_shell_scrollback);
 			
@@ -346,15 +363,19 @@ namespace Vanubi.UI {
 			index_command ("goto-line", "Jump to a line");
 			execute_command["goto-line"].connect (on_goto_line);
 	
+			bind_command (null, "pipe-shell-clipboard");
 			index_command ("pipe-shell-clipboard", "Pass selected or whole text to a shell command and copy the output to the clipboard");
 			execute_command["pipe-shell-clipboard"].connect (on_pipe_shell_clipboard);
 			
+			bind_command (null, "pipe-shell-replace");
 			index_command ("pipe-shell-replace", "Pass selected or whole text to a shell command and replace the buffer with the output");
 			execute_command["pipe-shell-replace"].connect (on_pipe_shell_replace);
 			
+			bind_command (null, "set-language");
 			index_command ("set-language", "Set the syntax highlight for this file");
 			execute_command["set-language"].connect (on_set_language);
 			
+			bind_command (null, "reload-file");
 			index_command ("reload-file", "Reopen the current file");
 			execute_command["reload-file"].connect (on_reload_file);
 
@@ -379,12 +400,15 @@ namespace Vanubi.UI {
 			index_command ("prev-error", "Jump to previous error in the compilation shell");
 			execute_command["prev-error"].connect (on_goto_error);
 
+			bind_command (null, "save-session");
 			index_command ("save-session", "Save currently opened the files in a session for being opened later");
 			execute_command["save-session"].connect (on_save_session);
 			
+			bind_command (null, "restore-session");
 			index_command ("restore-session", "Open the files of the last session");
 			execute_command["restore-session"].connect (on_restore_session);
 			
+			bind_command (null, "delete-session");
 			index_command ("delete-session", "Remove an existing session");
 			execute_command["delete-session"].connect (on_delete_session);
 			
@@ -404,15 +428,19 @@ namespace Vanubi.UI {
 			index_command ("full-screen", "Full-screen mode");
 			execute_command["full-screen"].connect (on_zen_mode);
 			
+			bind_command (null, "zen-mode");
 			index_command ("zen-mode", "Put yourself in meditation mode");
 			execute_command["zen-mode"].connect (on_zen_mode);
 			
+			bind_command (null, "update-copyright-year");
 			index_command ("update-copyright-year", "Update copyright year of the current file");
 			execute_command["update-copyright-year"].connect (on_update_copyright_year);
 			
+			bind_command (null, "toggle-autoupdate-copyright-year");
 			index_command ("toggle-autoupdate-copyright-year", "Auto update copyright year of modified files");
 			execute_command["toggle-autoupdate-copyright-year"].connect (on_toggle_autoupdate_copyright_year);
 			
+			bind_command (null, "about");
 			index_command ("about", "About");
 			execute_command["about"].connect (on_about);
 
@@ -520,8 +548,31 @@ namespace Vanubi.UI {
 			command_index.index_document (doc);
 		}
 
-		public void bind_command (Key[] keyseq, string cmd) {
-			keymanager.bind_command (keyseq, cmd);
+		public void bind_command (owned Key[] keyseq, string cmd) {
+			if (keyseq.length > 0) {
+				default_shortcuts[cmd] = new KeysWrapper (keyseq);
+			}
+			
+			var keystring = conf.get_shortcut (cmd);
+			if (keystring != null) {
+				try {
+					keyseq = parse_keys (keystring);
+				} catch (Error e) {
+					set_status_error (e.message);
+				}
+			}
+			
+			if (keyseq.length > 0) {
+				keymanager.bind_command (keyseq, cmd);
+			}
+		}
+		
+		public unowned Key[]? get_default_shortcut (string cmd) {
+			var wrapped = default_shortcuts[cmd];
+			if (wrapped != null) {
+				return wrapped.keys;
+			}
+			return null;
 		}
 
 		public void replace_widget (owned Widget old, Widget r) {
@@ -803,6 +854,7 @@ namespace Vanubi.UI {
 		
 		/* events */
 
+		const uint[] skip_keyvals = {Gdk.Key.Control_L, Gdk.Key.Control_R, Gdk.Key.Shift_L, Gdk.Key.Shift_R};
 		bool on_key_press_event (Widget w, Gdk.EventKey e) {
 			if (status_timeout == 0) {
 				// reset status bar
@@ -820,6 +872,10 @@ namespace Vanubi.UI {
 				// abort
 				clear_status ("keybinding");
 				abort (editor);
+				return true;
+			}
+			if (keyval in skip_keyvals) {
+				// skip
 				return true;
 			}
 

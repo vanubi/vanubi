@@ -229,6 +229,19 @@ namespace Vanubi {
 		public bool get_editor_bool (string key, bool default = false) {
 			return get_group_bool ("Editor", key, default);
 		}
+
+		/* Shortcuts */
+		public string get_shortcut (string command, string context = "editor") {
+			return get_group_string ("keys:"+context, command);
+		}
+		
+		public void set_shortcut (string command, string shortcut, string context = "editor") {
+			set_group_string ("keys:"+context, command, shortcut);
+		}
+		
+		public void remove_shortcut (string command, string context = "editor") {
+			remove_group_key ("keys:"+context, command);
+		}
 		
 		/* File */
 		// get files except *scratch*

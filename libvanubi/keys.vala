@@ -1,5 +1,5 @@
 /*
- *  Copyright © 2011-2013 Luca Bruno
+ *  Copyright © 2011-2014 Luca Bruno
  *
  *  This file is part of Vanubi.
  *
@@ -39,6 +39,7 @@ namespace Vanubi {
 
 	// Tree of keys for handling keybinding combos
 	class KeyNode {
+		internal weak KeyNode parent;
 		internal string command;
 		internal Key key;
 		internal HashTable<Key?, KeyNode> children = new HashTable<Key?, KeyNode> (Key.hash, Key.equal);
@@ -47,6 +48,7 @@ namespace Vanubi {
 			KeyNode child = children.get (key);
 			if (create && child == null) {
 				child = new KeyNode ();
+				child.parent = this;
 				child.key = key;
 				children[key] = child;
 			}
@@ -89,7 +91,47 @@ namespace Vanubi {
 			}
 			cur.command = cmd;
 		}
+		
+		public void rebind_command (Key[] keyseq, string cmd) {
+			remove_binding (cmd);
+			bind_command (keyseq, cmd);
+		}
+		
+		public void remove_binding (string cmd) {
+			var node = find_node (key_root, cmd);
+			if (node == null) {
+				return;
+			}
+			
+			var parent = node.parent;
+			if (parent != null) {
+				parent.children.remove (node.key);
+			}
+			node = parent;
+			
+			while (node != null && node.command == null) {
+				// clear empty keystrokes
+				parent = node.parent;
+				if (parent != null) {
+					parent.children.remove (node.key);
+				}
+				node = parent;
+			}
+		}
 
+		KeyNode find_node (KeyNode node, string command) {
+			if (node.command == command) {
+				return node;
+			}
+			foreach (var child in node.children.get_values ()) {
+				var n = find_node (child, command);
+				if (n != null) {
+					return n;
+				}
+			}
+			return null;
+		}
+		
 		bool get_binding_helper (GenericArray<Key?> res, KeyNode node, string command) {
 			if (node.command == command) {
 				res.add (node.key);
@@ -106,19 +148,16 @@ namespace Vanubi {
 			return false;
 		}
 
-		public Key?[]? get_binding (string command) {
+		public Key[]? get_binding (string command) {
 			var arr = new GenericArray<Key?> ();
 			get_binding_helper (arr, key_root, command);
 			if (arr.data.length == 0) {
 				return null;
 			}
-			var res = (owned) arr.data;
-			arr.data.length = 0; // bug that has been recently fixed in vala
+			var res = new Key[arr.length];
 			// reverse array
-			for (int i=0; i <= (res.length-1)/2; i++) {
-				var tmp = res[i];
-				res[i] = res[res.length-1-i];
-				res[res.length-1-i] = tmp;
+			for (var i=0; i < arr.length; i++) {
+				res[arr.length-i-1] = arr[i];
 			}
 			return res;
 		}
