@@ -986,7 +986,7 @@ namespace Vanubi.UI {
 					}
 			});
 			bar.aborted.connect (() => { abort (editor); });
-			add_overlay (bar);
+			add_overlay (bar, OverlayMode.PANE_BOTTOM);
 			bar.show ();
 			bar.grab_focus ();
 		}
