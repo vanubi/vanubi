@@ -15,10 +15,11 @@ $ git clone http://github.com/vanubi/vanubi.git
 $ cd vanubi
 $ ./autogen.sh
 $ make
-$ gui/vanubi
+$ gui/vanubi # to run without installing
+# make install
 -------
 
-Installation is not yet supported. Vanubi is only tested on Linux systems.
+Vanubi is only tested on Linux systems.
 
 Make sure to have the most recent Vala compiler at your disposal.
 
