@@ -33,32 +33,36 @@ namespace Vanubi {
 		}
 		
 		/* Returns the git directory that contains this file */
-		public File? get_repo (File? file) {
-			if (file == null) {
-				return null;
-			}
-			var git_command = config.get_global_string ("git_command", "git");
-			string stdout;
-			string stderr;
-			int status;
-			try {
-				string[] argv;
-				Shell.parse_argv (@"$git_command rev-parse --show-cdup", out argv);
-				if (!Process.spawn_sync (file.get_parent().get_path(),
-										 argv, null, SpawnFlags.SEARCH_PATH,
-										 null, out stdout, out stderr, out status)) {
-					return null;
-				}
-				if (stderr.strip() != "") {
-					return null;
-				}
-				if (status != 0) {
-					return null;
-				}
-				return file.get_parent().get_child (stdout.strip ());
-			} catch (Error e) {
-				return null;
-			}
+		public async File? get_repo (File? file, Cancellable? cancellable = null) {
+			return yield run_in_thread<File?> (() => {
+					if (file == null) {
+						return null;
+					}
+					var git_command = config.get_global_string ("git_command", "git");
+					string stdout;
+					string stderr;
+					int status;
+					try {
+						string[] argv;
+						Shell.parse_argv (@"$git_command rev-parse --show-cdup", out argv);
+						if (!Process.spawn_sync (file.get_parent().get_path(),
+												 argv, null, SpawnFlags.SEARCH_PATH,
+												 null, out stdout, out stderr, out status)) {
+							return null;
+						}
+						cancellable.set_error_if_cancelled ();
+						
+						if (stderr.strip() != "") {
+							return null;
+						}
+						if (status != 0) {
+							return null;
+						}
+						return file.get_parent().get_child (stdout.strip ());
+					} catch (Error e) {
+						return null;
+					}
+			});
 		}
 		
 		public void grep () {
@@ -66,7 +70,7 @@ namespace Vanubi {
 		}
 		
 		/* Based on https://github.com/jisaacks/GitGutter/blob/master/git_gutter_handler.py#L116 */
-		private HashTable<int, DiffType> parse_diff (uint8[] diff_buffer, Cancellable cancellable) {
+		private HashTable<int, DiffType>? parse_diff (uint8[] diff_buffer, Cancellable cancellable) {
 			var table = new HashTable<int, DiffType> (null, null);
 			Regex hr = new Regex ("^@@ -(\\d+),?(\\d*) \\+(\\d+),?(\\d*) @@");
 			string[] lines = ((string)diff_buffer).split ("\n");
@@ -99,8 +103,8 @@ namespace Vanubi {
 			return table;
 		}
 		
-		public async HashTable<int, DiffType>? diff_buffer (File file, uint8[] input, Cancellable cancellable) throws Error {
-			var repo = get_repo (file);
+		public async HashTable<int, DiffType>? diff_buffer (File file, owned uint8[] input, Cancellable cancellable) throws Error {
+			var repo = yield get_repo (file, cancellable);
 			if (repo == null) {
 				return null;
 			}
@@ -108,7 +112,7 @@ namespace Vanubi {
 			var filename = repo.get_relative_path (file);
 			
 			string cmdline = @"diff -d -U0 <($git_command show HEAD:$filename) -";
-			var output = yield execute_shell_async (repo, cmdline, input, cancellable);
+			var output = yield execute_shell_async (repo, cmdline, input, null, cancellable);
 			cancellable.set_error_if_cancelled ();
 			
 			var table = yield run_in_thread<HashTable<int, DiffType>> (() => { return parse_diff (output, cancellable); });

@@ -434,20 +434,19 @@ namespace Vanubi.UI {
 				
 				var cancellable = diff_cancellable = new Cancellable ();
 				git.diff_buffer.begin (file, view.buffer.text.data, cancellable, (obj, res) => {
+						HashTable<int, DiffType> table;
 						try {
-							HashTable<int, DiffType> table;
-							try {
-								table = git.diff_buffer.end (res);
-							} catch (IOError.CANCELLED e) {
-								return;
-							}
-		
-							diff_cancellable = null;
-							gutter_renderer.table = table;
-							gutter.queue_draw ();
+							table = git.diff_buffer.end (res);
+						} catch (IOError.CANCELLED e) {
+							return;
 						} catch (Error e) {
 							manager.set_status_error (e.message, "git-gutter");
+							return;
 						}
+		
+						diff_cancellable = null;
+						gutter_renderer.table = table;
+						gutter.queue_draw ();
 				});
 			}
 		}

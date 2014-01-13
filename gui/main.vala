@@ -1819,8 +1819,12 @@ namespace Vanubi.UI {
 		}
 		
 		void on_repo_grep (Editor editor) {
+			repo_grep.begin (editor);
+		}
+		
+		async void repo_grep (Editor editor) {
 			Git git = new Git (conf);
-			var repo_dir = git.get_repo (editor.file);
+			var repo_dir = yield git.get_repo (editor.file);
 			if (repo_dir == null) {
 				set_status ("Not in git repository");
 				return;
@@ -1886,8 +1890,12 @@ namespace Vanubi.UI {
 		}
 
 		void on_repo_open_file (Editor editor) {
+			repo_open_file.begin (editor);
+		}
+			
+		async void repo_open_file (Editor editor) {
 			Git git = new Git (conf);
-			var repo_dir = git.get_repo (editor.file);
+			var repo_dir = yield git.get_repo (editor.file);
 			if (repo_dir == null) {
 				set_status ("Not in git repository");
 				return;

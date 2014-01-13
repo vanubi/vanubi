@@ -121,12 +121,10 @@ namespace Vanubi {
 		}
 	}
 	
-	public async uint8[] execute_shell_async (File? working_dir, string command_line, uint8[]? input = null,
-						  Cancellable? cancellable = null) throws Error {
+	public async uint8[] execute_shell_async (File? working_dir, string command_line, uint8[]? input = null, out uint8[] errors = null, Cancellable? cancellable = null) throws Error {
 		string[] argv = {"bash", "-c", command_line};
 		int stdin, stdout, stderr;
-		Process.spawn_async_with_pipes (working_dir.get_path (), argv, null, SpawnFlags.SEARCH_PATH, null, null,
-						out stdin, out stdout, out stderr);
+		Process.spawn_async_with_pipes (working_dir.get_path (), argv, null, SpawnFlags.SEARCH_PATH, null, null, out stdin, out stdout, out stderr);
 		
 		var os = new UnixOutputStream (stdin, true);
 		if (input != null) {
@@ -136,7 +134,12 @@ namespace Vanubi {
 		
 		var is = new UnixInputStream (stdout, true);
 		var res = yield read_all_async (is, cancellable);
+		
+		var eis = new UnixInputStream (stderr, true);
+		errors = yield read_all_async (is, cancellable);
+		
 		is.close ();
+		eis.close ();
 		return res;
 	}
 	
