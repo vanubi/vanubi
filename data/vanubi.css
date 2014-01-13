@@ -28,6 +28,10 @@ VanubiUIEditorView {
 	background: black;
 }
 
+VanubiUIEditorView:selected {
+	background: blue;
+}
+
 .filename {
 	font-weight: bold;
 }
