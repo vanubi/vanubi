@@ -13,6 +13,7 @@ $ ./autogen.sh
 $ make
 $ gui/vanubi # to run without installing
 # make install
+# ldconfig
 ```
 
 Vanubi is only tested on Linux systems.
