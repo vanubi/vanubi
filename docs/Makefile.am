@@ -8,6 +8,8 @@ manual.html: manual.asciidoc manual.conf
 manual-stripped.html: manual.asciidoc manual.conf
 	$(ASCIIDOC) -s -f manual.conf -b html5 -o manual-stripped.html manual.asciidoc
 
+CLEANFILES = manual.html manual-stripped.html
+
 else
 
 all:
