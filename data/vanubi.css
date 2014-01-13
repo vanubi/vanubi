@@ -24,6 +24,10 @@ VanubiUIEditorInfoBar.nonfocused GtkLabel {
 	color: #555753;
 }
 
+VanubiUIEditorView {
+	background: black;
+}
+
 .filename {
 	font-weight: bold;
 }
