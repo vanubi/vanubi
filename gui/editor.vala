@@ -184,6 +184,10 @@ namespace Vanubi.UI {
 			sw.add (view);
 			add (sw);
 
+			gutter = view.get_gutter (TextWindowType.LEFT);
+			gutter_renderer = new GitGutterRenderer ();
+			gutter.insert (gutter_renderer, 0);
+			
 			// lower information bar
 			infobar = new EditorInfoBar ();
 			infobar.expand = false;
@@ -422,11 +426,6 @@ namespace Vanubi.UI {
 
 		void on_git_gutter () {
 			if (file_loaded) {
-				if (gutter == null) {
-					gutter = view.get_gutter (TextWindowType.LEFT);
-					gutter_renderer = new GitGutterRenderer ();
-					gutter.insert (gutter_renderer, 0);
-				}
 				Git git = new Git (conf);
 				git.diff_buffer.begin (file, view.buffer.text.data, (obj, res) => {
 						HashTable<int, DiffType> table = git.diff_buffer.end (res);

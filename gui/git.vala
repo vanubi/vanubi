@@ -28,6 +28,7 @@ namespace Vanubi {
 			bg.parse ("#000000");
 			background_rgba = bg; /* XXX: get editor bg color */
 			size = 3;
+			table = new HashTable<int, DiffType> (null, null);
 		}
 		
 		public void update_table (HashTable<int, DiffType> table) {
