@@ -64,7 +64,35 @@ namespace Vanubi {
 					}
 			});
 		}
-		
+
+		public async bool file_in_repo (File? file, Cancellable? cancellable = null) {
+			return yield run_in_thread<bool> (() => {
+					if (file == null) {
+						return false;
+					}
+					
+					var git_command = config.get_global_string ("git_command", "git");
+					string stdout;
+					string stderr;
+					int status;
+					try {
+						string[] argv;
+						var escaped = Shell.quote (file.get_path());
+						Shell.parse_argv (@"$git_command ls-files --error-unmatch '$escaped'", out argv);
+						if (!Process.spawn_sync (file.get_parent().get_path(),
+												 argv, null, SpawnFlags.SEARCH_PATH,
+												 null, out stdout, out stderr, out status)) {
+							return false;
+						}
+						cancellable.set_error_if_cancelled ();
+						
+						return status == 0;
+					} catch (Error e) {
+						return false;
+					}
+			});
+		}
+			
 		public void grep () {
 			/* TODO */
 		}
@@ -104,6 +132,11 @@ namespace Vanubi {
 		}
 		
 		public async HashTable<int, DiffType>? diff_buffer (File file, owned uint8[] input, Cancellable cancellable) throws Error {
+			var in_repo = yield file_in_repo (file, cancellable);
+			if (!in_repo) {
+				return null;
+			}
+			
 			var repo = yield get_repo (file, cancellable);
 			if (repo == null) {
 				return null;
