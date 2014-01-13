@@ -443,6 +443,10 @@ namespace Vanubi.UI {
 			bind_command (null, "about");
 			index_command ("about", "About");
 			execute_command["about"].connect (on_about);
+			
+			bind_command (null, "toggle-git-gutter");
+			index_command ("toggle-git-gutter", "Toggle git-gutter");
+			execute_command["toggle-git-gutter"].connect (on_toggle_git_gutter);
 
 			// setup empty buffer
 			unowned Editor ed = get_available_editor (null);
@@ -2206,6 +2210,16 @@ namespace Vanubi.UI {
 			main_box.remove (editors_grid);
 			main_box.add (bar);
 			bar.grab_focus ();
+		}
+		
+		void on_toggle_git_gutter (Editor editor) {
+			var val = !conf.get_editor_bool ("git_gutter", true);
+			conf.set_editor_bool ("git_gutter", val);
+			set_status (val ? "Enabled" : "Disabled");
+			each_editor ((ed) => {
+					ed.on_git_gutter();
+					return true;
+			});
 		}
 	}
 

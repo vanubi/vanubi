@@ -229,6 +229,10 @@ namespace Vanubi {
 		public bool get_editor_bool (string key, bool default = false) {
 			return get_group_bool ("Editor", key, default);
 		}
+		
+		public void set_editor_bool (string key, bool value) {
+			set_group_bool ("Editor", key, value);
+		}
 
 		/* Shortcuts */
 		public string get_shortcut (string command, string context = "editor") {

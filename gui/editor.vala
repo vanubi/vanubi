@@ -152,7 +152,7 @@ namespace Vanubi.UI {
 		int old_selection_end_offset = -1;
 		FileMonitor monitor;
 		SourceGutter? gutter = null;
-		GitGutterRenderer gutter_renderer;
+		GitGutterRenderer? gutter_renderer = null;
 		bool file_loaded = false;
 		Cancellable diff_cancellable = null;
 		uint diff_timer = 0;
@@ -185,10 +185,8 @@ namespace Vanubi.UI {
 			sw.expand = true;
 			sw.add (view);
 			add (sw);
-
-			gutter = view.get_gutter (TextWindowType.LEFT);
-			gutter_renderer = new GitGutterRenderer ();
-			gutter.insert (gutter_renderer, 0);
+			
+			on_git_gutter ();
 			
 			// lower information bar
 			infobar = new EditorInfoBar ();
@@ -426,7 +424,22 @@ namespace Vanubi.UI {
 			on_file_count ();
 		}
 
-		void on_git_gutter () {
+		public void on_git_gutter () {
+			if (!conf.get_editor_bool("git_gutter", true)) {
+				if (gutter != null) {
+					gutter.remove (gutter_renderer);
+					gutter = null;
+					gutter_renderer = null;
+				}
+				return;
+			}
+			
+			if (gutter == null) {
+				gutter = view.get_gutter (TextWindowType.LEFT);
+				gutter_renderer = new GitGutterRenderer ();
+				gutter.insert (gutter_renderer, 0);
+			}
+			
 			if (file_loaded) {
 				if (diff_timer > 0) {
 					Source.remove (diff_timer);
