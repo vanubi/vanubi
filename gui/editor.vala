@@ -375,6 +375,8 @@ namespace Vanubi.UI {
 			file_loading.set_markup ("<i>loading...</i>");
 			
 			try {
+				// we need to restore the original cursor after loading the first file chunk,
+				// otherwise the cursor goes bottom
 				bool first_load = true;
 				
 				var data = new uint8[4096];
@@ -445,6 +447,7 @@ namespace Vanubi.UI {
 					Source.remove (diff_timer);
 				}
 				
+				// this is needed to limit the number of spawned processes
 				diff_timer = Timeout.add (100, () => {
 						diff_timer = 0;
 						
@@ -481,6 +484,7 @@ namespace Vanubi.UI {
 			buf.get_iter_at_mark (out insert, buf.get_insert ());
 			int line = insert.get_line ();
 			
+			// we count tabs as tab_width
 			TextIter iter;
 			buf.get_iter_at_line (out iter, line);
 			int column = 0;

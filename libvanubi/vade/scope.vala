@@ -1,5 +1,5 @@
 /*
-*  Copyright © 2014 Luca Bruno
+*  Copyright © 2013-2014 Luca Bruno
 *
 *  This file is part of Vanubi.
 *

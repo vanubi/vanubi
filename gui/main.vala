@@ -554,9 +554,12 @@ namespace Vanubi.UI {
 
 		public void bind_command (owned Key[]? keyseq, string cmd) {
 			if (keyseq.length > 0) {
+				// save the default shortcut from the main method,
+				// so we can easily reset the default shortcut later in the helpbar
 				default_shortcuts[cmd] = new KeysWrapper (keyseq);
 			}
 			
+			// get a customized shortcut from the config
 			var keystring = conf.get_shortcut (cmd);
 			if (keystring != null) {
 				try {
@@ -566,6 +569,7 @@ namespace Vanubi.UI {
 				}
 			}
 			
+			// bother only if there's actually a shortcut for the command
 			if (keyseq.length > 0) {
 				keymanager.bind_command (keyseq, cmd);
 			}
