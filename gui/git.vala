@@ -59,7 +59,7 @@ namespace Vanubi {
 				} else if (t == DiffType.DEL) {
 					colorize_gutter (cr, background_area, 0xcc, 0, 0); /* scarlet red */
 				} else {
-					colorize_gutter (cr, background_area, 0xad, 0x7f, 0xa8); /* plum */
+					colorize_gutter (cr, background_area, 0xb0, 0x37, 0xa3); /* plum */
 				}
 			} else {
 				/* XXX: get editor bg color */
