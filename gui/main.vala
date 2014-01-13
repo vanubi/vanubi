@@ -1896,7 +1896,14 @@ namespace Vanubi.UI {
 			var git_command = conf.get_global_string ("git_command", "git");
 			
 			execute_shell_async.begin (repo_dir, @"$(git_command) ls-files", null, null, (s,r) => {
-					var res = (string) execute_shell_async.end (r);
+					string res;
+					try {
+						res = (string) execute_shell_async.end (r);
+					} catch (Error e) {
+						set_status_error (e.message, "repo-open-file");
+						return;
+					}
+					
 					var file_names = res.split ("\n");
 					var annotated = new Annotated<File>[file_names.length];
 					for (var i=0; i < file_names.length; i++) {

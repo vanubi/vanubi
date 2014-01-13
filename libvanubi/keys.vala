@@ -119,7 +119,7 @@ namespace Vanubi {
 			}
 		}
 
-		KeyNode find_node (KeyNode node, string command) {
+		KeyNode? find_node (KeyNode node, string command) {
 			if (node.command == command) {
 				return node;
 			}

@@ -634,8 +634,6 @@ namespace Vanubi {
 				return;
 			}
 
-			var prev_indent = buf.get_indent (prev_line);
-			
 			// indent
 			var unclosed = count_unclosed (prev_line);
 			if (unclosed == 0) {

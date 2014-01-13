@@ -101,7 +101,7 @@ namespace Vanubi {
 			var filename = repo.get_relative_path (file);
 			
 			try {
-				string cmdline =@"diff -d -U0 <(git show HEAD:$filename) -";
+				string cmdline =@"diff -d -U0 <($git_command show HEAD:$filename) -";
 				var output = yield execute_shell_async (repo, cmdline, input);
 				parse_diff (output, ref table);
 				return table;
