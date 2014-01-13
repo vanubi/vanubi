@@ -78,7 +78,7 @@ namespace Vanubi {
 					try {
 						string[] argv;
 						var escaped = Shell.quote (file.get_path());
-						Shell.parse_argv (@"$git_command ls-files --error-unmatch '$escaped'", out argv);
+						Shell.parse_argv (@"$git_command ls-files --error-unmatch $escaped", out argv);
 						if (!Process.spawn_sync (file.get_parent().get_path(),
 												 argv, null, SpawnFlags.SEARCH_PATH,
 												 null, out stdout, out stderr, out status)) {
