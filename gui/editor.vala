@@ -156,6 +156,7 @@ namespace Vanubi.UI {
 		bool file_loaded = false;
 		Cancellable diff_cancellable = null;
 		uint diff_timer = 0;
+		uint save_session_timer = 0;
 		
 		public Editor (Manager manager, Configuration conf, File? file) {
 			this.manager = manager;
@@ -499,8 +500,15 @@ namespace Vanubi.UI {
 
 			file_count.set_label ("(%d, %d)".printf (line+1, column+1));
 			
-			// update current location
-			manager.save_session (this);
+			// update current location, use a timer to reduce the number of disk writes
+			if (save_session_timer > 0) {
+				Source.remove (save_session_timer);
+			}
+			save_session_timer = Timeout.add (100, () => {
+					save_session_timer = 0;
+					manager.save_session (this);
+					return false;
+			});
 		}
 
 		void on_modified_changed () {
