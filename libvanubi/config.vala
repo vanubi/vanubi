@@ -28,6 +28,7 @@ namespace Vanubi {
 		File file;
 		Cancellable saving_cancellable;
 		public FileCluster cluster;
+		bool save_queued = false;
 
 		[CCode (cname = "VERSION", cheader_filename = "config.h")]
 		public extern const string VANUBI_VERSION;
@@ -282,12 +283,30 @@ namespace Vanubi {
 		public async void save () {
 			/* We save the file asynchronously (including the backup),
 			   so that the user does not experience any UI lag. */
+			if (save_queued) {
+				return;
+			}
+			
 			var saving_data = backend.to_data ();
-			if (saving_cancellable != null && !saving_cancellable.is_cancelled ()) {
+			if (saving_cancellable != null) {
 				// Cancel any previous save() operation 
 				saving_cancellable.cancel ();
+				// Wait until it's effectively cancelled
+				save_queued = true;
+				Timeout.add (10, () => {
+						if (saving_cancellable == null) {
+							Idle.add (save.callback);
+							return false;
+						} else {
+							return true;
+						}
+				});
+				yield;
 			}
+			
+			save_queued = false;
 			saving_cancellable = new Cancellable ();
+			
 			try {
 				// create a backup
 				var bak = File.new_for_path (file.get_path()+".bak");
@@ -301,6 +320,8 @@ namespace Vanubi {
 			} catch (Error e) {
 				// TODO: display error message
 				warning ("Could not save configuration: %s", e.message);
+			} finally {
+				saving_cancellable = null;
 			}
 		}
 	}
