@@ -29,6 +29,7 @@ vanubi_VALASOURCES = \
 	aboutbar.vala \
 	util.vala \
 	vade.vala	\
+	git.vala \
 	$(NULL)
 
 vanubi_SOURCES = \

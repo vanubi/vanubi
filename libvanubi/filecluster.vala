@@ -56,35 +56,5 @@ namespace Vanubi {
 			}
 			return file;
 		}
-		
-		// Returns the git directory that contains this file
-		public File? get_git_repo (File? file) {
-			if (file == null) {
-				return null;
-			}
-			var git_command = config.get_global_string ("git_command", "git");
-			string stdout;
-			int status;
-			try {
-				string[] argv;
-				Shell.parse_argv (@"$git_command rev-parse --show-toplevel", out argv);
-				if (!Process.spawn_sync (file.get_parent().get_path(),
-										 {git_command, "rev-parse", "--show-toplevel"},
-										 null,
-										 SpawnFlags.SEARCH_PATH,
-										 null, out stdout, null, out status)) {
-					return null;
-				}
-				if (status != 0) {
-					return null;
-				}
-				if (stdout.strip() == "") {
-					return null;
-				}
-				return File.new_for_path (stdout.strip ());
-			} catch (Error e) {
-				return null;
-			}
-		}
 	}
 }

@@ -1819,7 +1819,8 @@ namespace Vanubi.UI {
 		}
 		
 		void on_repo_grep (Editor editor) {
-			var repo_dir = conf.cluster.get_git_repo (editor.file);
+			Git git = new Git (conf);
+			var repo_dir = git.get_repo (editor.file);
 			if (repo_dir == null) {
 				set_status ("Not in git repository");
 				return;
@@ -1854,10 +1855,10 @@ namespace Vanubi.UI {
 					int stdout, stderr;
 					try {
 						Process.spawn_async_with_pipes (repo_dir.get_path(),
-														{git_command, "grep", "-inI", "--color", pat},
-														null,
-														SpawnFlags.SEARCH_PATH,
-														null, null, null, out stdout, out stderr);
+										{git_command, "grep", "-inI", "--color", pat},
+										null,
+										SpawnFlags.SEARCH_PATH,
+										null, null, null, out stdout, out stderr);
 					} catch (Error e) {
 						set_status_error (e.message, "repo-grep");
 						return;
@@ -1885,7 +1886,8 @@ namespace Vanubi.UI {
 		}
 
 		void on_repo_open_file (Editor editor) {
-			var repo_dir = conf.cluster.get_git_repo (editor.file);
+			Git git = new Git (conf);
+			var repo_dir = git.get_repo (editor.file);
 			if (repo_dir == null) {
 				set_status ("Not in git repository");
 				return;
