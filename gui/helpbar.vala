@@ -129,7 +129,6 @@ namespace Vanubi.UI {
 				manager.keymanager.remove_binding (cmd);
 				manager.conf.remove_shortcut (cmd);
 			} else {
-				var str = keys_to_string (keys);
 				manager.keymanager.rebind_command (keys, cmd);
 				manager.conf.set_shortcut (changing_command, keys_to_string (keys));
 			}

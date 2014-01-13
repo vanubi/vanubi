@@ -548,7 +548,7 @@ namespace Vanubi.UI {
 			command_index.index_document (doc);
 		}
 
-		public void bind_command (owned Key[] keyseq, string cmd) {
+		public void bind_command (owned Key[]? keyseq, string cmd) {
 			if (keyseq.length > 0) {
 				default_shortcuts[cmd] = new KeysWrapper (keyseq);
 			}
@@ -1892,7 +1892,6 @@ namespace Vanubi.UI {
 			}
 			
 			var git_command = conf.get_global_string ("git_command", "git");
-			InputStream? stream = null;
 			
 			execute_shell_async.begin (repo_dir, @"$(git_command) ls-files", null, null, (s,r) => {
 					var res = (string) execute_shell_async.end (r);
