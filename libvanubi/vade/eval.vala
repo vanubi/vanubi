@@ -1,5 +1,5 @@
 /*
- *  Copyright © 2013 Luca Bruno
+ *  Copyright © 2014 Luca Bruno
  *
  *  This file is part of Vanubi.
  *
@@ -20,7 +20,7 @@
 namespace Vanubi.Vade {
 	public class EvalVisitor : Visitor {
 		Value value;
-		public Value error; // make it publicy accessible to get the original error
+		Value error; // make it publicy accessible to get the original error
 		Scope scope;
 		Cancellable cancellable;
 		
@@ -296,7 +296,13 @@ namespace Vanubi.Vade {
 			
 			if (func != null) {
 				var innerscope = new Scope (func.scope ?? scope, false);
-				value = yield func.func.eval (innerscope, args, out error, cancellable);
+				try {
+					value = yield func.func.eval (innerscope, args, out error, cancellable);
+				} catch (IOError.CANCELLED e) {
+					return;
+				} catch (VError.EVAL_ERROR e) {
+					error = new StringValue (e.message);
+				}
 			} else {
 				value = NullValue.instance;
 			}

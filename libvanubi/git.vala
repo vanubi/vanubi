@@ -27,6 +27,15 @@ namespace Vanubi {
 
 	public class Git {
 		unowned Configuration config;
+		static Regex hunk_regex;
+		
+		static construct {
+			try {
+				hunk_regex = new Regex ("^@@ -(\\d+),?(\\d*) \\+(\\d+),?(\\d*) @@");
+			} catch (Error e) {
+				warning (e.message);
+			}
+		}
 		
 		public Git (Configuration config) {
 			this.config = config;
@@ -34,63 +43,75 @@ namespace Vanubi {
 		
 		/* Returns the git directory that contains this file */
 		public async File? get_repo (File? file, Cancellable? cancellable = null) {
-			return yield run_in_thread<File?> (() => {
-					if (file == null) {
-						return null;
-					}
-					var git_command = config.get_global_string ("git_command", "git");
-					string stdout;
-					string stderr;
-					int status;
-					try {
-						string[] argv;
-						Shell.parse_argv (@"$git_command rev-parse --show-cdup", out argv);
-						if (!Process.spawn_sync (file.get_parent().get_path(),
-												 argv, null, SpawnFlags.SEARCH_PATH,
-												 null, out stdout, out stderr, out status)) {
+			try {
+				return yield run_in_thread<File?> (() => {
+						if (file == null) {
 							return null;
 						}
-						cancellable.set_error_if_cancelled ();
-						
-						if (stderr.strip() != "") {
+						var git_command = config.get_global_string ("git_command", "git");
+						string stdout;
+						string stderr;
+						int status;
+						try {
+							string[] argv;
+							Shell.parse_argv (@"$git_command rev-parse --show-cdup", out argv);
+							if (!Process.spawn_sync (file.get_parent().get_path(),
+													 argv, null, SpawnFlags.SEARCH_PATH,
+													 null, out stdout, out stderr, out status)) {
+								return null;
+							}
+							cancellable.set_error_if_cancelled ();
+							
+							if (stderr.strip() != "") {
+								return null;
+							}
+							if (status != 0) {
+								return null;
+							}
+							return file.get_parent().get_child (stdout.strip ());
+						} catch (Error e) {
+							warning (e.message);
 							return null;
 						}
-						if (status != 0) {
-							return null;
-						}
-						return file.get_parent().get_child (stdout.strip ());
-					} catch (Error e) {
-						return null;
-					}
-			});
+				});
+			} catch (Error e) {
+				warning (e.message);
+				return null;
+			}
 		}
 
 		public async bool file_in_repo (File? file, Cancellable? cancellable = null) {
-			return yield run_in_thread<bool> (() => {
-					if (file == null) {
-						return false;
-					}
-					
-					var git_command = config.get_global_string ("git_command", "git");
-					string stdout;
-					string stderr;
-					int status;
-					try {
-						string[] argv;
-						var escaped = Shell.quote (file.get_path());
-						Shell.parse_argv (@"$git_command ls-files --error-unmatch $escaped", out argv);
-						if (!Process.spawn_sync (file.get_parent().get_path(),
-												 argv, null, SpawnFlags.SEARCH_PATH,
-												 null, out stdout, out stderr, out status)) {
+			try {
+				return yield run_in_thread<bool> (() => {
+						if (file == null) {
 							return false;
 						}
-						cancellable.set_error_if_cancelled ();
 						
-						return status == 0;
-					} catch (Error e) {
-						return false;
-					}
-			});
+						var git_command = config.get_global_string ("git_command", "git");
+						string stdout;
+						string stderr;
+						int status;
+						try {
+							string[] argv;
+							var escaped = Shell.quote (file.get_path());
+							Shell.parse_argv (@"$git_command ls-files --error-unmatch $escaped", out argv);
+							if (!Process.spawn_sync (file.get_parent().get_path(),
+													 argv, null, SpawnFlags.SEARCH_PATH,
+													 null, out stdout, out stderr, out status)) {
+								return false;
+							}
+							cancellable.set_error_if_cancelled ();
+							
+							return status == 0;
+						} catch (Error e) {
+							warning (e.message);
+							return false;
+						}
+				});
+			} catch (Error e) {
+				warning (e.message);
+				return false;
+			}
 		}
 			
 		public void grep () {
@@ -100,7 +121,6 @@ namespace Vanubi {
 		/* Based on https://github.com/jisaacks/GitGutter/blob/master/git_gutter_handler.py#L116 */
 		private HashTable<int, DiffType>? parse_diff (uint8[] diff_buffer, Cancellable cancellable) {
 			var table = new HashTable<int, DiffType> (null, null);
-			Regex hr = new Regex ("^@@ -(\\d+),?(\\d*) \\+(\\d+),?(\\d*) @@");
 			string[] lines = ((string)diff_buffer).split ("\n");
 			
 			for (var i=0; i<lines.length; i++) {
@@ -109,7 +129,7 @@ namespace Vanubi {
 				}
 				
 				MatchInfo hunks;
-				if (hr.match (lines[i], 0, out hunks)) {
+				if (hunk_regex.match (lines[i], 0, out hunks)) {
 					int start = int.parse (hunks.fetch (3));
 					int old_size = (hunks.fetch (2) == "") ? 1 : int.parse (hunks.fetch (2));
 					int new_size = (hunks.fetch (4) == "") ? 1 : int.parse (hunks.fetch (4));

@@ -148,7 +148,12 @@ namespace Vanubi {
 	// Returns true if any copyright year has been replaced
 	public bool update_copyright_year (Buffer buf) {
 		if (update_copyright_year_regex == null) {
-			update_copyright_year_regex = new Regex ("Copyright.*(\\d\\d\\d\\d)", RegexCompileFlags.OPTIMIZE | RegexCompileFlags.CASELESS);
+			try {
+				update_copyright_year_regex = new Regex ("Copyright.*(\\d\\d\\d\\d)", RegexCompileFlags.OPTIMIZE | RegexCompileFlags.CASELESS);
+			} catch (Error e) {
+				warning (e.message);
+				return false;
+			}
 		}
 		var year = new DateTime.now_local ().get_year ();
 		
@@ -193,7 +198,7 @@ namespace Vanubi {
 			Object (base_stream: base_stream);
 		}
 		
-		public async void ensure_filled (ssize_t size, int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) throws IOError {
+		public async void ensure_filled (ssize_t size, int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) throws Error {
 			if (get_available () < size) {
 				var res = yield fill_async (size, io_priority, cancellable);
 				if (res <= 0) {
@@ -202,17 +207,17 @@ namespace Vanubi {
 			}
 		}
 		
-		public async int32 read_int32_async (int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) throws IOError {
+		public async int32 read_int32_async (int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) throws Error {
 			yield ensure_filled ((ssize_t) sizeof (int32));
 			return read_int32 (cancellable);
 		}
 		
-		public async int32 read_byte_async (int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) throws IOError {
+		public async int32 read_byte_async (int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) throws Error {
 			yield ensure_filled ((ssize_t) sizeof (uint8));
 			return read_byte (cancellable);
 		}
 		
-		public async string read_zero_terminated_string (int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) throws IOError {
+		public async string read_zero_terminated_string (int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) throws Error {
 			return yield read_upto_async ("\0", 1, io_priority, cancellable, null);
 		}
 	}
