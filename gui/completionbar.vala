@@ -88,7 +88,7 @@ namespace Vanubi.UI {
 						var result = complete.end (r, out common_choice);
 						cancellable.set_error_if_cancelled ();
 						cancellable = null;
-						if (completion_box != null) {
+						if (completion_box != null && completion_box.parent == this) {
 							remove (completion_box);
 						}
 						if (result != null) {
