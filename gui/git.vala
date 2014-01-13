@@ -42,8 +42,10 @@ namespace Vanubi {
 			cr.restore ();
 		}
 		
-		public override void draw (Cairo.Context cr, Gdk.Rectangle background_area, Gdk.Rectangle cell_area,
-					   TextIter start, TextIter end, SourceGutterRendererState state) {
+		public override void draw (Cairo.Context cr,
+								   Gdk.Rectangle background_area, Gdk.Rectangle cell_area,
+								   TextIter start, TextIter end,
+								   SourceGutterRendererState state) {
 			base.draw (cr, background_area, cell_area, start, end, state);
 			
 			if (table == null) {
@@ -53,11 +55,11 @@ namespace Vanubi {
 			if (table.contains (start.get_line () + 1)) {
 				DiffType t = table.lookup (start.get_line () + 1);
 				if (t == DiffType.ADD) {
-					colorize_gutter (cr, background_area, 115, 210, 22); /* chamaeleon */
+					colorize_gutter (cr, background_area, 0x73, 0xd2, 0x16); /* chamaeleon */
 				} else if (t == DiffType.DEL) {
-					colorize_gutter (cr, background_area, 204, 0, 0); /* scarlet red */
+					colorize_gutter (cr, background_area, 0xcc, 0, 0); /* scarlet red */
 				} else {
-					colorize_gutter (cr, background_area, 117, 80, 123); /* plum */
+					colorize_gutter (cr, background_area, 0xad, 0x7f, 0xa8); /* plum */
 				}
 			} else {
 				/* XXX: get editor bg color */
