@@ -82,21 +82,17 @@ namespace Vanubi.UI {
 			}
 			
 			// ugly :P
-			shortcut_label.set_markup ("<b>saving in 3 seconds</b>");
+			var keystr = keys_to_string (captured_keys);
+			shortcut_label.set_markup (@"<b>saving as <$keystr> in 3 seconds</b>");
 			capture_timeout = Timeout.add_seconds (1, () => {
-					shortcut_label.set_markup ("<b>saving in 2 seconds</b>");
+					shortcut_label.set_markup (@"<b>saving as <$keystr> in 2 seconds</b>");
 					capture_timeout = Timeout.add_seconds (1, () => {
-							shortcut_label.set_markup ("<b>saving in 1 second</b>");
+							shortcut_label.set_markup (@"<b>saving as <$keystr> in 1 second</b>");
 							capture_timeout = Timeout.add_seconds (1, () => {
 									save_shortcut (changing_command);
 									capturing = false;
 									
-									capture_timeout = Timeout.add_seconds (2, () => {
-											shortcut_label.set_markup ("<b>C-r = reset shortcut     C-c = modify shortcut</b>");
-											capture_timeout = 0;
-											captured_keys = null;
-											return false;
-									});
+									
 									return false;
 							});
 							return false;
@@ -118,6 +114,16 @@ namespace Vanubi.UI {
 				manager.conf.set_shortcut (changing_command, keys_to_string (keys));
 			}
 			
+			if (capture_timeout > 0) {
+				Source.remove (capture_timeout);
+			}
+			capture_timeout = Timeout.add_seconds (2, () => {
+					shortcut_label.set_markup ("<b>C-r = reset shortcut     C-c = modify shortcut</b>");
+					capture_timeout = 0;
+					captured_keys = null;
+					return false;
+			});
+			
 			manager.conf.save.begin ();
 			// refresh
 			search (entry.get_text ());
@@ -133,6 +139,16 @@ namespace Vanubi.UI {
 				manager.conf.set_shortcut (changing_command, keys_to_string (keys));
 			}
 			shortcut_label.set_markup ("<b>reset shortcut for %s</b>".printf (cmd));
+			
+			if (capture_timeout > 0) {
+				Source.remove (capture_timeout);
+			}
+			capture_timeout = Timeout.add_seconds (2, () => {
+					shortcut_label.set_markup ("<b>C-r = reset shortcut     C-c = modify shortcut</b>");
+					capture_timeout = 0;
+					captured_keys = null;
+					return false;
+			});
 			
 			manager.conf.save.begin ();
 			// refresh
