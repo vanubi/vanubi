@@ -15,7 +15,7 @@ $ git clone http://github.com/vanubi/vanubi.git
 $ cd vanubi
 $ ./autogen.sh
 $ make
-$ gui/vanubi # to run without installing
+$ gui/vanubi     # to run without installing
 # make install
 # ldconfig
 -------
@@ -23,6 +23,9 @@ $ gui/vanubi # to run without installing
 Vanubi is only tested on Linux systems.
 
 Make sure to have the most recent Vala compiler at your disposal.
+
+[CAUTION]
+Vanubi is a young and unstable software. Vanubi crashes may lead to data loss. Save, double check and backup your files often!
 
 == Key/mouse bindings
 keywords:[keys keybindings mousebindings mouse]
