@@ -419,6 +419,11 @@ namespace Vanubi.UI {
 		/* events */
 
 		void on_buffer_changed () {
+			if (!(view.buffer is SourceBuffer)) {
+				// very weird, done on textview disposal
+				return;
+			}
+			
 			var buf = (SourceBuffer) view.buffer;
 			buf.mark_set.connect (on_file_count);
 			buf.changed.connect (on_file_count);
