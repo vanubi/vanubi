@@ -118,7 +118,15 @@
   margin-top: 2.0em;
   margin-bottom: 2.0em;
   margin-right: 10%;
-  color: #606060;
+  color: #888a85;
+}
+#topics div.admonitionblock .icon .title {
+    background-image: url('../images/caution.png');
+    background-size: 40px;
+    background-repeat: no-repeat;
+    height: 70px;
+    background-position-y: 30px;
+    background-position-x: 50%;
 }
 
 #topics div.content { /* Block element content. */
@@ -191,7 +199,6 @@
   vertical-align: top;
   font-size: 1.1em;
   font-weight: bold;
-  text-decoration: underline;
   color: #527bbd;
   padding-right: 0.5em;
 }
