@@ -1886,7 +1886,8 @@ namespace Vanubi.UI {
 		}
 
 		void on_repo_open_file (Editor editor) {
-			var repo_dir = conf.cluster.get_git_repo (editor.file);
+			Git git = new Git (conf);
+			var repo_dir = git.get_repo (editor.file);
 			if (repo_dir == null) {
 				set_status ("Not in git repository");
 				return;
