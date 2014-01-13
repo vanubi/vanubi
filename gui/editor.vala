@@ -151,7 +151,10 @@ namespace Vanubi.UI {
 		int old_selection_start_offset = -1;
 		int old_selection_end_offset = -1;
 		FileMonitor monitor;
-
+		SourceGutter? gutter = null;
+		GitGutterRenderer gutter_renderer;
+		bool file_loaded = false;
+		
 		public Editor (Manager manager, Configuration conf, File? file) {
 			this.manager = manager;
 			this.file = file;
@@ -172,7 +175,7 @@ namespace Vanubi.UI {
 
 			SourceStyleScheme st = editor_style.get_scheme(conf.get_editor_string ("style", "zen"));
 			if (st != null) { /* Use default if not found */
-				((SourceBuffer)view.buffer).set_style_scheme(st);
+					  ((SourceBuffer)view.buffer).set_style_scheme(st);
 			}
 
 			// scrolled window
@@ -224,14 +227,14 @@ namespace Vanubi.UI {
 					infobar.get_style_context().remove_class ("nonfocused");
 					infobar.reset_style (); // GTK+ 3.4 bug, solved in 3.6
 					return false;
-				});
+			});
 
 			view.focus_out_event.connect(() => {
 					update_old_selection ();
 					infobar.get_style_context().add_class ("nonfocused");
 					infobar.reset_style (); // GTK+ 3.4 bug, solved in 3.6
 					return false;
-				});
+			});
 			
 			restart_monitor ();
 		}
@@ -244,7 +247,7 @@ namespace Vanubi.UI {
 				monitor = null;
 			}
 			if (file != null) {
-			   	/* XXX: use FileMonitorFlags.WATCH_HARD_LINKS with valac >= 0.20.2 */
+				/* XXX: use FileMonitorFlags.WATCH_HARD_LINKS with valac >= 0.20.2 */
 				file.set_data<TimeVal?> ("editing_mtime", get_mtime ());
 				try {
 					monitor = file.monitor (FileMonitorFlags.NONE);
@@ -270,7 +273,7 @@ namespace Vanubi.UI {
 		public void update_old_selection () {
 			TextIter old_selection_start, old_selection_end;
 			view.buffer.get_selection_bounds (out old_selection_start,
-											  out old_selection_end);
+							  out old_selection_end);
 			old_selection_start_offset = old_selection_start.get_offset ();
 			old_selection_end_offset = old_selection_end.get_offset ();
 		}
@@ -318,8 +321,8 @@ namespace Vanubi.UI {
 			TextIter iter;
 			view.buffer.get_iter_at_mark (out iter, view.buffer.get_insert ());
 			var loc = new Location (file,
-									iter.get_line (),
-									iter.get_line_offset ());
+						iter.get_line (),
+						iter.get_line_offset ());
 			return loc;
 		}
 		
@@ -340,7 +343,7 @@ namespace Vanubi.UI {
 			var mark = get_end_mark_for_location (location, buf);
 			buf.get_iter_at_mark (out end_iter, mark);
 			buf.select_range (start_iter, end_iter);
-	
+
 			update_old_selection ();
 			
 			return true;
@@ -356,6 +359,8 @@ namespace Vanubi.UI {
 				loading_cancellable.cancel ();
 			}
 			loading_cancellable = cancellable;
+			
+			file_loaded = false;
 			
 			var buf = (SourceBuffer) view.buffer;
 			reset_language ();
@@ -373,7 +378,7 @@ namespace Vanubi.UI {
 				while (true) {
 					ssize_t r;
 					if (first_load) { // first loads sync
-						r = is.read (data, cancellable);
+							  r = is.read (data, cancellable);
 					} else {
 						r = yield is.read_async (data, Priority.LOW, cancellable);
 					}
@@ -399,6 +404,8 @@ namespace Vanubi.UI {
 				}
 			} finally {
 				file_loading.set_markup ("");
+				file_loaded = true;
+				on_git_gutter ();
 			}
 		}
 		
@@ -408,10 +415,27 @@ namespace Vanubi.UI {
 			var buf = (SourceBuffer) view.buffer;
 			buf.mark_set.connect (on_file_count);
 			buf.changed.connect (on_file_count);
+			buf.changed.connect (on_git_gutter);
 			buf.modified_changed.connect (on_modified_changed);
 			on_file_count ();
 		}
 
+		void on_git_gutter () {
+			if (file_loaded) {
+				if (gutter == null) {
+					gutter = view.get_gutter (TextWindowType.LEFT);
+					gutter_renderer = new GitGutterRenderer ();
+					gutter.insert (gutter_renderer, 0);
+				}
+				Git git = new Git (conf);
+				git.diff_buffer.begin (file, view.buffer.text.data, (obj, res) => {
+						HashTable<int, DiffType> table = git.diff_buffer.end (res);
+						gutter_renderer.update_table (table);
+						gutter.queue_draw ();
+				});
+			}
+		}
+		
 		void on_file_count () {
 			TextIter insert;
 			var buf = view.buffer;
