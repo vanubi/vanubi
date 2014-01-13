@@ -66,10 +66,16 @@ namespace Vanubi {
 		}
 		
 		/* Based on https://github.com/jisaacks/GitGutter/blob/master/git_gutter_handler.py#L116 */
-		private void parse_diff (uint8[] diff_buffer, ref HashTable<int, DiffType> table) {
+		private HashTable<int, DiffType> parse_diff (uint8[] diff_buffer, Cancellable cancellable) {
+			var table = new HashTable<int, DiffType> (null, null);
 			Regex hr = new Regex ("^@@ -(\\d+),?(\\d*) \\+(\\d+),?(\\d*) @@");
 			string[] lines = ((string)diff_buffer).split ("\n");
+			
 			for (var i=0; i<lines.length; i++) {
+				if (cancellable.is_cancelled ()) {
+					return null;
+				}
+				
 				MatchInfo hunks;
 				if (hr.match (lines[i], 0, out hunks)) {
 					int start = int.parse (hunks.fetch (3));
@@ -89,25 +95,26 @@ namespace Vanubi {
 					}
 				}
 			}
+			
+			return table;
 		}
 		
-		public async HashTable<int, DiffType> diff_buffer (File file, uint8[] input) {
-			HashTable<int, DiffType> table = new HashTable<int, DiffType> (null, null);
+		public async HashTable<int, DiffType>? diff_buffer (File file, uint8[] input, Cancellable cancellable) throws Error {
 			var repo = get_repo (file);
 			if (repo == null) {
-				return table;
+				return null;
 			}
 			var git_command = config.get_global_string ("git_command", "git");
 			var filename = repo.get_relative_path (file);
 			
-			try {
-				string cmdline =@"diff -d -U0 <($git_command show HEAD:$filename) -";
-				var output = yield execute_shell_async (repo, cmdline, input);
-				parse_diff (output, ref table);
-				return table;
-			} catch (Error e) {
-				return table;
-			}
+			string cmdline = @"diff -d -U0 <($git_command show HEAD:$filename) -";
+			var output = yield execute_shell_async (repo, cmdline, input, cancellable);
+			cancellable.set_error_if_cancelled ();
+			
+			var table = yield run_in_thread<HashTable<int, DiffType>> (() => { return parse_diff (output, cancellable); });
+			cancellable.set_error_if_cancelled ();
+			
+			return table;
 		}
 	}
 }

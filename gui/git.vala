@@ -21,18 +21,13 @@ using Gtk;
 
 namespace Vanubi {
 	public class GitGutterRenderer : SourceGutterRenderer {
-		HashTable<int, DiffType> table;
+		public HashTable<int, DiffType>? table = null;
 		
 		public GitGutterRenderer () {
 			Gdk.RGBA bg = Gdk.RGBA ();
 			bg.parse ("#000000");
 			background_rgba = bg; /* XXX: get editor bg color */
 			size = 3;
-			table = new HashTable<int, DiffType> (null, null);
-		}
-		
-		public void update_table (HashTable<int, DiffType> table) {
-			this.table = table;
 		}
 		
 		private void colorize_gutter (Cairo.Context cr, Gdk.Rectangle rect, int r, int g, int b) {
@@ -49,11 +44,7 @@ namespace Vanubi {
 								   SourceGutterRendererState state) {
 			base.draw (cr, background_area, cell_area, start, end, state);
 			
-			if (table == null) {
-				return;
-			}
-
-			if (table.contains (start.get_line () + 1)) {
+			if (table != null && table.contains (start.get_line () + 1)) {
 				DiffType t = table.lookup (start.get_line () + 1);
 				if (t == DiffType.ADD) {
 					colorize_gutter (cr, background_area, 0x73, 0xd2, 0x16); /* chamaeleon */

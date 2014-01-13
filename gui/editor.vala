@@ -154,6 +154,7 @@ namespace Vanubi.UI {
 		SourceGutter? gutter = null;
 		GitGutterRenderer gutter_renderer;
 		bool file_loaded = false;
+		Cancellable diff_cancellable = null;
 		
 		public Editor (Manager manager, Configuration conf, File? file) {
 			this.manager = manager;
@@ -427,10 +428,26 @@ namespace Vanubi.UI {
 		void on_git_gutter () {
 			if (file_loaded) {
 				Git git = new Git (conf);
-				git.diff_buffer.begin (file, view.buffer.text.data, (obj, res) => {
-						HashTable<int, DiffType> table = git.diff_buffer.end (res);
-						gutter_renderer.update_table (table);
-						gutter.queue_draw ();
+				if (diff_cancellable != null) {
+					diff_cancellable.cancel ();
+				}
+				
+				var cancellable = diff_cancellable = new Cancellable ();
+				git.diff_buffer.begin (file, view.buffer.text.data, cancellable, (obj, res) => {
+						try {
+							HashTable<int, DiffType> table;
+							try {
+								table = git.diff_buffer.end (res);
+							} catch (IOError.CANCELLED e) {
+								return;
+							}
+		
+							diff_cancellable = null;
+							gutter_renderer.table = table;
+							gutter.queue_draw ();
+						} catch (Error e) {
+							manager.set_status_error (e.message, "git-gutter");
+						}
 				});
 			}
 		}
