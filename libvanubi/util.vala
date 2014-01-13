@@ -143,13 +143,15 @@ namespace Vanubi {
 		return res;
 	}
 	
-	static Regex update_copyright_year_regex = null;
+	static Regex update_copyright_year_regex1 = null;
+	static Regex update_copyright_year_regex2 = null;
 	
 	// Returns true if any copyright year has been replaced
 	public bool update_copyright_year (Buffer buf) {
-		if (update_copyright_year_regex == null) {
+		if (update_copyright_year_regex1 == null || update_copyright_year_regex2 == null) {
 			try {
-				update_copyright_year_regex = new Regex ("Copyright.*(\\d\\d\\d\\d)", RegexCompileFlags.OPTIMIZE | RegexCompileFlags.CASELESS);
+				update_copyright_year_regex1 = new Regex ("Copyright.*\\d\\d\\d\\d-(\\d\\d\\d\\d)", RegexCompileFlags.OPTIMIZE | RegexCompileFlags.CASELESS);
+				update_copyright_year_regex2 = new Regex ("Copyright.*(\\d\\d\\d\\d)", RegexCompileFlags.OPTIMIZE | RegexCompileFlags.CASELESS);
 			} catch (Error e) {
 				warning (e.message);
 				return false;
@@ -166,7 +168,7 @@ namespace Vanubi {
 				var text = buf.line_text (iter.line);
 				
 				MatchInfo info;
-				if (update_copyright_year_regex.match (text, 0, out info)) {
+				if (update_copyright_year_regex1.match (text, 0, out info)) {
 					var cur_year = info.fetch (1);
 					if (cur_year == year.to_string ()) {
 						// already up-to-date
@@ -179,6 +181,20 @@ namespace Vanubi {
 					var end = buf.line_at_byte (iter.line, pos+4);
 					buf.delete (iter, end);
 					buf.insert (iter, year.to_string ());
+					return true;
+				} else if (update_copyright_year_regex2.match (text, 0, out info)) {
+					var cur_year = info.fetch (1);
+					if (cur_year == year.to_string ()) {
+						// already up-to-date
+						return false;
+					}
+					
+					int pos;
+					info.fetch_pos (1, out pos, null);
+					iter = buf.line_at_byte (iter.line, pos);
+					var end = buf.line_at_byte (iter.line, pos+4);
+					buf.delete (iter, end);
+					buf.insert (iter, @"$cur_year-$year");
 					return true;
 				}
 				
