@@ -28,12 +28,10 @@ namespace Vanubi {
 	public class Git {
 		unowned Configuration config;
 		static Regex hunk_regex;
-		static Regex head_regex;
 		
 		static construct {
 			try {
 				hunk_regex = new Regex ("^@@ -(\\d+),?(\\d*) \\+(\\d+),?(\\d*) @@");
-				head_regex = new Regex ("^ref: \\w+/\\w+/(\\w+)");
 			} catch (Error e) {
 				warning (e.message);
 			}
