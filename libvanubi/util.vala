@@ -18,6 +18,10 @@
  */
 
 namespace Vanubi {
+	/* Useful for functional combinators.
+	   Return false to quit the loop. */
+	public delegate bool Operation<G> (G object);
+
 	public delegate G TaskFunc<G> () throws Error;
 
 	public class Location : Object {

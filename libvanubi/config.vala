@@ -280,6 +280,11 @@ namespace Vanubi {
 			remove_group_key (group, key);
 		}
 		
+		public bool has_file_key (File? file, string key) {
+			var group = file != null ? file.get_uri () : "*scratch*";
+			return has_group_key (group, key);
+		}
+		
 		public async void save () {
 			if (save_queued) {
 				return;

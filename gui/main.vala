@@ -739,9 +739,6 @@ namespace Vanubi.UI {
 
 		/* File/Editor/etc. COMBINATORS */
 		
-		// return false to quit the loop
-		public delegate bool Operation<G> (G object);
-		
 		// iterate all files and perform the given operation on each of them
 		public bool each_file (Operation<File?> op, bool include_scratch = true) {
 			if (include_scratch) {
