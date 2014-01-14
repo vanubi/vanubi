@@ -448,7 +448,7 @@ namespace Vanubi.UI {
 			index_command ("toggle-git-gutter", "Toggle git-gutter");
 			execute_command["toggle-git-gutter"].connect (on_toggle_git_gutter);
 			
-			bind_command (null, "toggle-show-branch");
+			bind_command ({ Key (Gdk.Key.F12, 0) }, "toggle-show-branch");
 			index_command ("toggle-show-branch", "Show git branch in the info bar");
 			execute_command["toggle-show-branch"].connect (on_toggle_show_branch);
 
@@ -2234,7 +2234,10 @@ namespace Vanubi.UI {
 			var val = !conf.get_editor_bool ("show_branch", false);
 			conf.set_editor_bool ("show_branch", val);
 			set_status (val ? "Enabled" : "Disabled");
-			/* TODO: reload all opened files */
+			each_editor ((ed) => {
+					ed.update_show_branch ();
+					return true;
+			});
 		}
 	}
 
