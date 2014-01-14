@@ -127,11 +127,16 @@ namespace Vanubi {
 		Pid child_pid;
 		Process.spawn_async_with_pipes (working_dir.get_path (), argv, null, SpawnFlags.SEARCH_PATH | SpawnFlags.DO_NOT_REAP_CHILD, null, out child_pid, out stdin, out stdout, out stderr);
 		
-		int st = 0;
+		int st = 0xdead;
 		ChildWatch.add (child_pid, (pid, sta) => {
 			// Triggered when the child indicated by child_pid exits
 			Process.close_pid (pid);
-			st = sta;
+			if (st == 0xdead) {
+				st = sta;
+				execute_shell_async.callback ();
+			} else {
+				st = sta;
+			}
 		});
 		
 		var os = new UnixOutputStream (stdin, true);
@@ -149,6 +154,10 @@ namespace Vanubi {
 		is.close ();
 		eis.close ();
 		
+		if (st == 0xdead) {
+			// wait till child watch
+			yield;
+		}
 		status = st;
 		return res;
 	}
