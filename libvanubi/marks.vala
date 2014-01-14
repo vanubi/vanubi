@@ -21,6 +21,11 @@
 	 public class MarkManager {
 		 List<Location> stack = null;
 		 unowned List<Location> current = null;
+
+		 public void clear () {
+			 current = null;
+			 stack = null;
+		 }
 		 
 		 public void mark (Location loc) {
 			 if (current == null) {

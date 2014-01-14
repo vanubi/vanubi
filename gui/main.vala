@@ -416,6 +416,10 @@ namespace Vanubi.UI {
 			index_command ("mark", "Save the current location to the stack of positions");
 			execute_command["mark"].connect (on_mark);
 			
+			bind_command (null, "clear-marks");
+			index_command ("clear-marks", "Delete the stack of all marked positions");
+			execute_command["clear-marks"].connect (on_clear_marks);
+			
 			bind_command ({ Key ('.', Gdk.ModifierType.CONTROL_MASK) }, "next-mark");
 			index_command ("next-mark", "Go to the next saved position");
 			execute_command["next-mark"].connect (on_goto_mark);
@@ -1021,6 +1025,11 @@ namespace Vanubi.UI {
 			get_start_mark_for_location (loc, editor.view.buffer); // create a TextMark
 			marks.mark (loc);
 			set_status ("Mark saved", "marks");
+		}
+		
+		void on_clear_marks (Editor editor) {
+			marks.clear ();
+			set_status ("Marks cleared", "marks");
 		}
 		
 		void on_goto_mark (Editor editor, string command) {
