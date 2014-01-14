@@ -1,5 +1,5 @@
 /*
- *  Copyright © 2013 Luca Bruno
+ *  Copyright © 2013-2014 Luca Bruno
  *
  *  This file is part of Vanubi.
  *
@@ -26,7 +26,7 @@ namespace Vanubi {
 			if (f1 == f2) {
 				return 0;
 			}
-			if (f1 != null && f1.equal (f2)) {
+			if (f1 != null && f2 != null && f1.equal (f2)) {
 				return 0;
 			}
 			return -1;
