@@ -85,6 +85,8 @@ namespace Vanubi.UI {
 									foreach (unowned TextTag tag in tags) {
 										apply_tag (tag, start, end);
 									}
+								} catch (IOError.CANCELLED e) {
+									return null;
 								} catch (Error e) {
 								} finally {
 									Gdk.threads_leave ();
@@ -237,44 +239,47 @@ namespace Vanubi.UI {
 		}
 		
 		public async void read_stream (InputStream stream, Cancellable cancellable) {
+			var buf = view.buffer;
+			TextIter cursor;
+			buf.get_iter_at_mark (out cursor, buf.get_insert ());
+			var cursor_offset = cursor.get_offset ();
+			
 			try {
 				uint8[] buffer = new uint8[1024];
-				bool first_load = true;
 				while (true) {
 					manager.set_status ("Searching...", "grep");
-					ssize_t read;
-					if (first_load) { // first loads sync
-						read = stream.read (buffer, cancellable);
-					} else {
-						read = yield stream.read_async (buffer, Priority.DEFAULT, cancellable);
-					}
+					var read = yield stream.read_async (buffer, Priority.DEFAULT, cancellable);
 					if (read == 0) {
 						break;
 					}
+
+					// keep the cursor at the beginning, or honor any user movement
+					var old_offset = cursor_offset;
+					buf.get_iter_at_mark (out cursor, buf.get_insert ());
+					cursor_offset = old_offset;
+					TextIter iter;
+					buf.get_end_iter (out iter);
+					
+					if (iter.equal (cursor)) {
+						// reset cursor
+						buf.get_iter_at_offset (out cursor, old_offset);
+						buf.place_cursor (cursor);
+					}
 					
 					// write
-					TextIter iter;
-					view.buffer.get_end_iter (out iter);
 					cancellable.set_error_if_cancelled ();
-					yield ((GrepBuffer) view.buffer).insert_text_colored (iter, (string) buffer, (int) read, cancellable);
+					yield ((GrepBuffer) buf).insert_text_colored (iter, (string) buffer, (int) read, cancellable);
 					cancellable.set_error_if_cancelled ();
-					
-					// restore cursor position
-					if (first_load) {
-						first_load = false;
-						view.buffer.get_start_iter (out iter);
-						view.buffer.place_cursor (iter);
-					}
 				}
 				
 				// delete the last line if it's empty
 				TextIter start_iter, end_iter;
-				view.buffer.get_end_iter (out end_iter);
-				view.buffer.get_iter_at_line (out start_iter, end_iter.get_line ());
-				var text = view.buffer.get_text (start_iter, end_iter, false);
+				buf.get_end_iter (out end_iter);
+				buf.get_iter_at_line (out start_iter, end_iter.get_line ());
+				var text = buf.get_text (start_iter, end_iter, false);
 				if (text.strip () == "") {
 					start_iter.backward_char ();
-					view.buffer.delete (ref start_iter, ref end_iter);
+					buf.delete (ref start_iter, ref end_iter);
 				}
 			} catch (Error e) {
 			} finally {

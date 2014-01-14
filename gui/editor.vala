@@ -380,39 +380,39 @@ namespace Vanubi.UI {
 			
 			file_loading.set_markup ("<i>loading...</i>");
 			
+			TextIter cursor;
+			buf.get_iter_at_mark (out cursor, buf.get_insert ());
+			var cursor_offset = cursor.get_offset ();
 			try {
-				// we need to restore the original cursor after loading the first file chunk,
-				// otherwise the cursor goes bottom
-				bool first_load = true;
-				
 				var data = new uint8[4096];
 				string? default_charset = null;
 				while (true) {
-					ssize_t r;
-					if (first_load) { // first loads sync
-							  r = is.read (data, cancellable);
-					} else {
-						r = yield is.read_async (data, Priority.LOW, cancellable);
-					}
+					var r = yield is.read_async (data, Priority.LOW, cancellable);
 					if (r == 0) {
 						break;
 					}
 					
 					data = convert_to_utf8 (data, ref default_charset, null, null);
 
+					// keep the cursor at the beginning, or honor any user movement
+					int old_offset = cursor_offset;
+					buf.get_iter_at_mark (out cursor, buf.get_insert ());
+					cursor_offset = cursor.get_offset ();
 					TextIter iter;
-					buf.get_end_iter (out iter);
+					view.buffer.get_end_iter (out iter);
+					
+					if (iter.equal (cursor)) {
+						// reset cursor
+						buf.get_iter_at_offset (out cursor, old_offset);
+						view.buffer.place_cursor (cursor);
+					}
+					
+					// write
 					buf.begin_not_undoable_action ();
 					var old_modified = buf.get_modified ();
 					buf.insert (ref iter, (string) data, (int) r);
 					buf.set_modified (old_modified);
 					buf.end_not_undoable_action ();
-					
-					if (first_load) {
-						first_load = false;
-						buf.get_start_iter (out iter);
-						buf.place_cursor (iter);
-					}
 				}
 			} finally {
 				file_loading.set_markup ("");
