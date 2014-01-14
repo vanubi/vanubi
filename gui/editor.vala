@@ -156,7 +156,6 @@ namespace Vanubi.UI {
 		GitGutterRenderer? gutter_renderer = null;
 		bool file_loaded = false;
 		Cancellable diff_cancellable = null;
-		Cancellable show_branch_cancellable = null;
 		uint diff_timer = 0;
 		uint save_session_timer = 0;
 		Git git;
@@ -425,12 +424,7 @@ namespace Vanubi.UI {
 		
 		public void update_show_branch () {
 			if (conf.get_editor_bool ("show_branch", false)) {
-				if (show_branch_cancellable != null) {
-					show_branch_cancellable.cancel ();
-				}
-						
-				var cancellable = show_branch_cancellable = new Cancellable ();
-				git.current_branch.begin (file, cancellable, (s, r) => {
+				git.current_branch.begin (file, null, (s, r) => {
 						string bname;
 						try {
 							bname = git.current_branch.end (r);
@@ -448,8 +442,6 @@ namespace Vanubi.UI {
 							git_branch.margin_left = 0;
 							git_branch.label = "";
 						}
-
-						show_branch_cancellable = null;
 				});
 			} else {
 				git_branch.margin_left = 0;

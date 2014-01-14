@@ -120,25 +120,24 @@ namespace Vanubi {
 			/* TODO */
 		}
 		
-		public async string? current_branch (File? file, Cancellable? cancellable) throws Error {
-			var in_repo = yield file_in_repo (file, cancellable);
-			if (!in_repo) {
+		public async string? current_branch (File? file, Cancellable? cancellable = null) throws Error {
+			if (file == null) {
 				return null;
 			}
-			var repo = yield get_repo (file, cancellable);
-			if (repo == null) {
+			
+			var git_command = config.get_global_string ("git_command", "git");
+			
+			string cmdline = @"$git_command rev-parse --abbrev-ref HEAD";
+			uint8[] errors;
+			var output = (string) yield execute_shell_async (file.get_parent(), cmdline, null, out errors, cancellable);
+			cancellable.set_error_if_cancelled ();
+			
+			unowned string stderr = (string) errors;
+			if (stderr.strip() != "" || output.strip () == "") {
 				return null;
 			}
-			var repo_path = repo.get_path ();
-			var head_file = File.parse_name (@"$repo_path/.git/HEAD");
-			var stream = @head_file.read (cancellable);
-			DataInputStream dstream = new DataInputStream (@stream);
-			var line = dstream.read_line ();
-			MatchInfo branch;
-			if (head_regex.match (line, 0, out branch)) {
-				return branch.fetch (1);
-			}
-			return null;
+			
+			return output.strip ();
 		}
 		
 		/* Based on https://github.com/jisaacks/GitGutter/blob/master/git_gutter_handler.py#L116 */
