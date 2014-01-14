@@ -281,18 +281,16 @@ namespace Vanubi {
 		}
 		
 		public async void save () {
-			/* We save the file asynchronously (including the backup),
-			   so that the user does not experience any UI lag. */
 			if (save_queued) {
 				return;
 			}
 			
-			var saving_data = backend.to_data ();
 			if (saving_cancellable != null) {
 				// Cancel any previous save() operation 
 				saving_cancellable.cancel ();
 				// Wait until it's effectively cancelled
 				save_queued = true;
+				// Yes, spin lock
 				Timeout.add (10, () => {
 						if (saving_cancellable == null) {
 							Idle.add (save.callback);
@@ -306,6 +304,7 @@ namespace Vanubi {
 			
 			save_queued = false;
 			saving_cancellable = new Cancellable ();
+			var saving_data = backend.to_data ();
 			
 			try {
 				// create a backup

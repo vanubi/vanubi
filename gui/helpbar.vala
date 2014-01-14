@@ -179,7 +179,7 @@ namespace Vanubi.UI {
 				if (cmd == null) {
 					manager.set_status ("No command selected", "help");
 				} else {
-					changing_command = completion_box.get_selected_command ();
+					changing_command = cmd;
 					captured_keys = null;
 					capturing = true;
 					restart_capture_timeout ();
