@@ -146,6 +146,7 @@ namespace Vanubi.UI {
 		Label file_count;
 		Label file_status;
 		Label file_external_changed;
+		Label git_branch;
 		Label file_loading;
 		EditorInfoBar infobar;
 		int old_selection_start_offset = -1;
@@ -157,6 +158,7 @@ namespace Vanubi.UI {
 		Cancellable diff_cancellable = null;
 		uint diff_timer = 0;
 		uint save_session_timer = 0;
+		Git git;
 		
 		public Editor (Manager manager, Configuration conf, File? file) {
 			this.manager = manager;
@@ -165,6 +167,8 @@ namespace Vanubi.UI {
 			orientation = Orientation.VERTICAL;
 			expand = true;
 
+			git = new Git (conf);
+			
 			/* Style */
 			editor_style = new SourceStyleSchemeManager();
 			editor_style.set_search_path (get_styles_search_path ());
@@ -206,6 +210,9 @@ namespace Vanubi.UI {
 			file_count = new Label ("(0, 0)");
 			file_count.margin_left = 20;
 			infobar.add (file_count);
+			
+			git_branch = new Label ("");
+			infobar.add (git_branch);
 
 			file_status = new Label ("");
 			file_status.margin_left = 20;
@@ -412,6 +419,32 @@ namespace Vanubi.UI {
 			} finally {
 				file_loading.set_markup ("");
 				file_loaded = true;
+				
+				if (conf.get_editor_bool ("show_branch", false)) {
+					git.current_branch.begin (file, cancellable, (s, r) => {
+							string bname;
+							try {
+								bname = git.current_branch.end (r);
+							} catch (IOError.CANCELLED e) {
+								return;
+							} catch (Error e) {
+								manager.set_status_error (e.message, "show-branch");
+								return;
+							}
+							
+							if (bname != null) {
+								git_branch.margin_left = 20;
+								git_branch.label = "git:" + bname;
+							} else {
+								git_branch.margin_left = 0;
+								git_branch.label = "";
+							}
+					});
+				} else {
+					git_branch.margin_left = 0;
+					git_branch.label = "";
+				}
+				
 				on_git_gutter ();
 			}
 		}
@@ -457,7 +490,6 @@ namespace Vanubi.UI {
 				diff_timer = Timeout.add (100, () => {
 						diff_timer = 0;
 						
-						Git git = new Git (conf);
 						if (diff_cancellable != null) {
 							diff_cancellable.cancel ();
 						}

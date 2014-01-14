@@ -28,10 +28,12 @@ namespace Vanubi {
 	public class Git {
 		unowned Configuration config;
 		static Regex hunk_regex;
+		static Regex head_regex;
 		
 		static construct {
 			try {
 				hunk_regex = new Regex ("^@@ -(\\d+),?(\\d*) \\+(\\d+),?(\\d*) @@");
+				head_regex = new Regex ("^ref: \\w+/\\w+/(\\w+)");
 			} catch (Error e) {
 				warning (e.message);
 			}
@@ -116,6 +118,27 @@ namespace Vanubi {
 			
 		public void grep () {
 			/* TODO */
+		}
+		
+		public async string? current_branch (File? file, Cancellable? cancellable) throws Error {
+			var in_repo = yield file_in_repo (file, cancellable);
+			if (!in_repo) {
+				return null;
+			}
+			var repo = yield get_repo (file, cancellable);
+			if (repo == null) {
+				return null;
+			}
+			var repo_path = repo.get_path ();
+			var head_file = File.parse_name (@"$repo_path/.git/HEAD");
+			var stream = @head_file.read (cancellable);
+			DataInputStream dstream = new DataInputStream (@stream);
+			var line = dstream.read_line ();
+			MatchInfo branch;
+			if (head_regex.match (line, 0, out branch)) {
+				return branch.fetch (1);
+			}
+			return null;
 		}
 		
 		/* Based on https://github.com/jisaacks/GitGutter/blob/master/git_gutter_handler.py#L116 */
