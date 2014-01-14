@@ -121,10 +121,18 @@ namespace Vanubi {
 		}
 	}
 	
-	public async uint8[] execute_shell_async (File? working_dir, string command_line, uint8[]? input = null, out uint8[] errors = null, Cancellable? cancellable = null) throws Error {
+	public async uint8[] execute_shell_async (File? working_dir, string command_line, uint8[]? input = null, out uint8[] errors = null, out int status = null, Cancellable? cancellable = null) throws Error {
 		string[] argv = {"bash", "-c", command_line};
 		int stdin, stdout, stderr;
-		Process.spawn_async_with_pipes (working_dir.get_path (), argv, null, SpawnFlags.SEARCH_PATH, null, null, out stdin, out stdout, out stderr);
+		Pid child_pid;
+		Process.spawn_async_with_pipes (working_dir.get_path (), argv, null, SpawnFlags.SEARCH_PATH | SpawnFlags.DO_NOT_REAP_CHILD, null, out child_pid, out stdin, out stdout, out stderr);
+		
+		int st = 0;
+		ChildWatch.add (child_pid, (pid, sta) => {
+			// Triggered when the child indicated by child_pid exits
+			Process.close_pid (pid);
+			st = sta;
+		});
 		
 		var os = new UnixOutputStream (stdin, true);
 		if (input != null) {
@@ -140,6 +148,8 @@ namespace Vanubi {
 		
 		is.close ();
 		eis.close ();
+		
+		status = st;
 		return res;
 	}
 	

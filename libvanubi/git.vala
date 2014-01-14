@@ -128,12 +128,11 @@ namespace Vanubi {
 			var git_command = config.get_global_string ("git_command", "git");
 			
 			string cmdline = @"$git_command rev-parse --abbrev-ref HEAD";
-			uint8[] errors;
-			var output = (string) yield execute_shell_async (file.get_parent(), cmdline, null, out errors, cancellable);
+			int status;
+			var output = (string) yield execute_shell_async (file.get_parent(), cmdline, null, null, out status, cancellable);
 			cancellable.set_error_if_cancelled ();
 			
-			unowned string stderr = (string) errors;
-			if (stderr.strip() != "" || output.strip () == "") {
+			if (status != 0 || output.strip () == "") {
 				return null;
 			}
 			
@@ -187,7 +186,7 @@ namespace Vanubi {
 			var filename = repo.get_relative_path (file);
 			
 			string cmdline = @"diff -d -U0 <($git_command show HEAD:$filename) -";
-			var output = yield execute_shell_async (repo, cmdline, input, null, cancellable);
+			var output = yield execute_shell_async (repo, cmdline, input, null, null, cancellable);
 			cancellable.set_error_if_cancelled ();
 			
 			var table = yield run_in_thread<HashTable<int, DiffType>> (() => { return parse_diff (output, cancellable); });
