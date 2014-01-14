@@ -78,6 +78,7 @@ namespace Vanubi.UI {
 									TextIter end;
 									get_end_iter (out end);
 									var offset = end.get_offset ();
+									if (((string)converted).length != converted.length) message("asd");
 									insert_text (ref end, (string) converted, converted.length);
 									// apply tags
 									TextIter start;
@@ -96,7 +97,7 @@ namespace Vanubi.UI {
 							// parse command
 							i++; // [
 							i++;
-							if (new_text[i] == 'm') {
+							if (i < new_text_length && new_text[i] == 'm') {
 								tags.length = 0;
 								last_start = i+1;
 							} else {
@@ -108,7 +109,7 @@ namespace Vanubi.UI {
 									}
 									// next attribute
 									while (++i < new_text_length && new_text[i] != ';' && new_text[i] != 'm');
-									if (new_text[i] == ';') {
+									if (i < new_text_length && new_text[i] == ';') {
 										i++;
 									}
 								}
@@ -131,6 +132,7 @@ namespace Vanubi.UI {
 							TextIter end;
 							get_end_iter (out end);
 							var offset = end.get_offset ();
+							if (((string)converted).length != converted.length) message("dsa");
 							insert_text (ref end, (string) converted, converted.length);
 							// apply tags
 							TextIter start;
@@ -245,7 +247,8 @@ namespace Vanubi.UI {
 			var cursor_offset = cursor.get_offset ();
 			
 			try {
-				uint8[] buffer = new uint8[1024];
+				uint8[] buffer = new uint8[1025];
+				buffer.length--; // trailing zero
 				while (true) {
 					manager.set_status ("Searching...", "grep");
 					var read = yield stream.read_async (buffer, Priority.DEFAULT, cancellable);
@@ -268,6 +271,7 @@ namespace Vanubi.UI {
 					
 					// write
 					cancellable.set_error_if_cancelled ();
+					buffer[read] = '\0';
 					yield ((GrepBuffer) buf).insert_text_colored (iter, (string) buffer, (int) read, cancellable);
 					cancellable.set_error_if_cancelled ();
 				}
