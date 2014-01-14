@@ -80,38 +80,13 @@ namespace Vanubi {
 			}
 		}
 
-		public async bool file_in_repo (File? file, Cancellable? cancellable = null) {
-			try {
-				return yield run_in_thread<bool> (() => {
-						if (file == null) {
-							return false;
-						}
-						
-						var git_command = config.get_global_string ("git_command", "git");
-						string stdout;
-						string stderr;
-						int status;
-						try {
-							string[] argv;
-							var escaped = Shell.quote (file.get_path());
-							Shell.parse_argv (@"$git_command ls-files --error-unmatch $escaped", out argv);
-							if (!Process.spawn_sync (file.get_parent().get_path(),
-													 argv, null, SpawnFlags.SEARCH_PATH,
-													 null, out stdout, out stderr, out status)) {
-								return false;
-							}
-							cancellable.set_error_if_cancelled ();
-							
-							return status == 0;
-						} catch (Error e) {
-							warning (e.message);
-							return false;
-						}
-				});
-			} catch (Error e) {
-				warning (e.message);
-				return false;
-			}
+		public async bool file_in_repo (File? file, Cancellable? cancellable = null) throws Error {
+			var git_command = config.get_global_string ("git_command", "git");
+			int status;
+			var escaped = Shell.quote (file.get_path());
+			var cmd = @"$git_command ls-files --error-unmatch $escaped";
+			yield execute_shell_async (file.get_parent(), cmd, null, null, out status, cancellable);
+			return status == 0;
 		}
 			
 		public void grep () {
@@ -128,7 +103,6 @@ namespace Vanubi {
 			string cmdline = @"$git_command rev-parse --abbrev-ref HEAD";
 			int status;
 			var output = (string) yield execute_shell_async (file.get_parent(), cmdline, null, null, out status, cancellable);
-			cancellable.set_error_if_cancelled ();
 			
 			if (status != 0 || output.strip () == "") {
 				return null;
