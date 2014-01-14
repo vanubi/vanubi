@@ -133,9 +133,9 @@ namespace Vanubi {
 			Process.close_pid (pid);
 			if (st == 0xdead) {
 				st = sta;
-				execute_shell_async.callback ();
 			} else {
 				st = sta;
+				execute_shell_async.callback ();
 			}
 		});
 		
