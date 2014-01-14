@@ -40,7 +40,22 @@
 				 }
 			 }
 		 }
-		 
+
+		 public bool unmark () {
+			 if (current == null) {
+				 return false;
+			 }
+			 
+			 unowned List<Location> to_delete = current;
+			 prev_mark ();
+			 if (current == to_delete) {
+				 current = null;
+			 }
+			 stack.delete_link (to_delete);
+			 
+			 return true;
+		 }
+
 		 public Location? prev_mark () {
 			 if (stack == null) {
 				 return null;
