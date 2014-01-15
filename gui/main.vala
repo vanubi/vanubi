@@ -39,7 +39,6 @@ namespace Vanubi.UI {
 		TextIter selection_start;
 		TextIter selection_end;
 
-		bool zen_mode = false;
 		bool saving_on_quit = false;
 		
 		[Signal (detailed = true)]
@@ -2201,12 +2200,11 @@ namespace Vanubi.UI {
 		}
 		
 		void on_zen_mode (Editor editor) {
-			if (!zen_mode) {
-				zen_mode = true;
-				this.get_window().fullscreen();
-			} else {
-				zen_mode = false;
+			var state = get_window().get_state ();
+			if (Gdk.WindowState.FULLSCREEN in state) {
 				this.get_window().unfullscreen();
+			} else {
+				this.get_window().fullscreen();
 			}
 		}
 		
