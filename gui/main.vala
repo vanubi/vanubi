@@ -1185,11 +1185,22 @@ namespace Vanubi.UI {
 				files.remove (editor.file);
 				conf.cluster.closed_file (editor.file);
 			}
+			
+			var container = editor.editor_container;
+			
 			unowned Editor ed = get_available_editor (next_file);
 			replace_widget (editor, ed);
 			ed.grab_focus ();
 			foreach (unowned Editor old_ed in editors.data) {
 				((Container) old_ed.get_parent ()).remove (old_ed);
+			}
+			
+			unowned List<File?> lru_head = container.lru.list();
+			if (lru_head != null && lru_head.data != null && lru_head.next != null) {
+				if (lru_head.data == next_file || (next_file != null && lru_head.data.equal (next_file))) {
+					// the next file in the lru is next_file, give precedence to the second file in the lru
+					container.lru.used (lru_head.next.data);
+				}
 			}
 		}
 
