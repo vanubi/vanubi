@@ -2261,8 +2261,15 @@ namespace Vanubi.UI {
 	}
 
 	public class Application : Gtk.Application {
+		static bool arg_version = false;
+		
+		const OptionEntry[] options = {
+			{ "version", 0, 0, OptionArg.NONE, ref arg_version, "Show Vanubi's version", null },
+			{ null }
+		};
+		
 		public Application () {
-			Object (application_id: "org.vanubi", flags: ApplicationFlags.HANDLES_OPEN);
+			Object (application_id: "org.vanubi", flags: ApplicationFlags.HANDLES_COMMAND_LINE);
 		}
 
 		Window new_window () {
@@ -2271,7 +2278,7 @@ namespace Vanubi.UI {
 			
 			var slm = SourceLanguageManager.get_default();
 			var search_path = slm.get_search_path();
-			search_path += "./data/languages/";	     
+			search_path += "./data/languages/";
 			search_path += Configuration.VANUBI_DATADIR + "/vanubi/languages";
 			slm.set_search_path (search_path);
 			
@@ -2317,7 +2324,7 @@ namespace Vanubi.UI {
 				// global keybinding
 				Keybinder.init ();
 				Keybinder.bind (manager.conf.get_global_string ("global_keybinding", "<Ctrl><Mod1>v"), () => { focus_window (win); });
-			} 
+			}
 			try {
 				win.icon = new Gdk.Pixbuf.from_file("./data/vanubi.png");
 			} catch (Error e) {
@@ -2353,19 +2360,66 @@ namespace Vanubi.UI {
 				w.present_with_time (Keybinder.get_current_event_time ());
 			}
 		}
+
+		protected override void activate () {
+			new_window ();
+		}
 		
-		public override void open (File[] files, string hint) {
+		private string[] clone_args (string[] args) {
+			string*[] new_args = new string[args.length];
+			for (int i = 0; i < args.length; i++) {
+				new_args[i] = args[i];
+			}
+			return new_args;
+		}
+		
+		private int _command_line (ApplicationCommandLine command_line) {
+			/*
+			 * We have to make an extra copy of the array, since .parse assumes
+			 * that it can remove strings from the array without freeing them.
+			 */
+			string[] args = command_line.get_arguments ();
+			string*[] new_args = clone_args (args);
+
+			try {
+				var opt_context = new OptionContext ("[FILE]");
+				opt_context.set_help_enabled (true);
+				opt_context.set_description ("Please report comments, suggestions and bugs to: \n\t\t" + Configuration.VANUBI_BUGREPORT_URL);
+				opt_context.add_main_entries (options, null);
+				unowned string[] tmp = new_args;
+				opt_context.parse (ref tmp);
+			} catch (OptionError e) {
+				command_line.print ("Unknown option %s\n", e.message);
+				command_line.print ("Run '%s --help' to see a full list of available command line options.\n", args[0]);
+				return 1;
+			}
+
+			if (arg_version) {
+				command_line.print ("Vanubi " + Configuration.VANUBI_VERSION + "\n");
+				return 0;
+			}
+
 			var win = get_active_window ();
 			if (win == null) {
 				win = new_window ();
 			}
-			var manager = (Manager) win.get_child ();
-			manager.open_file.begin (manager.get_first_visible_editor (), files[0]);
-			win.present ();
+
+			if (new_args.length > 1) {
+				var manager = (Manager) win.get_child ();
+				/* Load only the first file. */
+				/* XXX: to load all passed files we must resolve first the SorceView bug */
+				manager.open_file.begin (manager.get_first_visible_editor (), File.new_for_path (args[1]));
+				win.present ();
+			}
+
+			return 0;
 		}
 
-		protected override void activate () {
-			new_window ();
+		public override int command_line (ApplicationCommandLine command_line) {
+			this.hold ();
+			int res = _command_line (command_line);
+			this.release ();
+			return res;
 		}
 	}
 
