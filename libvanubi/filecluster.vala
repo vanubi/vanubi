@@ -93,16 +93,18 @@ namespace Vanubi {
 			if (similar != null) {
 				return similar;
 			}
-			
-			each_same_extension (file, (f) => {
-					if (config.has_file_key (f, key)) {
-						similar = f;
-						return false;
-					}
-					return true;
-			});
-			if (similar != null) {
-				return similar;
+
+			if (key == "language") {
+				each_same_extension (file, (f) => {
+						if (config.has_file_key (f, key)) {
+							similar = f;
+							return false;
+						}
+						return true;
+				});
+				if (similar != null) {
+					return similar;
+				}
 			}
 			
 			return file;
