@@ -176,6 +176,9 @@ b = hax
 main = do
 let a = b
 c = d
+
+data Foo = Foo
+deriving (Show)
 ");
 
 	var w = buffer.tab_width;
@@ -187,8 +190,11 @@ c = d
 	assert_indent_haskell (buffer, 5, w*3); // let
 	assert_indent_haskell (buffer, 6, w*4); // a = qux
 	assert_indent_haskell (buffer, 7, w*4); // hax
+	
 	assert_indent_haskell (buffer, 10, w); // let a = b
 	assert_indent_haskell (buffer, 11, w+4); // c = d
+	
+	assert_indent_haskell (buffer, 14, w); // deriving (Show)
 }
 
 int main (string[] args) {

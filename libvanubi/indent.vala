@@ -681,6 +681,11 @@ namespace Vanubi {
 				}
 			}
 			
+			var cur_text = buf.line_text (line).strip ();
+			if (cur_text.has_prefix ("deriving ")) {
+				new_indent += tab_width;
+			}
+			
 			buf.set_indent (line, new_indent);
 		}
 	}
