@@ -135,6 +135,7 @@ void test_embedded () {
 	assert_embed (scope, "$(1+2)", new Vade.NumValue (3));
 	assert_embed (scope, "\\$(1+2)", new Vade.StringValue ("$(1+2)"));
 	assert_embed (scope, "$(1+2) foo $(foo++) $(foo)", new Vade.StringValue ("3 foo 0 1"));
+	assert_embed (scope, "$foo", new Vade.StringValue ("$foo"));
 }
 
 void test_exceptions () {

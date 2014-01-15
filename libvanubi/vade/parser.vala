@@ -74,6 +74,8 @@ namespace Vanubi.Vade {
 						args += expr;
 						
 						s.truncate ();
+					} else {
+						s.append_c ('$');
 					}
 				} else {
 					s.append_c (lex.char);
