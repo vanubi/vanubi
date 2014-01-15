@@ -1816,7 +1816,10 @@ namespace Vanubi.UI {
 		void on_goto_error (Editor editor, string cmd) {
 			bool no_more_errors = true;
 			if (error_locations != null) {	
-				if (current_error == null) {
+				if (error_locations.length() == 1) {
+					current_error = error_locations;
+					no_more_errors = false;
+				} else if (current_error == null) {
 					current_error = error_locations;
 					no_more_errors = false;
 				} else {

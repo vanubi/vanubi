@@ -136,6 +136,8 @@ namespace Vanubi.UI {
 			GenericArray<Annotated<G>> matches;
 			try {
 				matches = yield run_in_thread (() => { return pattern_match_many<G> (pattern, choices, cancellable); });
+			} catch (IOError.CANCELLED e) {
+				return null;
 			} catch (Error e) {
 				message (e.message);
 				return null;

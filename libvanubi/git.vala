@@ -69,6 +69,8 @@ namespace Vanubi {
 								return null;
 							}
 							return file.get_parent().get_child (stdout.strip ());
+						} catch (IOError.CANCELLED e) {
+							return null;
 						} catch (Error e) {
 							warning (e.message);
 							return null;
