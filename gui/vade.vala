@@ -82,18 +82,6 @@ namespace Vanubi.UI {
 		}
 	}
 
-	public class NativeEditor : NativeObject {
-		public unowned Editor editor;
-		
-		public NativeEditor (Editor editor) {
-			this.editor = editor;
-		}
-		
-		public override string to_string () {
-			return "Editor";
-		}
-	}
-	
 	public class NativeCommand : NativeFunction {
 		unowned Manager manager;
 		
@@ -129,6 +117,48 @@ namespace Vanubi.UI {
 		}
 	}
 
+	/* Editor */
+	
+	public class NativeEditor : NativeObject {
+		public unowned Editor editor;
+		
+		public NativeEditor (Editor editor) {
+			this.editor = editor;
+		}
+
+		class construct {
+			vtable["file"] =  new FunctionValue (new NativeGetFile ());
+		}
+			
+		internal string file () {
+			return editor.file != null ? editor.file.get_path() : "*scratch*";
+		}
+
+		public override string to_string () {
+			return "Editor";
+		}
+	}
+
+	public class NativeGetFile : NativeFunction {
+		public override async Vade.Value eval (Scope scope, Vade.Value[]? a, out Vade.Value? error, Cancellable cancellable) {
+			error = null;
+			
+			NativeEditor editor = a.length > 0 ? ((NativeEditor) a[0]) : null;
+			if (editor == null) {
+				error = new StringValue ("argument 1 must be an Editor");
+				return NullValue.instance;
+			}
+			
+			var res = new StringValue (editor.file ());
+			return res;
+		}
+		
+		public override string to_string () {
+			return "string file (editor)";
+		}
+	}
+
+
 	/* CURSOR */
 
 	public class NativeCursorMoveChars : NativeFunction {
@@ -152,7 +182,7 @@ namespace Vanubi.UI {
 		}
 		
 		public override string to_string () {
-			return "cursor move_chars (cursor)";
+			return "cursor move_chars (cursor, num_chars)";
 		}
 	}
 	
