@@ -203,7 +203,7 @@ namespace Vanubi.UI {
 							var val = scope.eval_string.end (r);
 							var str = val.str;
 							if (str != null) {
-								command_line.print ("%s\n", val.str);
+								command_line.print (val.str);
 							}
 						} catch (Error e) {
 							command_line.printerr (e.message);

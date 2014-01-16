@@ -127,11 +127,21 @@ namespace Vanubi.UI {
 		}
 
 		class construct {
-			vtable["file"] =  new FunctionValue (new NativeGetFile ());
+			vtable["file"] =  new FunctionValue (new NativeEditorFile ());
+			vtable["text"] =  new FunctionValue (new NativeEditorText ());
 		}
 			
 		internal string file () {
 			return editor.file != null ? editor.file.get_path() : "*scratch*";
+		}
+		
+		internal string text () {
+			var buf = editor.view.buffer;
+			TextIter start, end;
+			buf.get_start_iter (out start);
+			buf.get_end_iter (out end);
+			string text = buf.get_text (start, end, false);
+			return text;
 		}
 
 		public override string to_string () {
@@ -139,7 +149,7 @@ namespace Vanubi.UI {
 		}
 	}
 
-	public class NativeGetFile : NativeFunction {
+	public class NativeEditorFile : NativeFunction {
 		public override async Vade.Value eval (Scope scope, Vade.Value[]? a, out Vade.Value? error, Cancellable? cancellable) {
 			error = null;
 			
@@ -155,6 +165,25 @@ namespace Vanubi.UI {
 		
 		public override string to_string () {
 			return "string file (editor)";
+		}
+	}
+	
+	public class NativeEditorText : NativeFunction {
+		public override async Vade.Value eval (Scope scope, Vade.Value[]? a, out Vade.Value? error, Cancellable? cancellable) {
+			error = null;
+			
+			NativeEditor editor = a.length > 0 ? ((NativeEditor) a[0]) : null;
+			if (editor == null) {
+				error = new StringValue ("argument 1 must be an Editor");
+				return NullValue.instance;
+			}
+			
+			var res = new StringValue (editor.text ());
+			return res;
+		}
+		
+		public override string to_string () {
+			return "string text (editor)";
 		}
 	}
 
