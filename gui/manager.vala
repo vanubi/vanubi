@@ -1203,14 +1203,23 @@ namespace Vanubi.UI {
 			}
 
 			if (!other_visible) {
-				// trash the data
 				if (editor.view.buffer.get_modified ()) {
-					var bar = new EntryBar ("Your changes will be lost. Confirm?");
-					bar.activate.connect (() => {
+					/* Ask user */
+					var bar = new MessageBar ("Your changes will be lost. Confirm? (y/n)");
+					bar.key_pressed.connect ((e) => {
+							if (e.keyval == Gdk.Key.n) {
+								abort (editor);
+								return true;
+							} else if (e.keyval == Gdk.Key.y || e.keyval == Gdk.Key.Return) {
+								abort (editor);
+								kill_buffer (editor, editors, next_file);
+								return true;
+							}
+							return false;
+					});
+					bar.aborted.connect (() => {
 							abort (editor);
-							kill_buffer (editor, editors, next_file);
-						});
-					bar.aborted.connect (() => { abort (editor); });
+					});
 					add_overlay (bar);
 					bar.show ();
 					bar.grab_focus ();
