@@ -22,9 +22,11 @@ using Gtk;
 namespace Vanubi.UI {
 	public class Application : Gtk.Application {
 		static bool arg_version = false;
+		static bool arg_standalone = false;
 		
 		const OptionEntry[] options = {
 			{ "version", 0, 0, OptionArg.NONE, ref arg_version, "Show Vanubi's version", null },
+			{ "standalone", 0, 0, OptionArg.NONE, ref arg_standalone, "Run Vanubi in a new process", null },
 			{ null }
 		};
 		
@@ -138,12 +140,19 @@ namespace Vanubi.UI {
 			focus_window (win, (uint)(get_monotonic_time()/1000));
 		}
 		
-		private string[] clone_args (string[] args) {
-			string*[] new_args = new string[args.length];
-			for (int i = 0; i < args.length; i++) {
-				new_args[i] = args[i];
+		void parse_options (ref unowned string[] args) throws OptionError {
+			try {
+				var opt_context = new OptionContext ("[FILE]");
+				opt_context.set_help_enabled (true);
+				opt_context.set_description ("Please report comments, suggestions and bugs to: \n\t" + Configuration.VANUBI_BUGREPORT_URL);
+				opt_context.add_main_entries (options, null);
+				unowned string[] tmp = args;
+				opt_context.parse (ref tmp);
+			} catch (OptionError e) {
+				print ("Unknown option %s\n", e.message);
+				print ("Run '%s --help' to see a full list of available command line options.\n", args[0]);
+				throw e;
 			}
-			return new_args;
 		}
 		
 		private int _command_line (ApplicationCommandLine command_line) {
@@ -152,18 +161,12 @@ namespace Vanubi.UI {
 			 * that it can remove strings from the array without freeing them.
 			 */
 			string[] args = command_line.get_arguments ();
-			string*[] new_args = clone_args (args);
+			string*[] new_args = (string*[]) args;
 
 			try {
-				var opt_context = new OptionContext ("[FILE]");
-				opt_context.set_help_enabled (true);
-				opt_context.set_description ("Please report comments, suggestions and bugs to: \n\t\t" + Configuration.VANUBI_BUGREPORT_URL);
-				opt_context.add_main_entries (options, null);
 				unowned string[] tmp = new_args;
-				opt_context.parse (ref tmp);
+				parse_options (ref tmp);
 			} catch (OptionError e) {
-				command_line.print ("Unknown option %s\n", e.message);
-				command_line.print ("Run '%s --help' to see a full list of available command line options.\n", args[0]);
 				return 1;
 			}
 
@@ -187,6 +190,29 @@ namespace Vanubi.UI {
 			int res = _command_line (command_line);
 			this.release ();
 			return res;
+		}
+		
+		public override bool local_command_line (ref unowned string[] args, out int exit_status) {
+			exit_status = 0;
+			
+			try {
+				unowned string[] tmp = args;
+				parse_options (ref tmp);
+			} catch (OptionError e) {
+				exit_status = 1;
+				return true;
+			}
+
+			if (arg_version) {
+				print ("Vanubi " + Configuration.VANUBI_VERSION + "\n");
+				return true;
+			}
+			
+			if (arg_standalone) {
+				flags |= ApplicationFlags.NON_UNIQUE;
+			}
+
+			return base.local_command_line (ref args, out exit_status);
 		}
 	}
 
