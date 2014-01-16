@@ -196,7 +196,6 @@ namespace Vanubi.UI {
 			
 			if (arg_vade_expression != null) {
 				var manager = (Manager) get_active_window().get_child ();
-				hold ();
 				var scope = get_editor_scope (manager.last_focused_editor);
 				scope.eval_string.begin (arg_vade_expression, null, (s,r) => {
 						try {
@@ -208,8 +207,6 @@ namespace Vanubi.UI {
 						} catch (Error e) {
 							command_line.printerr (e.message);
 							command_line.set_exit_status (1);
-						} finally {
-							release ();
 						}
 				});
 			}
