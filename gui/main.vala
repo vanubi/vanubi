@@ -28,6 +28,8 @@ namespace Vanubi.UI {
 			{ null }
 		};
 		
+		File[]? open_files = null;
+		
 		public Application () {
 			Object (application_id: "org.vanubi", flags: ApplicationFlags.HANDLES_COMMAND_LINE);
 		}
@@ -83,7 +85,7 @@ namespace Vanubi.UI {
 				
 				// global keybinding
 				Keybinder.init ();
-				Keybinder.bind (manager.conf.get_global_string ("global_keybinding", "<Ctrl><Mod1>v"), () => { focus_window (win); });
+				Keybinder.bind (manager.conf.get_global_string ("global_keybinding", "<Ctrl><Mod1>v"), () => { focus_window (win, Keybinder.get_current_event_time ()); });
 			}
 			try {
 				win.icon = new Gdk.Pixbuf.from_file("./data/vanubi.png");
@@ -104,7 +106,7 @@ namespace Vanubi.UI {
 			return win;
 		}
 
-		void focus_window (Window w) {
+		void focus_window (Window w, uint time) {
 			// update wnck
 			var wnscreen = Wnck.Screen.get_default ();
 			wnscreen.force_update ();
@@ -113,16 +115,27 @@ namespace Vanubi.UI {
 			var xid = Gdk.X11Window.get_xid (w.get_window());
 			weak Wnck.Window wnw = Wnck.Window.get (xid);
 			if (wnw != null) {
-				wnw.get_workspace().activate (Keybinder.get_current_event_time ());
-				wnw.activate (Keybinder.get_current_event_time ());
+				wnw.get_workspace().activate (time);
+				wnw.activate (time);
 			} else {
 				// fallback, we cannot switch workspace though
-				w.present_with_time (Keybinder.get_current_event_time ());
+				w.present_with_time (time);
 			}
 		}
 
 		protected override void activate () {
-			new_window ();
+			var win = get_active_window ();
+			if (win == null) {
+				win = new_window ();
+			}
+
+			var manager = (Manager) win.get_child ();
+			foreach (unowned File file in open_files) {
+				manager.open_file.begin (manager.get_first_visible_editor (), file);
+			}
+			open_files = null;
+			
+			focus_window (win, (uint)(get_monotonic_time()/1000));
 		}
 		
 		private string[] clone_args (string[] args) {
@@ -159,18 +172,12 @@ namespace Vanubi.UI {
 				return 0;
 			}
 
-			var win = get_active_window ();
-			if (win == null) {
-				win = new_window ();
-			}
-
 			if (new_args.length > 1) {
-				var manager = (Manager) win.get_child ();
 				/* Load only the first file. */
 				/* XXX: to load all passed files we must resolve first the SorceView bug */
-				manager.open_file.begin (manager.get_first_visible_editor (), File.new_for_path (args[1]));
-				win.present ();
+				open_files = { File.new_for_path (args[1]) };
 			}
+			activate ();
 
 			return 0;
 		}

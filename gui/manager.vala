@@ -652,11 +652,11 @@ namespace Vanubi.UI {
 			assert_not_reached ();
 		}
 
-		public async void open_file (Editor editor, File file, bool focus = true) {
+		public async void open_file (Editor editor, owned File file, bool focus = true) {
 			yield open_location (editor, new Location (file), focus);
 		}
 		
-		public async void open_location (Editor editor, Location location, bool focus = true) {
+		public async void open_location (Editor editor, owned Location location, bool focus = true) {
 			var file = location.file;
 
 			// first search already opened files
