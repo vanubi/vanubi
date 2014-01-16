@@ -389,13 +389,6 @@ namespace Vanubi.UI {
 				var data = new uint8[4096];
 				string? default_charset = null;
 				while (true) {
-					var r = yield is.read_async (data, Priority.LOW, cancellable);
-					if (r == 0) {
-						break;
-					}
-					
-					data = convert_to_utf8 (data, ref default_charset, null, null);
-
 					// keep the cursor at the beginning, or honor any user movement
 					int old_offset = cursor_offset;
 					buf.get_iter_at_mark (out cursor, buf.get_insert ());
@@ -408,6 +401,12 @@ namespace Vanubi.UI {
 						buf.get_iter_at_offset (out cursor, old_offset);
 						view.buffer.place_cursor (cursor);
 					}
+					
+					var r = yield is.read_async (data, Priority.LOW, cancellable);
+					if (r == 0) {
+						break;
+					}
+					data = convert_to_utf8 (data, ref default_charset, null, null);
 					
 					// write
 					buf.begin_not_undoable_action ();
