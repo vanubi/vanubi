@@ -23,10 +23,15 @@ namespace Vanubi.UI {
 	public class Application : Gtk.Application {
 		static bool arg_version = false;
 		static bool arg_standalone = false;
+		static string arg_vade_expression = null;
+		[CCode (array_length = false, array_null_terminated = true)]
+		static string[] arg_filenames;
 		
 		const OptionEntry[] options = {
 			{ "version", 0, 0, OptionArg.NONE, ref arg_version, "Show Vanubi's version", null },
 			{ "standalone", 0, 0, OptionArg.NONE, ref arg_standalone, "Run Vanubi in a new process", null },
+			{ "eval", 0, 0, OptionArg.STRING, ref arg_vade_expression, "Evaluate a Vade expression in the current opened file", "EXPR" },
+			{ "", 0, 0, OptionArg.FILENAME_ARRAY, ref arg_filenames, null, "[FILE...]" },
 			{ null }
 		};
 		
@@ -137,24 +142,31 @@ namespace Vanubi.UI {
 				manager.open_file.begin (manager.last_focused_editor, file, focus);
 				focus = false;
 			}
-			open_files = null;
 			
-			focus_window (win, (uint)(get_monotonic_time()/1000));
+			if (arg_vade_expression != null) {
+				focus_window (win, (uint)(get_monotonic_time()/1000));
+			}
 		}
 		
-		void parse_options (ref unowned string[] args) throws OptionError {
+		void parse_options (ApplicationCommandLine? command_line, ref unowned string[] args) throws OptionError {
 			try {
-				var opt_context = new OptionContext ("[FILE]");
-				opt_context.set_help_enabled (true);
-				opt_context.add_group(Gtk.get_option_group(false));
-				opt_context.set_description ("Please report comments, suggestions and bugs to: \n\t" + Configuration.VANUBI_BUGREPORT_URL);
+				var opt_context = new OptionContext ("- Vanubi");
+				opt_context.set_help_enabled (command_line == null);
 				opt_context.add_main_entries (options, null);
+				opt_context.add_group (Gtk.get_option_group(false));
+				opt_context.set_description ("Please report comments, suggestions and bugs to: \n\t" + Configuration.VANUBI_BUGREPORT_URL);
+				
 				unowned string[] tmp = args;
 				opt_context.parse (ref tmp);
 				args = tmp;
 			} catch (OptionError e) {
-				print ("Unknown option %s\n", e.message);
-				print ("Run '%s --help' to see a full list of available command line options.\n", args[0]);
+				if (command_line != null) {
+					command_line.printerr ("Unknown option %s\n", e.message);
+					command_line.printerr ("Run '%s --help' to see a full list of available command line options.\n", args[0]);
+				} else {
+					print ("Unknown option %s\n", e.message);
+					print ("Run '%s --help' to see a full list of available command line options.\n", args[0]);
+				}
 				throw e;
 			}
 		}
@@ -166,36 +178,52 @@ namespace Vanubi.UI {
 			 */
 			string[] args = command_line.get_arguments ();
 			string*[] new_args = (string*[]) args;
-
+			
 			try {
 				unowned string[] tmp = new_args;
-				parse_options (ref tmp);
+				parse_options (command_line, ref tmp);
 			} catch (OptionError e) {
 				return 1;
 			}
 
-			if (arg_version) {
-				command_line.print ("Vanubi " + Configuration.VANUBI_VERSION + "\n");
-				return 0;
+			open_files = null;
+			foreach (unowned string filename in arg_filenames) {
+				/* message(filename); */
+				open_files += command_line.create_file_for_arg (filename);
 			}
-
-			if (new_args.length > 1) {
-				/* Load only the first file. */
-				/* XXX: to load all passed files we must resolve first the SorceView bug */
-				open_files = null;
-				for (var i=1; i < args.length; i++) {
-					open_files += command_line.create_file_for_arg (args[i]);
-				}
-			}
+				
 			activate ();
+			
+			if (arg_vade_expression != null) {
+				var manager = (Manager) get_active_window().get_child ();
+				hold ();
+				var scope = get_editor_scope (manager.last_focused_editor);
+				scope.eval_string.begin (arg_vade_expression, null, (s,r) => {
+						try {
+							var val = scope.eval_string.end (r);
+							var str = val.str;
+							if (str != null) {
+								command_line.print ("%s\n", val.str);
+							}
+						} catch (Error e) {
+							command_line.printerr (e.message);
+							command_line.set_exit_status (1);
+						} finally {
+							release ();
+						}
+				});
+			}
+			
+			// cleanup
+			arg_vade_expression = null;
+			arg_filenames = null;
+			open_files = null;
 
 			return 0;
 		}
 
 		public override int command_line (ApplicationCommandLine command_line) {
-			this.hold ();
 			int res = _command_line (command_line);
-			this.release ();
 			return res;
 		}
 		
@@ -203,9 +231,10 @@ namespace Vanubi.UI {
 			exit_status = 0;
 			
 			try {
-				unowned string[] tmp = args;
-				parse_options (ref tmp);
-				args = tmp;
+				var copy = args;
+				unowned string[] tmp = copy;
+				parse_options (null, ref tmp);
+				/* args = tmp; */
 			} catch (OptionError e) {
 				exit_status = 1;
 				return true;
@@ -219,7 +248,7 @@ namespace Vanubi.UI {
 			if (arg_standalone) {
 				flags |= ApplicationFlags.NON_UNIQUE;
 			}
-
+			
 			return base.local_command_line (ref args, out exit_status);
 		}
 	}

@@ -24,7 +24,7 @@ namespace Vanubi.Vade {
 		Scope scope;
 		Cancellable cancellable;
 		
-		public async Value eval (Scope scope, Expression expr, Cancellable cancellable) throws IOError.CANCELLED, VError.EVAL_ERROR {
+		public async Value eval (Scope scope, Expression expr, Cancellable? cancellable) throws IOError.CANCELLED, VError.EVAL_ERROR {
 			this.scope = scope;
 			this.cancellable = cancellable;
 			yield expr.visit (this);

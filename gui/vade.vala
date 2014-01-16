@@ -37,7 +37,7 @@ namespace Vanubi.UI {
 			this.manager = manager;
 		}
 		
-		public override async Vade.Value eval (Scope scope, Vade.Value[]? a, out Vade.Value? error, Cancellable cancellable) {
+		public override async Vade.Value eval (Scope scope, Vade.Value[]? a, out Vade.Value? error, Cancellable? cancellable) {
 			error = null;
 			
 			var msg = get_string (a, 0);
@@ -63,7 +63,7 @@ namespace Vanubi.UI {
 			this.manager = manager;
 		}
 		
-		public override async Vade.Value eval (Scope scope, Vade.Value[]? a, out Vade.Value? error, Cancellable cancellable) {
+		public override async Vade.Value eval (Scope scope, Vade.Value[]? a, out Vade.Value? error, Cancellable? cancellable) {
 			error = null;
 			
 			var msg = get_string (a, 0);
@@ -89,7 +89,7 @@ namespace Vanubi.UI {
 			this.manager = manager;
 		}
 		
-		public override async Vade.Value eval (Scope scope, Vade.Value[]? a, out Vade.Value? error, Cancellable cancellable) {
+		public override async Vade.Value eval (Scope scope, Vade.Value[]? a, out Vade.Value? error, Cancellable? cancellable) {
 			error = null;
 			
 			var cmd = get_string (a, 0);
@@ -140,7 +140,7 @@ namespace Vanubi.UI {
 	}
 
 	public class NativeGetFile : NativeFunction {
-		public override async Vade.Value eval (Scope scope, Vade.Value[]? a, out Vade.Value? error, Cancellable cancellable) {
+		public override async Vade.Value eval (Scope scope, Vade.Value[]? a, out Vade.Value? error, Cancellable? cancellable) {
 			error = null;
 			
 			NativeEditor editor = a.length > 0 ? ((NativeEditor) a[0]) : null;
@@ -158,11 +158,10 @@ namespace Vanubi.UI {
 		}
 	}
 
-
 	/* CURSOR */
 
 	public class NativeCursorMoveChars : NativeFunction {
-		public override async Vade.Value eval (Scope scope, Vade.Value[]? a, out Vade.Value? error, Cancellable cancellable) {
+		public override async Vade.Value eval (Scope scope, Vade.Value[]? a, out Vade.Value? error, Cancellable? cancellable) {
 			error = null;
 			
 			NativeCursor cursor = a.length > 0 ? ((NativeCursor) a[0]) : null;

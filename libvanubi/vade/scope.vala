@@ -19,7 +19,7 @@
 
 namespace Vanubi.Vade {
 	public abstract class Function {
-		public abstract async Value eval (Scope scope, Value[]? arguments, out Value? error, Cancellable cancellable)  throws IOError.CANCELLED, VError.EVAL_ERROR;
+		public abstract async Value eval (Scope scope, Value[]? arguments, out Value? error, Cancellable? cancellable)  throws IOError.CANCELLED, VError.EVAL_ERROR;
 		public abstract string to_string ();
 	}
 	
@@ -33,7 +33,7 @@ namespace Vanubi.Vade {
 			this.body = body;
 		}
 		
-		public override async Value eval (Scope scope, Value[]? arguments, out Value? error, Cancellable cancellable) throws IOError.CANCELLED, VError.EVAL_ERROR {
+		public override async Value eval (Scope scope, Value[]? arguments, out Value? error, Cancellable? cancellable) throws IOError.CANCELLED, VError.EVAL_ERROR {
 			error = null;
 			for (var i=0; i < int.min(parameters.length, arguments.length); i++) {
 				scope.set_local (parameters[i], arguments[i]);
@@ -256,7 +256,7 @@ namespace Vanubi.Vade {
 			this.func = func;
 		}
 		
-		public override async Value eval (Scope scope, Value[]? a, out Value? error, Cancellable cancellable) throws IOError.CANCELLED, VError.EVAL_ERROR {
+		public override async Value eval (Scope scope, Value[]? a, out Value? error, Cancellable? cancellable) throws IOError.CANCELLED, VError.EVAL_ERROR {
 			Value[] b = new Value[a.length+1];
 			b[0] = self;
 			for (var i=0; i < a.length; i++) {
@@ -421,19 +421,19 @@ namespace Vanubi.Vade {
 			}
 		}
 		
-		public async Value eval (Expression expr, Cancellable cancellable) throws IOError.CANCELLED, VError.EVAL_ERROR {
+		public async Value eval (Expression expr, Cancellable? cancellable) throws IOError.CANCELLED, VError.EVAL_ERROR {
 			var ev = new EvalVisitor ();
 			var ret = yield ev.eval (this, expr, cancellable);
 			return ret;
 		}
 		
-		public async Value eval_string (string sexpr, Cancellable cancellable) throws IOError.CANCELLED, VError {
+		public async Value eval_string (string sexpr, Cancellable? cancellable) throws IOError.CANCELLED, VError {
 			var parser = new Vade.Parser.for_string (sexpr);
 			var expr = parser.parse_expression ();
 			return yield eval (expr, cancellable);
 		}
 		
-		public async Value eval_embedded (string sexpr, Cancellable cancellable) throws IOError.CANCELLED, VError {
+		public async Value eval_embedded (string sexpr, Cancellable? cancellable) throws IOError.CANCELLED, VError {
 			var parser = new Vade.Parser.for_string (sexpr);
 			var expr = parser.parse_embedded ();
 			return yield eval (expr, cancellable);
