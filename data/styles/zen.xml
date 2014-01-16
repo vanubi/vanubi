@@ -97,11 +97,18 @@
   <!-- Language specific -->
   
   <!-- Diff -->
-  <style name="diff:added-line"             foreground="dl-green-3"/>
-  <style name="diff:removed-line"           foreground="dl-red"/>
-  <style name="diff:changed-line"           foreground="dl-violet"/>
-  <style name="diff:diff-file"              foreground="#white" bold="true"/> 
-  <style name="diff:location"               foreground="dl-khaki"/>
-  <style name="diff:special-case"           foreground="#white" bold="true"/>
+  <style name="diff:added-line" foreground="dl-green-3"/>
+  <style name="diff:removed-line" foreground="dl-red"/>
+  <style name="diff:changed-line" foreground="dl-violet"/>
+  <style name="diff:diff-file" foreground="white" bold="true"/> 
+  <style name="diff:location" foreground="dl-khaki"/>
+  <style name="diff:special-case" foreground="white" bold="true"/>
+  
+  <!-- Changelogs -->
+  <style name="changelog:date" foreground="dl-light-salmon"/>
+  <style name="changelog:email" foreground="white" underline="true"/>
+  <style name="changelog:file" foreground="dl-light-sky-blue"/>
+  <style name="changelog:bullet" foreground="dl-light-sky-blue"/>
+  <style name="changelog:release" foreground="white" bold="true"/>
 
 </style-scheme>
