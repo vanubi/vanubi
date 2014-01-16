@@ -40,7 +40,10 @@ namespace Vanubi.UI {
 			return false;
 		}
 	}
-	
+
+	public class StatusBar : Label {
+	}
+
 	public class MessageBar : Bar {
 		EventBox box;
 		

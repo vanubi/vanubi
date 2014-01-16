@@ -24,6 +24,7 @@ vanubi_VALASOURCES = \
 	helpbar.vala \
 	buffer.vala \
 	main.vala \
+	manager.vala	\
 	searchbar.vala \
 	shellbar.vala \
 	aboutbar.vala \
