@@ -144,6 +144,7 @@ namespace Vanubi.UI {
 			try {
 				var opt_context = new OptionContext ("[FILE]");
 				opt_context.set_help_enabled (true);
+				opt_context.add_group(Gtk.get_option_group(false));
 				opt_context.set_description ("Please report comments, suggestions and bugs to: \n\t" + Configuration.VANUBI_BUGREPORT_URL);
 				opt_context.add_main_entries (options, null);
 				unowned string[] tmp = args;
