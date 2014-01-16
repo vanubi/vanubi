@@ -148,6 +148,7 @@ namespace Vanubi.UI {
 				opt_context.add_main_entries (options, null);
 				unowned string[] tmp = args;
 				opt_context.parse (ref tmp);
+				args = tmp;
 			} catch (OptionError e) {
 				print ("Unknown option %s\n", e.message);
 				print ("Run '%s --help' to see a full list of available command line options.\n", args[0]);
@@ -178,7 +179,7 @@ namespace Vanubi.UI {
 			if (new_args.length > 1) {
 				/* Load only the first file. */
 				/* XXX: to load all passed files we must resolve first the SorceView bug */
-				open_files = { File.new_for_path (args[1]) };
+				open_files = { command_line.create_file_for_arg (args[1]) };
 			}
 			activate ();
 
@@ -192,12 +193,13 @@ namespace Vanubi.UI {
 			return res;
 		}
 		
-		public override bool local_command_line (ref unowned string[] args, out int exit_status) {
+		public override bool local_command_line ([CCode (array_length = false, array_null_terminated = true)] ref unowned string[] args, out int exit_status) {
 			exit_status = 0;
 			
 			try {
 				unowned string[] tmp = args;
 				parse_options (ref tmp);
+				args = tmp;
 			} catch (OptionError e) {
 				exit_status = 1;
 				return true;
