@@ -615,6 +615,7 @@ namespace Vanubi.UI {
 			if (old is Editor) {
 				add (old);
 				old.hide ();
+				Idle.add (() => { old.hide(); return false; });
 			}
 		}
 

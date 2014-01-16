@@ -179,7 +179,10 @@ namespace Vanubi.UI {
 			if (new_args.length > 1) {
 				/* Load only the first file. */
 				/* XXX: to load all passed files we must resolve first the SorceView bug */
-				open_files = { command_line.create_file_for_arg (args[1]) };
+				open_files = null;
+				for (var i=1; i < args.length; i++) {
+					open_files += command_line.create_file_for_arg (args[i]);
+				}
 			}
 			activate ();
 
