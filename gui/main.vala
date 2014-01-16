@@ -143,7 +143,7 @@ namespace Vanubi.UI {
 				focus = false;
 			}
 			
-			if (arg_vade_expression != null) {
+			if (arg_vade_expression == null) {
 				focus_window (win, (uint)(get_monotonic_time()/1000));
 			}
 		}
