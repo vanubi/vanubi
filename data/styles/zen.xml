@@ -57,6 +57,7 @@
   <style name="selection" background="dl-blue"/>
   <style name="cursor" foreground="dl-yellow"/>
   <style name="current-line" background="#0d0f0f"/>
+  <style name="right-margin" background="dl-red"/>
 
   <!-- Bracket Matching -->
   <style name="bracket-match" background="dl-dark-olive-green"/>
@@ -68,6 +69,7 @@
   <!-- Comments -->
   <style name="def:comment" foreground="dl-orange-red"/>
   <style name="def:shebang" foreground="dl-orange-red"/>
+  <style name="def:doc-comment" foreground="dl-dim-gray"/>
   <style name="def:doc-comment-element" italic="true"/>
 
   <!-- Constants -->
@@ -93,13 +95,13 @@
   <style name="def:underlined" italic="true" underline="true"/>
 
   <!-- Language specific -->
-  <!--
-  <style name="diff:added-line"             foreground="butter2"/>
-  <style name="diff:removed-line"           foreground="skyblue1"/>
-  <style name="diff:changed-line"           foreground="plum1"/>
-  <style name="diff:diff-file"              foreground="chameleon1" bold="true"/> 
-  <style name="diff:location"               foreground="chameleon1"/> 
+  
+  <!-- Diff -->
+  <style name="diff:added-line"             foreground="dl-green-3"/>
+  <style name="diff:removed-line"           foreground="dl-red"/>
+  <style name="diff:changed-line"           foreground="dl-violet"/>
+  <style name="diff:diff-file"              foreground="#white" bold="true"/> 
+  <style name="diff:location"               foreground="dl-khaki"/>
   <style name="diff:special-case"           foreground="#white" bold="true"/>
-  -->
 
 </style-scheme>
