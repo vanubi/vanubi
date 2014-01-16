@@ -455,6 +455,14 @@ namespace Vanubi.UI {
 			bind_command (null, "toggle-show-branch");
 			index_command ("toggle-show-branch", "Show repository branch in the file info bar");
 			execute_command["toggle-show-branch"].connect (on_toggle_show_branch);
+			
+			bind_command (null, "toggle-right-margin");
+			index_command ("toggle-right-margin", "Show right margin");
+			execute_command["toggle-right-margin"].connect (on_toggle_right_margin);
+			
+			bind_command (null, "set-right-margin-column");
+			index_command ("set-right-margin-column", "Show right margin column");
+			execute_command["set-right-margin-column"].connect (on_set_right_margin_column);
 
 			// setup empty buffer
 			unowned Editor ed = get_available_editor (null);
@@ -2256,6 +2264,35 @@ namespace Vanubi.UI {
 					ed.update_show_branch ();
 					return true;
 			});
+		}
+		
+		void on_toggle_right_margin (Editor editor) {
+			var val = !conf.get_editor_bool ("right_margin", false);
+			conf.set_editor_bool ("right_margin", val);
+			set_status (val ? "Enabled" : "Disabled");
+			each_editor ((ed) => {
+					ed.update_right_margin ();
+					return true;
+			});
+		}
+		
+		void on_set_right_margin_column (Editor editor) {
+			var val = conf.get_editor_int("right_margin_column", 80);
+			var bar = new EntryBar (val.to_string());
+			bar.activate.connect ((text) => {
+					abort (editor);
+					conf.set_editor_int("right_margin_column", int.parse(text));
+					conf.save.begin ();
+					
+					each_editor ((ed) => {
+							ed.update_right_margin ();
+							return true;
+					});
+			});
+			bar.aborted.connect (() => { abort (editor); });
+			add_overlay (bar);
+			bar.show ();
+			bar.grab_focus ();
 		}
 	}
 }

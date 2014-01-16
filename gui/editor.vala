@@ -179,6 +179,7 @@ namespace Vanubi.UI {
 			view.set_data ("editor", (Editor*)this);
 			view.tab_width = conf.get_editor_int("tab_width", 4);
 			view.highlight_current_line = conf.get_editor_bool ("highlight_current_line", true);
+			update_right_margin ();
 
 			SourceStyleScheme st = editor_style.get_scheme(conf.get_editor_string ("style", "zen"));
 			if (st != null) { /* Use default if not found */
@@ -447,6 +448,16 @@ namespace Vanubi.UI {
 			} else {
 				git_branch.margin_left = 0;
 				git_branch.label = "";
+			}
+		}
+		
+		public void update_right_margin () {
+			if (conf.get_editor_bool ("right_margin", false)) {
+				var col = conf.get_editor_int ("right_margin_column", 80);
+				view.right_margin_position = col;
+				view.show_right_margin = true;
+			} else {
+				view.show_right_margin = false;
 			}
 		}
 		
