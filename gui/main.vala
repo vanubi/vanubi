@@ -61,7 +61,7 @@ namespace Vanubi.UI {
 
 			var win = new ApplicationWindow (this);
 			win.title = "Vanubi";
-			win.delete_event.connect (() => { manager.execute_command (manager.get_first_visible_editor (), "quit"); return false; });
+			win.delete_event.connect (() => { manager.execute_command (manager.last_focused_editor, "quit"); return false; });
 			// restore geometry like one of the main window
 			win.move (manager.conf.get_global_int ("window_x"),
 					  manager.conf.get_global_int ("window_y"));
@@ -132,8 +132,10 @@ namespace Vanubi.UI {
 			}
 
 			var manager = (Manager) win.get_child ();
+			var focus = true;
 			foreach (unowned File file in open_files) {
-				manager.open_file.begin (manager.get_first_visible_editor (), file);
+				manager.open_file.begin (manager.last_focused_editor, file, focus);
+				focus = false;
 			}
 			open_files = null;
 			

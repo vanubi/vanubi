@@ -55,6 +55,7 @@ namespace Vanubi.UI {
 		string status_context;
 		MarkManager marks = new MarkManager ();
 		string last_grep_string = "";
+		public Editor last_focused_editor = null; // must never be null
 		
 		Session last_session;
 		
@@ -593,6 +594,7 @@ namespace Vanubi.UI {
 		public void replace_widget (owned Widget old, Widget r) {
 			var parent = (Container) old.get_parent ();
 			var rparent = (Container) r.get_parent ();
+			
 			if (rparent != null) {
 				rparent.remove (r);
 			}
@@ -615,7 +617,6 @@ namespace Vanubi.UI {
 			if (old is Editor) {
 				add (old);
 				old.hide ();
-				Idle.add (() => { old.hide(); return false; });
 			}
 		}
 
@@ -631,26 +632,6 @@ namespace Vanubi.UI {
 					detach_editors (child);
 				}
 			}
-		}
-
-		public Editor get_first_visible_editor () {
-			// start from scratch_editors
-			foreach (unowned Editor ed in scratch_editors.data) {
-				if (ed.visible) {
-					return ed;
-				}
-			}
-
-			foreach (unowned File file in files.get_keys ()) {
-				unowned GenericArray<Editor> editors = file.get_data ("editors");
-				foreach (unowned Editor ed in editors.data) {
-					if (ed.visible) {
-						return ed;
-					}
-				}
-			}
-
-			assert_not_reached ();
 		}
 
 		public async void open_file (Editor editor, owned File file, bool focus = true) {
@@ -832,6 +813,7 @@ namespace Vanubi.UI {
 					return ed;
 				}
 			}
+			
 			// no editor reusable, so create one
 			var ed = new Editor (this, conf, file);
 			// set the font according to the user/system configuration

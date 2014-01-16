@@ -230,6 +230,7 @@ namespace Vanubi.UI {
 			on_buffer_changed ();
 
 			view.focus_in_event.connect(() => { 
+					manager.last_focused_editor = this;
 					if (old_selection_start_offset >= 0 && old_selection_end_offset >= 0) {
 						TextIter start, end;
 						view.buffer.get_iter_at_offset (out start, old_selection_start_offset);
@@ -297,6 +298,7 @@ namespace Vanubi.UI {
 		public override void grab_focus () {
 			view.grab_focus ();
 			manager.save_session (this); // changed focused 
+			manager.last_focused_editor = this;
 		}
 
 		public string get_editor_name () {
