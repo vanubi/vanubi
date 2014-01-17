@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=Vanubi
+GenericName=Text Editor
+Comment=View and edit files
+Exec=vanubi %U
+Terminal=false
+Type=Application
+MimeType=text/plain;
+Icon=/usr/local/share/vanubi/logo/vanubi.png
+Categories=GNOME;GTK;Development;TextEditor;
