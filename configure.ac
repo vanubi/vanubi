@@ -127,12 +127,28 @@ AC_SUBST(LIBVANUBI_LIBS)
 AC_SUBST(VANUBI_CFLAGS)
 AC_SUBST(VANUBI_LIBS)
 
+# This macro expands DIR and assigns it to RET.
+# If DIR is NONE, then it's replaced by DEFAULT.
+# Based on https://git.gnome.org/browse/gedit/tree/configure.ac#n148
+AC_DEFUN([VANUBI_FULLPATH], [
+  test "x$prefix" = xNONE && prefix="$ac_default_prefix"
+  test "x$exec_prefix" = xNONE && exec_prefix='${prefix}'
+  ac_expand=[$]$1
+  test "x$ac_expand" = xNONE && ac_expand="[$]$2"
+  ac_expand=`eval echo [$]ac_expand`
+  $3=`eval echo [$]ac_expand`
+])
+
+VANUBI_FULLPATH(datadir, NONE, DESKTOP_PREFIX)
+AC_SUBST(DESKTOP_PREFIX)
+
 AC_CONFIG_FILES([
 		Makefile
 		libvanubi/Makefile
 		docs/Makefile
 		gui/Makefile
 		data/Makefile
+		data/vanubi.desktop
 		tests/Makefile
 ])
 
