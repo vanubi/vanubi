@@ -36,6 +36,7 @@ libvanubi_la_VALASOURCES = \
 libvanubi@PACKAGE_SUFFIX@_la_SOURCES = \
 	.libvanubi.vala.stamp \
 	$(libvanubi_la_VALASOURCES:.vala=.c) \
+	gspawn/vanubi_gspawn.c	\
 	$(NULL)
 
 .libvanubi.vala.stamp: $(libvanubi_la_VALASOURCES)
