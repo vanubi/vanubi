@@ -103,7 +103,7 @@ namespace Vanubi.UI {
 				// avoid adding unfriendly undo actions, however move the cursor
 				Gtk.TextIter insert_iter;
 				buf.get_iter_at_mark (out insert_iter, buf.get_insert ());
-				if (insert_iter.get_line_offset () < indent) {
+				if (insert_iter.get_line() == line && insert_iter.get_line_offset () < indent) {
 					var viter = new BufferIter (this, insert_iter);
 					while (viter.effective_line_offset <= indent) {
 						viter.forward_char ();
