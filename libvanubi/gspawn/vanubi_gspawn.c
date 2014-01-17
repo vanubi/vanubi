@@ -20,7 +20,10 @@
  * Boston, MA 02111-1307, USA.
  */
 
-/* Functions have been renamed with a _vanubi_ prefix to avid conflict */ 
+/* Real async version of g_spawn_async_with_pipes.
+ * The function has been renamed with a vanubi_ prefix to avoid conflict.
+ * See bug: https://bugzilla.gnome.org/show_bug.cgi?id=722401 
+ */
  
 #include "config.h"
 
@@ -56,37 +59,44 @@
  */
 
 typedef struct {
+	// Vanubi specific
 	int _state_;
 	GObject* _source_object_;
 	GAsyncResult* _res_;
 	GSimpleAsyncResult* _async_result;
+	GDataInputStream* read_stream;
+	gint io_priority;
+	GCancellable* cancellable;
+
+	// Parameters to fork_exec_with_pipes
 	gboolean              intermediate_child;
-                      const gchar          *working_directory;
-                      gchar               **argv;
-                      gchar               **envp;
-                      gboolean              close_descriptors;
-                      gboolean              search_path;
-                      gboolean              search_path_from_envp;
-                      gboolean              stdout_to_null;
-                      gboolean              stderr_to_null;
-                      gboolean              child_inherits_stdin;
-                      gboolean              file_and_argv_zero;
-                      gboolean              cloexec_pipes;
-                      GSpawnChildSetupFunc  child_setup;
-                      gpointer              user_data;
-                      GPid                 child_pid;
-                      gint                 standard_input;
-                      gint                 standard_output;
-                      gint                 standard_error;
-					  
-					   GPid pid;
-					   gint stdin_pipe[2];
-					   gint stdout_pipe[2];
-					   gint stderr_pipe[2];
-					   gint child_err_report_pipe[2];
-					   gint child_pid_report_pipe[2];
-					   guint pipe_flags;
-					   gint status;
+	const gchar          *working_directory;
+	gchar               **argv;
+	gchar               **envp;
+	gboolean              close_descriptors;
+	gboolean              search_path;
+	gboolean              search_path_from_envp;
+	gboolean              stdout_to_null;
+	gboolean              stderr_to_null;
+	gboolean              child_inherits_stdin;
+	gboolean              file_and_argv_zero;
+	gboolean              cloexec_pipes;
+	GSpawnChildSetupFunc  child_setup;
+	gpointer              user_data;
+	GPid                 child_pid;
+	gint                 standard_input;
+	gint                 standard_output;
+	gint                 standard_error;
+	
+	// Temporary variables of fork_exec_with_pipes
+	GPid pid;
+	gint stdin_pipe[2];
+	gint stdout_pipe[2];
+	gint stderr_pipe[2];
+	gint child_err_report_pipe[2];
+	gint child_pid_report_pipe[2];
+	guint pipe_flags;
+	gint status;
 } VanubiSpawnAsyncWithPipesData;
 
 
@@ -165,6 +175,15 @@ read_data (GString *str,
     }
 }
 
+static void
+vanubi_spawn_async_with_pipes_ready (GObject* source_object, GAsyncResult* _res_, gpointer _user_data_) {
+	VanubiSpawnAsyncWithPipesData* _data_;
+	_data_ = _user_data_;
+	_data_->_source_object_ = source_object;
+	_data_->_res_ = _res_;
+	fork_exec_with_pipes (_data_);
+}
+
 void
 vanubi_spawn_async_with_pipes (const gchar          *working_directory,
 							   gchar               **argv,
@@ -172,6 +191,8 @@ vanubi_spawn_async_with_pipes (const gchar          *working_directory,
 							   GSpawnFlags           flags,
 							   GSpawnChildSetupFunc  child_setup,
 							   gpointer              user_data,
+							   int io_priority,
+							   GCancellable* cancellable,
 							   GAsyncReadyCallback _callback_, gpointer _user_data_) {
 	g_return_val_if_fail (argv != NULL, FALSE);
   
@@ -196,6 +217,8 @@ vanubi_spawn_async_with_pipes (const gchar          *working_directory,
 	_data_->cloexec_pipes = FALSE; // (flags & G_SPAWN_CLOEXEC_PIPES) != 0;
 	_data_->child_setup = child_setup;
 	_data_->user_data = user_data;
+	_data_->io_priority = io_priority;
+	_data_->cancellable = cancellable;
 	
 	fork_exec_with_pipes (_data_);
 }
@@ -654,6 +677,10 @@ fork_exec_with_pipes (VanubiSpawnAsyncWithPipesData* _data_) {
 	switch (_data_->_state_) {
 	case 0:
 		goto _state_0;
+	case 1:
+		goto _state_1;
+	case 2:
+		goto _state_2;
 	default:
 		g_assert_not_reached ();
 	}
@@ -820,15 +847,30 @@ _state_0:
             }
         }
       
+		GInputStream *unix_stream = g_unix_input_stream_new (_data_->child_err_report_pipe[0], FALSE);
+		_data_->read_stream = g_data_input_stream_new (unix_stream);
+		_data_->_state_ = 1;
+		g_buffered_input_stream_fill_async (_data_->read_stream, sizeof(int)*2, _data_->io_priority, _data_->cancellable, vanubi_spawn_async_with_pipes_ready, _data_);
+		return FALSE;
+		
+	_state_1:
+		n_ints = g_buffered_input_stream_fill_finish (_data_->read_stream, _data_->_res_, error);
+		if (error != NULL) {
+			goto cleanup_and_fail;
+		}
+		n_ints = n_ints / sizeof(int);
 
-      if (!read_ints (_data_->child_err_report_pipe[0],
-                      buf, 2, &n_ints,
-                      error))
-        goto cleanup_and_fail;
-        
       if (n_ints >= 2)
         {
           /* Error from the child. */
+		  buf[0] = g_data_input_stream_read_int32 (_data_->read_stream, _data_->cancellable, error);
+		  if (error != NULL) {
+			  goto cleanup_and_fail;
+		  }
+		  buf[1] = g_data_input_stream_read_int32 (_data_->read_stream, _data_->cancellable, error);
+		  if (error != NULL) {
+			  goto cleanup_and_fail;
+		  }
 
           switch (buf[0])
             {
@@ -884,11 +926,16 @@ _state_0:
       /* Get child pid from intermediate child pipe. */
       if (_data_->intermediate_child)
         {
-          n_ints = 0;
-          
-          if (!read_ints (_data_->child_pid_report_pipe[0],
-                          buf, 1, &n_ints, error))
-            goto cleanup_and_fail;
+			_data_->_state_ = 2;
+			g_buffered_input_stream_fill_async (_data_->read_stream, sizeof(int)*1, _data_->io_priority, _data_->cancellable, vanubi_spawn_async_with_pipes_ready, _data_);
+			return FALSE;
+		
+		_state_2:
+			n_ints = g_buffered_input_stream_fill_finish (_data_->read_stream, _data_->_res_, error);
+			if (error != NULL) {
+				goto cleanup_and_fail;
+			}
+			n_ints = n_ints / sizeof(int);
 
           if (n_ints < 1)
             {
@@ -904,6 +951,10 @@ _state_0:
           else
             {
               /* we have the child pid */
+			  buf[0] = g_data_input_stream_read_int32 (_data_->read_stream, _data_->cancellable, error);
+			  if (error != NULL) {
+				  goto cleanup_and_fail;
+			  }
               _data_->pid = buf[0];
             }
         }
