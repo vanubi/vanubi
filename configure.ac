@@ -2,7 +2,7 @@
 # bump micro_version to the next odd number after each release
 m4_define([vanubi_major_version], [0])
 m4_define([vanubi_minor_version], [0])
-m4_define([vanubi_micro_version], [5])
+m4_define([vanubi_micro_version], [6])
 m4_define([vanubi_patch_version], [0])
 
 m4_define([vanubi_version], [vanubi_major_version.vanubi_minor_version.vanubi_micro_version.vanubi_patch_version])
