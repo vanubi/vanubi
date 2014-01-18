@@ -329,7 +329,7 @@ namespace Vanubi.Vade {
 	}
 	
 	public abstract class NativeObject : Value {
-		protected class HashTable<string, Value> vtable;
+		protected class HashTable<string, Value> vtable = null;
 		
 		class construct {
 			vtable = new HashTable<string, Value> (str_hash, str_equal);
