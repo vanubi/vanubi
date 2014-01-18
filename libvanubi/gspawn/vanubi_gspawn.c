@@ -1,6 +1,6 @@
 /* gspawn.c - Process launching
  *
- *  Copyright 2000 Red Hat, Inc.
+ *  Copyright 2000-2014 Red Hat, Inc.
  *  g_execvpe implementation based on GNU libc execvp:
  *   Copyright 1991, 92, 95, 96, 97, 98, 99 Free Software Foundation, Inc.
  *
@@ -49,6 +49,7 @@
 #include <glib.h>
 #include <glib-object.h>
 #include <gio/gio.h>
+#include <gio/gunixinputstream.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -223,7 +224,7 @@ vanubi_spawn_async_with_pipes (const gchar          *working_directory,
 	fork_exec_with_pipes (_data_);
 }
 
-void vanubi_spawn_async_with_pipes_finish (GAsyncResult* _res_,
+gboolean vanubi_spawn_async_with_pipes_finish (GAsyncResult* _res_,
 										   GPid                 *child_pid,
 										   gint                 *standard_input,
 										   gint                 *standard_output,
@@ -231,7 +232,7 @@ void vanubi_spawn_async_with_pipes_finish (GAsyncResult* _res_,
 										   GError** error) {
 	VanubiSpawnAsyncWithPipesData* _data_;
 	if (g_simple_async_result_propagate_error (G_SIMPLE_ASYNC_RESULT (_res_), error)) {
-		return NULL;
+		return FALSE;
 	}
 	_data_ = g_simple_async_result_get_op_res_gpointer (G_SIMPLE_ASYNC_RESULT (_res_));
 	if (child_pid != NULL)
@@ -242,6 +243,8 @@ void vanubi_spawn_async_with_pipes_finish (GAsyncResult* _res_,
 		*standard_output = _data_->standard_output;
 	if (standard_error != NULL)
 		*standard_error = _data_->standard_error;
+		
+	return TRUE;
 }
 
 static gint
@@ -687,22 +690,22 @@ fork_exec_with_pipes (VanubiSpawnAsyncWithPipesData* _data_) {
 	GError *error = NULL;
 	 
 _state_0: 
-  if (!g_unix_open_pipe (_data_->child_err_report_pipe, _data_->pipe_flags, error)) {
+  if (!g_unix_open_pipe (_data_->child_err_report_pipe, _data_->pipe_flags, &error)) {
 	  set_error (_data_, error);
 	  complete (_data_);
 	  return FALSE;
   }
 
-  if (_data_->intermediate_child && !g_unix_open_pipe (_data_->child_pid_report_pipe, _data_->pipe_flags, error))
+  if (_data_->intermediate_child && !g_unix_open_pipe (_data_->child_pid_report_pipe, _data_->pipe_flags, &error))
 	  goto cleanup_and_fail;
   
-  if (!g_unix_open_pipe (_data_->stdin_pipe, _data_->pipe_flags, error))
+  if (!g_unix_open_pipe (_data_->stdin_pipe, _data_->pipe_flags, &error))
     goto cleanup_and_fail;
   
-  if (!g_unix_open_pipe (_data_->stdout_pipe, _data_->pipe_flags, error))
+  if (!g_unix_open_pipe (_data_->stdout_pipe, _data_->pipe_flags, &error))
     goto cleanup_and_fail;
 
-  if (!g_unix_open_pipe (_data_->stderr_pipe, FD_CLOEXEC, error))
+  if (!g_unix_open_pipe (_data_->stderr_pipe, FD_CLOEXEC, &error))
     goto cleanup_and_fail;
 
   _data_->pid = fork ();
@@ -711,7 +714,7 @@ _state_0:
     {
       int errsv = errno;
 
-      g_set_error (error,
+      g_set_error (&error,
                    G_SPAWN_ERROR,
                    G_SPAWN_ERROR_FORK,
                    ("Failed to fork (%s)"),
@@ -822,7 +825,7 @@ _state_0:
       /* Parent */
       
       gint buf[2];
-      gint n_ints = 0;    
+      gssize n_ints = 0;    
 
       /* Close the uncared-about ends of the pipes */
       close_and_invalidate (&_data_->child_err_report_pipe[1]);
@@ -849,12 +852,14 @@ _state_0:
       
 		GInputStream *unix_stream = g_unix_input_stream_new (_data_->child_err_report_pipe[0], FALSE);
 		_data_->read_stream = g_data_input_stream_new (unix_stream);
+		g_object_unref (unix_stream);
+		
 		_data_->_state_ = 1;
-		g_buffered_input_stream_fill_async (_data_->read_stream, sizeof(int)*2, _data_->io_priority, _data_->cancellable, vanubi_spawn_async_with_pipes_ready, _data_);
+		g_buffered_input_stream_fill_async (G_BUFFERED_INPUT_STREAM (_data_->read_stream), sizeof(int)*2, _data_->io_priority, _data_->cancellable, vanubi_spawn_async_with_pipes_ready, _data_);
 		return FALSE;
 		
 	_state_1:
-		n_ints = g_buffered_input_stream_fill_finish (_data_->read_stream, _data_->_res_, error);
+		n_ints = g_buffered_input_stream_fill_finish (G_BUFFERED_INPUT_STREAM (_data_->read_stream), _data_->_res_, &error);
 		if (error != NULL) {
 			goto cleanup_and_fail;
 		}
@@ -863,11 +868,11 @@ _state_0:
       if (n_ints >= 2)
         {
           /* Error from the child. */
-		  buf[0] = g_data_input_stream_read_int32 (_data_->read_stream, _data_->cancellable, error);
+		  buf[0] = g_data_input_stream_read_int32 (_data_->read_stream, _data_->cancellable, &error);
 		  if (error != NULL) {
 			  goto cleanup_and_fail;
 		  }
-		  buf[1] = g_data_input_stream_read_int32 (_data_->read_stream, _data_->cancellable, error);
+		  buf[1] = g_data_input_stream_read_int32 (_data_->read_stream, _data_->cancellable, &error);
 		  if (error != NULL) {
 			  goto cleanup_and_fail;
 		  }
@@ -875,7 +880,7 @@ _state_0:
           switch (buf[0])
             {
             case CHILD_CHDIR_FAILED:
-              g_set_error (error,
+              g_set_error (&error,
                            G_SPAWN_ERROR,
                            G_SPAWN_ERROR_CHDIR,
                            ("Failed to change to directory '%s' (%s)"),
@@ -885,7 +890,7 @@ _state_0:
               break;
               
             case CHILD_EXEC_FAILED:
-              g_set_error (error,
+              g_set_error (&error,
                            G_SPAWN_ERROR,
                            exec_err_to_g_error (buf[1]),
                            ("Failed to execute child process \"%s\" (%s)"),
@@ -895,7 +900,7 @@ _state_0:
               break;
               
             case CHILD_DUP2_FAILED:
-              g_set_error (error,
+              g_set_error (&error,
                            G_SPAWN_ERROR,
                            G_SPAWN_ERROR_FAILED,
                            ("Failed to redirect output or input of child process (%s)"),
@@ -904,7 +909,7 @@ _state_0:
               break;
 
             case CHILD_FORK_FAILED:
-              g_set_error (error,
+              g_set_error (&error,
                            G_SPAWN_ERROR,
                            G_SPAWN_ERROR_FORK,
                            ("Failed to fork child process (%s)"),
@@ -912,7 +917,7 @@ _state_0:
               break;
               
             default:
-              g_set_error (error,
+              g_set_error (&error,
                            G_SPAWN_ERROR,
                            G_SPAWN_ERROR_FAILED,
                            ("Unknown error executing child process \"%s\""),
@@ -927,11 +932,11 @@ _state_0:
       if (_data_->intermediate_child)
         {
 			_data_->_state_ = 2;
-			g_buffered_input_stream_fill_async (_data_->read_stream, sizeof(int)*1, _data_->io_priority, _data_->cancellable, vanubi_spawn_async_with_pipes_ready, _data_);
+			g_buffered_input_stream_fill_async (G_BUFFERED_INPUT_STREAM (_data_->read_stream), sizeof(int)*1, _data_->io_priority, _data_->cancellable, vanubi_spawn_async_with_pipes_ready, _data_);
 			return FALSE;
 		
 		_state_2:
-			n_ints = g_buffered_input_stream_fill_finish (_data_->read_stream, _data_->_res_, error);
+			n_ints = g_buffered_input_stream_fill_finish (G_BUFFERED_INPUT_STREAM (_data_->read_stream), _data_->_res_, &error);
 			if (error != NULL) {
 				goto cleanup_and_fail;
 			}
@@ -941,7 +946,7 @@ _state_0:
             {
               int errsv = errno;
 
-              g_set_error (error,
+              g_set_error (&error,
                            G_SPAWN_ERROR,
                            G_SPAWN_ERROR_FAILED,
                            ("Failed to read enough data from child pid pipe (%s)"),
@@ -951,7 +956,7 @@ _state_0:
           else
             {
               /* we have the child pid */
-			  buf[0] = g_data_input_stream_read_int32 (_data_->read_stream, _data_->cancellable, error);
+			  buf[0] = g_data_input_stream_read_int32 (_data_->read_stream, _data_->cancellable, &error);
 			  if (error != NULL) {
 				  goto cleanup_and_fail;
 			  }
