@@ -1213,7 +1213,7 @@ namespace Vanubi.UI {
 			if (!other_visible) {
 				if (editor.view.buffer.get_modified ()) {
 					/* Ask user */
-					var bar = new MessageBar ("Your changes will be lost. Confirm? (y/n)");
+					var bar = new MessageBar ("<b>Your changes will be lost. Confirm? (y/n)</b>");
 					bar.key_pressed.connect ((e) => {
 							if (e.keyval == Gdk.Key.n) {
 								abort (editor);
@@ -1327,7 +1327,7 @@ namespace Vanubi.UI {
 				SourceFunc resume = ask_save_modified_editors.callback;
 
 				// ask user
-				var bar = new MessageBar ("s = save, n = discard, ! = save-all, q = discard all");
+				var bar = new MessageBar ("<b>s = save, n = discard, ! = save-all, q = discard all</b>");
 				bar.key_pressed.connect ((e) => {
 						if (e.keyval == Gdk.Key.s) {
 							ignore_abort = true;
