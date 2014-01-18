@@ -1432,10 +1432,11 @@ namespace Vanubi.UI {
 				var output = yield pipe_shell (ed);
 				
 				var stream = new MemoryInputStream.from_data ((owned) output, GLib.free);
-				yield ed.replace_contents (stream);
+
+				var buf = ed.view.buffer;
+				yield ed.replace_contents (stream, true);
 				
 				TextIter iter;
-				var buf = ed.view.buffer;
 				buf.get_iter_at_offset (out iter, old_offset);
 				buf.place_cursor (iter);
 				ed.view.scroll_mark_onscreen (buf.get_insert ());
