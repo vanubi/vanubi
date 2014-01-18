@@ -677,6 +677,8 @@ static void complete (VanubiSpawnAsyncWithPipesData* _data_) {
 
 static gboolean
 fork_exec_with_pipes (VanubiSpawnAsyncWithPipesData* _data_) {
+	GError *error = NULL;
+	
 	switch (_data_->_state_) {
 	case 0:
 		goto _state_0;
@@ -687,7 +689,6 @@ fork_exec_with_pipes (VanubiSpawnAsyncWithPipesData* _data_) {
 	default:
 		g_assert_not_reached ();
 	}
-	GError *error = NULL;
 	 
 _state_0: 
   if (!g_unix_open_pipe (_data_->child_err_report_pipe, _data_->pipe_flags, &error)) {
@@ -707,7 +708,7 @@ _state_0:
 
   if (!g_unix_open_pipe (_data_->stderr_pipe, FD_CLOEXEC, &error))
     goto cleanup_and_fail;
-
+	
   _data_->pid = fork ();
 
   if (_data_->pid < 0)
