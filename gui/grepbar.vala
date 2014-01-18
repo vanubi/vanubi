@@ -132,7 +132,6 @@ namespace Vanubi.UI {
 							TextIter end;
 							get_end_iter (out end);
 							var offset = end.get_offset ();
-							if (((string)converted).length != converted.length) message("dsa");
 							insert_text (ref end, (string) converted, converted.length);
 							// apply tags
 							TextIter start;
