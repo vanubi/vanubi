@@ -1,6 +1,5 @@
 VanubiUIEditorView {
 	-GtkWidget-cursor-aspect-ratio: 0.1;
-	-GtkWidget-cursor-color: white;
 }
 
 VanubiUIEditorView.caret:selected {
