@@ -92,7 +92,6 @@ namespace Vanubi.UI {
 
 		mark = buf.create_mark (null, iter, false);
 		loc.set_data ("start-mark", mark);
-		mark.weak_ref (() => { loc.set_data ("start-mark", null); });
 
 		return mark;
 	}
@@ -114,7 +113,6 @@ namespace Vanubi.UI {
 		}
 		
 		loc.set_data ("end-mark", mark);
-		mark.weak_ref (() => { loc.set_data ("end-mark", null); });
 		
 		return mark;
 	}
