@@ -20,28 +20,28 @@
 namespace Vanubi {
 	public class FileCluster {
 		unowned Configuration config;
-		List<File> opened_files;
+		List<FileSource> opened_files;
 
 		public FileCluster (Configuration config) {
 			this.config = config;
 		}
 		
-		public void opened_file (File f) {
-			unowned List<File> link = opened_files.find_custom (f, (CompareFunc) File.equal);
+		public void opened_file (FileSource f) {
+			unowned List<FileSource> link = opened_files.find_custom (f, (CompareFunc) DataSource.equal);
 			// ensure we have no duplicates
 			if (link == null) {
 				opened_files.append (f);
 			}
 		}
 		
-		public void closed_file (File f) {
-			unowned List<File> link = opened_files.find_custom (f, (CompareFunc) File.equal);
+		public void closed_file (FileSource f) {
+			unowned List<FileSource> link = opened_files.find_custom (f, (CompareFunc) DataSource.equal);
 			if (link != null) {
 				opened_files.delete_link (link);
 			}
 		}
 		
-		bool each_file (Operation<File?> op) {
+		bool each_file (Operation<FileSource> op) {
 			var files = config.get_files ();
 			foreach (var other in files) {
 				if (!op (other)) {
@@ -51,24 +51,24 @@ namespace Vanubi {
 			return true;
 		}
 		
-		bool each_sibling (File file, Operation<File?> op) {
-			var parent = file.get_parent ();
+		bool each_sibling (FileSource file, Operation<FileSource> op) {
+			var container = file.container;
 			return each_file ((other) => {
-					if (parent.equal (other.get_parent ()) && !op (other)) {
+					if (container.equal (other.container) && !op (other)) {
 						return false;
 					}
 					return true;
 			});
 		}
 		
-		bool each_same_extension (File file, Operation<File?> op) {
-			var ext = get_file_extension (file);
+		bool each_same_extension (FileSource file, Operation<FileSource> op) {
+			var ext = file.extension;
 			if (ext == null) {
 				return true;
 			}
 			
 			return each_file ((other) => {
-					if (get_file_extension (file) == ext && !op (other)) {
+					if (file.extension == ext && !op (other)) {
 						return false;
 					}
 					return true;
@@ -76,13 +76,13 @@ namespace Vanubi {
 		}
 		
 		// Returns a similar file, or itself, for a given configuration key
-		public File get_similar_file (File file, string key, bool has_default) {
+		public FileSource get_similar_file (FileSource file, string key, bool has_default) {
 			if (key == "language" && has_default) {
 				// use the default language, do not look further if we have a default value
 				return file;
 			}
 
-			File? similar = null;
+			FileSource? similar = null;
 			each_sibling (file, (f) => {
 					if (config.has_file_key (f, key)) {
 						similar = f;

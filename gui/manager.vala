@@ -21,8 +21,8 @@ using Gtk;
 
 namespace Vanubi.UI {
 	public class Manager : Grid {
-		/* List of files opened. Work on unique File instances. */
-		HashTable<File, File> files = new HashTable<File, File> (File.hash, File.equal);
+		/* List of data sources opened. Work on unique DataSource instances. */
+		HashTable<DataSource, DataSource> sources = new HashTable<DataSource, DataSource> (DataSource.hash, DataSource.equal);
 		/* List of buffers for *scratch* */
 		GenericArray<Editor> scratch_editors = new GenericArray<Editor> ();
 		
@@ -643,18 +643,18 @@ namespace Vanubi.UI {
 		}
 
 		public async void open_file (Editor editor, owned File file, bool focus = true) {
-			yield open_location (editor, new Location (file), focus);
+			yield open_location (editor, new Location (new LocalFileSource (file)), focus);
 		}
 		
 		public async void open_location (Editor editor, owned Location location, bool focus = true) {
-			var file = location.file;
+			var source = location.source;
 
-			// first search already opened files
-			var f = files[file];
-			if (f != null) {
+			// first search already opened sources
+			var s = sources[source];
+			if (s != null) {
 				unowned Editor ed;
-				if (f != editor.file) {
-					ed = get_available_editor (f);
+				if (s != editor.source) {
+					ed = get_available_editor (s);
 					if (focus) {
 						replace_widget (editor, ed);
 					}
@@ -670,10 +670,12 @@ namespace Vanubi.UI {
 					ed.grab_focus ();
 				}
 				return;
+			} else {
+				source = s; // normalize
 			}
 
 			// if the file doesn't exist, don't try to read it
-			if (!file.query_exists ()) {
+			if (!source.query_exists ()) {
 				unowned Editor ed = get_available_editor (file);
 				if (focus) {
 					replace_widget (editor, ed);
@@ -724,19 +726,29 @@ namespace Vanubi.UI {
 
 		/* File/Editor/etc. COMBINATORS */
 		
-		// iterate all files and perform the given operation on each of them
-		public bool each_file (Operation<File?> op, bool include_scratch = true) {
-			if (include_scratch) {
-				if (!op (null)) { // *scratch*
-					return false;
-				}
-			}
-			foreach (var file in files.get_keys ()) {
-				if (!op (file)) {
+		// iterate all data sources and perform the given operation on each of them
+		public bool each_source (Operation<DataSource> op, bool include_scratch = true) {
+			foreach (var source in sources.get_keys ()) {
+				if (source is ScratchSource) {
+					if (include_scratch) {
+						if (!op (source)) {
+							return false;
+						}
+					}
+					return true;
+				} else if (!op (source)) {
 					return false;
 				}
 			}
 			return true;
+		}
+		
+		public bool each_file (Operation<FileSource> op) {
+			each_source ((s) => {
+					if (s is FileSource && !op ((FileSource) s)) {
+						return false;
+					}
+			});
 		}
 		
 		// iterate all editors of a given file and perform the given operation on each of them
@@ -759,9 +771,25 @@ namespace Vanubi.UI {
 			return true;
 		}
 		
+		// iterate all editors of a given source and perform the given operation on each of them
+		public bool each_source_editor (DataSource source, Operation<Editor> op) {
+			unowned GenericArray<Editor> editors;
+			editors = source.get_data ("editors");
+			if (editors == null) {
+				return true;
+			}
+			
+			foreach (unowned Editor ed in editors.data) {
+				if (!op (ed)) {
+					return false;
+				}
+			}
+			return true;
+		}
+		
 		public bool each_editor (Operation<Editor> op, bool include_scratch = true) {
-			return each_file ((f) => {
-					return each_file_editor (f, (ed) => {
+			return each_source ((s) => {
+					return each_source_editor (s, (ed) => {
 							return op (ed);
 					});
 			}, include_scratch);
@@ -781,38 +809,33 @@ namespace Vanubi.UI {
 		}
 		
 		// iterate lru of all EditorContainer and perform the given operation on each of them
-		public bool each_lru (Operation<FileLRU> op) {
+		public bool each_lru (Operation<SourceLRU> op) {
 			return each_editor_container ((c) => {
 					return !op (c.lru);
 			});
 		}
 		
 		/* Returns an Editor for the given file */
-		unowned Editor get_available_editor (File? file) {
+		unowned Editor get_available_editor (DataSource source) {
 			// list of editors for the file
 			unowned GenericArray<Editor> editors;
-			if (file == null) {
-				// file == null means *scratch*
-				editors = scratch_editors;
-			} else {
-				// map to the unique file instance
-				var f = files[file];
-				if (f == null) {
-					// update lru of all existing containers
-					each_lru ((lru) => { lru.append (file); return true; });
-					
-					// this is a new file
-					files[file] = file;
-					conf.cluster.opened_file (file);
-					var etors = new GenericArray<Editor> ();
-					editors = etors;
-					// store editors in the File itself
-					file.set_data ("editors", (owned) etors);
-					// save session for the new opened file
-				} else {
-					// get the editors of the file
-					editors = f.get_data ("editors");
+			var s = sources[source];
+			if (s == null) {
+				// update lru of all existing containers
+				each_lru ((lru) => { lru.append (source); return true; });
+				
+				// this is a new source
+				sources[source] = source;
+				if (source is FileSource) {
+					conf.cluster.opened_file ((FileSource) source);
 				}
+				var etors = new GenericArray<Editor> ();
+				editors = etors;
+				// store editors in the Source itself
+				source.set_data ("editors", (owned) etors);
+			} else {
+				// get the editors of the source
+				editors = source.get_data ("editors");
 			}
 
 			// first find an editor that is not visible, so we can reuse it
@@ -823,7 +846,7 @@ namespace Vanubi.UI {
 			}
 			
 			// no editor reusable, so create one
-			var ed = new Editor (this, conf, file);
+			var ed = new Editor (this, conf, source);
 			// set the font according to the user/system configuration
 			var system_size = ed.view.style.font_desc.get_size () / Pango.SCALE;
 			ed.view.override_font (Pango.FontDescription.from_string ("Monospace %d".printf (conf.get_editor_int ("font_size", system_size))));
@@ -833,8 +856,7 @@ namespace Vanubi.UI {
 				// share TextBuffer with an existing editor for this file,
 				// so that they display the same content
 				ed.view.buffer = editors[0].view.buffer;
-			} else if (file != null) {
-				// if it's not *scratch*, guess the content-type to set the syntax highlight
+			} else {
 				ed.reset_language ();
 			}
 			// let the Manager own the reference to the editor
@@ -849,7 +871,7 @@ namespace Vanubi.UI {
 			each_file ((f) => {
 					session.files.add (f);
 					return true;
-			}, false);
+			});
 			session.location = ed.get_location ();
 			conf.save_session (session, name);
 			conf.save.begin ();
@@ -1090,7 +1112,12 @@ namespace Vanubi.UI {
 		}
 		
 		void on_open_file (Editor editor) {
-			var bar = new FileBar (editor.file);
+			var base_source = editor.source.container as FileSource;
+			if (base_source == null) {
+				return;
+			}
+			
+			var bar = new FileBar (base_source);
 			bar.activate.connect ((f) => {
 					abort (editor);
 					open_file.begin (editor, File.new_for_path (f));

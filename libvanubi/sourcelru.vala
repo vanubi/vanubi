@@ -18,50 +18,40 @@
  */
 
 namespace Vanubi {
-	// well not really lru :S it's queue
-	public class FileLRU {
-		List<File> lru = new List<File> ();
-		
-		static int filecmp (File? f1, File? f2) {
-			if (f1 == f2) {
-				return 0;
-			}
-			if (f1 != null && f2 != null && f1.equal (f2)) {
-				return 0;
-			}
-			return -1;
-		}
+	// last recently used
+	public class SourceLRU {
+		List<DataSource> lru = new List<DataSource> ();
 
-		public void append (File? f) {
-			unowned List<File> link = lru.find_custom (f, filecmp);
+		public void append (DataSource? f) {
+			unowned List<DataSource> link = lru.find_custom (f, (CompareFunc) DataSource.equal);
 			// ensure we have no duplicates
 			if (link == null) {
 				lru.append (f);
 			}
 		}
 		
-		public void used (File? f) {
+		public void used (DataSource s) {
 			// bring to head
-			unowned List<File> link = lru.find_custom (f, filecmp);
+			unowned List<DataSource> link = lru.find_custom (s, (CompareFunc) DataSource.equal);
 			if (link != null) {
 				lru.delete_link (link);
-				lru.prepend (f);
+				lru.prepend (s);
 			}
 		}
 		
-		public void remove (File? f) {
-			unowned List<File> link = lru.find_custom (f, filecmp);
+		public void remove (DataSource? f) {
+			unowned List<DataSource> link = lru.find_custom (f, (CompareFunc) DataSource.equal);
 			if (link != null) {
 				lru.delete_link (link);
 			}
 		}
 		
-		public unowned List<File> list () {
+		public unowned List<DataSource> list () {
 			return lru;
 		}
 		
-		public FileLRU copy () {
-			var res = new FileLRU ();
+		public SourceLRU copy () {
+			var res = new SourceLRU ();
 			res.lru = lru.copy ();
 			return res;
 		}

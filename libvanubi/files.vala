@@ -179,14 +179,4 @@ namespace Vanubi {
 		}
 		return Environment.get_current_dir()+"/";
 	}
-	
-	public string? get_file_extension (File file) {
-		var basename = file.get_basename ();
-		var idx = basename.last_index_of (".");
-		if (idx < 0) {
-			return null;
-		}
-		
-		return basename.substring (idx+1);
-	}
 }

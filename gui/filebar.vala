@@ -1,5 +1,5 @@
 /*
- *  Copyright © 2011-2013 Luca Bruno
+ *  Copyright © 2011-2014 Luca Bruno
  *
  *  This file is part of Vanubi.
  *
@@ -23,9 +23,9 @@ namespace Vanubi.UI {
 	class FileBar : CompletionBar<File> {
 		string base_directory;
 
-		public FileBar (File? base_file) {
-			base_directory = get_base_directory (base_file);
-			entry.set_text(base_directory);
+		public FileBar (FileSource base_source) {
+			base_directory = base_source.to_string ();
+			entry.set_text(base_directory+"/");
 		}
 
 		public override void grab_focus () {

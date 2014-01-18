@@ -100,7 +100,7 @@ namespace Vanubi.UI {
 	}
 
 	public class EditorContainer : EventBox {
-		public FileLRU lru = new FileLRU ();
+		public SourceLRU lru = new SourceLRU ();
 		
 		public Editor editor {
 			get {
@@ -126,11 +126,11 @@ namespace Vanubi.UI {
 			base.remove (w);
 		}
 		
-		/* Get files in lru order */
-		public File[] get_files () {
-			File[] res = null;
-			foreach (var file in lru.list ()) {
-				res += file;
+		/* Get sources in lru order */
+		public DataSource[] get_sources () {
+			DataSource[] res = null;
+			foreach (var source in lru.list ()) {
+				res += source;
 			}
 			return res;
 		}
@@ -139,7 +139,7 @@ namespace Vanubi.UI {
 	public class Editor : Grid {
 		public weak Manager manager;
 		Configuration conf;
-		public File file { get; private set; }
+		public weak DataSource source { get; private set; }
 		public SourceView view { get; private set; }
 		public SourceStyleSchemeManager editor_style { get; private set; }
 		ScrolledWindow sw;
@@ -160,9 +160,9 @@ namespace Vanubi.UI {
 		uint save_session_timer = 0;
 		Git git;
 		
-		public Editor (Manager manager, Configuration conf, File? file) {
+		public Editor (Manager manager, Configuration conf, DataSource file) {
 			this.manager = manager;
-			this.file = file;
+			this.source = source;
 			this.conf = conf;
 			orientation = Orientation.VERTICAL;
 			expand = true;
@@ -317,12 +317,14 @@ namespace Vanubi.UI {
 		}
 
 		public void reset_language () {
+			var file = source as LocalFileSource;
+			
 			bool uncertain;
-			var content_type = ContentType.guess (file.get_path (), null, out uncertain);
+			var content_type = ContentType.guess (file.to_string (), null, out uncertain);
 			if (uncertain) {
 				content_type = null;
 			}
-			var default_lang = SourceLanguageManager.get_default().guess_language (file.get_path (), content_type);
+			var default_lang = SourceLanguageManager.get_default().guess_language (file.to_string (), content_type);
 			var lang_id = conf.get_file_string (file, "language", default_lang != null ? default_lang.id : null);
 			if (lang_id != null) {
 				var lang = SourceLanguageManager.get_default().get_language (lang_id);
@@ -333,9 +335,9 @@ namespace Vanubi.UI {
 		public Location get_location () {
 			TextIter iter;
 			view.buffer.get_iter_at_mark (out iter, view.buffer.get_insert ());
-			var loc = new Location (file,
-						iter.get_line (),
-						iter.get_line_offset ());
+			var loc = new Location (source,
+									iter.get_line (),
+									iter.get_line_offset ());
 			return loc;
 		}
 		

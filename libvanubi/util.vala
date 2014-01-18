@@ -25,14 +25,14 @@ namespace Vanubi {
 	public delegate G TaskFunc<G> () throws Error;
 
 	public class Location : Object {
-		public File? file;
+		public DataSource? source;
 		public int start_line;
 		public int start_column;
 		public int end_line;
 		public int end_column;
 		
-		public Location (owned File? file, int start_line = -1, int start_column = -1, int end_line = -1, int end_column = -1) {
-			this.file = (owned) file;
+		public Location (owned DataSource? source, int start_line = -1, int start_column = -1, int end_line = -1, int end_column = -1) {
+			this.source = (owned) source;
 			this.start_line = start_line;
 			this.start_column = start_column;
 			this.end_line = end_line;
@@ -41,8 +41,8 @@ namespace Vanubi {
 		
 		public string to_string () {
 			var s = "";
-			if (file != null) {
-				s += file.get_path ();
+			if (source != null) {
+				s += source.to_string ();
 			}
 			if (start_line >= 0) {
 				s += ":"+start_line.to_string ();
