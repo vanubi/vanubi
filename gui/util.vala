@@ -104,15 +104,10 @@ namespace Vanubi.UI {
 		}
 		
 		var start_mark = get_start_mark_for_location (loc, buf);
-		TextIter iter;
 		if (loc.start_line >= 0 && loc.end_line >= 0) {
-			buf.get_iter_at_mark (out iter, start_mark);
-			if (loc.end_column >= 0) {
-				iter.forward_chars (loc.end_column);
-			} else {
-				iter.forward_chars (loc.start_column);
-			}
-			
+			var end_column = loc.end_column >= 0 ? loc.end_column : loc.start_column;
+			TextIter iter;
+			buf.get_iter_at_line_offset (out iter, loc.end_line, end_column);
 			mark = buf.create_mark (null, iter, false);
 		} else {
 			mark = start_mark;
