@@ -176,12 +176,24 @@ namespace Vanubi.UI {
 					manager.set_status ("Searching...", "search");
 					displayed_searching = true;
 				}
+				
+				// use a mark when giving control back to the gui
+				TextMark? mark = null;
 				if (iterations++ % 50 == 0) {
+					mark = buf.create_mark (null, iter, false);
 					SourceFunc resume = search.callback;
 					Idle.add ((owned) resume);
 					yield;
 				}
-				var subiter = iter;
+				
+				TextIter subiter;
+				if (mark != null) {
+					buf.get_iter_at_mark (out subiter, mark);
+					buf.delete_mark (mark);
+				} else {
+					subiter = iter;
+				}
+				
 				bool found = true;
 				if (is_regex) {
 					var end_line = iter;
