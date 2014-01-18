@@ -374,6 +374,10 @@ namespace Vanubi.UI {
 			bind_command (null, "reload-file");
 			index_command ("reload-file", "Reopen the current file");
 			execute_command["reload-file"].connect (on_reload_file);
+			
+			bind_command (null, "reload-all-files");
+			index_command ("reload-all-files", "Reopen all the files that have been changed");
+			execute_command["reload-all-files"].connect (on_reload_all_files);
 
 			bind_command ({ Key (Gdk.Key.x, Gdk.ModifierType.CONTROL_MASK),
 							Key (Gdk.Key.s, 0) }, "repo-grep");
@@ -1074,8 +1078,6 @@ namespace Vanubi.UI {
 			var old_offset = selection_start.get_offset ();
 			try {
 				var is = yield editor.file.read_async ();
-				editor.grab_focus ();
-
 				yield editor.replace_contents (is);
 
 				TextIter iter;
@@ -1083,10 +1085,29 @@ namespace Vanubi.UI {
 				buf.get_iter_at_offset (out iter, old_offset);
 				buf.place_cursor (iter);
 				editor.view.scroll_mark_onscreen (buf.get_insert ());
+				
+				// in case of splitted editors
+				each_file_editor (editor.file, (ed) => {
+						ed.reset_external_changed ();
+						return true;
+				});
 			} catch (IOError.CANCELLED e) {
 			} catch (Error e) {
 				set_status_error (e.message);
 			}
+		}
+		
+		void on_reload_all_files (Editor editor) {
+			each_file ((f) => {
+					each_file_editor (f, (ed) => {
+							// only the first editor, the buffer is shared
+							if (ed.is_externally_changed ()) {
+								reload_file.begin (ed);
+							}
+							return false;
+					});
+					return true;
+			}, false);
 		}
 		
 		void on_open_file (Editor editor) {

@@ -290,6 +290,10 @@ namespace Vanubi.UI {
 			old_selection_end_offset = old_selection_end.get_offset ();
 		}
 
+		public bool is_externally_changed () {
+			return file_external_changed.label != "";
+		}
+		
 		public void reset_external_changed () {
 			file_external_changed.set_label ("");
 			file.set_data<TimeVal?> ("editing_mtime", get_mtime ());
