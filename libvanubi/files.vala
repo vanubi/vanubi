@@ -18,25 +18,24 @@
  */
 
 namespace Vanubi {
-	void file_complete_pattern (File file, int index, string[] pattern, GenericArray<File> result, Cancellable cancellable) throws Error {
-		File child = file.get_child (pattern[index]);
-		if (index < pattern.length-1 && child.query_exists ()) {
+	void source_complete_pattern (DataSource source, int index, string[] pattern, GenericArray<DataSource> result, Cancellable? cancellable = null) throws Error {
+		DataSource child = source.child (pattern[index]);
+		if (index < pattern.length-1 && child.exists_sync ()) {
 			// perfect directory match
-			file_complete_pattern (child, index+1, pattern, result, cancellable);
+			source_complete_pattern (child, index+1, pattern, result, cancellable);
 			return;
 		}
 
-		File[]? matches = null;
+		DataSource[]? matches = null;
 		try {
-			var source = DataSource.new_from_string (file.get_path ());
 			var iterator = source.iterate_children (cancellable);
-			Annotated<File>[]? a = null;
+			Annotated<DataSource>[]? a = null;
 			while (true) {
 				var info = iterator.next (cancellable);
 				if (info == null) {
 					break;
 				}
-				a += new Annotated<File> (info.source.to_string(), ((LocalFileSource) info.source).file);
+				a += new Annotated<DataSource> (info.source.to_string(), info.source);
 			}
 			cancellable.set_error_if_cancelled ();
 			if (pattern[index] == "") {
@@ -46,7 +45,7 @@ namespace Vanubi {
 				}
 			} else {
 				// pattern match
-				var res = pattern_match_many<File> (pattern[index], a, cancellable);
+				var res = pattern_match_many<DataSource> (pattern[index], a, cancellable);
 				foreach (var an in res.data) {
 					matches += an.obj;
 				}
@@ -65,7 +64,7 @@ namespace Vanubi {
 		// recurse into next subdirectory
 		while (index < pattern.length-1 && pattern[++index] == null);
 		foreach (var match in matches) {
-			file_complete_pattern (match, index, pattern, result, cancellable);
+			source_complete_pattern (match, index, pattern, result, cancellable);
 			cancellable.set_error_if_cancelled ();
 		}
 	}
@@ -159,20 +158,14 @@ namespace Vanubi {
 	}
 	
 	/* The given pattern must be absolute */
-	public GenericArray<FileSource>? file_complete (string pattern, Cancellable cancellable) throws Error requires (pattern[0] == '/') {
+	public GenericArray<DataSource>? source_complete (DataSource root, string pattern, Cancellable? cancellable = null) throws Error requires (pattern[0] == '/') {
 		string[] comps = pattern.split ("/");
 		if (comps.length == 0) {
 			return null;
 		}
 
-		LocalFileSource file = (LocalFileSource) DataSource.new_from_string ("/");
-		var fresult = new GenericArray<File> ();
-		file_complete_pattern (file.file, 1, comps, fresult, cancellable);
-		
-		var result = new GenericArray<FileSource> ();
-		foreach (var f in fresult.data) {
-			result.add (new LocalFileSource (f));
-		}
+		var result = new GenericArray<DataSource> ();
+		source_complete_pattern (root, 1, comps, result, cancellable);
 		return result;
 	}
 }

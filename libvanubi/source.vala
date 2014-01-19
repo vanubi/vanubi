@@ -54,6 +54,29 @@ namespace Vanubi {
 		public abstract bool equal (DataSource? s);		
 		public abstract string to_string ();
 		
+		public bool exists_sync (Cancellable? cancellable = null) throws IOError.CANCELLED {
+			var ctx = MainContext.default ();
+			var loop = new MainLoop (ctx, false);
+			Error? err = null;
+			bool ret = false;
+			
+			exists.begin (Priority.DEFAULT, cancellable, (s,r) => {
+					try {
+						ret = exists.end (r);
+					} catch (Error e) {
+						err = e;
+					} finally {
+						loop.quit ();
+					}
+			});
+			loop.run ();
+
+			if (err != null) {
+				throw (IOError.CANCELLED) err;
+			}
+			return ret;
+		}
+		
 		public int compare (DataSource? s) {
 			if (equal (s)) {
 				return 0;
