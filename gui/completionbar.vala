@@ -1,5 +1,5 @@
 /*
- *  Copyright © 2011-2012 Luca Bruno
+ *  Copyright © 2011-2014 Luca Bruno
  *
  *  This file is part of Vanubi.
  *
@@ -43,12 +43,12 @@ namespace Vanubi.UI {
 			on_changed ();
 		}
 
-		protected virtual async Annotated<File>[]? complete (string pattern, out string common_choice, Cancellable cancellable) {
+		protected virtual async Annotated<File>[]? complete (string pattern, out string common_choice, Cancellable cancellable) throws Error {
 			common_choice = pattern;
 			return null;
 		}
 
-		protected virtual string get_pattern_from_choice (string original_pattern, string choice) {
+		protected virtual async string get_pattern_from_choice (string original_pattern, string choice) {
 			return choice;
 		}
 
@@ -56,15 +56,15 @@ namespace Vanubi.UI {
 			return completion_box.get_choice().obj;
 		}
 		
-		protected virtual void set_choice_to_entry () {
+		protected virtual async void set_choice_to_entry () {
 			Annotated choice = completion_box.get_choice ();
 			entry.set_text (choice.str);
 			entry.move_cursor (MovementStep.BUFFER_ENDS, 1, false);
 		}
 
-		void set_common_pattern () {
+		async void set_common_pattern () {
 			if (common_choice != null) {
-				var new_pattern = get_pattern_from_choice (original_pattern, common_choice);
+				var new_pattern = yield get_pattern_from_choice (original_pattern, common_choice);
 				if (new_pattern == original_pattern) {
 					entry.get_style_context().add_class ("error");
 				}				
@@ -116,15 +116,15 @@ namespace Vanubi.UI {
 				navigated = true;
 				return true;
 			} else if (e.keyval == Gdk.Key.Tab) {
-				if (completion_box.get_choices().length > 0) {
+				if (completion_box != null && completion_box.get_choices().length > 0) {
 					if (navigated || completion_box.get_choices().length == 1) {
-						set_choice_to_entry ();
+						set_choice_to_entry.begin ();
 					} else {
 						if (!has_changed) {
-							set_choice_to_entry ();
+							set_choice_to_entry.begin ();
 						} else {
 							has_changed = false;
-							set_common_pattern ();
+							set_common_pattern.begin ();
 						}
 					}
 				} else {

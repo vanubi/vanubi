@@ -175,7 +175,7 @@ namespace Vanubi.UI {
 			base ((owned) choices, "default");
 		}
 		
-		protected override async Annotated[]? complete (string pattern, out string common_choice, Cancellable cancellable) {
+		protected override async Annotated[]? complete (string pattern, out string common_choice, Cancellable cancellable) throws Error {
 			if (pattern == "default") {
 				// like empty
 				common_choice = pattern;

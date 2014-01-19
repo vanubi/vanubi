@@ -158,25 +158,20 @@ namespace Vanubi {
 	}
 	
 	/* The given pattern must be absolute */
-	public GenericArray<File>? file_complete (string pattern, Cancellable cancellable) throws Error requires (pattern[0] == '/') {
+	public GenericArray<FileSource>? file_complete (string pattern, Cancellable cancellable) throws Error requires (pattern[0] == '/') {
 		string[] comps = pattern.split ("/");
 		if (comps.length == 0) {
 			return null;
 		}
 
-		File file = File.new_for_path ("/");
-		var result = new GenericArray<File> ();
-		file_complete_pattern (file, 1, comps, result, cancellable);
-		return result;
-	}
-
-	public string get_base_directory (File? base_file) {
-		if (base_file != null) {
-			var parent = base_file.get_parent ();
-			if (parent != null) {
-				return parent.get_path()+"/";
-			}
+		LocalFileSource file = (LocalFileSource) DataSource.new_from_string ("/");
+		var fresult = new GenericArray<File> ();
+		file_complete_pattern (file.file, 1, comps, fresult, cancellable);
+		
+		var result = new GenericArray<FileSource> ();
+		foreach (var f in fresult.data) {
+			result.add (new LocalFileSource (f));
 		}
-		return Environment.get_current_dir()+"/";
+		return result;
 	}
 }

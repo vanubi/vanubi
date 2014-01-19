@@ -31,6 +31,7 @@ namespace Vanubi {
 		public abstract async TimeVal? get_mtime (int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null);
 		public abstract async void monitor (int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) throws IOError.CANCELLED;
 		
+		public abstract async bool is_directory (int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) throws IOError.CANCELLED;
 
 		public abstract DataSource child (string path);
 		
@@ -91,6 +92,10 @@ namespace Vanubi {
 			return this;
 		}
 		
+		public override async bool is_directory (int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) throws IOError.CANCELLED {
+			return false;
+		}
+		
 		public override uint hash () {
 			uint ptr = (uint)(void*) this;
 			return ptr;
@@ -127,11 +132,11 @@ namespace Vanubi {
 	}
 	
 	public class LocalFileSource : FileSource {
-		File file;
+		public File file { get; private set; }
 		FileMonitor _monitor;
 		
-		public LocalFileSource (File file) {
-			this.file = file;
+		public LocalFileSource (owned File file) {
+			this.file = (owned) file;
 			
 		}
 		
@@ -201,6 +206,17 @@ namespace Vanubi {
 		
 		public override async void write (uint8[] data, int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) throws Error {
 			
+		}
+
+		public override async bool is_directory (int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) throws IOError.CANCELLED {
+			try {
+				var info = yield file.query_info_async (FileAttribute.STANDARD_TYPE, FileQueryInfoFlags.NONE, io_priority, cancellable);
+				return info.get_file_type () == FileType.DIRECTORY;
+			} catch (IOError.CANCELLED e) {
+				throw e;
+			} catch (Error e) {
+				return false;
+			}
 		}
 		
 		public override DataSource child (string path) {
