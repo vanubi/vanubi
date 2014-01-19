@@ -428,7 +428,7 @@ namespace Vanubi.UI {
 			}
 			
 			if (conf.get_editor_bool ("show_branch", true)) {
-				git.current_branch.begin ((FileSource) source, null, (s, r) => {
+				git.current_branch.begin ((FileSource) source, Priority.DEFAULT, null, (s, r) => {
 						string bname;
 						try {
 							bname = git.current_branch.end (r);
@@ -533,7 +533,7 @@ namespace Vanubi.UI {
 						}
 						
 						var cancellable = diff_cancellable = new Cancellable ();
-						git.diff_buffer.begin ((FileSource) source, view.buffer.text.data, cancellable, (obj, res) => {
+						git.diff_buffer.begin ((FileSource) source, view.buffer.text.data, Priority.DEFAULT, cancellable, (obj, res) => {
 								HashTable<int, DiffType> table;
 								try {
 									table = git.diff_buffer.end (res);

@@ -86,12 +86,12 @@ namespace Vanubi {
 			}
 		}
 
-		public async bool file_in_repo (FileSource file, Cancellable? cancellable = null) throws Error {
+		public async bool file_in_repo (FileSource file, int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) throws Error {
 			var git_command = config.get_global_string ("git_command", "git");
 			int status;
 			var escaped = Shell.quote (file.to_string ());
 			var cmd = @"$git_command ls-files --error-unmatch $escaped";
-			yield execute_shell_async ((FileSource) file.parent, cmd, null, null, out status, cancellable);
+			yield file.parent.execute_shell (cmd, null, null, out status, io_priority, cancellable);
 			return status == 0;
 		}
 			
@@ -99,12 +99,12 @@ namespace Vanubi {
 			/* TODO */
 		}
 		
-		public async string? current_branch (FileSource source, Cancellable? cancellable = null) throws Error {
+		public async string? current_branch (FileSource source, int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) throws Error {
 			var git_command = config.get_global_string ("git_command", "git");
 			
 			string cmdline = @"$git_command rev-parse --abbrev-ref HEAD";
 			int status;
-			var output = (string) yield execute_shell_async ((FileSource) source.parent, cmdline, null, null, out status, cancellable);
+			var output = (string) yield source.parent.execute_shell (cmdline, null, null, out status, io_priority, cancellable);
 			
 			if (status != 0 || output.strip () == "") {
 				return null;
@@ -146,8 +146,8 @@ namespace Vanubi {
 			return table;
 		}
 		
-		public async HashTable<int, DiffType>? diff_buffer (FileSource file, owned uint8[] input, Cancellable cancellable) throws Error {
-			var in_repo = yield file_in_repo (file, cancellable);
+		public async HashTable<int, DiffType>? diff_buffer (FileSource file, owned uint8[] input, int io_priority = GLib.Priority.DEFAULT, Cancellable cancellable) throws Error {
+			var in_repo = yield file_in_repo (file, io_priority, cancellable);
 			if (!in_repo) {
 				return null;
 			}
@@ -160,7 +160,7 @@ namespace Vanubi {
 			var filename = repo.get_relative_path (file);
 			
 			string cmdline = @"diff -d -U0 <($git_command show HEAD:$filename) -";
-			var output = yield execute_shell_async (repo, cmdline, input, null, null, cancellable);
+			var output = yield repo.execute_shell (cmdline, input, null, null, io_priority, cancellable);
 			cancellable.set_error_if_cancelled ();
 			
 			var table = yield run_in_thread<HashTable<int, DiffType>> (() => { return parse_diff (output, cancellable); });

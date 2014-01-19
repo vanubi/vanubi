@@ -46,6 +46,7 @@ namespace Vanubi {
 		public abstract async void monitor (int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) throws IOError.CANCELLED;
 		
 		public abstract async bool is_directory (int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) throws IOError.CANCELLED;
+		public abstract async uint8[] execute_shell (string command_line, uint8[]? input = null, out uint8[] errors = null, out int status = null, int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) throws Error;
 
 		public abstract DataSource child (string path);
 		public abstract SourceIterator iterate_children (Cancellable? cancellable = null) throws Error;
@@ -142,6 +143,10 @@ namespace Vanubi {
 		
 		public override async bool is_directory (int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) throws IOError.CANCELLED {
 			return false;
+		}
+		
+		public override async uint8[] execute_shell (string command_line, uint8[]? input = null, out uint8[] errors = null, out int status = null, int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) throws Error {
+			throw new IOError.INVALID_ARGUMENT ("Commands must be executed in a directory");
 		}
 		
 		public override SourceIterator iterate_children (Cancellable? cancellable = null) throws Error {
@@ -288,6 +293,48 @@ namespace Vanubi {
 				return false;
 			}
 		}
+
+		public override async uint8[] execute_shell (string command_line, uint8[]? input = null, out uint8[] errors = null, out int status = null, int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) throws Error {
+			string[] argv = {"bash", "-c", command_line};
+			int stdin, stdout, stderr;
+			Pid child_pid;
+			yield spawn_async_with_pipes (to_string (), argv, null, SpawnFlags.SEARCH_PATH | SpawnFlags.DO_NOT_REAP_CHILD, null, Priority.DEFAULT, cancellable, out child_pid, out stdin, out stdout, out stderr);
+			
+			int st = 0xdead;
+			bool requires_resume = false;
+			ChildWatch.add (child_pid, (pid, sta) => {
+					// Triggered when the child indicated by child_pid exits
+					Process.close_pid (pid);
+					st = sta;
+					if (requires_resume) {
+						execute_shell.callback ();
+					}
+			}, io_priority);
+			
+			var os = new UnixOutputStream (stdin, true);
+			if (input != null) {
+				yield os.write_async (input, io_priority, cancellable);
+			}
+			os.close ();
+			
+			var is = new UnixInputStream (stdout, true);
+			var res = yield read_all_async (is, io_priority, cancellable);
+			
+			var eis = new UnixInputStream (stderr, true);
+			errors = yield read_all_async (is, io_priority, cancellable);
+			
+			is.close ();
+			eis.close ();
+			
+			if (st == 0xdead) {
+				requires_resume = true;
+				// wait till child watch
+				yield;
+			}
+			status = st;
+			return res;
+		}
+
 		
 		public override DataSource child (string path) {
 			return new LocalFileSource (file.get_child (path));

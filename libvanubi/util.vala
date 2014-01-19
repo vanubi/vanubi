@@ -107,7 +107,7 @@ namespace Vanubi {
 		return result;
 	}
 
-	public async uint8[] read_all_async (InputStream is, Cancellable? cancellable = null) throws Error {
+	public async uint8[] read_all_async (InputStream is, int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) throws Error {
 		uint8[] res = new uint8[1024];
 		ssize_t offset = 0;
 		ssize_t read = 0;
@@ -117,7 +117,7 @@ namespace Vanubi {
 			}
 			unowned uint8[] buffer = (uint8[])(((uint8*)res)+offset);
 			buffer.length = (int)(res.length-offset);
-			read = yield is.read_async (buffer, Priority.DEFAULT, cancellable);
+			read = yield is.read_async (buffer, io_priority, cancellable);
 			offset += read;
 			if (read == 0) {
 				res.length = (int) offset;
@@ -127,47 +127,6 @@ namespace Vanubi {
 	}
 	
 	public async extern void spawn_async_with_pipes (string? working_directory, [CCode (array_length = false, array_null_terminated = true)] string[] argv, [CCode (array_length = false, array_null_terminated = true)] string[]? envp, SpawnFlags _flags, SpawnChildSetupFunc? child_setup, int io_priority, Cancellable? cancellable, out Pid child_pid, out int standard_input = null, out int standard_output = null, out int standard_error = null) throws SpawnError;
-	
-	public async uint8[] execute_shell_async (FileSource working_dir, string command_line, uint8[]? input = null, out uint8[] errors = null, out int status = null, Cancellable? cancellable = null) throws Error {
-		string[] argv = {"bash", "-c", command_line};
-		int stdin, stdout, stderr;
-		Pid child_pid;
-		yield spawn_async_with_pipes (working_dir.to_string (), argv, null, SpawnFlags.SEARCH_PATH | SpawnFlags.DO_NOT_REAP_CHILD, null, Priority.DEFAULT, cancellable, out child_pid, out stdin, out stdout, out stderr);
-		
-		int st = 0xdead;
-		bool requires_resume = false;
-		ChildWatch.add (child_pid, (pid, sta) => {
-			// Triggered when the child indicated by child_pid exits
-			Process.close_pid (pid);
-			st = sta;
-			if (requires_resume) {
-				execute_shell_async.callback ();
-			}
-		});
-		
-		var os = new UnixOutputStream (stdin, true);
-		if (input != null) {
-			yield os.write_async (input, Priority.DEFAULT, cancellable);
-		}
-		os.close ();
-		
-		var is = new UnixInputStream (stdout, true);
-		var res = yield read_all_async (is, cancellable);
-		
-		var eis = new UnixInputStream (stderr, true);
-		errors = yield read_all_async (is, cancellable);
-		
-		is.close ();
-		eis.close ();
-		
-		if (st == 0xdead) {
-			requires_resume = true;
-			// wait till child watch
-			yield;
-		}
-		status = st;
-		return res;
-	}
 	
 	static Regex update_copyright_year_regex1 = null;
 	static Regex update_copyright_year_regex2 = null;

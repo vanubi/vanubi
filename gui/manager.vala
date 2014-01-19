@@ -1530,9 +1530,9 @@ namespace Vanubi.UI {
 					var cmd = command.replace("%f", Shell.quote(filename)).replace("%s", start.get_offset().to_string()).replace("%e", end.get_offset().to_string());
 					var base_file = ed.source.parent as FileSource;
 					var dir = base_file != null ? base_file : (FileSource) ScratchSource.instance.parent;
-					execute_shell_async.begin (dir, cmd, text.data, null, (s,r) => {
+					dir.execute_shell.begin (cmd, text.data, Priority.DEFAULT, null, (s,r) => {
 							try {
-								output = execute_shell_async.end (r);
+								output = dir.execute_shell.end (r);
 								Idle.add ((owned) resume);
 							} catch (Error e) {
 								error = e;
@@ -1977,7 +1977,7 @@ namespace Vanubi.UI {
 					stream = new UnixInputStream (stdout, true);
 					bar.stream = stream;
 					
-					read_all_async.begin (new UnixInputStream (stderr, true), null, (s,r) => {
+					read_all_async.begin (new UnixInputStream (stderr, true), Priority.DEFAULT, null, (s,r) => {
 							try {
 								var res = read_all_async.end (r);
 								var err = (string) res;
@@ -2000,7 +2000,7 @@ namespace Vanubi.UI {
 			repo_open_file.begin (editor);
 		}
 			
-		async void repo_open_file (Editor editor) {
+		async void repo_open_file (Editor editor, int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) {
 			Git git = new Git (conf);
 			var repo_dir = yield git.get_repo (editor.source);
 			if (repo_dir == null) {
@@ -2010,36 +2010,34 @@ namespace Vanubi.UI {
 			
 			var git_command = conf.get_global_string ("git_command", "git");
 			
-			execute_shell_async.begin (repo_dir, @"$(git_command) ls-files", null, null, (s,r) => {
-					string res;
-					try {
-						res = (string) execute_shell_async.end (r);
-					} catch (Error e) {
-						set_status_error (e.message, "repo-open-file");
+			string res;
+			try {
+				res = (string) yield repo_dir.execute_shell (@"$(git_command) ls-files");
+			} catch (Error e) {
+				set_status_error (e.message, "repo-open-file");
+				return;
+			}
+					
+			var file_names = res.split ("\n");
+			var annotated = new Annotated<DataSource>[file_names.length];
+			for (var i=0; i < file_names.length; i++) {
+				annotated[i] = new Annotated<DataSource> (file_names[i], repo_dir.child (file_names[i]));
+			}
+			
+			var bar = new SimpleCompletionBar<DataSource> ((owned) annotated);
+			bar.activate.connect (() => {
+					abort (editor);
+					var file = bar.get_choice();
+					if (file == editor.source) {
+						// no-op
 						return;
 					}
-					
-					var file_names = res.split ("\n");
-					var annotated = new Annotated<DataSource>[file_names.length];
-					for (var i=0; i < file_names.length; i++) {
-						annotated[i] = new Annotated<DataSource> (file_names[i], repo_dir.child (file_names[i]));
-					}
-					
-					var bar = new SimpleCompletionBar<DataSource> ((owned) annotated);
-					bar.activate.connect (() => {
-							abort (editor);
-							var file = bar.get_choice();
-							if (file == editor.source) {
-								// no-op
-								return;
-							}
-							open_file.begin (editor, file);
-					});
-					bar.aborted.connect (() => { abort (editor); });
-					add_overlay (bar);
-					bar.show ();
-					bar.grab_focus ();
+					open_file.begin (editor, file);
 			});
+			bar.aborted.connect (() => { abort (editor); });
+			add_overlay (bar);
+			bar.show ();
+			bar.grab_focus ();
 		}
 
 		
