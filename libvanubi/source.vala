@@ -18,6 +18,20 @@
  */
 
 namespace Vanubi {
+	public class SourceInfo {
+		public DataSource source { get; private set; }
+		public bool is_directory { get; private set; }
+		
+		public SourceInfo (DataSource source, bool is_directory) {
+			this.source = source;
+			this.is_directory = is_directory;
+		}
+	}
+			
+	public abstract class SourceIterator {
+		public abstract SourceInfo? next (Cancellable? cancellable = null) throws Error;
+	}
+	
 	public abstract class DataSource : Object {
 		public signal void changed ();
 		
@@ -34,6 +48,7 @@ namespace Vanubi {
 		public abstract async bool is_directory (int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) throws IOError.CANCELLED;
 
 		public abstract DataSource child (string path);
+		public abstract SourceIterator iterate_children (Cancellable? cancellable = null) throws Error;
 		
 		public abstract uint hash ();
 		public abstract bool equal (DataSource? s);		
@@ -106,6 +121,10 @@ namespace Vanubi {
 			return false;
 		}
 		
+		public override SourceIterator iterate_children (Cancellable? cancellable = null) throws Error {
+			return parent.iterate_children (cancellable);
+		}
+		
 		public override uint hash () {
 			return 0;
 		}
@@ -137,6 +156,25 @@ namespace Vanubi {
 				
 				return bn.substring (idx+1);
 			}
+		}
+	}
+	
+	public class LocalFileIterator : SourceIterator {
+		LocalFileSource parent;
+		FileEnumerator enumerator;
+		
+		public LocalFileIterator (LocalFileSource parent, FileEnumerator enumerator) {
+			this.parent = parent;
+			this.enumerator = enumerator;
+		}
+		
+		public override SourceInfo? next (Cancellable? cancellable = null) throws Error {
+			var info = enumerator.next_file (cancellable);
+			if (info == null) {
+				return null;
+			}
+			var sinfo = new SourceInfo (parent.child (info.get_name ()), info.get_type() == FileType.DIRECTORY);
+			return sinfo;
 		}
 	}
 	
@@ -231,7 +269,13 @@ namespace Vanubi {
 		public override DataSource child (string path) {
 			return new LocalFileSource (file.get_child (path));
 		}
-		
+
+		public override SourceIterator iterate_children (Cancellable? cancellable = null) throws Error {
+			var enumerator = file.enumerate_children (FileAttribute.STANDARD_NAME+","+FileAttribute.STANDARD_TYPE, FileQueryInfoFlags.NONE, cancellable);
+			var iterator = new LocalFileIterator (this, enumerator);
+			return iterator;
+		}
+			
 		public void on_monitor () {
 			restart_monitor.begin ();
 		}

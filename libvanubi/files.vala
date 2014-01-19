@@ -28,14 +28,15 @@ namespace Vanubi {
 
 		File[]? matches = null;
 		try {
-			var enumerator = file.enumerate_children (FileAttribute.STANDARD_NAME+","+FileAttribute.STANDARD_TYPE, FileQueryInfoFlags.NONE, cancellable);
+			var source = DataSource.new_from_string (file.get_path ());
+			var iterator = source.iterate_children (cancellable);
 			Annotated<File>[]? a = null;
 			while (true) {
-				var info = enumerator.next_file (cancellable);
+				var info = iterator.next (cancellable);
 				if (info == null) {
 					break;
 				}
-				a += new Annotated<File> (info.get_name (), file.get_child (info.get_name ()));
+				a += new Annotated<File> (info.source.to_string(), ((LocalFileSource) info.source).file);
 			}
 			cancellable.set_error_if_cancelled ();
 			if (pattern[index] == "") {
