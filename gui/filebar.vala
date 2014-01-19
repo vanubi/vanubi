@@ -24,8 +24,8 @@ namespace Vanubi.UI {
 		string base_directory;
 
 		public FileBar (FileSource base_source) {
-			base_directory = base_source.to_string ();
-			entry.set_text(base_directory+"/");
+			base_directory = base_source.to_string ()+"/";
+			entry.set_text(base_directory);
 		}
 
 		public override void grab_focus () {
