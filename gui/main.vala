@@ -198,7 +198,7 @@ namespace Vanubi.UI {
 
 			var focus = true;
 			foreach (unowned DataSource file in sources) {
-				manager.open_file.begin (manager.last_focused_editor, file, focus);
+				manager.open_source.begin (manager.last_focused_editor, file, focus);
 				focus = false;
 			}
 

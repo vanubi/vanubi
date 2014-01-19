@@ -653,7 +653,7 @@ namespace Vanubi.UI {
 			}
 		}
 
-		public async void open_file (Editor editor, owned DataSource source, bool focus = true) {
+		public async void open_source (Editor editor, owned DataSource source, bool focus = true) {
 			yield open_location (editor, new Location (source), focus);
 		}
 		
@@ -980,7 +980,7 @@ namespace Vanubi.UI {
 				FileSource? focused_file = session.location != null ? (FileSource) session.location.source : null;
 				foreach (var file in session.files.data) {
 					if (focused_file == null || !file.equal (focused_file)) {
-						open_file.begin (editor, file, false);
+						open_source.begin (editor, file, false);
 					}
 				}
 			}
@@ -1141,7 +1141,7 @@ namespace Vanubi.UI {
 			var bar = new FileBar (base_source);
 			bar.activate.connect ((p) => {
 					abort (editor);
-					open_file.begin (editor, DataSource.new_from_string (p));
+					open_source.begin (editor, DataSource.new_from_string (p));
 				});
 			bar.aborted.connect (() => { abort (editor); });
 			add_overlay (bar);
@@ -1202,7 +1202,7 @@ namespace Vanubi.UI {
 				} else {
 					set_status ("Saved as %s".printf (as_source.to_string ()));
 					if (open_as_source) {
-						yield open_file (editor, as_source);
+						yield open_source (editor, as_source);
 					}
 				}
 			} catch (Error e) {
@@ -2018,7 +2018,7 @@ namespace Vanubi.UI {
 						// no-op
 						return;
 					}
-					open_file.begin (editor, file);
+					open_source.begin (editor, file);
 			});
 			bar.aborted.connect (() => { abort (editor); });
 			add_overlay (bar);
