@@ -54,6 +54,7 @@ namespace Vanubi.UI {
 		MarkManager marks = new MarkManager ();
 		string last_grep_string = "";
 		public Editor last_focused_editor = null; // must never be null
+		int next_stream_id = 1;
 		
 		Session last_session;
 		
@@ -476,6 +477,10 @@ namespace Vanubi.UI {
 			container.lru.append (ScratchSource.instance);
 			editors_grid.add (container);
 			container.grab_focus ();
+		}
+		
+		public string new_stdin_stream_name () {
+			return "*stdin %d*".printf (next_stream_id++);
 		}
 		
 		public void clear_status (string? context = null) {

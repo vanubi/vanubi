@@ -26,6 +26,7 @@ libvanubi_la_VALASOURCES = \
 	source.vala			\
 	sourcelru.vala 		\
 	sources/scratch.vala	\
+	sources/stream.vala		\
 	sources/localfile.vala	\
 	util.vala			\
 	vade/ast.vala		\

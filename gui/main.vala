@@ -35,8 +35,6 @@ namespace Vanubi.UI {
 			{ null }
 		};
 		
-		DataSource[]? open_files = null;
-		
 		public Application () {
 			Object (application_id: "org.vanubi", flags: ApplicationFlags.HANDLES_COMMAND_LINE);
 		}
@@ -130,22 +128,24 @@ namespace Vanubi.UI {
 			}
 		}
 
-		protected override void activate () {
+		Manager get_active_manager () {
 			var win = get_active_window ();
 			if (win == null) {
 				win = new_window ();
 			}
 
 			var manager = (Manager) win.get_child ();
-			var focus = true;
-			foreach (unowned DataSource file in open_files) {
-				manager.open_file.begin (manager.last_focused_editor, file, focus);
-				focus = false;
+			return manager;
+		}
+		
+		protected override void activate () {
+			var win = get_active_window ();
+			if (win == null) {
+				win = new_window ();
 			}
 			
-			if (arg_vade_expression == null) {
-				focus_window (win, (uint)(get_monotonic_time()/1000));
-			}
+			focus_window (win, (uint)(get_monotonic_time()/1000));
+			
 		}
 		
 		void parse_options (ApplicationCommandLine? command_line, ref unowned string[] args) throws OptionError {
@@ -186,19 +186,23 @@ namespace Vanubi.UI {
 				return 1;
 			}
 
-			open_files = null;
+			var manager = get_active_manager ();
+			DataSource[]? sources = null;
 			foreach (unowned string filename in arg_filenames) {
 				if (filename == "-") {
-					/* open_files += new StreamSource (command_line.get_stdin ()); */
+					sources += new StreamSource (manager.new_stdin_stream_name (), command_line.get_stdin (), DataSource.new_from_string (command_line.get_cwd ()));
 				} else {
-					open_files += new LocalFileSource (command_line.create_file_for_arg (filename));
+					sources += new LocalFileSource (command_line.create_file_for_arg (filename));
 				}
 			}
-				
-			activate ();
-			
+
+			var focus = true;
+			foreach (unowned DataSource file in sources) {
+				manager.open_file.begin (manager.last_focused_editor, file, focus);
+				focus = false;
+			}
+
 			if (arg_vade_expression != null) {
-				var manager = (Manager) get_active_window().get_child ();
 				var scope = get_editor_scope (manager.last_focused_editor);
 				scope.eval_string.begin (arg_vade_expression, null, (s,r) => {
 						try {
@@ -212,12 +216,13 @@ namespace Vanubi.UI {
 							command_line.set_exit_status (1);
 						}
 				});
+			} else {
+				activate ();
 			}
 			
 			// cleanup
 			arg_vade_expression = null;
 			arg_filenames = null;
-			open_files = null;
 
 			return 0;
 		}

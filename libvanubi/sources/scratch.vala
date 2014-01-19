@@ -55,7 +55,7 @@ namespace Vanubi {
 		}
 		
 		public override async void write (uint8[] data, int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) throws Error {
-			throw new IOError.NOT_SUPPORTED ("*scratch* is not readable");
+			throw new IOError.NOT_SUPPORTED ("*scratch* is not writable");
 		}
 		
 		public override DataSource child (string path) {
