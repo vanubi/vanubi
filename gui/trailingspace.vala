@@ -45,7 +45,7 @@ namespace Vanubi.UI {
 				return;
 			}
 			
-			while (start.get_char ().isspace ()) {
+			while (!start.is_start () && start.get_char ().isspace ()) {
 				start.backward_char ();
 			}
 			start.forward_char ();
