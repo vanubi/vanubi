@@ -21,13 +21,13 @@ libvanubi_la_VALASOURCES = \
 	keys.vala 			\
 	marks.vala			\
 	matching.vala 		\
-	rfserver.vala		\
 	search.vala 		\
 	source.vala			\
 	sourcelru.vala 		\
+	sources/localfile.vala	\
+	sources/remotefile.vala	\
 	sources/scratch.vala	\
 	sources/stream.vala		\
-	sources/localfile.vala	\
 	util.vala			\
 	vade/ast.vala		\
 	vade/eval.vala		\

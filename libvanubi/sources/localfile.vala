@@ -18,27 +18,6 @@
  */
 
 namespace Vanubi {
-	public abstract class FileSource : DataSource {
-		public abstract string basename { owned get; }
-		
-		public string get_relative_path (FileSource other) {
-		// FIXME:
-			return File.new_for_path (to_string()).get_relative_path (File.new_for_path (other.to_string ()));
-		}
-		
-		public string? extension {
-			owned get {
-				var bn = basename;
-				var idx = bn.last_index_of (".");
-				if (idx < 0) {
-					return null;
-				}
-				
-				return bn.substring (idx+1);
-			}
-		}
-	}
-	
 	public class LocalFileIterator : SourceIterator {
 		LocalFileSource parent;
 		FileEnumerator enumerator;
@@ -81,6 +60,12 @@ namespace Vanubi {
 		public override string basename {
 			owned get {
 				return file.get_basename ();
+			}
+		}
+		
+		public override string local_path {
+			owned get {
+				return file.get_path ();
 			}
 		}
 		

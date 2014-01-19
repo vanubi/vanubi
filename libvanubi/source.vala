@@ -96,4 +96,25 @@ namespace Vanubi {
 			}
 		}
 	}
+	
+	public abstract class FileSource : DataSource {
+		public abstract string basename { owned get; }
+		public abstract string local_path { owned get; }
+		
+		public string get_relative_path (FileSource other) {
+			return File.new_for_path (local_path).get_relative_path (File.new_for_path (other.local_path));
+		}
+		
+		public string? extension {
+			owned get {
+				var bn = basename;
+				var idx = bn.last_index_of (".");
+				if (idx < 0) {
+					return null;
+				}
+				
+				return bn.substring (idx+1);
+			}
+		}
+	}
 }
