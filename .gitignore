@@ -1,6 +1,7 @@
 *.o
 libvanubi/*.c
 libvanubi/vade/*.c
+libvanubi/sources/*.c
 gui/*.c
 tests/*.c
 *~
