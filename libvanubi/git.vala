@@ -43,10 +43,6 @@ namespace Vanubi {
 		
 		/* Returns the git directory that contains this file */
 		public async FileSource? get_repo (DataSource file, Cancellable? cancellable = null) {
-			if (!(file is FileSource)) {
-				return null;
-			}
-			
 			try {
 				return yield run_in_thread<FileSource?> (() => {
 						if (file == null) {

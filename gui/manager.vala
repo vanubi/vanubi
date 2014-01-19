@@ -710,6 +710,7 @@ namespace Vanubi.UI {
 				}
 
 				yield ed.replace_contents (is);
+				is.close ();
 				
 				var buf = ed.view.buffer;
 				if (location.start_line < 0) {
@@ -1098,6 +1099,7 @@ namespace Vanubi.UI {
 			try {
 				var is = yield editor.source.read ();
 				yield editor.replace_contents (is);
+				is.close ();
 
 				TextIter iter;
 				var buf = editor.view.buffer;
@@ -1476,6 +1478,7 @@ namespace Vanubi.UI {
 
 				var buf = ed.view.buffer;
 				yield ed.replace_contents (stream, true);
+				stream.close ();
 				
 				TextIter iter;
 				buf.get_iter_at_offset (out iter, old_offset);
