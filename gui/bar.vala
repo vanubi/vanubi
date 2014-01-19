@@ -50,6 +50,8 @@ namespace Vanubi.UI {
 		public signal bool key_pressed (Gdk.EventKey e);
 		
 		public MessageBar (string markup) {
+			column_homogeneous = true;
+			
 			box = new EventBox ();
 			box.set_above_child (true);
 			box.can_focus = true;

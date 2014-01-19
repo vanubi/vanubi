@@ -290,6 +290,10 @@ namespace Vanubi.UI {
 			old_selection_end_offset = old_selection_end.get_offset ();
 		}
 
+		public bool is_externally_changed () {
+			return file_external_changed.label != "";
+		}
+		
 		public void reset_external_changed () {
 			file_external_changed.set_label ("");
 			file.set_data<TimeVal?> ("editing_mtime", get_mtime ());
@@ -366,7 +370,7 @@ namespace Vanubi.UI {
 
 		Cancellable? loading_cancellable = null;
 		
-		public async void replace_contents (InputStream is, owned Cancellable? cancellable = null) throws Error {
+		public async void replace_contents (InputStream is, bool undoable = false, owned Cancellable? cancellable = null) throws Error {
 			if (cancellable == null) {
 				cancellable = new Cancellable ();
 			}
@@ -409,14 +413,19 @@ namespace Vanubi.UI {
 					if (r == 0) {
 						break;
 					}
+					data.length = (int)r;
 					data = convert_to_utf8 (data, ref default_charset, null, null);
 					
 					// write
-					buf.begin_not_undoable_action ();
+					if (!undoable) {
+						buf.begin_not_undoable_action ();
+					}
 					var old_modified = buf.get_modified ();
 					buf.insert (ref iter, (string) data, (int) r);
-					buf.set_modified (old_modified);
-					buf.end_not_undoable_action ();
+					if (!undoable) {
+						buf.set_modified (old_modified);
+						buf.end_not_undoable_action ();
+					}
 				}
 			} finally {
 				file_loading.set_markup ("");

@@ -118,10 +118,11 @@ namespace Vanubi {
 			unowned uint8[] buffer = (uint8[])(((uint8*)res)+offset);
 			buffer.length = (int)(res.length-offset);
 			read = yield is.read_async (buffer, Priority.DEFAULT, cancellable);
+			offset += read;
 			if (read == 0) {
+				res.length = (int) offset;
 				return res;
 			}
-			offset += read;
 		}
 	}
 	
