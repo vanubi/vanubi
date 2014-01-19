@@ -471,7 +471,7 @@ namespace Vanubi.UI {
 			// setup empty buffer
 			unowned Editor ed = get_available_editor (ScratchSource.instance);
 			var container = new EditorContainer (ed);
-			container.lru.append (null); // *scratch*
+			container.lru.append (ScratchSource.instance);
 			editors_grid.add (container);
 			container.grab_focus ();
 		}

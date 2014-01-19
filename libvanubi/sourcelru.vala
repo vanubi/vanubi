@@ -22,7 +22,7 @@ namespace Vanubi {
 	public class SourceLRU {
 		List<DataSource> lru = new List<DataSource> ();
 
-		public void append (DataSource? f) {
+		public void append (DataSource f) {
 			unowned List<DataSource> link = lru.find_custom (f, (CompareFunc) DataSource.equal);
 			// ensure we have no duplicates
 			if (link == null) {
@@ -39,7 +39,7 @@ namespace Vanubi {
 			}
 		}
 		
-		public void remove (DataSource? f) {
+		public void remove (DataSource f) {
 			unowned List<DataSource> link = lru.find_custom (f, (CompareFunc) DataSource.equal);
 			if (link != null) {
 				lru.delete_link (link);
