@@ -23,8 +23,6 @@ namespace Vanubi.UI {
 	public class Manager : Grid {
 		/* List of data sources opened. Work on unique DataSource instances. */
 		HashTable<DataSource, DataSource> sources = new HashTable<DataSource, DataSource> (DataSource.hash, DataSource.equal);
-		/* List of buffers for *scratch* */
-		GenericArray<Editor> scratch_editors = new GenericArray<Editor> ();
 		
 		internal KeyManager<Editor> keymanager;
 		string last_search_string = "";
@@ -763,26 +761,6 @@ namespace Vanubi.UI {
 					}
 					return true;
 			});
-		}
-		
-		// iterate all editors of a given file and perform the given operation on each of them
-		public bool each_file_editor (File? file, Operation<Editor> op) {
-			unowned GenericArray<Editor> editors;
-			if (file == null) {
-				editors = scratch_editors;
-			} else {
-				editors = file.get_data ("editors");
-			}	
-			if (editors == null) {
-				return true;
-			}
-			
-			foreach (unowned Editor ed in editors.data) {
-				if (!op (ed)) {
-					return false;
-				}
-			}
-			return true;
 		}
 		
 		// iterate all editors of a given source and perform the given operation on each of them
