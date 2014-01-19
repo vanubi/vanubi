@@ -42,6 +42,8 @@ namespace Vanubi {
 		public static DataSource new_from_string (string path) {
 			if (path == "*scratch*") {
 				return ScratchSource.instance;
+			} else if (path.has_prefix ("file://")) {
+				return new LocalFileSource (File.new_for_uri (path));
 			} else {
 				return new LocalFileSource (File.new_for_path (path));
 			}
