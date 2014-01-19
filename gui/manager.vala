@@ -678,20 +678,25 @@ namespace Vanubi.UI {
 				source = s; // normalize
 			}
 
-			// if the file doesn't exist, don't try to read it
-			if (!source.query_exists ()) {
-				unowned Editor ed = get_available_editor (file);
-				if (focus) {
-					replace_widget (editor, ed);
-					ed.grab_focus ();
+			// if the source is unreadable, don't try to read it
+			try {
+				var exists = yield source.exists ();
+				if (!exists) {
+					unowned Editor ed = get_available_editor (source);
+					if (focus) {
+						replace_widget (editor, ed);
+						ed.grab_focus ();
+					}
+					return;
 				}
+			} catch (IOError.CANCELLED e) {
 				return;
 			}
 
-			// existing file, read it
+			// existing source, read it
 			try {
-				var is = yield file.read_async ();
-				var ed = get_available_editor (file);
+				var is = yield source.read ();
+				var ed = get_available_editor (source);
 				if (focus) {
 					replace_widget (editor, ed);
 					ed.grab_focus ();
@@ -1150,7 +1155,7 @@ namespace Vanubi.UI {
 		}
 
 		void on_save_file (Editor editor) {
-			if (editor.file == null) {
+			if (editor.source is ScratchSource) {
 				// save scratch buffer to another file
 				execute_command["save-as-file-and-open"] (editor, "save-as-file-and-open");
 			} else {
@@ -1170,17 +1175,17 @@ namespace Vanubi.UI {
 			bar.grab_focus ();
 		}
 		
-		async void save_file (Editor editor, File? as_file = null, bool open_as_file = false) {
+		async void save_file (Editor editor, DataSource? as_source = null, bool open_as_file = false) {
 			var buf = editor.view.buffer;
-			if (as_file == null) {
-				as_file = editor.file;
+			if (as_source == null) {
+				as_source = editor.source;
 			}
 			
-			if (as_file == null) {
+			if (as_source == null) {
 				return;
 			}
 			
-			if (!(buf.get_modified () || !as_file.equal (editor.file))) {
+			if (!(buf.get_modified () || !as_source.equal (editor.source))) {
 				// should not save anything
 				return;
 			}
@@ -1195,14 +1200,14 @@ namespace Vanubi.UI {
 			string text = buf.get_text (start, end, false);
 								
 			try {
-				yield as_file.replace_contents_async (text.data, null, true, FileCreateFlags.NONE, null, null);
-				if (as_file.equal (editor.file)) {
+				yield as_source.replace_contents_async (text.data, null, true, FileCreateFlags.NONE, null, null);
+				if (as_source.equal (editor.file)) {
 					buf.set_modified (false);
 					editor.reset_external_changed ();
 				} else {
-					set_status ("Saved as %s".printf (as_file.get_path ()));
-					if (open_as_file) {
-						yield open_file (editor, as_file);
+					set_status ("Saved as %s".printf (as_source.get_path ()));
+					if (open_as_source) {
+						yield open_file (editor, as_source);
 					}
 				}
 			} catch (Error e) {

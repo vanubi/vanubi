@@ -19,10 +19,17 @@
 
 namespace Vanubi {
 	public abstract class DataSource : Object {
+		public signal void changed ();
+		
 		public abstract DataSource? container { owned get; }
 
-		public abstract async bool exists ();
+		public abstract async bool exists (int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) throws IOError.CANCELLED;
+		public abstract async InputStream read (int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) throws Error;
+		public abstract async TimeVal? get_mtime (int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null);
+		public abstract async void monitor (int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) throws IOError.CANCELLED;
 
+		public abstract DataSource child (string path);
+		
 		public abstract uint hash ();
 		public abstract bool equal (DataSource? s);		
 		public abstract string to_string ();
@@ -57,8 +64,23 @@ namespace Vanubi {
 			}
 		}
 		
-		public override async bool exists () {
-			return true;
+		public override async bool exists (int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) throws IOError.CANCELLED {
+			return false;
+		}
+
+		public override async InputStream read (int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) throws Error {
+			throw new IOError.NOT_FOUND ("*scratch* is not readable");
+		}
+		
+		public override async TimeVal? get_mtime (int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) {
+			return null;
+		}
+		
+		public override async void monitor (int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) throws IOError.CANCELLED {
+		}
+		
+		public override DataSource child (string path) {
+			return this;
 		}
 		
 		public override uint hash () {
@@ -78,6 +100,11 @@ namespace Vanubi {
 	public abstract class FileSource : DataSource {
 		public abstract string basename { owned get; }
 		
+		public string get_relative_path (FileSource other) {
+			// FIXME:
+			return File.new_for_path (to_string()).get_relative_path (File.new_for_path (other.to_string ()));
+		}
+		
 		public string? extension {
 			owned get {
 				var bn = basename;
@@ -92,10 +119,12 @@ namespace Vanubi {
 	}
 	
 	public class LocalFileSource : FileSource {
-		public File file;
+		File file;
+		FileMonitor _monitor;
 		
 		public LocalFileSource (File file) {
 			this.file = file;
+			
 		}
 		
 		public override DataSource? container {
@@ -114,9 +143,60 @@ namespace Vanubi {
 				return file.get_basename ();
 			}
 		}
+
+		public override async InputStream read (int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) throws Error {
+			return yield file.read_async (io_priority, cancellable);
+		}
 		
-		public override async bool exists () {
+		public override async bool exists (int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) throws IOError.CANCELLED {
+			try {
+				yield file.query_info_async (FileAttribute.STANDARD_TYPE, FileQueryInfoFlags.NONE, io_priority, cancellable);
+				return true;
+			} catch (IOError.CANCELLED e) {
+				throw e;
+			} catch (Error e) {
+				return false;
+			}
+		}
+
+		public override async TimeVal? get_mtime (int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) {
+			try {
+				var info = yield file.query_info_async (FileAttribute.TIME_MODIFIED, FileQueryInfoFlags.NONE);
+				return info.get_modification_time ();
+			} catch (Error e) {
+				return null;
+			}
+		}
+		
+		async void restart_monitor () throws IOError.CANCELLED {
+			if (_monitor != null) {
+				_monitor.changed.disconnect (on_monitor);
+				_monitor = null;
+				yield monitor ();
+			}
+		}
+		
+		public override async void monitor (int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) throws IOError.CANCELLED {
+			if (_monitor != null) {
+				// already monitoring
+				return;
+			}
 			
+			try {
+				_monitor = file.monitor (FileMonitorFlags.NONE, cancellable);
+				_monitor.changed.connect (on_monitor);
+			} catch (IOError.CANCELLED e) {
+				throw e;
+			} catch (Error e) {
+			}
+		}
+		
+		public override DataSource child (string path) {
+			return new LocalFileSource (file.get_child (path));
+		}
+		
+		public void on_monitor () {
+			restart_monitor.begin ();
 		}
 		
 		public override uint hash () {

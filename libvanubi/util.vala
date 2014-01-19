@@ -128,11 +128,11 @@ namespace Vanubi {
 	
 	public async extern void spawn_async_with_pipes (string? working_directory, [CCode (array_length = false, array_null_terminated = true)] string[] argv, [CCode (array_length = false, array_null_terminated = true)] string[]? envp, SpawnFlags _flags, SpawnChildSetupFunc? child_setup, int io_priority, Cancellable? cancellable, out Pid child_pid, out int standard_input = null, out int standard_output = null, out int standard_error = null) throws SpawnError;
 	
-	public async uint8[] execute_shell_async (File? working_dir, string command_line, uint8[]? input = null, out uint8[] errors = null, out int status = null, Cancellable? cancellable = null) throws Error {
+	public async uint8[] execute_shell_async (FileSource working_dir, string command_line, uint8[]? input = null, out uint8[] errors = null, out int status = null, Cancellable? cancellable = null) throws Error {
 		string[] argv = {"bash", "-c", command_line};
 		int stdin, stdout, stderr;
 		Pid child_pid;
-		yield spawn_async_with_pipes (working_dir.get_path (), argv, null, SpawnFlags.SEARCH_PATH | SpawnFlags.DO_NOT_REAP_CHILD, null, Priority.DEFAULT, cancellable, out child_pid, out stdin, out stdout, out stderr);
+		yield spawn_async_with_pipes (working_dir.to_string (), argv, null, SpawnFlags.SEARCH_PATH | SpawnFlags.DO_NOT_REAP_CHILD, null, Priority.DEFAULT, cancellable, out child_pid, out stdin, out stdout, out stderr);
 		
 		int st = 0xdead;
 		bool requires_resume = false;
