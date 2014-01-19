@@ -164,7 +164,7 @@ namespace Vanubi.UI {
 		}
 	}
 	
-	class SwitchBufferBar : SimpleCompletionBar<File> {
+	class SwitchBufferBar : SimpleCompletionBar<DataSource> {
 		public SwitchBufferBar (owned Annotated[] choices) {
 			base ((owned) choices);
 		}
@@ -175,7 +175,7 @@ namespace Vanubi.UI {
 			base ((owned) choices, "default");
 		}
 		
-		protected override async Annotated[]? complete (string pattern, out string common_choice, Cancellable cancellable) {
+		protected override async Annotated[]? complete (string pattern, out string common_choice, Cancellable cancellable) throws Error {
 			if (pattern == "default") {
 				// like empty
 				common_choice = pattern;

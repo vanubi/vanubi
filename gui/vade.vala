@@ -132,7 +132,7 @@ namespace Vanubi.UI {
 		}
 			
 		internal string file () {
-			return editor.file != null ? editor.file.get_path() : "*scratch*";
+			return editor.source.to_string ();
 		}
 		
 		internal string text () {

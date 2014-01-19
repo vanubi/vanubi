@@ -1,5 +1,5 @@
 /*
- *  Copyright © 2011-2013 Luca Bruno
+ *  Copyright © 2011-2014 Luca Bruno
  *
  *  This file is part of Vanubi.
  *
@@ -20,11 +20,11 @@
 using Gtk;
 
 namespace Vanubi.UI {
-	class FileBar : CompletionBar<File> {
+	class FileBar : CompletionBar<FileSource> {
 		string base_directory;
 
-		public FileBar (File? base_file) {
-			base_directory = get_base_directory (base_file);
+		public FileBar (FileSource base_source) {
+			base_directory = base_source.to_string ()+"/";
 			entry.set_text(base_directory);
 		}
 
@@ -35,25 +35,21 @@ namespace Vanubi.UI {
 			}
 		}
 		
-		protected override async Annotated<File>[]? complete (string pattern, out string common_choice, Cancellable cancellable) {
+		protected override async Annotated<FileSource>[]? complete (string pattern, out string common_choice, Cancellable cancellable) throws Error {
 			common_choice = pattern;
 			var absolute_pattern = absolute_path (base_directory, pattern);
-			GenericArray<File> files;
-			try {
-				files = yield run_in_thread<GenericArray<File>> (() => { return file_complete (absolute_pattern, cancellable); });
-				if (files.length == 0) {
-					return null;
-				}
-			} catch (Error e) {
+			GenericArray<FileSource> files;
+			files = yield run_in_thread<GenericArray<FileSource>> (() => { return file_complete (absolute_pattern, cancellable); });
+			if (files.length == 0) {
 				return null;
 			}
 				
 			// Common base directory
-			string[] common_comps = files[0].get_path().split("/");
+			string[] common_comps = files[0].to_string().split("/");
 			common_comps[common_comps.length-1] = null;
 			common_comps.length--;
 			for (var i=1; i < files.length; i++) {
-				var comps = files[i].get_path().split("/");
+				var comps = files[i].to_string().split("/");
 				for (var j=0; j < int.min(common_comps.length, comps.length); j++) {
 					if (comps[j] != common_comps[j]) {
 						common_comps.length = j;
@@ -63,22 +59,23 @@ namespace Vanubi.UI {
 				}
 			}
 			var common_comp_index = string.joinv ("/", common_comps).length+1;
-			Annotated<File>[] res = null;
+			Annotated<FileSource>[] res = null;
 			// only display the uncommon part of the files
 			foreach (var file in files.data) {
-				var path = file.get_path().substring(common_comp_index);
-				if (file.query_file_type (FileQueryInfoFlags.NONE) == FileType.DIRECTORY) {
+				var path = file.to_string().substring(common_comp_index);
+				var isdir = yield file.is_directory ();
+				if (isdir) {
 					// append / for hinting the user that this is a directory
 					path += "/";
 				}
-				res += new Annotated<File> (path, file);
+				res += new Annotated<FileSource> (path, file);
 			}
 
 			// common choice
 			// 1. compute the common prefix among all files
-			common_choice = files[0].get_path ();
+			common_choice = files[0].to_string ();
 			for (var i=1; i < files.length; i++) {
-				compute_common_prefix (files[i].get_path(), ref common_choice);
+				compute_common_prefix (files[i].to_string (), ref common_choice);
 			}
 			// 2. if the common prefix is shorter than the pattern, fill missing pieces with components from the pattern
 			var pat_comps = absolute_pattern.split("/");
@@ -96,8 +93,13 @@ namespace Vanubi.UI {
 		}
 
 		protected override void set_choice_to_entry () {
-			File choice = get_choice ();
-			entry.set_text (get_pattern_from_choice (original_pattern, choice.get_path ()));
+			var choice = get_annotated_choice ();
+			var choicestr = choice.obj.to_string ();
+			if (choice.str.has_suffix ("/")) {
+				// directory
+				choicestr += "/";
+			}
+			entry.set_text (get_pattern_from_choice (original_pattern, choicestr));
 			entry.move_cursor (MovementStep.BUFFER_ENDS, 1, false);
 		}
 		
@@ -140,8 +142,8 @@ namespace Vanubi.UI {
 				relative += new_absolute_pattern.substring (last_sep+1);
 				res = (owned) relative;
 			}
-
-			if (res[res.length-1] != '/' && File.new_for_path (res).query_file_type (FileQueryInfoFlags.NONE) == FileType.DIRECTORY) {
+			
+			if (res[res.length-1] != '/' && choice[choice.length-1] == '/') {
 				return res + "/";
 			} else {
 				return res;

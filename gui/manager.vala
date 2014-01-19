@@ -21,8 +21,8 @@ using Gtk;
 
 namespace Vanubi.UI {
 	public class Manager : Grid {
-		/* List of files opened. Work on unique File instances. */
-		HashTable<File, File> files = new HashTable<File, File> (File.hash, File.equal);
+		/* List of data sources opened. Work on unique DataSource instances. */
+		HashTable<DataSource, DataSource> sources = new HashTable<DataSource, DataSource> (DataSource.hash, DataSource.equal);
 		/* List of buffers for *scratch* */
 		GenericArray<Editor> scratch_editors = new GenericArray<Editor> ();
 		
@@ -473,9 +473,9 @@ namespace Vanubi.UI {
 			execute_command["toggle-trailing-spaces"].connect (on_toggle_trailing_spaces);
 
 			// setup empty buffer
-			unowned Editor ed = get_available_editor (null);
+			unowned Editor ed = get_available_editor (ScratchSource.instance);
 			var container = new EditorContainer (ed);
-			container.lru.append (null); // *scratch*
+			container.lru.append (ScratchSource.instance);
 			editors_grid.add (container);
 			container.grab_focus ();
 		}
@@ -650,19 +650,21 @@ namespace Vanubi.UI {
 			}
 		}
 
-		public async void open_file (Editor editor, owned File file, bool focus = true) {
-			yield open_location (editor, new Location (file), focus);
+		public async void open_file (Editor editor, owned DataSource source, bool focus = true) {
+			yield open_location (editor, new Location (source), focus);
 		}
 		
 		public async void open_location (Editor editor, owned Location location, bool focus = true) {
-			var file = location.file;
+			var source = location.source;
 
-			// first search already opened files
-			var f = files[file];
-			if (f != null) {
+			// first search already opened sources
+			var s = sources[source];
+			if (s != null) {
+				source = s; // normalize
+				
 				unowned Editor ed;
-				if (f != editor.file) {
-					ed = get_available_editor (f);
+				if (source != editor.source) {
+					ed = get_available_editor (source);
 					if (focus) {
 						replace_widget (editor, ed);
 					}
@@ -680,20 +682,25 @@ namespace Vanubi.UI {
 				return;
 			}
 
-			// if the file doesn't exist, don't try to read it
-			if (!file.query_exists ()) {
-				unowned Editor ed = get_available_editor (file);
-				if (focus) {
-					replace_widget (editor, ed);
-					ed.grab_focus ();
+			// if the source is unreadable, don't try to read it
+			try {
+				var exists = yield source.exists ();
+				if (!exists) {
+					unowned Editor ed = get_available_editor (source);
+					if (focus) {
+						replace_widget (editor, ed);
+						ed.grab_focus ();
+					}
+					return;
 				}
+			} catch (Error e) {
 				return;
 			}
 
-			// existing file, read it
+			// existing source, read it
 			try {
-				var is = yield file.read_async ();
-				var ed = get_available_editor (file);
+				var is = yield source.read ();
+				var ed = get_available_editor (source);
 				if (focus) {
 					replace_widget (editor, ed);
 					ed.grab_focus ();
@@ -732,19 +739,30 @@ namespace Vanubi.UI {
 
 		/* File/Editor/etc. COMBINATORS */
 		
-		// iterate all files and perform the given operation on each of them
-		public bool each_file (Operation<File?> op, bool include_scratch = true) {
-			if (include_scratch) {
-				if (!op (null)) { // *scratch*
-					return false;
-				}
-			}
-			foreach (var file in files.get_keys ()) {
-				if (!op (file)) {
+		// iterate all data sources and perform the given operation on each of them
+		public bool each_source (Operation<DataSource> op, bool include_scratch = true) {
+			foreach (var source in sources.get_keys ()) {
+				if (source is ScratchSource) {
+					if (include_scratch) {
+						if (!op (source)) {
+							return false;
+						}
+					}
+					return true;
+				} else if (!op (source)) {
 					return false;
 				}
 			}
 			return true;
+		}
+		
+		public bool each_file (Operation<FileSource> op) {
+			return each_source ((s) => {
+					if (s is FileSource && !op ((FileSource) s)) {
+						return false;
+					}
+					return true;
+			});
 		}
 		
 		// iterate all editors of a given file and perform the given operation on each of them
@@ -767,9 +785,25 @@ namespace Vanubi.UI {
 			return true;
 		}
 		
+		// iterate all editors of a given source and perform the given operation on each of them
+		public bool each_source_editor (DataSource source, Operation<Editor> op) {
+			unowned GenericArray<Editor> editors;
+			editors = source.get_data ("editors");
+			if (editors == null) {
+				return true;
+			}
+			
+			foreach (unowned Editor ed in editors.data) {
+				if (!op (ed)) {
+					return false;
+				}
+			}
+			return true;
+		}
+		
 		public bool each_editor (Operation<Editor> op, bool include_scratch = true) {
-			return each_file ((f) => {
-					return each_file_editor (f, (ed) => {
+			return each_source ((s) => {
+					return each_source_editor (s, (ed) => {
 							return op (ed);
 					});
 			}, include_scratch);
@@ -777,50 +811,48 @@ namespace Vanubi.UI {
 		
 		// iterate all editor containers and perform the given operation on each of them
 		public bool each_editor_container (Operation<EditorContainer> op) {
+			var looked = new EditorContainer[0];
 			return each_editor ((ed) => {
 					var container = ed.get_parent() as EditorContainer;
-					if (container != null) {
+					if (container != null && !(container in looked)) {
 						if (!op (container)) {
 							return false;
 						}
+						looked += container;
 					}
 					return true;
 			});
 		}
 		
 		// iterate lru of all EditorContainer and perform the given operation on each of them
-		public bool each_lru (Operation<FileLRU> op) {
+		public bool each_lru (Operation<SourceLRU> op) {
 			return each_editor_container ((c) => {
-					return !op (c.lru);
+					return op (c.lru);
 			});
 		}
 		
 		/* Returns an Editor for the given file */
-		unowned Editor get_available_editor (File? file) {
+		unowned Editor get_available_editor (DataSource source) {
 			// list of editors for the file
 			unowned GenericArray<Editor> editors;
-			if (file == null) {
-				// file == null means *scratch*
-				editors = scratch_editors;
-			} else {
-				// map to the unique file instance
-				var f = files[file];
-				if (f == null) {
-					// update lru of all existing containers
-					each_lru ((lru) => { lru.append (file); return true; });
-					
-					// this is a new file
-					files[file] = file;
-					conf.cluster.opened_file (file);
-					var etors = new GenericArray<Editor> ();
-					editors = etors;
-					// store editors in the File itself
-					file.set_data ("editors", (owned) etors);
-					// save session for the new opened file
-				} else {
-					// get the editors of the file
-					editors = f.get_data ("editors");
+			var s = sources[source];
+			if (s == null) {
+				// update lru of all existing containers
+				each_lru ((lru) => { lru.append (source); return true; });
+				
+				// this is a new source
+				sources[source] = source;
+				if (source is FileSource) {
+					conf.cluster.opened_file ((FileSource) source);
 				}
+				var etors = new GenericArray<Editor> ();
+				editors = etors;
+				// store editors in the Source itself
+				source.set_data ("editors", (owned) etors);
+			} else {
+				// get the editors of the source
+				editors = source.get_data ("editors");
+				source = s; // normalize
 			}
 
 			// first find an editor that is not visible, so we can reuse it
@@ -831,7 +863,7 @@ namespace Vanubi.UI {
 			}
 			
 			// no editor reusable, so create one
-			var ed = new Editor (this, conf, file);
+			var ed = new Editor (this, conf, source);
 			// set the font according to the user/system configuration
 			var system_size = ed.view.style.font_desc.get_size () / Pango.SCALE;
 			ed.view.override_font (Pango.FontDescription.from_string ("Monospace %d".printf (conf.get_editor_int ("font_size", system_size))));
@@ -841,8 +873,7 @@ namespace Vanubi.UI {
 				// share TextBuffer with an existing editor for this file,
 				// so that they display the same content
 				ed.view.buffer = editors[0].view.buffer;
-			} else if (file != null) {
-				// if it's not *scratch*, guess the content-type to set the syntax highlight
+			} else {
 				ed.reset_language ();
 			}
 			// let the Manager own the reference to the editor
@@ -857,10 +888,10 @@ namespace Vanubi.UI {
 			each_file ((f) => {
 					session.files.add (f);
 					return true;
-			}, false);
+			});
 			session.location = ed.get_location ();
 			conf.save_session (session, name);
-			conf.save.begin ();
+			conf.save ();
 		}
 		
 		/* events */
@@ -906,7 +937,7 @@ namespace Vanubi.UI {
 				}
 				sv.override_font (Pango.FontDescription.from_string ("Monospace %d".printf (size)));
 				conf.set_editor_int ("font_size", size);
-				conf.save.begin ();
+				conf.save ();
 				return true;
 			}
 			return false;
@@ -962,7 +993,7 @@ namespace Vanubi.UI {
 					yield open_location (editor, session.location);
 				}
 				
-				File? focused_file = session.location != null ? session.location.file : null;
+				FileSource? focused_file = session.location != null ? (FileSource) session.location.source : null;
 				foreach (var file in session.files.data) {
 					if (focused_file == null || !file.equal (focused_file)) {
 						open_file.begin (editor, file, false);
@@ -1005,7 +1036,7 @@ namespace Vanubi.UI {
 					var name = bar.get_choice ();
 					if (name != "") {
 						conf.delete_session (name);
-						conf.save.begin ();
+						conf.save ();
 						set_status ("Session %s deleted".printf (name), "sessions");
 					}
 			});
@@ -1056,13 +1087,17 @@ namespace Vanubi.UI {
 					abort (editor);
 					var lang = SourceLanguageManager.get_default().get_language (lang_id);
 					if (lang != null) {
-						unowned GenericArray<Editor> editors = editor.file.get_data("editors");
+						unowned GenericArray<Editor> editors = editor.source.get_data("editors");
 						foreach (unowned Editor ed in editors.data) {
 							((SourceBuffer) ed.view.buffer).set_language (lang);
 						}
-						conf.set_file_string (editor.file, "language", lang_id);
+						if (editor.source is FileSource) {
+							conf.set_file_string ((FileSource) editor.source, "language", lang_id);
+						}
 					} else {
-						conf.remove_file_key (editor.file, "language");
+						if (editor.source is FileSource) {
+							conf.remove_file_key ((FileSource) editor.source, "language");
+						}
 					}
 			});
 			bar.aborted.connect (() => { abort (editor); });
@@ -1076,12 +1111,9 @@ namespace Vanubi.UI {
 		}
 		
 		async void reload_file (Editor editor) {
-			if (editor.file == null) {
-				return;
-			}
 			var old_offset = selection_start.get_offset ();
 			try {
-				var is = yield editor.file.read_async ();
+				var is = yield editor.source.read ();
 				yield editor.replace_contents (is);
 
 				TextIter iter;
@@ -1091,19 +1123,20 @@ namespace Vanubi.UI {
 				editor.view.scroll_mark_onscreen (buf.get_insert ());
 				
 				// in case of splitted editors
-				each_file_editor (editor.file, (ed) => {
-						ed.reset_external_changed ();
+				each_source_editor (editor.source, (ed) => {
+						ed.reset_external_changed.begin ();
 						return true;
 				});
 			} catch (IOError.CANCELLED e) {
+			} catch (IOError.NOT_SUPPORTED e) {
 			} catch (Error e) {
 				set_status_error (e.message);
 			}
 		}
 		
 		void on_reload_all_files (Editor editor) {
-			each_file ((f) => {
-					each_file_editor (f, (ed) => {
+			each_source ((s) => {
+					each_source_editor (s, (ed) => {
 							// only the first editor, the buffer is shared
 							if (ed.is_externally_changed ()) {
 								reload_file.begin (ed);
@@ -1115,10 +1148,15 @@ namespace Vanubi.UI {
 		}
 		
 		void on_open_file (Editor editor) {
-			var bar = new FileBar (editor.file);
-			bar.activate.connect ((f) => {
+			var base_source = editor.source.parent as FileSource;
+			if (base_source == null) {
+				return;
+			}
+			
+			var bar = new FileBar (base_source);
+			bar.activate.connect ((p) => {
 					abort (editor);
-					open_file.begin (editor, File.new_for_path (f));
+					open_file.begin (editor, DataSource.new_from_string (p));
 				});
 			bar.aborted.connect (() => { abort (editor); });
 			add_overlay (bar);
@@ -1127,7 +1165,7 @@ namespace Vanubi.UI {
 		}
 
 		void on_save_file (Editor editor) {
-			if (editor.file == null) {
+			if (editor.source is ScratchSource) {
 				// save scratch buffer to another file
 				execute_command["save-as-file-and-open"] (editor, "save-as-file-and-open");
 			} else {
@@ -1136,10 +1174,10 @@ namespace Vanubi.UI {
 		}
 		
 		void on_save_as_file (Editor editor, string command) {
-			var bar = new FileBar (editor.file);
+			var bar = new FileBar ((FileSource) editor.source.parent);
 			bar.activate.connect ((f) => {
 					abort (editor);
-					save_file.begin (editor, File.new_for_path (f), command == "save-as-file-and-open");
+					save_file.begin (editor, DataSource.new_from_string (f), command == "save-as-file-and-open");
 			});
 			bar.aborted.connect (() => { abort (editor); });
 			add_overlay (bar);
@@ -1147,21 +1185,21 @@ namespace Vanubi.UI {
 			bar.grab_focus ();
 		}
 		
-		async void save_file (Editor editor, File? as_file = null, bool open_as_file = false) {
+		async void save_file (Editor editor, DataSource? as_source = null, bool open_as_source = false) {
 			var buf = editor.view.buffer;
-			if (as_file == null) {
-				as_file = editor.file;
+			if (as_source == null) {
+				as_source = editor.source;
 			}
 			
-			if (as_file == null) {
+			if (as_source == null) {
 				return;
 			}
 			
-			if (!(buf.get_modified () || !as_file.equal (editor.file))) {
+			if (!(buf.get_modified () || !as_source.equal (editor.source))) {
 				// should not save anything
 				return;
 			}
-
+			
 			if (conf.get_global_bool ("autoupdate_copyright_year")) {
 				execute_command["update-copyright-year"] (editor, "autoupdate-copyright-year");
 			}
@@ -1172,14 +1210,14 @@ namespace Vanubi.UI {
 			string text = buf.get_text (start, end, false);
 								
 			try {
-				yield as_file.replace_contents_async (text.data, null, true, FileCreateFlags.NONE, null, null);
-				if (as_file.equal (editor.file)) {
+				yield as_source.write (text.data);
+				if (as_source.equal (editor.source)) {
 					buf.set_modified (false);
-					editor.reset_external_changed ();
+					yield editor.reset_external_changed ();
 				} else {
-					set_status ("Saved as %s".printf (as_file.get_path ()));
-					if (open_as_file) {
-						yield open_file (editor, as_file);
+					set_status ("Saved as %s".printf (as_source.to_string ()));
+					if (open_as_source) {
+						yield open_file (editor, as_source);
 					}
 				}
 			} catch (Error e) {
@@ -1188,45 +1226,40 @@ namespace Vanubi.UI {
 		}
 
 		/* Kill a buffer. The file of this buffer must not have any other editors visible. */
-		void kill_buffer (Editor editor, GenericArray<Editor> editors, File? next_file) {
-			if (editor.file == null) {
-				scratch_editors = new GenericArray<Editor> ();
-			} else {
+		void kill_buffer (Editor editor, GenericArray<Editor> editors, DataSource next_source) {
+			if (!(editor.source is ScratchSource)) { // scratch never dies
 				// removed file, update all editor containers
-				each_lru ((lru) => { lru.remove (editor.file); return true; });
-				files.remove (editor.file);
-				conf.cluster.closed_file (editor.file);
+				each_lru ((lru) => { lru.remove (editor.source); return true; });
+				sources.remove (editor.source);
+				conf.cluster.closed_file ((FileSource) editor.source);
 			}
 			
 			var container = editor.editor_container;
 			
-			unowned Editor ed = get_available_editor (next_file);
+			unowned Editor ed = get_available_editor (next_source);
 			replace_widget (editor, ed);
 			ed.grab_focus ();
 			foreach (unowned Editor old_ed in editors.data) {
 				((Container) old_ed.get_parent ()).remove (old_ed);
 			}
 			
-			unowned List<File?> lru_head = container.lru.list();
+			unowned List<DataSource> lru_head = container.lru.list();
 			if (lru_head != null && lru_head.data != null && lru_head.next != null) {
-				if (lru_head.data == next_file || (next_file != null && lru_head.data.equal (next_file))) {
-					// the next file in the lru is next_file, give precedence to the second file in the lru
+				if (lru_head.data == next_source || (next_source != null && lru_head.data.equal (next_source))) {
+					// the next source in the lru is next_source, give precedence to the second file in the lru
 					container.lru.used (lru_head.next.data);
 				}
 			}
 		}
 
 		void on_kill_buffer (Editor editor) {
-			var files = editor.editor_container.get_files ();
+			var sources = editor.editor_container.get_sources ();
 			// get next lru file
-			unowned File next_file = files[0];
+			unowned DataSource next_source = sources[0];
 
 			GenericArray<Editor> editors;
-			if (editor.file == null) {
-				editors = scratch_editors;
-			} else {
-				editors = editor.file.get_data ("editors");
-			}
+			editors = editor.source.get_data ("editors");
+			
 			bool other_visible = false;
 			foreach (unowned Editor ed in editors.data) {
 				if (editor != ed && ed.visible) {
@@ -1245,7 +1278,7 @@ namespace Vanubi.UI {
 								return true;
 							} else if (e.keyval == Gdk.Key.y || e.keyval == Gdk.Key.Return) {
 								abort (editor);
-								kill_buffer (editor, editors, next_file);
+								kill_buffer (editor, editors, next_source);
 								return true;
 							}
 							return false;
@@ -1257,10 +1290,10 @@ namespace Vanubi.UI {
 					bar.show ();
 					bar.grab_focus ();
 				} else {
-					kill_buffer (editor, editors, next_file);
+					kill_buffer (editor, editors, next_source);
 				}
 			} else {
-				unowned Editor ed = get_available_editor (next_file);
+				unowned Editor ed = get_available_editor (next_source);
 				replace_widget (editor, ed);
 				ed.grab_focus ();
 			}
@@ -1290,7 +1323,7 @@ namespace Vanubi.UI {
 			bar.activate.connect ((text) => {
 					abort (editor);
 					conf.set_editor_int("tab_width", int.parse(text));
-					conf.save.begin ();
+					conf.save ();
 			});
 			bar.aborted.connect (() => { abort (editor); });
 			add_overlay (bar);
@@ -1304,7 +1337,7 @@ namespace Vanubi.UI {
 			bar.activate.connect ((text) => {
 					abort (editor);
 					conf.set_global_int("shell_scrollback", int.parse(text));
-					conf.save.begin ();
+					conf.save ();
 			});
 			bar.aborted.connect (() => { abort (editor); });
 			add_overlay (bar);
@@ -1493,9 +1526,10 @@ namespace Vanubi.UI {
 			bar.activate.connect ((command) => {
 					abort (ed);
 					last_pipe_command = command;
-					var filename = ed.file != null ? ed.file.get_path() : "*scratch*";
+					var filename = ed.source != null ? ed.source.to_string() : "*scratch*";
 					var cmd = command.replace("%f", Shell.quote(filename)).replace("%s", start.get_offset().to_string()).replace("%e", end.get_offset().to_string());
-					var dir = ed.file != null ? ed.file.get_parent() : File.new_for_path (Environment.get_current_dir ());
+					var base_file = ed.source.parent as FileSource;
+					var dir = base_file != null ? base_file : (FileSource) ScratchSource.instance.parent;
 					execute_shell_async.begin (dir, cmd, text.data, null, (s,r) => {
 							try {
 								output = execute_shell_async.end (r);
@@ -1799,16 +1833,16 @@ namespace Vanubi.UI {
 		}
 
 		void on_switch_buffer (Editor editor) {
-			var sp = short_paths (editor.editor_container.get_files ());
+			var sp = short_paths (editor.editor_container.get_sources ());
 			var bar = new SwitchBufferBar ((owned) sp);
 			bar.activate.connect (() => {
 					abort (editor);
-					var file = bar.get_choice();
-					if (file == editor.file) {
+					var source = bar.get_choice();
+					if (source == editor.source) {
 						// no-op
 						return;
 					}
-					unowned Editor ed = get_available_editor (file);
+					unowned Editor ed = get_available_editor (source);
 					replace_widget (editor, ed);
 					ed.grab_focus ();
 				});
@@ -1847,6 +1881,10 @@ namespace Vanubi.UI {
 		}
 
 		void on_goto_error (Editor editor, string cmd) {
+			goto_error.begin (editor, cmd);
+		}
+		
+		async void goto_error (Editor editor, string cmd) {
 			bool no_more_errors = true;
 			if (error_locations != null) {	
 				if (error_locations.length() == 1) {
@@ -1874,11 +1912,15 @@ namespace Vanubi.UI {
 				set_status ("No more errors");
 			} else {
 				var loc = current_error.data;
-				if (loc.file.query_exists ()) {
-					open_location.begin (editor, loc);
-					set_status_error (loc.get_data ("error-message"));
-				} else {
-					set_status_error ("File %s not found".printf (loc.file.get_path ()));
+				try {
+					var exists = yield loc.source.exists ();
+					if (exists) {
+						open_location.begin (editor, loc);
+						set_status_error (Markup.escape_text (loc.get_data ("error-message")));
+					} else {
+						set_status_error ("Source %s not found".printf (loc.source.to_string ()));
+					}
+				} catch (Error e) {
 				}
 			}
 		}
@@ -1889,7 +1931,7 @@ namespace Vanubi.UI {
 		
 		async void repo_grep (Editor editor) {
 			Git git = new Git (conf);
-			var repo_dir = yield git.get_repo (editor.file);
+			var repo_dir = yield git.get_repo (editor.source);
 			if (repo_dir == null) {
 				set_status ("Not in git repository");
 				return;
@@ -1902,7 +1944,7 @@ namespace Vanubi.UI {
 			bar.activate.connect (() => {
 					abort (editor);
 					var loc = bar.location;
-					if (loc != null && loc.file != null) {
+					if (loc != null && loc.source != null) {
 						open_location.begin (editor, loc);
 					}
 			});
@@ -1923,7 +1965,7 @@ namespace Vanubi.UI {
 					
 					int stdout, stderr;
 					try {
-						Process.spawn_async_with_pipes (repo_dir.get_path(),
+						Process.spawn_async_with_pipes (repo_dir.to_string(),
 										{git_command, "grep", "-inI", "--color", pat},
 										null,
 										SpawnFlags.SEARCH_PATH,
@@ -1960,7 +2002,7 @@ namespace Vanubi.UI {
 			
 		async void repo_open_file (Editor editor) {
 			Git git = new Git (conf);
-			var repo_dir = yield git.get_repo (editor.file);
+			var repo_dir = yield git.get_repo (editor.source);
 			if (repo_dir == null) {
 				set_status ("Not in git repository");
 				return;
@@ -1978,16 +2020,16 @@ namespace Vanubi.UI {
 					}
 					
 					var file_names = res.split ("\n");
-					var annotated = new Annotated<File>[file_names.length];
+					var annotated = new Annotated<DataSource>[file_names.length];
 					for (var i=0; i < file_names.length; i++) {
-						annotated[i] = new Annotated<File> (file_names[i], repo_dir.get_child (file_names[i]));
+						annotated[i] = new Annotated<DataSource> (file_names[i], repo_dir.child (file_names[i]));
 					}
 					
-					var bar = new SimpleCompletionBar<File> ((owned) annotated);
+					var bar = new SimpleCompletionBar<DataSource> ((owned) annotated);
 					bar.activate.connect (() => {
 							abort (editor);
 							var file = bar.get_choice();
-							if (file == editor.file) {
+							if (file == editor.source) {
 								// no-op
 								return;
 							}
@@ -2016,7 +2058,7 @@ namespace Vanubi.UI {
 			replace_widget (container, paned);
 
 			// get an editor for the same file
-			var ed = get_available_editor (editor.file);
+			var ed = get_available_editor (editor.source);
 			if (ed.get_parent() != null) {
 				// ensure the new editor is unparented
 				((Container) ed.get_parent ()).remove (ed);
@@ -2308,7 +2350,7 @@ namespace Vanubi.UI {
 			bar.activate.connect ((text) => {
 					abort (editor);
 					conf.set_editor_int("right_margin_column", int.parse(text));
-					conf.save.begin ();
+					conf.save ();
 					
 					each_editor ((ed) => {
 							ed.update_right_margin ();

@@ -100,7 +100,7 @@ namespace Vanubi.UI {
 	}
 
 	public class EditorContainer : EventBox {
-		public FileLRU lru = new FileLRU ();
+		public SourceLRU lru = new SourceLRU ();
 		
 		public Editor editor {
 			get {
@@ -121,16 +121,16 @@ namespace Vanubi.UI {
 
 		public override void remove (Widget w) {
 			if (editor != null) {
-				lru.used (editor.file);
+				lru.used (editor.source);
 			}
 			base.remove (w);
 		}
 		
-		/* Get files in lru order */
-		public File[] get_files () {
-			File[] res = null;
-			foreach (var file in lru.list ()) {
-				res += file;
+		/* Get sources in lru order */
+		public DataSource[] get_sources () {
+			DataSource[] res = null;
+			foreach (var source in lru.list ()) {
+				res += source;
 			}
 			return res;
 		}
@@ -139,7 +139,7 @@ namespace Vanubi.UI {
 	public class Editor : Grid {
 		public weak Manager manager;
 		Configuration conf;
-		public File file { get; private set; }
+		public weak DataSource source { get; private set; }
 		public SourceView view { get; private set; }
 		public SourceStyleSchemeManager editor_style { get; private set; }
 		ScrolledWindow sw;
@@ -151,7 +151,6 @@ namespace Vanubi.UI {
 		EditorInfoBar infobar;
 		int old_selection_start_offset = -1;
 		int old_selection_end_offset = -1;
-		FileMonitor monitor;
 		SourceGutter? gutter = null;
 		GitGutterRenderer? gutter_renderer = null;
 		bool file_loaded = false;
@@ -161,9 +160,9 @@ namespace Vanubi.UI {
 		Git git;
 		TrailingSpaces? trailsp = null;
 		
-		public Editor (Manager manager, Configuration conf, File? file) {
+		public Editor (Manager manager, Configuration conf, DataSource source) {
 			this.manager = manager;
-			this.file = file;
+			this.source = source;
 			this.conf = conf;
 			orientation = Orientation.VERTICAL;
 			expand = true;
@@ -253,37 +252,10 @@ namespace Vanubi.UI {
 					return false;
 			});
 			
-			restart_monitor ();
+			source.changed.connect (on_external_changed);
+			source.monitor.begin ();
 		}
 
-		void restart_monitor () {
-			if (monitor != null) {
-				monitor.changed.disconnect (on_external_changed);
-				monitor = null;
-			}
-			if (file != null) {
-				/* XXX: use FileMonitorFlags.WATCH_HARD_LINKS with valac >= 0.20.2 */
-				file.set_data<TimeVal?> ("editing_mtime", get_mtime ());
-				try {
-					monitor = file.monitor (FileMonitorFlags.NONE);
-					monitor.changed.connect (on_external_changed);
-				} catch (Error e) {
-					manager.set_status_error (e.message);
-				}
-			}
-		}
-		
-		public TimeVal? get_mtime () {
-			if (file != null && file.query_exists ()) {
-				try {
-					var info = file.query_info (FileAttribute.TIME_MODIFIED, FileQueryInfoFlags.NONE);
-					return info.get_modification_time ();
-				} catch (Error e) {
-					return null;
-				}
-			}
-			return null;
-		}
 		
 		public void update_old_selection () {
 			TextIter old_selection_start, old_selection_end;
@@ -297,10 +269,10 @@ namespace Vanubi.UI {
 			return file_external_changed.label != "";
 		}
 		
-		public void reset_external_changed () {
+		public async void reset_external_changed () {
 			file_external_changed.set_label ("");
-			file.set_data<TimeVal?> ("editing_mtime", get_mtime ());
-			restart_monitor ();
+			var mtime = yield source.get_mtime ();
+			source.set_data<TimeVal?> ("editing_mtime", mtime);
 		}
 		
 		public override void grab_focus () {
@@ -310,11 +282,7 @@ namespace Vanubi.UI {
 		}
 
 		public string get_editor_name () {
-			if (file == null) {
-				return "*scratch*";
-			} else {
-				return file.get_path();
-			}
+			return source.to_string ();
 		}
 
 		public EditorContainer editor_container {
@@ -324,12 +292,17 @@ namespace Vanubi.UI {
 		}
 
 		public void reset_language () {
+			var file = source as LocalFileSource;
+			if (file == null) {
+				return;
+			}
+			
 			bool uncertain;
-			var content_type = ContentType.guess (file.get_path (), null, out uncertain);
+			var content_type = ContentType.guess (file.to_string (), null, out uncertain);
 			if (uncertain) {
 				content_type = null;
 			}
-			var default_lang = SourceLanguageManager.get_default().guess_language (file.get_path (), content_type);
+			var default_lang = SourceLanguageManager.get_default().guess_language (file.to_string (), content_type);
 			var lang_id = conf.get_file_string (file, "language", default_lang != null ? default_lang.id : null);
 			if (lang_id != null) {
 				var lang = SourceLanguageManager.get_default().get_language (lang_id);
@@ -340,9 +313,9 @@ namespace Vanubi.UI {
 		public Location get_location () {
 			TextIter iter;
 			view.buffer.get_iter_at_mark (out iter, view.buffer.get_insert ());
-			var loc = new Location (file,
-						iter.get_line (),
-						iter.get_line_offset ());
+			var loc = new Location (source,
+									iter.get_line (),
+									iter.get_line_offset ());
 			return loc;
 		}
 		
@@ -386,7 +359,10 @@ namespace Vanubi.UI {
 			reset_language ();
 			buf.set_text ("", -1);
 			buf.set_modified (false);
-			reset_external_changed ();
+			yield reset_external_changed ();
+			if (cancellable.is_cancelled ()) {
+				return;
+			}
 			
 			file_loading.set_markup ("<i>loading...</i>");
 			
@@ -422,24 +398,37 @@ namespace Vanubi.UI {
 						buf.begin_not_undoable_action ();
 					}
 					var old_modified = buf.get_modified ();
+
+					view.buffer.get_end_iter (out iter);
 					buf.insert (ref iter, (string) data, (int) r);
+					
 					if (!undoable) {
 						buf.set_modified (old_modified);
 						buf.end_not_undoable_action ();
 					}
 				}
+			} catch (IOError.CANCELLED e) {
 			} finally {
-				file_loading.set_markup ("");
-				file_loaded = true;
-				update_show_branch ();
-				on_git_gutter ();
-				on_trailing_spaces ();
+				// check cancellable to avoid race with other replace_contents
+				if (cancellable == loading_cancellable) {
+					file_loading.set_markup ("");
+					file_loaded = true;
+					update_show_branch ();
+					on_git_gutter ();
+					on_trailing_spaces ();
+
+					loading_cancellable = null;
+				}
 			}
 		}
 		
 		public void update_show_branch () {
-			if (conf.get_editor_bool ("show_branch", false)) {
-				git.current_branch.begin (file, null, (s, r) => {
+			if (!(source is FileSource)) {
+				return;
+			}
+			
+			if (conf.get_editor_bool ("show_branch", true)) {
+				git.current_branch.begin ((FileSource) source, null, (s, r) => {
 						string bname;
 						try {
 							bname = git.current_branch.end (r);
@@ -515,7 +504,7 @@ namespace Vanubi.UI {
 		}
 
 		public void on_git_gutter () {
-			if (!conf.get_editor_bool("git_gutter", true)) {
+			if (!conf.get_editor_bool("git_gutter", true) || !(source is FileSource)) {
 				if (gutter != null) {
 					gutter.remove (gutter_renderer);
 					gutter = null;
@@ -544,7 +533,7 @@ namespace Vanubi.UI {
 						}
 						
 						var cancellable = diff_cancellable = new Cancellable ();
-						git.diff_buffer.begin (file, view.buffer.text.data, cancellable, (obj, res) => {
+						git.diff_buffer.begin ((FileSource) source, view.buffer.text.data, cancellable, (obj, res) => {
 								HashTable<int, DiffType> table;
 								try {
 									table = git.diff_buffer.end (res);
@@ -603,17 +592,21 @@ namespace Vanubi.UI {
 		}
 		
 		void on_external_changed () {
-			var cur = get_mtime ();
-			var editing = file.get_data<TimeVal?> ("editing_mtime");
+			external_changed.begin ();
+		}
+		
+		async void external_changed () {
+			var cur = yield source.get_mtime ();
+			var editing = source.get_data<TimeVal?> ("editing_mtime");
 			if (editing == null) {
-				file.set_data<TimeVal?> ("editing_mtime", cur);
+				// we didn't track the mtime yet
+				source.set_data<TimeVal?> ("editing_mtime", cur);
 				return;
 			}
 			
 			if (cur != editing) {
 				file_external_changed.set_markup ("<span fgcolor='black' bgcolor='red'> <b>file has changed</b> </span>");
 			}
-			restart_monitor ();
 		}
 	}
 }

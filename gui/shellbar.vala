@@ -58,16 +58,16 @@ namespace Vanubi.UI {
 			this.editor = editor;
 			this.config = manager.conf;
 			
-			var base_file = editor.file;
+			var base_source = editor.source as FileSource;
 			
 			expand = true;
-			term = base_file != null ? base_file.get_data<Terminal> ("shell") : null;
+			term = base_source != null ? base_source.get_data<Terminal> ("shell") : null;
 			var is_new = false;
 			if (term == null) {
 				is_new = true;
-				term = create_new_term (base_file);
-				if (base_file != null) {
-					base_file.set_data ("shell", term.ref ());
+				term = create_new_term (base_source);
+				if (base_source != null) {
+					base_source.set_data ("shell", term.ref ());
 				}
 			}
 			term.expand = true;
@@ -84,13 +84,13 @@ namespace Vanubi.UI {
 					}
 					
 					// store cwd in config file
-					if (base_file != null) {
+					if (base_source != null) {
 						var curdir = get_cwd ();
 						if (curdir != null) {
-							var olddir = config.get_file_string (base_file, "shell_cwd", get_base_directory (base_file));
+							var olddir = config.get_file_string (base_source, "shell_cwd", base_source.parent.to_string ());
 							if (absolute_path ("", olddir) != absolute_path ("", curdir)) {
-								config.set_file_string (base_file, "shell_cwd", curdir);
-								config.save.begin ();
+								config.set_file_string (base_source, "shell_cwd", curdir);
+								config.save ();
 							}
 						}
 					}
@@ -114,7 +114,7 @@ namespace Vanubi.UI {
 			}
 		}
 		
-		Terminal create_new_term (File? base_file) {
+		Terminal create_new_term (FileSource base_source) {
 			var term = new Terminal ();
 			term.scrollback_lines = config.get_global_int ("shell_scrollback", 65535);
 			var shell = Vte.get_user_shell ();
@@ -125,7 +125,7 @@ namespace Vanubi.UI {
 			try {
 				string[] argv;
 				Shell.parse_argv (shell, out argv);
-				var workdir = config.get_file_string (base_file, "shell_cwd", get_base_directory (base_file));
+				var workdir = config.get_file_string (base_source, "shell_cwd", base_source.parent.to_string ());
 
 				Pid pid;
 				term.fork_command_full (PtyFlags.DEFAULT, workdir, {shell}, null, SpawnFlags.SEARCH_PATH, null, out pid);
@@ -146,7 +146,8 @@ namespace Vanubi.UI {
 				var is = new UnixInputStream (fd, true);
 				var buf = new uint8[1024];
 				var b = new StringBuilder ();
-				var curdir = editor.file != null ? editor.file.get_parent().get_path () : ".";
+				var base_file = editor.source.parent as FileSource;
+				var curdir = base_file != null ? base_file.to_string () : ".";
 				
 				while (true) {
 					var r = yield is.read_async (buf);
@@ -196,19 +197,19 @@ namespace Vanubi.UI {
 									}
 								}
 								
-								File file;
+								DataSource source;
 								if (filename[0] != '/') {
-									file = File.new_for_path (curdir+"/"+filename);
+									source = DataSource.new_from_string (curdir+"/"+filename);
 								} else {
-									file = File.new_for_path (filename);
+									source = DataSource.new_from_string (filename);
 								}
 								
 								var msg = info.fetch_named ("msg").strip ();
-								var loc = new Location (file, start_line, start_column, end_line, end_column);
+								var loc = new Location (source, start_line, start_column, end_line, end_column);
 								loc.set_data ("error-message", (owned) msg);
 								
 								// create marks for all editors of that file
-								manager.each_file_editor (file, (ed) => {
+								manager.each_source_editor (source, (ed) => {
 										get_start_mark_for_location (loc, ed.view.buffer); // create a TextMark
 										get_end_mark_for_location (loc, ed.view.buffer); // create a TextMark
 										return false; // buffer is shared among editors

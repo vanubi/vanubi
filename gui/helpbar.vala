@@ -124,7 +124,7 @@ namespace Vanubi.UI {
 					return false;
 			});
 			
-			manager.conf.save.begin ();
+			manager.conf.save ();
 			// refresh
 			search (entry.get_text ());
 		}
@@ -150,7 +150,7 @@ namespace Vanubi.UI {
 					return false;
 			});
 			
-			manager.conf.save.begin ();
+			manager.conf.save ();
 			// refresh
 			search (entry.get_text ());
 		}

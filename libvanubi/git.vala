@@ -42,9 +42,13 @@ namespace Vanubi {
 		}
 		
 		/* Returns the git directory that contains this file */
-		public async File? get_repo (File? file, Cancellable? cancellable = null) {
+		public async FileSource? get_repo (DataSource file, Cancellable? cancellable = null) {
+			if (!(file is FileSource)) {
+				return null;
+			}
+			
 			try {
-				return yield run_in_thread<File?> (() => {
+				return yield run_in_thread<FileSource?> (() => {
 						if (file == null) {
 							return null;
 						}
@@ -55,7 +59,7 @@ namespace Vanubi {
 						try {
 							string[] argv;
 							Shell.parse_argv (@"$git_command rev-parse --show-cdup", out argv);
-							if (!Process.spawn_sync (file.get_parent().get_path(),
+							if (!Process.spawn_sync (file.parent.to_string (),
 													 argv, null, SpawnFlags.SEARCH_PATH,
 													 null, out stdout, out stderr, out status)) {
 								return null;
@@ -68,7 +72,7 @@ namespace Vanubi {
 							if (status != 0) {
 								return null;
 							}
-							return file.get_parent().get_child (stdout.strip ());
+							return (FileSource) file.parent.child (stdout.strip ());
 						} catch (IOError.CANCELLED e) {
 							return null;
 						} catch (Error e) {
@@ -82,12 +86,12 @@ namespace Vanubi {
 			}
 		}
 
-		public async bool file_in_repo (File? file, Cancellable? cancellable = null) throws Error {
+		public async bool file_in_repo (FileSource file, Cancellable? cancellable = null) throws Error {
 			var git_command = config.get_global_string ("git_command", "git");
 			int status;
-			var escaped = Shell.quote (file.get_path());
+			var escaped = Shell.quote (file.to_string ());
 			var cmd = @"$git_command ls-files --error-unmatch $escaped";
-			yield execute_shell_async (file.get_parent(), cmd, null, null, out status, cancellable);
+			yield execute_shell_async ((FileSource) file.parent, cmd, null, null, out status, cancellable);
 			return status == 0;
 		}
 			
@@ -95,16 +99,12 @@ namespace Vanubi {
 			/* TODO */
 		}
 		
-		public async string? current_branch (File? file, Cancellable? cancellable = null) throws Error {
-			if (file == null) {
-				return null;
-			}
-			
+		public async string? current_branch (FileSource source, Cancellable? cancellable = null) throws Error {
 			var git_command = config.get_global_string ("git_command", "git");
 			
 			string cmdline = @"$git_command rev-parse --abbrev-ref HEAD";
 			int status;
-			var output = (string) yield execute_shell_async (file.get_parent(), cmdline, null, null, out status, cancellable);
+			var output = (string) yield execute_shell_async ((FileSource) source.parent, cmdline, null, null, out status, cancellable);
 			
 			if (status != 0 || output.strip () == "") {
 				return null;
@@ -146,7 +146,7 @@ namespace Vanubi {
 			return table;
 		}
 		
-		public async HashTable<int, DiffType>? diff_buffer (File file, owned uint8[] input, Cancellable cancellable) throws Error {
+		public async HashTable<int, DiffType>? diff_buffer (FileSource file, owned uint8[] input, Cancellable cancellable) throws Error {
 			var in_repo = yield file_in_repo (file, cancellable);
 			if (!in_repo) {
 				return null;
