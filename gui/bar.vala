@@ -164,7 +164,7 @@ namespace Vanubi.UI {
 		}
 	}
 	
-	class SwitchBufferBar : SimpleCompletionBar<File> {
+	class SwitchBufferBar : SimpleCompletionBar<DataSource> {
 		public SwitchBufferBar (owned Annotated[] choices) {
 			base ((owned) choices);
 		}

@@ -35,7 +35,7 @@ namespace Vanubi.UI {
 			{ null }
 		};
 		
-		File[]? open_files = null;
+		DataSource[]? open_files = null;
 		
 		public Application () {
 			Object (application_id: "org.vanubi", flags: ApplicationFlags.HANDLES_COMMAND_LINE);
@@ -138,7 +138,7 @@ namespace Vanubi.UI {
 
 			var manager = (Manager) win.get_child ();
 			var focus = true;
-			foreach (unowned File file in open_files) {
+			foreach (unowned DataSource file in open_files) {
 				manager.open_file.begin (manager.last_focused_editor, file, focus);
 				focus = false;
 			}
@@ -188,8 +188,7 @@ namespace Vanubi.UI {
 
 			open_files = null;
 			foreach (unowned string filename in arg_filenames) {
-				/* message(filename); */
-				open_files += command_line.create_file_for_arg (filename);
+				open_files += new LocalFileSource (command_line.create_file_for_arg (filename));
 			}
 				
 			activate ();

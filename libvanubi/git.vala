@@ -42,7 +42,11 @@ namespace Vanubi {
 		}
 		
 		/* Returns the git directory that contains this file */
-		public async FileSource? get_repo (FileSource file, Cancellable? cancellable = null) {
+		public async FileSource? get_repo (DataSource file, Cancellable? cancellable = null) {
+			if (!(file is FileSource)) {
+				return null;
+			}
+			
 			try {
 				return yield run_in_thread<FileSource?> (() => {
 						if (file == null) {
@@ -55,7 +59,7 @@ namespace Vanubi {
 						try {
 							string[] argv;
 							Shell.parse_argv (@"$git_command rev-parse --show-cdup", out argv);
-							if (!Process.spawn_sync (file.container.to_string (),
+							if (!Process.spawn_sync (file.parent.to_string (),
 													 argv, null, SpawnFlags.SEARCH_PATH,
 													 null, out stdout, out stderr, out status)) {
 								return null;
@@ -68,7 +72,7 @@ namespace Vanubi {
 							if (status != 0) {
 								return null;
 							}
-							return (FileSource) file.container.child (stdout.strip ());
+							return (FileSource) file.parent.child (stdout.strip ());
 						} catch (IOError.CANCELLED e) {
 							return null;
 						} catch (Error e) {
@@ -87,7 +91,7 @@ namespace Vanubi {
 			int status;
 			var escaped = Shell.quote (file.to_string ());
 			var cmd = @"$git_command ls-files --error-unmatch $escaped";
-			yield execute_shell_async ((FileSource) file.container, cmd, null, null, out status, cancellable);
+			yield execute_shell_async ((FileSource) file.parent, cmd, null, null, out status, cancellable);
 			return status == 0;
 		}
 			
@@ -100,7 +104,7 @@ namespace Vanubi {
 			
 			string cmdline = @"$git_command rev-parse --abbrev-ref HEAD";
 			int status;
-			var output = (string) yield execute_shell_async ((FileSource) source.container, cmdline, null, null, out status, cancellable);
+			var output = (string) yield execute_shell_async ((FileSource) source.parent, cmdline, null, null, out status, cancellable);
 			
 			if (status != 0 || output.strip () == "") {
 				return null;

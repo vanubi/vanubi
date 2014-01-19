@@ -167,12 +167,12 @@ namespace Vanubi.UI {
 		TextView view;
 		ScrolledWindow sw;
 		Cancellable cancellable;
-		File base_path;
+		DataSource base_source;
 		
-		public GrepBar (Manager manager, Configuration conf, File base_path, string default = "") {
+		public GrepBar (Manager manager, Configuration conf, DataSource base_source, string default = "") {
 			base (default);
 			this.manager = manager;
-			this.base_path = base_path;
+			this.base_source = base_source;
 			entry.expand = false;
 			view = new GrepView (conf);
 			view.editable = false;
@@ -208,7 +208,7 @@ namespace Vanubi.UI {
 			
 			var filename = data[0];
 			var lineno = int.parse (data[1]) - 1;
-			location = new Location (File.new_for_path (base_path.get_path()+"/"+filename), lineno);
+			location = new Location (base_source.child (filename), lineno);
 			
 			base.on_activate ();
 		}

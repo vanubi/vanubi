@@ -121,7 +121,7 @@ namespace Vanubi.UI {
 
 		public override void remove (Widget w) {
 			if (editor != null) {
-				lru.used (editor.file);
+				lru.used (editor.source);
 			}
 			base.remove (w);
 		}
@@ -151,7 +151,6 @@ namespace Vanubi.UI {
 		EditorInfoBar infobar;
 		int old_selection_start_offset = -1;
 		int old_selection_end_offset = -1;
-		FileMonitor monitor;
 		SourceGutter? gutter = null;
 		GitGutterRenderer? gutter_renderer = null;
 		bool file_loaded = false;
@@ -251,7 +250,7 @@ namespace Vanubi.UI {
 			});
 			
 			source.changed.connect (on_external_changed);
-			source.monitor ();
+			source.monitor.begin ();
 		}
 
 		
@@ -280,11 +279,7 @@ namespace Vanubi.UI {
 		}
 
 		public string get_editor_name () {
-			if (file == null) {
-				return "*scratch*";
-			} else {
-				return file.get_path();
-			}
+			return source.to_string ();
 		}
 
 		public EditorContainer editor_container {
@@ -358,7 +353,7 @@ namespace Vanubi.UI {
 			reset_language ();
 			buf.set_text ("", -1);
 			buf.set_modified (false);
-			reset_external_changed ();
+			yield reset_external_changed ();
 			
 			file_loading.set_markup ("<i>loading...</i>");
 			
@@ -554,11 +549,15 @@ namespace Vanubi.UI {
 		}
 		
 		void on_external_changed () {
-			var cur = get_mtime ();
-			var editing = file.get_data<TimeVal?> ("editing_mtime");
+			external_changed.begin ();
+		}
+		
+		async void external_changed () {
+			var cur = yield source.get_mtime ();
+			var editing = source.get_data<TimeVal?> ("editing_mtime");
 			if (editing == null) {
 				// we didn't track the mtime yet
-				file.set_data<TimeVal?> ("editing_mtime", cur);
+				source.set_data<TimeVal?> ("editing_mtime", cur);
 				return;
 			}
 			

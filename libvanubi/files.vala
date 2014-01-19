@@ -88,10 +88,10 @@ namespace Vanubi {
 	struct ShortComp {
 		string comp;
 		int clashes;
-		File file;
+		DataSource source;
 	}
 	
-	void short_path_helper (Node<ShortComp?> node, GenericArray<Annotated<File>> res) {
+	void short_path_helper (Node<ShortComp?> node, GenericArray<Annotated<DataSource>> res) {
 		unowned ShortComp? shortcomp = node.data;
 		if (shortcomp != null && shortcomp.clashes == 0) {
 			// build path up to root
@@ -103,7 +103,7 @@ namespace Vanubi {
 				cur = cur.parent;
 			}
 			path.data[path.length-1] = '\0'; // remove trailing slash
-			res.add (new Annotated<File> (path, shortcomp.file));
+			res.add (new Annotated<DataSource> (path, shortcomp.source));
 			return;
 		}
 
@@ -114,12 +114,12 @@ namespace Vanubi {
 		}
 	}
 	
-	public Annotated<File>[] short_paths (File[] files) {
+	public Annotated<DataSource>[] short_paths (DataSource[] sources) {
 		// create a trie of file components
 		var root = new Node<ShortComp?> ();
-		foreach (unowned File file in files) {
+		foreach (unowned DataSource source in sources) {
 			unowned Node<ShortComp?> cur = root;
-			var path = file != null ? file.get_path() : "*scratch*";
+			var path = source.to_string ();
 			var comps = path.split("/");
 			for (int i=comps.length-1; i >= 0; i--) {
 				unowned string comp = comps[i];
@@ -140,7 +140,7 @@ namespace Vanubi {
 					ShortComp? shortcomp = ShortComp ();
 					shortcomp.comp = comp;
 					shortcomp.clashes = 0;
-					shortcomp.file = file;
+					shortcomp.source = source;
 					var newchild = new Node<ShortComp?> ((owned) shortcomp);
 					unowned Node<ShortComp?> refchild = newchild;
 					cur.append ((owned) newchild);
@@ -149,7 +149,7 @@ namespace Vanubi {
 			}
 		}
 		
-		GenericArray<Annotated<File>> work = new GenericArray<Annotated<File>> ();
+		var work = new GenericArray<Annotated<DataSource>> ();
 		// depth first search
 		short_path_helper (root, work);
 		var res = (owned) work.data;

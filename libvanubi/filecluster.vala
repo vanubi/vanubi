@@ -52,9 +52,9 @@ namespace Vanubi {
 		}
 		
 		bool each_sibling (FileSource file, Operation<FileSource> op) {
-			var container = file.container;
+			var parent = file.parent;
 			return each_file ((other) => {
-					if (container.equal (other.container) && !op (other)) {
+					if (parent.equal (other.parent) && !op (other)) {
 						return false;
 					}
 					return true;

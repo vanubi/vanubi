@@ -21,12 +21,16 @@ namespace Vanubi {
 	public abstract class DataSource : Object {
 		public signal void changed ();
 		
-		public abstract DataSource? container { owned get; }
+		public abstract DataSource? parent { owned get; }
 
 		public abstract async bool exists (int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) throws IOError.CANCELLED;
 		public abstract async InputStream read (int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) throws Error;
+		
+		public abstract async void write (uint8[] data, int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) throws Error;
+		
 		public abstract async TimeVal? get_mtime (int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null);
 		public abstract async void monitor (int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) throws IOError.CANCELLED;
+		
 
 		public abstract DataSource child (string path);
 		
@@ -58,7 +62,7 @@ namespace Vanubi {
 		private ScratchSource () {
 		}
 		
-		public override DataSource? container {
+		public override DataSource? parent {
 			owned get {
 				return new LocalFileSource (File.new_for_path (Environment.get_current_dir()));
 			}
@@ -69,7 +73,7 @@ namespace Vanubi {
 		}
 
 		public override async InputStream read (int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) throws Error {
-			throw new IOError.NOT_FOUND ("*scratch* is not readable");
+			throw new IOError.NOT_SUPPORTED ("*scratch* is not readable");
 		}
 		
 		public override async TimeVal? get_mtime (int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) {
@@ -77,6 +81,10 @@ namespace Vanubi {
 		}
 		
 		public override async void monitor (int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) throws IOError.CANCELLED {
+		}
+		
+		public override async void write (uint8[] data, int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) throws Error {
+			throw new IOError.NOT_SUPPORTED ("*scratch* is not readable");
 		}
 		
 		public override DataSource child (string path) {
@@ -127,7 +135,7 @@ namespace Vanubi {
 			
 		}
 		
-		public override DataSource? container {
+		public override DataSource? parent {
 			owned get {
 				var parent = file.get_parent ();
 				if (parent != null) {
@@ -189,6 +197,10 @@ namespace Vanubi {
 				throw e;
 			} catch (Error e) {
 			}
+		}
+		
+		public override async void write (uint8[] data, int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) throws Error {
+			
 		}
 		
 		public override DataSource child (string path) {
