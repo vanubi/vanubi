@@ -807,12 +807,14 @@ namespace Vanubi.UI {
 		
 		// iterate all editor containers and perform the given operation on each of them
 		public bool each_editor_container (Operation<EditorContainer> op) {
+			var looked = new EditorContainer[0];
 			return each_editor ((ed) => {
 					var container = ed.get_parent() as EditorContainer;
-					if (container != null) {
+					if (container != null && !(container in looked)) {
 						if (!op (container)) {
 							return false;
 						}
+						looked += container;
 					}
 					return true;
 			});
@@ -821,7 +823,7 @@ namespace Vanubi.UI {
 		// iterate lru of all EditorContainer and perform the given operation on each of them
 		public bool each_lru (Operation<SourceLRU> op) {
 			return each_editor_container ((c) => {
-					return !op (c.lru);
+					return op (c.lru);
 			});
 		}
 		
@@ -846,6 +848,7 @@ namespace Vanubi.UI {
 			} else {
 				// get the editors of the source
 				editors = source.get_data ("editors");
+				source = s; // normalize
 			}
 
 			// first find an editor that is not visible, so we can reuse it

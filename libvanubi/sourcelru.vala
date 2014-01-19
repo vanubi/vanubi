@@ -23,7 +23,7 @@ namespace Vanubi {
 		List<DataSource> lru = new List<DataSource> ();
 
 		public void append (DataSource f) {
-			unowned List<DataSource> link = lru.find_custom (f, (CompareFunc) DataSource.equal);
+			unowned List<DataSource> link = lru.find_custom (f, DataSource.compare);
 			// ensure we have no duplicates
 			if (link == null) {
 				lru.append (f);
@@ -32,7 +32,7 @@ namespace Vanubi {
 		
 		public void used (DataSource s) {
 			// bring to head
-			unowned List<DataSource> link = lru.find_custom (s, (CompareFunc) DataSource.equal);
+			unowned List<DataSource> link = lru.find_custom (s, DataSource.compare);
 			if (link != null) {
 				lru.delete_link (link);
 				lru.prepend (s);
@@ -40,7 +40,7 @@ namespace Vanubi {
 		}
 		
 		public void remove (DataSource f) {
-			unowned List<DataSource> link = lru.find_custom (f, (CompareFunc) DataSource.equal);
+			unowned List<DataSource> link = lru.find_custom (f, DataSource.compare);
 			if (link != null) {
 				lru.delete_link (link);
 			}

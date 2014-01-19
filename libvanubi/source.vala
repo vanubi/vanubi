@@ -39,6 +39,14 @@ namespace Vanubi {
 		public abstract bool equal (DataSource? s);		
 		public abstract string to_string ();
 		
+		public int compare (DataSource? s) {
+			if (equal (s)) {
+				return 0;
+			} else {
+				return -1;
+			}
+		}
+		
 		public static DataSource new_from_string (string path) {
 			if (path == "*scratch*") {
 				return ScratchSource.instance;
@@ -99,8 +107,7 @@ namespace Vanubi {
 		}
 		
 		public override uint hash () {
-			uint ptr = (uint)(void*) this;
-			return ptr;
+			return 0;
 		}
 		
 		public override bool equal (DataSource? s) {

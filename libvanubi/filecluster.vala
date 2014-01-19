@@ -27,7 +27,7 @@ namespace Vanubi {
 		}
 		
 		public void opened_file (FileSource f) {
-			unowned List<FileSource> link = opened_files.find_custom (f, (CompareFunc) DataSource.equal);
+			unowned List<FileSource> link = opened_files.find_custom (f, DataSource.compare);
 			// ensure we have no duplicates
 			if (link == null) {
 				opened_files.append (f);
@@ -35,7 +35,7 @@ namespace Vanubi {
 		}
 		
 		public void closed_file (FileSource f) {
-			unowned List<FileSource> link = opened_files.find_custom (f, (CompareFunc) DataSource.equal);
+			unowned List<FileSource> link = opened_files.find_custom (f, DataSource.compare);
 			if (link != null) {
 				opened_files.delete_link (link);
 			}
