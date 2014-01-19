@@ -32,7 +32,7 @@ namespace Vanubi.UI {
 			/* XXX: get tag from the style */
 			if (view.buffer.get_tag_table ().lookup (TAG_NAME) == null) {
 				/* Insert default tag */
-				view.buffer.create_tag (TAG_NAME, "background", "#370300");
+				view.buffer.create_tag (TAG_NAME, "background", "#160808");
 			}
 		}
 		
