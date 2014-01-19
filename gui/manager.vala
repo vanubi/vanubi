@@ -461,12 +461,16 @@ namespace Vanubi.UI {
 			execute_command["toggle-show-branch"].connect (on_toggle_show_branch);
 			
 			bind_command (null, "toggle-right-margin");
-			index_command ("toggle-right-margin", "Show right margin");
+			index_command ("toggle-right-margin", "Toggle right margin");
 			execute_command["toggle-right-margin"].connect (on_toggle_right_margin);
 			
 			bind_command (null, "set-right-margin-column");
-			index_command ("set-right-margin-column", "Show right margin column");
+			index_command ("set-right-margin-column", "Set right margin column size");
 			execute_command["set-right-margin-column"].connect (on_set_right_margin_column);
+			
+			bind_command (null, "toggle-trailing-spaces");
+			index_command ("toggle-trailing-spaces", "Toggle trailing spaces");
+			execute_command["toggle-trailing-spaces"].connect (on_toggle_trailing_spaces);
 
 			// setup empty buffer
 			unowned Editor ed = get_available_editor (null);
@@ -2315,6 +2319,16 @@ namespace Vanubi.UI {
 			add_overlay (bar);
 			bar.show ();
 			bar.grab_focus ();
+		}
+		
+		void on_toggle_trailing_spaces (Editor editor) {
+			var val = !conf.get_editor_bool ("trailing_spaces", true);
+			conf.set_editor_bool ("trailing_spaces", val);
+			set_status (val ? "Enabled" : "Disabled");
+			each_editor ((ed) => {
+					ed.on_trailing_spaces ();
+					return true;
+			});
 		}
 	}
 }

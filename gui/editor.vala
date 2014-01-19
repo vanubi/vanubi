@@ -159,6 +159,7 @@ namespace Vanubi.UI {
 		uint diff_timer = 0;
 		uint save_session_timer = 0;
 		Git git;
+		TrailingSpaces? trailsp = null;
 		
 		public Editor (Manager manager, Configuration conf, File? file) {
 			this.manager = manager;
@@ -193,6 +194,7 @@ namespace Vanubi.UI {
 			add (sw);
 			
 			on_git_gutter ();
+			on_trailing_spaces ();
 			
 			// lower information bar
 			infobar = new EditorInfoBar ();
@@ -227,6 +229,7 @@ namespace Vanubi.UI {
 			file_loading.margin_left = 20;
 			infobar.add (file_loading);
 			
+			view.buffer.insert_text.connect_after (on_insert_text);
 			view.notify["buffer"].connect_after (on_buffer_changed);
 			on_buffer_changed ();
 
@@ -430,6 +433,7 @@ namespace Vanubi.UI {
 				file_loaded = true;
 				update_show_branch ();
 				on_git_gutter ();
+				on_trailing_spaces ();
 			}
 		}
 		
@@ -470,8 +474,32 @@ namespace Vanubi.UI {
 			}
 		}
 		
+		public void on_trailing_spaces () {
+			if (!conf.get_editor_bool ("trailing_spaces", true)) {
+				if (trailsp != null) {
+					trailsp.cleanup_buffer ();
+					trailsp = null;
+				}
+				return;
+			}
+			
+			if (trailsp == null) {
+				trailsp = new TrailingSpaces (view);
+			}
+			
+			if (file_loaded) {
+				trailsp.check_buffer ();
+			}
+		}
+		
 		/* events */
 
+		void on_insert_text (ref TextIter pos, string new_text, int new_text_length) {
+			if (trailsp != null) {
+				trailsp.check_inserted_text (ref pos, new_text);
+			}
+		}
+		
 		void on_buffer_changed () {
 			if (!(view.buffer is SourceBuffer)) {
 				// very weird, done on textview disposal

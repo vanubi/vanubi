@@ -24,13 +24,14 @@ vanubi_VALASOURCES = \
 	helpbar.vala \
 	buffer.vala \
 	main.vala \
-	manager.vala	\
+	manager.vala \
 	searchbar.vala \
 	shellbar.vala \
 	aboutbar.vala \
 	util.vala \
-	vade.vala	\
+	vade.vala \
 	git.vala \
+	trailingspace.vala \
 	$(NULL)
 
 vanubi_SOURCES = \

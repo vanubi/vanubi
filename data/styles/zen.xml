@@ -58,6 +58,7 @@
   <style name="cursor" foreground="#white"/>
   <style name="current-line" background="#0d0f0f"/>
   <style name="right-margin" background="#6d6d6d"/>
+  <style name="trailing-space" background="dl-red"/>
 
   <!-- Bracket Matching -->
   <style name="bracket-match" background="dl-dark-olive-green"/>
