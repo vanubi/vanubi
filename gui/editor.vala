@@ -357,6 +357,9 @@ namespace Vanubi.UI {
 			buf.set_text ("", -1);
 			buf.set_modified (false);
 			yield reset_external_changed ();
+			if (cancellable.is_cancelled ()) {
+				return;
+			}
 			
 			file_loading.set_markup ("<i>loading...</i>");
 			
@@ -392,17 +395,26 @@ namespace Vanubi.UI {
 						buf.begin_not_undoable_action ();
 					}
 					var old_modified = buf.get_modified ();
+
+					view.buffer.get_end_iter (out iter);
 					buf.insert (ref iter, (string) data, (int) r);
+					
 					if (!undoable) {
 						buf.set_modified (old_modified);
 						buf.end_not_undoable_action ();
 					}
 				}
+			} catch (IOError.CANCELLED e) {
 			} finally {
-				file_loading.set_markup ("");
-				file_loaded = true;
-				update_show_branch ();
-				on_git_gutter ();
+				// check cancellable to avoid race with other replace_contents
+				if (cancellable == loading_cancellable) {
+					file_loading.set_markup ("");
+					file_loaded = true;
+					update_show_branch ();
+					on_git_gutter ();
+					
+					loading_cancellable = null;
+				}
 			}
 		}
 		
