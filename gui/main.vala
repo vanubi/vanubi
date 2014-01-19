@@ -188,7 +188,11 @@ namespace Vanubi.UI {
 
 			open_files = null;
 			foreach (unowned string filename in arg_filenames) {
-				open_files += new LocalFileSource (command_line.create_file_for_arg (filename));
+				if (filename == "-") {
+					/* open_files += new StreamSource (command_line.get_stdin ()); */
+				} else {
+					open_files += new LocalFileSource (command_line.create_file_for_arg (filename));
+				}
 			}
 				
 			activate ();
