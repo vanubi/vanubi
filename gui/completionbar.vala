@@ -43,12 +43,12 @@ namespace Vanubi.UI {
 			on_changed ();
 		}
 
-		protected virtual async Annotated<File>[]? complete (string pattern, out string common_choice, Cancellable cancellable) throws Error {
+		protected virtual async Annotated<G>[]? complete (string pattern, out string common_choice, Cancellable cancellable) throws Error {
 			common_choice = pattern;
 			return null;
 		}
 
-		protected virtual async string get_pattern_from_choice (string original_pattern, string choice) {
+		protected virtual string get_pattern_from_choice (string original_pattern, string choice) {
 			return choice;
 		}
 
@@ -56,15 +56,19 @@ namespace Vanubi.UI {
 			return completion_box.get_choice().obj;
 		}
 		
-		protected virtual async void set_choice_to_entry () {
+		public Annotated<G> get_annotated_choice () {
+			return completion_box.get_choice();
+		}
+		
+		protected virtual void set_choice_to_entry () {
 			Annotated choice = completion_box.get_choice ();
 			entry.set_text (choice.str);
 			entry.move_cursor (MovementStep.BUFFER_ENDS, 1, false);
 		}
 
-		async void set_common_pattern () {
+		void set_common_pattern () {
 			if (common_choice != null) {
-				var new_pattern = yield get_pattern_from_choice (original_pattern, common_choice);
+				var new_pattern = get_pattern_from_choice (original_pattern, common_choice);
 				if (new_pattern == original_pattern) {
 					entry.get_style_context().add_class ("error");
 				}				
@@ -118,14 +122,12 @@ namespace Vanubi.UI {
 			} else if (e.keyval == Gdk.Key.Tab) {
 				if (completion_box != null && completion_box.get_choices().length > 0) {
 					if (navigated || completion_box.get_choices().length == 1) {
-						set_choice_to_entry.begin ();
+						set_choice_to_entry ();
+					} else if (!has_changed) {
+						set_choice_to_entry ();
 					} else {
-						if (!has_changed) {
-							set_choice_to_entry.begin ();
-						} else {
-							has_changed = false;
-							set_common_pattern.begin ();
-						}
+						has_changed = false;
+						set_common_pattern ();
 					}
 				} else {
 					entry.get_style_context().add_class ("error");

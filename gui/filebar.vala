@@ -92,14 +92,19 @@ namespace Vanubi.UI {
 			return res;
 		}
 
-		protected override async void set_choice_to_entry () {
-			FileSource choice = get_choice ();
-			entry.set_text (yield get_pattern_from_choice (original_pattern, choice.to_string ()));
+		protected override void set_choice_to_entry () {
+			var choice = get_annotated_choice ();
+			var choicestr = choice.obj.to_string ();
+			if (choice.str.has_suffix ("/")) {
+				// directory
+				choicestr += "/";
+			}
+			entry.set_text (get_pattern_from_choice (original_pattern, choicestr));
 			entry.move_cursor (MovementStep.BUFFER_ENDS, 1, false);
 		}
 		
 		// choice must be an absolute path
-		protected override async string get_pattern_from_choice (string original_pattern, string choice) {
+		protected override string get_pattern_from_choice (string original_pattern, string choice) {
 			string absolute_pattern = absolute_path (base_directory, original_pattern);
 			int choice_seps = count (choice, '/');
 			int pattern_seps = count (absolute_pattern, '/');
@@ -137,8 +142,8 @@ namespace Vanubi.UI {
 				relative += new_absolute_pattern.substring (last_sep+1);
 				res = (owned) relative;
 			}
-
-			if (res[res.length-1] != '/' && File.new_for_path (res).query_file_type (FileQueryInfoFlags.NONE) == FileType.DIRECTORY) {
+			
+			if (res[res.length-1] != '/' && choice[choice.length-1] == '/') {
 				return res + "/";
 			} else {
 				return res;
