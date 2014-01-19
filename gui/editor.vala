@@ -159,7 +159,7 @@ namespace Vanubi.UI {
 		uint save_session_timer = 0;
 		Git git;
 		
-		public Editor (Manager manager, Configuration conf, DataSource file) {
+		public Editor (Manager manager, Configuration conf, DataSource source) {
 			this.manager = manager;
 			this.source = source;
 			this.conf = conf;
@@ -290,6 +290,9 @@ namespace Vanubi.UI {
 
 		public void reset_language () {
 			var file = source as LocalFileSource;
+			if (file == null) {
+				return;
+			}
 			
 			bool uncertain;
 			var content_type = ContentType.guess (file.to_string (), null, out uncertain);
