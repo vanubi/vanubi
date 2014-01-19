@@ -1912,7 +1912,7 @@ namespace Vanubi.UI {
 					var exists = yield loc.source.exists ();
 					if (exists) {
 						open_location.begin (editor, loc);
-						set_status_error (loc.get_data ("error-message"));
+						set_status_error (Markup.escape_text (loc.get_data ("error-message")));
 					} else {
 						set_status_error ("Source %s not found".printf (loc.source.to_string ()));
 					}
