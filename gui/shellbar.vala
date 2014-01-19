@@ -90,7 +90,7 @@ namespace Vanubi.UI {
 							var olddir = config.get_file_string (base_source, "shell_cwd", base_source.parent.to_string ());
 							if (absolute_path ("", olddir) != absolute_path ("", curdir)) {
 								config.set_file_string (base_source, "shell_cwd", curdir);
-								config.save.begin ();
+								config.save ();
 							}
 						}
 					}

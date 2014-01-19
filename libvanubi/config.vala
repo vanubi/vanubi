@@ -29,6 +29,9 @@ namespace Vanubi {
 		Cancellable saving_cancellable;
 		public FileCluster cluster;
 		bool save_queued = false;
+		string last_saved_data = null;
+		
+		const int SAVE_TIMEOUT = 500;
 
 		[CCode (cname = "VERSION", cheader_filename = "config.h")]
 		public extern const string VANUBI_VERSION;
@@ -285,8 +288,33 @@ namespace Vanubi {
 			var group = file.to_string ();
 			return has_group_key (group, key);
 		}
+
+		int64 last_time_saved = 0; // seconds
+		uint save_timeout = 0;
+
+		public void save () {
+			// save the config at most 1 time every SAVE_TIMEOUT milliseconds
+			var cur_time = get_monotonic_time () / 1000;
+			if (cur_time - last_time_saved >= SAVE_TIMEOUT) {
+				last_time_saved = cur_time;
+				save_immediate.begin ();
+			} else {
+				// too early to save, enqueue
+				if (save_timeout > 0) {
+					// some already enqueued
+					return;
+				}
+				
+				save_timeout = Timeout.add_seconds (1, () => {
+						last_time_saved = get_monotonic_time () / 1000;
+						save_timeout = 0;
+						save_immediate.begin ();
+						return false;
+				});
+			}
+		}
 		
-		public async void save () {
+		public async void save_immediate () {
 			if (save_queued) {
 				return;
 			}
@@ -299,7 +327,7 @@ namespace Vanubi {
 				// Yes, spin lock
 				Timeout.add (10, () => {
 						if (saving_cancellable == null) {
-							Idle.add (save.callback);
+							Idle.add (save_immediate.callback);
 							return false;
 						} else {
 							return true;
@@ -311,6 +339,9 @@ namespace Vanubi {
 			save_queued = false;
 			saving_cancellable = new Cancellable ();
 			var saving_data = backend.to_data ();
+			if (last_saved_data == saving_data) {
+				return;
+			}
 			
 			try {
 				// create a backup
@@ -321,6 +352,8 @@ namespace Vanubi {
 				yield tmp.replace_contents_async (saving_data.data, null, true, FileCreateFlags.PRIVATE, saving_cancellable, null);
 				// rename temp to file
 				tmp.move (file, FileCopyFlags.OVERWRITE, saving_cancellable, null);
+				
+				last_saved_data = saving_data;
 			} catch (IOError.CANCELLED e) {
 			} catch (Error e) {
 				// TODO: display error message

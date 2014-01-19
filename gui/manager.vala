@@ -887,7 +887,7 @@ namespace Vanubi.UI {
 			});
 			session.location = ed.get_location ();
 			conf.save_session (session, name);
-			conf.save.begin ();
+			conf.save ();
 		}
 		
 		/* events */
@@ -933,7 +933,7 @@ namespace Vanubi.UI {
 				}
 				sv.override_font (Pango.FontDescription.from_string ("Monospace %d".printf (size)));
 				conf.set_editor_int ("font_size", size);
-				conf.save.begin ();
+				conf.save ();
 				return true;
 			}
 			return false;
@@ -1032,7 +1032,7 @@ namespace Vanubi.UI {
 					var name = bar.get_choice ();
 					if (name != "") {
 						conf.delete_session (name);
-						conf.save.begin ();
+						conf.save ();
 						set_status ("Session %s deleted".printf (name), "sessions");
 					}
 			});
@@ -1319,7 +1319,7 @@ namespace Vanubi.UI {
 			bar.activate.connect ((text) => {
 					abort (editor);
 					conf.set_editor_int("tab_width", int.parse(text));
-					conf.save.begin ();
+					conf.save ();
 			});
 			bar.aborted.connect (() => { abort (editor); });
 			add_overlay (bar);
@@ -1333,7 +1333,7 @@ namespace Vanubi.UI {
 			bar.activate.connect ((text) => {
 					abort (editor);
 					conf.set_global_int("shell_scrollback", int.parse(text));
-					conf.save.begin ();
+					conf.save ();
 			});
 			bar.aborted.connect (() => { abort (editor); });
 			add_overlay (bar);
@@ -2346,7 +2346,7 @@ namespace Vanubi.UI {
 			bar.activate.connect ((text) => {
 					abort (editor);
 					conf.set_editor_int("right_margin_column", int.parse(text));
-					conf.save.begin ();
+					conf.save ();
 					
 					each_editor ((ed) => {
 							ed.update_right_margin ();

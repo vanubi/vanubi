@@ -79,14 +79,14 @@ namespace Vanubi.UI {
 						win.get_size (out w, out h);
 						manager.conf.set_global_int ("window_width", w);
 						manager.conf.set_global_int ("window_height", h);
-						manager.conf.save.begin ();
+						manager.conf.save ();
 				});
 				win.configure_event.connect (() => {
 						int x, y;
 						win.get_position (out x, out y);
 						manager.conf.set_global_int ("window_x", x);
 						manager.conf.set_global_int ("window_y", y);
-						manager.conf.save.begin ();
+						manager.conf.save ();
 						return false;
 				});
 				
