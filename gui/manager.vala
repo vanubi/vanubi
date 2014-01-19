@@ -656,9 +656,11 @@ namespace Vanubi.UI {
 			// first search already opened sources
 			var s = sources[source];
 			if (s != null) {
+				source = s; // normalize
+				
 				unowned Editor ed;
-				if (s != editor.source) {
-					ed = get_available_editor (s);
+				if (source != editor.source) {
+					ed = get_available_editor (source);
 					if (focus) {
 						replace_widget (editor, ed);
 					}
@@ -674,8 +676,6 @@ namespace Vanubi.UI {
 					ed.grab_focus ();
 				}
 				return;
-			} else {
-				source = s; // normalize
 			}
 
 			// if the source is unreadable, don't try to read it

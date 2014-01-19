@@ -205,7 +205,7 @@ namespace Vanubi {
 		}
 		
 		public override async void write (uint8[] data, int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) throws Error {
-			
+			yield file.replace_contents_async (data, null, true, FileCreateFlags.NONE, cancellable, null);
 		}
 
 		public override async bool is_directory (int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) throws IOError.CANCELLED {
