@@ -25,6 +25,7 @@ namespace Vanubi.UI {
 		private const string TAG_NAME = "trailing-space";
 		
 		unowned SourceView view;
+		int old_cursor;
 		
 		public TrailingSpaces (SourceView view) {
 			this.view = view;
@@ -34,6 +35,8 @@ namespace Vanubi.UI {
 				/* Insert default tag */
 				view.buffer.create_tag (TAG_NAME, "background", "#160808");
 			}
+			
+			old_cursor = get_cursor_line ();
 		}
 		
 		private void find_line_trailing_spaces (int line, out TextIter start, out TextIter end) {
@@ -96,6 +99,22 @@ namespace Vanubi.UI {
 			} else {
 				check_line (pos.get_line ());
 			}
+		}
+		
+		private int get_cursor_line () {
+			TextIter insert;
+			view.buffer.get_iter_at_mark (out insert, view.buffer.get_insert ());
+			return insert.get_line ();
+		}
+		
+		public void check_cursor_line () {
+			int curr_cursor = get_cursor_line ();
+			if (curr_cursor == old_cursor) {
+				return;
+			}
+			check_line (old_cursor);
+			cleanup_line (curr_cursor);
+			old_cursor = curr_cursor;
 		}
 	}
 }
