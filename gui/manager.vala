@@ -471,6 +471,10 @@ namespace Vanubi.UI {
 			bind_command (null, "toggle-trailing-spaces");
 			index_command ("toggle-trailing-spaces", "Toggle trailing spaces");
 			execute_command["toggle-trailing-spaces"].connect (on_toggle_trailing_spaces);
+			
+			bind_command (null, "toggle-remote-file-server");
+			index_command ("toggle-remote-file-server", "Toggle the remote file service");
+			execute_command["toggle-remote-file-server"].connect (on_toggle_remote_file_server);
 
 			// setup empty buffer
 			unowned Editor ed = get_available_editor (ScratchSource.instance);
@@ -480,10 +484,12 @@ namespace Vanubi.UI {
 			container.grab_focus ();
 			
 			// remote file server
-			try {
-				remote = new RemoteFileServer ();
-			} catch (Error e) {
-				set_status_error ("Could not start the remote server: "+e.message);
+			if (conf.get_global_bool ("remote_file_server", true)) {
+				try {
+					remote = new RemoteFileServer ();
+				} catch (Error e) {
+					set_status_error ("Could not start the remote server: "+e.message);
+				}
 			}
 		}
 		
@@ -2292,6 +2298,23 @@ namespace Vanubi.UI {
 			conf.set_global_bool ("autoupdate_copyright_year", autoupdate_copyright_year);
 			
 			set_status (autoupdate_copyright_year ? "Enabled" : "Disabled");
+		}
+		
+		void on_toggle_remote_file_server (Editor editor) {
+			var flag = !conf.get_global_bool ("remote_file_server", true);
+			conf.set_global_bool ("remote_file_server", flag);
+			set_status (flag ? "Enabled" : "Disabled");
+	
+			if (flag) {
+				try {
+					remote = new RemoteFileServer ();
+				} catch (Error e) {
+					set_status_error ("Could not start the remote server: "+e.message);
+				}
+			} else if (remote != null) {
+				remote.stop ();
+				remote = null;
+			}
 		}
 		
 		void on_about (Editor editor) {
