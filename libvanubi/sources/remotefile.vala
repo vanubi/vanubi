@@ -117,25 +117,36 @@ namespace Vanubi {
 		async void handle_client (SocketConnection conn) {
 			var is = new AsyncDataInputStream (conn.input_stream);
 			string ident = null;
-			try {
-				var cmd = yield is.read_line_async ();
-				switch (cmd) {
-				case "ident":
-					ident = yield is.read_line_async ();
-					message("identified %s", ident);
-					break;
-				case "open":
-					yield handle_open (is, ident);
-					break;
-				default:
-					throw new RemoteFileError.UNKNOWN_COMMAND ("Unknown command "+cmd);
-				}
-			} catch (Error e) {
-				warning ("Got error "+e.message+", disconnecting.");
+			
+			while (true) {
 				try {
-					yield conn.close_async ();
+					var cmd = yield is.read_line_async ();
+					if (cmd == null) {
+						return;
+					}
+					
+					switch (cmd) {
+					case "ident":
+						ident = yield is.read_line_async ();
+						if (ident == null) {
+							return;
+						}
+						message("identified %s", ident);
+						break;
+					case "open":
+						yield handle_open (is, ident);
+						break;
+					default:
+						throw new RemoteFileError.UNKNOWN_COMMAND ("Unknown command "+cmd);
+					}
 				} catch (Error e) {
-					warning ("Error while closing connection: "+e.message);
+					warning ("Got error "+e.message+", disconnecting.");
+					try {
+						yield conn.close_async ();
+					} catch (Error e) {
+						warning ("Error while closing connection: "+e.message);
+					}
+					return;
 				}
 			}
 		}
@@ -146,6 +157,7 @@ namespace Vanubi {
 		}
 		
 		public override bool incoming (SocketConnection conn, Object? source) {
+			message("connected");
 			handle_client.begin (conn);
 			return false;
 		}

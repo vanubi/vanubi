@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import sys, socket, os, os.path, struct, stat
+import sys, socket, os, os.path, struct, stat, getpass
 if len (sys.argv) < 2:
 	print "Specify a filename"
 	sys.exit (1);
@@ -25,7 +25,11 @@ if (size >= 0):
 s = socket.socket (socket.AF_INET, socket.SOCK_STREAM)
 s.connect(("localhost", port))
 
-s.send (struct.pack("%dsx%dsxi" % (len("open"), len(path)), "open", path, size))
+s.send ("ident\n");
+s.send (getpass.getuser()+":"+socket.gethostname()+"\n")
+
+s.send ("open\n");
+s.send (struct.pack("%dsx" % (len(path)), path))
 
 if size >= 0:
 	while True:
