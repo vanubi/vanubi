@@ -584,6 +584,10 @@ namespace Vanubi.UI {
 					manager.save_session (this);
 					return false;
 			});
+			
+			if (trailsp != null) {
+				trailsp.check_cursor_line ();
+			}
 		}
 
 		void on_modified_changed () {
