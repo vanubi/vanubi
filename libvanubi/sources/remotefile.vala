@@ -33,12 +33,12 @@ namespace Vanubi {
 	}
 			
 	public class RemoteConnection {
-		public string addr { get; private set; }
+		public string ident { get; private set; }
 		List<SocketConnection> pool = new List<SocketConnection> ();
 		AsyncMutex mutex = new AsyncMutex ();
 		
-		public RemoteConnection (owned string addr) {
-			this.addr = (owned) addr;
+		public RemoteConnection (owned string ident) {
+			this.ident = (owned) ident;
 		}
 		
 		public void add_connection (owned SocketConnection conn) {
@@ -133,7 +133,7 @@ namespace Vanubi {
 		}
 		
 		public override uint hash () {
-			return local.hash () + remote.addr.hash ();
+			return local.hash () + remote.ident.hash ();
 		}
 		
 		public override bool equal (DataSource? s) {
@@ -141,11 +141,11 @@ namespace Vanubi {
 				return true;
 			}
 			var f = s as RemoteFileSource;
-			return f != null && local.equal (f.local) && remote.addr == f.remote.addr;
+			return f != null && local.equal (f.local) && remote.ident == f.remote.ident;
 		}
 		
 		public override string to_string () {
-			return remote.addr+":"+local.get_path ();
+			return remote.ident+":"+local.get_path ();
 		}
 	}
 	
@@ -153,7 +153,33 @@ namespace Vanubi {
 		UNKNOWN_COMMAND
 	}
 	
+	public class RemoteIdent {
+		public InetAddress address { get; private set; }
+		public string ident { get; private set; }
+		uint _hash;
+		
+		public RemoteIdent (owned InetAddress address, owned string ident) {
+			this.address = (owned) address;
+			this.ident = (owned) ident;
+			_hash = (address.to_string()+" "+ident).hash ();
+		}
+		
+		public uint hash () {
+			return _hash;
+		}
+		
+		public bool equal (RemoteIdent ind) {
+			if (this == ind) {
+				return true;
+			}
+			
+			return address.equal (ind.address) && ident == ind.ident;
+		}
+	}
+		
 	public class RemoteFileServer : SocketService {
+		HashTable<RemoteIdent, RemoteConnection> conns = new HashTable<RemoteIdent, RemoteConnection> (RemoteIdent.hash, RemoteIdent.equal);
+		
 		public RemoteFileServer () throws Error {
 			add_inet_port (62518, null);
 		}
@@ -163,7 +189,46 @@ namespace Vanubi {
 		async void handle_client (SocketConnection conn) {
 			var is = new AsyncDataInputStream (conn.input_stream);
 			string ident = null;
+
+			try {
+				var cmd = yield is.read_line_async ();
+				if (cmd == null) {
+					return;
+				}
+				if (cmd == "indent") {
+					ident = yield is.read_line_async ();
+					if (ident == null) {
+						return;
+					}
+					message("identified %s", ident);
+				} else {
+					message("did not identify, got command: %s", cmd);
+				}
+			} catch (Error e) {
+				warning ("Got error "+e.message+", disconnecting.");
+				try {
+					yield conn.close_async ();
+				} catch (Error e) {
+					warning ("Error while closing connection: "+e.message);
+				}
+				return;
+			}
 			
+			var inet = ((InetSocketAddress) conn).address;
+			var remote_ident = new RemoteIdent (inet, ident);
+			var remote_connection = conns[remote_ident];
+			if (remote_connection == null) {
+				remote_connection = new RemoteConnection (ident);
+				conns[remote_ident] = remote_connection;
+				// use this connection to handle remote requests
+				handle_remote_requests.begin (remote_connection, conn, is);
+			} else {
+				// add connection to the pool for handling user requests
+				remote_connection.add_connection (conn);
+			}
+		}
+		
+		async void handle_remote_requests (RemoteConnection remote, SocketConnection conn, AsyncDataInputStream is) {
 			while (true) {
 				try {
 					var cmd = yield is.read_line_async ();
@@ -172,15 +237,8 @@ namespace Vanubi {
 					}
 					
 					switch (cmd) {
-					case "ident":
-						ident = yield is.read_line_async ();
-						if (ident == null) {
-							return;
-						}
-						message("identified %s", ident);
-						break;
 					case "open":
-						yield handle_open (is, ident);
+						yield handle_open (remote, is);
 						break;
 					default:
 						throw new RemoteFileError.UNKNOWN_COMMAND ("Unknown command "+cmd);
@@ -197,9 +255,9 @@ namespace Vanubi {
 			}
 		}
 		
-		async void handle_open (AsyncDataInputStream is, string ident) throws Error {
+		async void handle_open (RemoteConnection remote, AsyncDataInputStream is) throws Error {
 			var path = yield is.read_zero_terminated_string ();
-			message ("%s: %s", ident, path);
+			message ("%s: %s", remote.ident, path);
 		}
 		
 		public override bool incoming (SocketConnection conn, Object? source) {
