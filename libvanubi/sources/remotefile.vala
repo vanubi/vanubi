@@ -115,12 +115,17 @@ namespace Vanubi {
 		public signal void open_file (File file);
 		
 		async void handle_client (SocketConnection conn) {
+			var is = new AsyncDataInputStream (conn.input_stream);
+			string ident = null;
 			try {
-				var is = new AsyncDataInputStream (conn.input_stream);
 				var cmd = yield is.read_line_async ();
 				switch (cmd) {
+				case "ident":
+					ident = yield is.read_line_async ();
+					message("identified %s", ident);
+					break;
 				case "open":
-					yield handle_open (is);
+					yield handle_open (is, ident);
 					break;
 				default:
 					throw new RemoteFileError.UNKNOWN_COMMAND ("Unknown command "+cmd);
@@ -135,9 +140,9 @@ namespace Vanubi {
 			}
 		}
 		
-		async void handle_open (AsyncDataInputStream is) throws Error {
+		async void handle_open (AsyncDataInputStream is, string ident) throws Error {
 			var path = yield is.read_zero_terminated_string ();
-			message (path);
+			message ("%s: %s", ident, path);
 		}
 		
 		public override bool incoming (SocketConnection conn, Object? source) {

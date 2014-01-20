@@ -58,17 +58,13 @@ namespace Vanubi.UI {
 			this.editor = editor;
 			this.config = manager.conf;
 			
-			var base_source = editor.source as FileSource;
-			
 			expand = true;
-			term = base_source != null ? base_source.get_data<Terminal> ("shell") : null;
+			term = editor.source.get_data<Terminal> ("shell");
 			var is_new = false;
 			if (term == null) {
 				is_new = true;
-				term = create_new_term (base_source);
-				if (base_source != null) {
-					base_source.set_data ("shell", term.ref ());
-				}
+				term = create_new_term (editor.source);
+				editor.source.set_data ("shell", term.ref ());
 			}
 			term.expand = true;
 			term.key_press_event.connect (on_key_press_event);
@@ -84,12 +80,13 @@ namespace Vanubi.UI {
 					}
 					
 					// store cwd in config file
-					if (base_source != null) {
+					if (editor.source is FileSource) {
+						var file = (FileSource) editor.source;
 						var curdir = get_cwd ();
 						if (curdir != null) {
-							var olddir = config.get_file_string (base_source, "shell_cwd", base_source.parent.to_string ());
+							var olddir = config.get_file_string (file, "shell_cwd", file.parent.to_string ());
 							if (absolute_path ("", olddir) != absolute_path ("", curdir)) {
-								config.set_file_string (base_source, "shell_cwd", curdir);
+								config.set_file_string (file, "shell_cwd", curdir);
 								config.save ();
 							}
 						}
@@ -114,7 +111,7 @@ namespace Vanubi.UI {
 			}
 		}
 		
-		Terminal create_new_term (FileSource base_source) {
+		Terminal create_new_term (DataSource base_source) {
 			var term = new Terminal ();
 			term.scrollback_lines = config.get_global_int ("shell_scrollback", 65535);
 			var shell = Vte.get_user_shell ();
@@ -125,7 +122,12 @@ namespace Vanubi.UI {
 			try {
 				string[] argv;
 				Shell.parse_argv (shell, out argv);
-				var workdir = config.get_file_string (base_source, "shell_cwd", base_source.parent.to_string ());
+				string workdir;
+				if (base_source is LocalFileSource) {
+					workdir = config.get_file_string ((LocalFileSource) base_source, "shell_cwd", base_source.parent.to_string ());
+				} else {
+					workdir = ScratchSource.instance.parent.to_string ();
+				}
 
 				Pid pid;
 				term.fork_command_full (PtyFlags.DEFAULT, workdir, {shell}, null, SpawnFlags.SEARCH_PATH, null, out pid);

@@ -55,6 +55,7 @@ namespace Vanubi.UI {
 		string last_grep_string = "";
 		public Editor last_focused_editor = null; // must never be null
 		int next_stream_id = 1;
+		RemoteFileServer remote = null;
 		
 		Session last_session;
 		
@@ -477,6 +478,13 @@ namespace Vanubi.UI {
 			container.lru.append (ScratchSource.instance);
 			editors_grid.add (container);
 			container.grab_focus ();
+			
+			// remote file server
+			try {
+				remote = new RemoteFileServer ();
+			} catch (Error e) {
+				set_status_error ("Could not start the remote server: "+e.message);
+			}
 		}
 		
 		public string new_stdin_stream_name () {
