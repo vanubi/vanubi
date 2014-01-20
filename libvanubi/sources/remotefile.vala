@@ -18,22 +18,68 @@
  */
 
 namespace Vanubi {
-	public class RemoteFileSource : FileSource {
-		SocketConnection control;
-		File local;
-		string remote_addr;
+	public class RemoteChannel {
+		public RemoteConnection remote { get; private set; }
+		public SocketConnection conn { get; private set; }
 		
-		public RemoteFileSource (string local_path, owned string remote_addr, owned SocketConnection control) {
+		public RemoteChannel (owned RemoteConnection remote, owned SocketConnection conn) {
+			this.remote = remote;
+			this.conn = conn;
+		}
+		
+		~RemoteChannel () {
+			remote.release (conn);
+		}
+	}
+			
+	public class RemoteConnection {
+		public string addr { get; private set; }
+		List<SocketConnection> pool = new List<SocketConnection> ();
+		AsyncMutex mutex = new AsyncMutex ();
+		
+		public RemoteConnection (owned string addr) {
+			this.addr = (owned) addr;
+		}
+		
+		public void add_connection (owned SocketConnection conn) {
+			pool.append ((owned) conn);
+			conn.set_data ("acquired", false);
+		}
+		
+		public async RemoteChannel acquire () {
+			while (true) {
+				foreach (unowned SocketConnection conn in pool) {
+					bool acquired = conn.get_data ("acquired");
+					if (!acquired) {
+						conn.set_data ("acquired", true);
+						return new RemoteChannel (this, conn);
+					}
+				}
+			
+				yield mutex.acquire ();
+			}
+		}
+		
+		internal void release (SocketConnection conn) {
+			conn.set_data ("acquired", false);
+			mutex.release ();
+		}
+	}
+	
+	public class RemoteFileSource : FileSource {
+		RemoteConnection remote;
+		File local;
+		
+		public RemoteFileSource (string local_path, owned RemoteConnection remote) {
 			this.local = File.new_for_path (local_path);
-			this.control = (owned) control;
-			this.remote_addr = (owned) remote_addr;
+			this.remote = (owned) remote;
 		}
 		
 		public override DataSource? parent {
 			owned get {
 				var parent = local.get_parent ();
 				if (parent != null) {
-					return new RemoteFileSource (parent.get_path(), remote_addr, control);
+					return new RemoteFileSource (parent.get_path(), remote);
 				}
 				// we are at the root of the file system
 				return null;
@@ -79,7 +125,7 @@ namespace Vanubi {
 		}
 		
 		public override DataSource child (string path) {
-			return new RemoteFileSource (local.get_child(path).get_path(), remote_addr, control);
+			return new RemoteFileSource (local.get_child(path).get_path(), remote);
 		}
 		
 		public override SourceIterator iterate_children (Cancellable? cancellable = null) throws Error {
@@ -87,7 +133,7 @@ namespace Vanubi {
 		}
 		
 		public override uint hash () {
-			return local.hash () + remote_addr.hash ();
+			return local.hash () + remote.addr.hash ();
 		}
 		
 		public override bool equal (DataSource? s) {
@@ -95,11 +141,11 @@ namespace Vanubi {
 				return true;
 			}
 			var f = s as RemoteFileSource;
-			return f != null && local.equal (f.local) && remote_addr == f.remote_addr;
+			return f != null && local.equal (f.local) && remote.addr == f.remote.addr;
 		}
 		
 		public override string to_string () {
-			return remote_addr+":"+local.get_path ();
+			return remote.addr+":"+local.get_path ();
 		}
 	}
 	

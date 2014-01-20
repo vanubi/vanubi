@@ -222,4 +222,34 @@ namespace Vanubi {
 			return yield read_upto_async ("\0", 1, io_priority, cancellable, null);
 		}
 	}
+	
+	public class AsyncMutex {
+		class CallbackObject {
+			internal SourceFunc resume;
+			
+			public CallbackObject (owned SourceFunc resume) {
+				this.resume = (owned) resume;
+			}
+		}
+		List<CallbackObject> queue = new List<CallbackObject> ();
+		bool acquired = false;
+		
+		public async void acquire () {
+			if (!acquired) {
+				acquired = true;
+			} else {
+				queue.append (new CallbackObject ((SourceFunc) acquire.callback));
+			}
+		}
+		
+		public void release () {
+			if (queue != null) {
+				SourceFunc resume = (owned) queue.data.resume;
+				queue.delete_link (queue);
+				Idle.add (resume);
+			} else {
+				acquired = false;
+			}
+		}
+	}
 }
