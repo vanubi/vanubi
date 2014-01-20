@@ -55,7 +55,7 @@
   <!-- Global Settings -->
   <style name="text" foreground="dl-white" background="dl-black"/>
   <style name="selection" background="dl-blue"/>
-  <style name="cursor" foreground="#white"/>
+  <style name="cursor" foreground="dl-yellow"/>
   <style name="current-line" background="#0d0f0f"/>
   <style name="right-margin" background="#6d6d6d"/>
   <style name="trailing-space" background="dl-red"/>
