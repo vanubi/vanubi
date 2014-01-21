@@ -186,47 +186,39 @@ namespace Vanubi {
 		
 		public signal void open_file (File file);
 		
-		async string? read_ident (SocketConnection conn, AsyncDataInputStream is) throws Error {
-			try {
-				var cmd = yield is.read_line_async ();
-				if (cmd == null) {
-					return null;
-				}
-				
-				if (cmd == "ident") {
-					var ident = yield is.read_line_async ();
-					if (ident != null) {
-						message("identified %s", ident);
-						return ident;
-					}
-				} else {
-					message("did not identify, got command: %s", cmd);
-					try {
-						yield conn.close_async ();
-					} catch (Error e) {
-						warning ("Error while closing connection: "+e.message);
-						throw e;
-					}
-				}
-			} catch (Error e) {
-				warning ("Got error "+e.message+", disconnecting.");
-				try {
-					yield conn.close_async ();
-				} catch (Error e) {
-					warning ("Error while closing connection: "+e.message);
-					throw e;
+		async string read_ident (SocketConnection conn, AsyncDataInputStream is) throws Error {
+			var cmd = yield is.read_line_async ();
+			if (cmd == null) {
+				throw new IOError.PARTIAL_INPUT ("No command received");
+			}
+			
+			if (cmd == "ident") {
+				var ident = yield is.read_line_async ();
+				if (ident != null) {
+					message("identified %s", ident);
+					return ident;
 				}
 			}
 			
-			return null;
+			throw new IOError.INVALID_ARGUMENT ("Invalid command: %s", cmd);
 		}
 		
-		async void handle_client (SocketConnection conn) {
-			var is = new AsyncDataInputStream (conn.input_stream);
-			string? ident = yield read_ident (conn, is);
-			if (ident == null) {
-				return;
+		async void handle_client_wrapper (SocketConnection conn) {
+			try {
+				yield handle_client (conn);
+			} catch (Error e) {
+				warning ("Closing connection due to error: %s", e.message);
+				try {
+					yield conn.close_async ();
+				} catch (Error e) {
+					warning ("Error while closing: %s", e.message);
+				}
 			}
+		}
+		
+		async void handle_client (SocketConnection conn) throws Error {
+			var is = new AsyncDataInputStream (conn.input_stream);
+			string ident = yield read_ident (conn, is);
 			
 			var inet = ((InetSocketAddress) conn.get_remote_address()).address;
 			var remote_ident = new RemoteIdent ((owned) inet, ident);
@@ -235,36 +227,27 @@ namespace Vanubi {
 				remote_connection = new RemoteConnection (ident);
 				conns[remote_ident] = remote_connection;
 				// use this connection to handle remote requests
-				handle_remote_requests.begin (remote_connection, conn, is);
+				yield handle_remote_requests (remote_connection, conn, is);
 			} else {
 				// add connection to the pool for handling user requests
 				remote_connection.add_connection (conn);
 			}
 		}
 		
-		async void handle_remote_requests (RemoteConnection remote, SocketConnection conn, AsyncDataInputStream is) {
+		async void handle_remote_requests (RemoteConnection remote, SocketConnection conn, AsyncDataInputStream is) throws Error {
 			while (true) {
-				try {
-					var cmd = yield is.read_line_async ();
-					if (cmd == null) {
-						return;
-					}
-					
-					switch (cmd) {
-					case "open":
-						yield handle_open (remote, is);
-						break;
-					default:
-						throw new RemoteFileError.UNKNOWN_COMMAND ("Unknown command "+cmd);
-					}
-				} catch (Error e) {
-					warning ("Got error "+e.message+", disconnecting.");
-					try {
-						yield conn.close_async ();
-					} catch (Error e) {
-						warning ("Error while closing connection: "+e.message);
-					}
+				var cmd = yield is.read_line_async ();
+				if (cmd == null) {
+					// end
 					return;
+				}
+					
+				switch (cmd) {
+				case "open":
+					yield handle_open (remote, is);
+					break;
+				default:
+					throw new RemoteFileError.UNKNOWN_COMMAND ("Unknown command "+cmd);
 				}
 			}
 		}
@@ -272,11 +255,19 @@ namespace Vanubi {
 		async void handle_open (RemoteConnection remote, AsyncDataInputStream is) throws Error {
 			var path = yield is.read_zero_terminated_string ();
 			message ("%s: %s", remote.ident, path);
+			
+			string size_str = yield is.read_line_async ();
+			if (size_str == null) {
+				return;
+			}
+			int size = int.parse (size_str);
+			
+			message ("%d", size);
 		}
 		
 		public override bool incoming (SocketConnection conn, Object? source) {
 			message("connected");
-			handle_client.begin (conn);
+			handle_client_wrapper.begin (conn);
 			return false;
 		}
 	}

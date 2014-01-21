@@ -219,7 +219,9 @@ namespace Vanubi {
 		}
 		
 		public async string read_zero_terminated_string (int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) throws Error {
-			return yield read_upto_async ("\0", 1, io_priority, cancellable, null);
+			var res = yield read_upto_async ("\0", 1, io_priority, cancellable, null);
+			read_byte (); // consume the null byte
+			return res;
 		}
 	}
 	

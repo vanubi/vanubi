@@ -30,6 +30,7 @@ s.send (getpass.getuser()+":"+socket.gethostname()+"\n")
 
 s.send ("open\n");
 s.send (struct.pack("%dsx" % (len(path)), path))
+s.send ("%d\n" % size)
 
 if size >= 0:
 	while True:
