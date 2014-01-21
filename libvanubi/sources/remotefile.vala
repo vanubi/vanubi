@@ -44,6 +44,8 @@ namespace Vanubi {
 		public void add_connection (owned SocketConnection conn) {
 			pool.append ((owned) conn);
 			conn.set_data ("acquired", false);
+			// maybe unblock some blocked operation with this fresh connection
+			mutex.release ();
 		}
 		
 		public async RemoteChannel acquire () {
@@ -55,7 +57,7 @@ namespace Vanubi {
 						return new RemoteChannel (this, conn);
 					}
 				}
-			
+
 				yield mutex.acquire ();
 			}
 		}
@@ -179,17 +181,37 @@ namespace Vanubi {
 		
 	public class RemoteFileServer : SocketService {
 		HashTable<RemoteIdent, RemoteConnection> conns = new HashTable<RemoteIdent, RemoteConnection> (RemoteIdent.hash, RemoteIdent.equal);
+		Configuration conf;
 		
-		public RemoteFileServer () throws Error {
-			add_inet_port (62518, null);
+		public signal void open_file (RemoteFileSource file);
+		
+		public RemoteFileServer (Configuration conf) throws Error {
+			this.conf = conf;
+			add_inet_port ((uint16) conf.get_global_int ("remote_service_port", 62518), null);
+		}
+
+		async string read_version (SocketConnection conn, AsyncDataInputStream is) throws Error {
+			var ver = yield is.read_line_async ();
+			if (ver == null || ver == "") {
+				throw new IOError.PARTIAL_INPUT ("Expected protocol version");
+			}
+			return ver;
 		}
 		
-		public signal void open_file (File file);
-		
-		async string read_ident (SocketConnection conn, AsyncDataInputStream is) throws Error {
+		async string read_ident (SocketConnection conn, AsyncDataInputStream is, out bool is_main) throws Error {
 			var cmd = yield is.read_line_async ();
 			if (cmd == null) {
-				throw new IOError.PARTIAL_INPUT ("No command received");
+				throw new IOError.PARTIAL_INPUT ("Expected main or ident command");
+			}
+			
+			if (cmd == "main") {
+				is_main = true;
+				cmd = yield is.read_line_async ();
+				if (cmd == null) {
+					throw new IOError.PARTIAL_INPUT ("Expected ident command");
+				}
+			} else {
+				is_main = false;
 			}
 			
 			if (cmd == "ident") {
@@ -200,7 +222,7 @@ namespace Vanubi {
 				}
 			}
 			
-			throw new IOError.INVALID_ARGUMENT ("Invalid command: %s", cmd);
+			throw new IOError.INVALID_ARGUMENT ("Expected ident command, got: %s", cmd);
 		}
 		
 		async void handle_client_wrapper (SocketConnection conn) {
@@ -218,7 +240,9 @@ namespace Vanubi {
 		
 		async void handle_client (SocketConnection conn) throws Error {
 			var is = new AsyncDataInputStream (conn.input_stream);
-			string ident = yield read_ident (conn, is);
+			string version = yield read_version (conn, is);
+			bool is_main;
+			string ident = yield read_ident (conn, is, out is_main);
 			
 			var inet = ((InetSocketAddress) conn.get_remote_address()).address;
 			var remote_ident = new RemoteIdent ((owned) inet, ident);
@@ -226,6 +250,9 @@ namespace Vanubi {
 			if (remote_connection == null) {
 				remote_connection = new RemoteConnection (ident);
 				conns[remote_ident] = remote_connection;
+			}
+			
+			if (is_main) {
 				// use this connection to handle remote requests
 				yield handle_remote_requests (remote_connection, conn, is);
 			} else {
@@ -253,16 +280,9 @@ namespace Vanubi {
 		}
 		
 		async void handle_open (RemoteConnection remote, AsyncDataInputStream is) throws Error {
-			var path = yield is.read_zero_terminated_string ();
-			message ("%s: %s", remote.ident, path);
-			
-			string size_str = yield is.read_line_async ();
-			if (size_str == null) {
-				return;
-			}
-			int size = int.parse (size_str);
-			
-			message ("%d", size);
+			var path = yield is.read_line_async ();
+			var file = new RemoteFileSource (path, remote);
+			open_file (file);
 		}
 		
 		public override bool incoming (SocketConnection conn, Object? source) {

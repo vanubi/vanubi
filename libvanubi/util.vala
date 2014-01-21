@@ -196,7 +196,7 @@ namespace Vanubi {
 	
 	public class AsyncDataInputStream : DataInputStream {
 		public AsyncDataInputStream (InputStream base_stream) {
-			Object (base_stream: base_stream);
+			Object (base_stream: base_stream, newline_type: DataStreamNewlineType.ANY);
 		}
 		
 		public async void ensure_filled (ssize_t size, int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) throws Error {

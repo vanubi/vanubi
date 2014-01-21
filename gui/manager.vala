@@ -484,18 +484,34 @@ namespace Vanubi.UI {
 			container.grab_focus ();
 			
 			// remote file server
-			if (conf.get_global_bool ("remote_file_server", true)) {
-				try {
-					remote = new RemoteFileServer ();
-					remote.start ();
-				} catch (Error e) {
-					set_status_error ("Could not start the remote server: "+e.message);
-				}
+			try {
+				remote = new RemoteFileServer (conf);
+				remote.stop ();
+			} catch (Error e) {
+				set_status_error ("Could not start the remote server: "+e.message);
 			}
+			
+			check_remote_file_server ();
 		}
 		
 		public string new_stdin_stream_name () {
 			return "*stdin %d*".printf (next_stream_id++);
+		}
+		
+		void check_remote_file_server () {
+			var flag = conf.get_global_bool ("remote_file_server", true);
+			if (flag && remote == null) {
+				try {
+					remote = new RemoteFileServer (conf);
+					remote.open_file.connect (on_remote_open_file);
+					remote.start ();
+				} catch (Error e) {
+					set_status_error ("Could not start the remote server: "+e.message);
+				}
+			} else if (!flag && remote != null) {
+				remote.stop ();
+				remote = null;
+			}
 		}
 		
 		public void clear_status (string? context = null) {
@@ -2305,17 +2321,7 @@ namespace Vanubi.UI {
 			var flag = !conf.get_global_bool ("remote_file_server", true);
 			conf.set_global_bool ("remote_file_server", flag);
 			set_status (flag ? "Enabled" : "Disabled");
-	
-			if (flag) {
-				try {
-					remote = new RemoteFileServer ();
-				} catch (Error e) {
-					set_status_error ("Could not start the remote server: "+e.message);
-				}
-			} else if (remote != null) {
-				remote.stop ();
-				remote = null;
-			}
+			check_remote_file_server ();
 		}
 		
 		void on_about (Editor editor) {
@@ -2387,6 +2393,10 @@ namespace Vanubi.UI {
 					ed.on_trailing_spaces ();
 					return true;
 			});
+		}
+		
+		void on_remote_open_file (RemoteFileSource file) {
+			message(file.to_string ());
 		}
 	}
 }
