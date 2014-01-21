@@ -2,9 +2,8 @@ VanubiUIEditorView {
 	-GtkWidget-cursor-aspect-ratio: 0.1;
 }
 
-VanubiUIEditorView.caret:selected {
-	color: black;
-	background-color: white;
+VanubiUIEditorView {
+	-GtkWidget-cursor-color: yellow;
 }
 
 VanubiUIEditorInfoBar {
