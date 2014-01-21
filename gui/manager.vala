@@ -487,6 +487,7 @@ namespace Vanubi.UI {
 			if (conf.get_global_bool ("remote_file_server", true)) {
 				try {
 					remote = new RemoteFileServer ();
+					remote.start ();
 				} catch (Error e) {
 					set_status_error ("Could not start the remote server: "+e.message);
 				}

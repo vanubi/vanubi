@@ -161,7 +161,7 @@ namespace Vanubi {
 		public RemoteIdent (owned InetAddress address, owned string ident) {
 			this.address = (owned) address;
 			this.ident = (owned) ident;
-			_hash = (address.to_string()+" "+ident).hash ();
+			_hash = (this.address.to_string()+" "+this.ident).hash ();
 		}
 		
 		public uint hash () {
@@ -186,23 +186,27 @@ namespace Vanubi {
 		
 		public signal void open_file (File file);
 		
-		async void handle_client (SocketConnection conn) {
-			var is = new AsyncDataInputStream (conn.input_stream);
-			string ident = null;
-
+		async string? read_ident (SocketConnection conn, AsyncDataInputStream is) throws Error {
 			try {
 				var cmd = yield is.read_line_async ();
 				if (cmd == null) {
-					return;
+					return null;
 				}
-				if (cmd == "indent") {
-					ident = yield is.read_line_async ();
-					if (ident == null) {
-						return;
+				
+				if (cmd == "ident") {
+					var ident = yield is.read_line_async ();
+					if (ident != null) {
+						message("identified %s", ident);
+						return ident;
 					}
-					message("identified %s", ident);
 				} else {
 					message("did not identify, got command: %s", cmd);
+					try {
+						yield conn.close_async ();
+					} catch (Error e) {
+						warning ("Error while closing connection: "+e.message);
+						throw e;
+					}
 				}
 			} catch (Error e) {
 				warning ("Got error "+e.message+", disconnecting.");
@@ -210,12 +214,22 @@ namespace Vanubi {
 					yield conn.close_async ();
 				} catch (Error e) {
 					warning ("Error while closing connection: "+e.message);
+					throw e;
 				}
+			}
+			
+			return null;
+		}
+		
+		async void handle_client (SocketConnection conn) {
+			var is = new AsyncDataInputStream (conn.input_stream);
+			string? ident = yield read_ident (conn, is);
+			if (ident == null) {
 				return;
 			}
 			
-			var inet = ((InetSocketAddress) conn).address;
-			var remote_ident = new RemoteIdent (inet, ident);
+			var inet = ((InetSocketAddress) conn.get_remote_address()).address;
+			var remote_ident = new RemoteIdent ((owned) inet, ident);
 			var remote_connection = conns[remote_ident];
 			if (remote_connection == null) {
 				remote_connection = new RemoteConnection (ident);

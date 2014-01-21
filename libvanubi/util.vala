@@ -246,7 +246,7 @@ namespace Vanubi {
 			if (queue != null) {
 				SourceFunc resume = (owned) queue.data.resume;
 				queue.delete_link (queue);
-				Idle.add (resume);
+				Idle.add ((owned) resume);
 			} else {
 				acquired = false;
 			}
