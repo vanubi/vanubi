@@ -1775,6 +1775,8 @@ namespace Vanubi.UI {
 					return new Indent_Lua (vbuf);
 				case "haskell":
 					return new Indent_Haskell (vbuf);
+				case "python":
+					return new Indent_Python (vbuf);
 				case "makefile":
 					return null;
 				default:
