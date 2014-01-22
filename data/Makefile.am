@@ -12,7 +12,7 @@ lang_DATA = languages/asm-intel.lang languages/i386asm.lang languages/asciidoc.l
             languages/commitmsg.lang
 
 styledir = $(datadir)/vanubi/styles
-style_DATA = styles/zen.xml
+style_DATA = styles/zen.xml styles/zen-grep.xml
 
 EXTRA_DIST = vanubi.desktop.in vanubi.css vanubi.png languages/asm-intel.lang \
              languages/i386asm.lang languages/asciidoc.lang languages/commitmsg.lang styles/zen.xml

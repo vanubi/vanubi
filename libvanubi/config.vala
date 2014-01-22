@@ -345,8 +345,12 @@ namespace Vanubi {
 			
 			try {
 				// create a backup
-				var bak = File.new_for_path (file.get_path()+".bak");
-				yield file.copy_async (bak, FileCopyFlags.OVERWRITE, Priority.DEFAULT, saving_cancellable, null);
+				var exists = yield new LocalFileSource (file).exists ();
+				if (exists) {
+					// if configuration exists, do a backup
+					var bak = File.new_for_path (file.get_path()+".bak");
+					yield file.copy_async (bak, FileCopyFlags.OVERWRITE, Priority.DEFAULT, saving_cancellable, null);
+				}
 				// write to a temp file
 				var tmp = File.new_for_path (file.get_path()+".tmp");
 				yield tmp.replace_contents_async (saving_data.data, null, true, FileCreateFlags.PRIVATE, saving_cancellable, null);
