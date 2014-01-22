@@ -42,8 +42,8 @@ namespace Vanubi {
 		}
 		
 		public void add_connection (owned SocketConnection conn) {
-			pool.append ((owned) conn);
 			conn.set_data ("acquired", false);
+			pool.append ((owned) conn);
 			// maybe unblock some blocked operation with this fresh connection
 			mutex.release ();
 		}
