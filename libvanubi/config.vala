@@ -25,7 +25,7 @@ namespace Vanubi {
 	
 	public class Configuration {
 		KeyFile backend;
-		File file;
+		File? file;
 		Cancellable saving_cancellable;
 		public FileCluster cluster;
 		bool save_queued = false;
@@ -53,21 +53,82 @@ namespace Vanubi {
 			backend = new KeyFile ();
 			file = File.new_for_path (filename);
 			if (file.query_exists ()) {
-				try {
-					backend.load_from_file (filename, KeyFileFlags.NONE);
-					check_config ();
-				} catch (Error e) {
-					warning ("Could not load vanubi configuration: %s", e.message);
-				}
+				backend.load_from_file (filename, KeyFileFlags.NONE);
+				check_config ();
 			}
 		}
 
 		public void check_config () {
-			var version = get_global_int ("config_version", 0);
-			migrate (version);
+			try {
+				var version = get_global_int ("config_version", 0);
+				if (!migrate (version)) {
+					// no migration happened
+					return;
+				}
+				// successful, write the new config, synchronously
+				
+				// first write to a temp file
+				var saving_data = backend.to_data ();
+				var tmp = File.new_for_path (file.get_path()+".tmp");
+				tmp.replace_contents (saving_data.data, null, true, FileCreateFlags.PRIVATE, null);
+				// rename temp to file
+				tmp.move (file, FileCopyFlags.OVERWRITE);
+
+				message ("Configuration has been migrated successfully");
+			} catch (Error e) {
+				warning ("Could not migrate configuration. Your original configuration will not be overwritten. Error: %s".printf (e.message));
+				file = null;
+			}
 		}
 		
-		public void migrate (int from_version) {
+		public bool migrate (int from_version) throws Error {
+			var version = from_version;
+			if (version == 0) {
+				// backup, synchronous
+				var bak = File.new_for_path (file.get_path()+".bak."+version.to_string());
+				file.copy (bak, FileCopyFlags.OVERWRITE);
+				
+				var groups = backend.get_groups ();
+				foreach (unowned string group in groups) {
+					if (group.has_prefix ("file://")) {
+						// convert file settings to source settings
+						var newgroup = "source:"+group.substring ("file://".length);
+						foreach (unowned string key in backend.get_keys (group)) {
+							backend.set_value (newgroup, key, backend.get_value (group, key));
+						}
+						backend.remove_group (group);
+					} else if (group.has_prefix ("session:")) {
+						// convert session focused_file to focused_source
+						if (has_group_key (group, "focused_file")) {
+							var val = backend.get_value (group, "focused_file");
+							if (val.has_prefix ("file://")) {
+								val = val.substring ("file://".length);
+							}
+							backend.set_value (group, "focused_source", val);
+							backend.remove_key (group, "focused_file");
+						}
+						foreach (unowned string key in backend.get_keys (group)) {
+							if (key.has_prefix ("file")) {
+								var val = backend.get_value (group, key);
+								if (val.has_prefix ("file://")) {
+									val = val.substring ("file://".length);
+								}
+								backend.set_value (group, "source"+key.substring ("file".length), val);
+								backend.remove_key (group, key);
+							}
+						}
+					}
+				}
+
+				version++;
+			}
+
+			if (version > from_version) {
+				set_global_int ("config_version", version);
+				return true;
+			} else {
+				return false;
+			}
 		}
 		
 		public int get_group_int (string group, string key, int default = 0) {
@@ -171,12 +232,12 @@ namespace Vanubi {
 			var group = "session:"+name;
 			remove_group (group);
 			if (session.location != null && session.location.source is FileSource) {
-				set_group_string (group, "focused_file", session.location.source.to_string ());
+				set_group_string (group, "focused_source", session.location.source.to_string ());
 				set_group_int (group, "focused_line", session.location.start_line);
 				set_group_int (group, "focused_column", session.location.start_column);
 			}
 			for (var i=0; i < session.files.length; i++) {
-				set_group_string (group, "file"+(i+1).to_string(), "file://"+session.files[i].to_string ());
+				set_group_string (group, "source"+(i+1).to_string(), session.files[i].to_string ());
 			}
 		}
 		
@@ -184,14 +245,14 @@ namespace Vanubi {
 			var group = "session:"+name;
 			var session = new Session ();
 			if (backend.has_group (group)) {
-				if (has_group_key (group, "focused_file")) {
-					var file = DataSource.new_from_string (get_group_string (group, "focused_file"));
+				if (has_group_key (group, "focused_source")) {
+					var file = DataSource.new_from_string (get_group_string (group, "focused_source"));
 					session.location = new Location (file,
 													 get_group_int (group, "focused_line"),
 													 get_group_int (group, "focused_column"));
 				}
 				foreach (var key in get_group_keys (group)) {
-					if (key.has_prefix ("file")) {
+					if (key.has_prefix ("source")) {
 						session.files.add ((FileSource) DataSource.new_from_string (get_group_string (group, key)));
 					}
 				}
@@ -264,28 +325,30 @@ namespace Vanubi {
 			return res;
 		}
 		
-		public string? get_file_string (FileSource file, string key, string? default = null) {
-			var group = "file://"+file.to_string ();
+		public string? get_file_string (DataSource file, string key, string? default = null) {
+			var group = "source:"+file.to_string ();
 			if (!has_group_key (group, key)) {
 				// look into a similar file
-				var similar = cluster.get_similar_file (file, key, default != null);
-				group = "file://"+similar.to_string ();
+				if (file is FileSource) {
+					var similar = cluster.get_similar_file ((FileSource) file, key, default != null);
+					group = "source:"+similar.to_string ();
+				}
 			}
 			return get_group_string (group, key, get_editor_string (key, default));
 		}
 		
-		public void set_file_string (FileSource file, string key, string value) {
-			var group = "file://"+file.to_string ();
+		public void set_file_string (DataSource file, string key, string value) {
+			var group = "source:"+file.to_string ();
 			backend.set_string (group, key, value);
 		}
 		
-		public void remove_file_key (FileSource file, string key) {
-			var group = "file://"+file.to_string ();
+		public void remove_file_key (DataSource file, string key) {
+			var group = "source:"+file.to_string ();
 			remove_group_key (group, key);
 		}
 		
-		public bool has_file_key (FileSource file, string key) {
-			var group = "file://"+file.to_string ();
+		public bool has_file_key (DataSource file, string key) {
+			var group = "source:"+file.to_string ();
 			return has_group_key (group, key);
 		}
 
@@ -293,6 +356,10 @@ namespace Vanubi {
 		uint save_timeout = 0;
 
 		public void save () {
+			if (file == null) {
+				return;
+			}
+			
 			// save the config at most 1 time every SAVE_TIMEOUT milliseconds
 			var cur_time = get_monotonic_time () / 1000;
 			if (cur_time - last_time_saved >= SAVE_TIMEOUT) {
@@ -315,6 +382,10 @@ namespace Vanubi {
 		}
 		
 		public async void save_immediate () {
+			if (file == null) {
+				return;
+			}
+			
 			if (save_queued) {
 				return;
 			}
