@@ -185,6 +185,7 @@ namespace Vanubi {
 		
 		public void on_monitor () {
 			restart_monitor.begin ();
+			changed ();
 		}
 		
 		public override uint hash () {
