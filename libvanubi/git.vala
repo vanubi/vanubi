@@ -42,44 +42,16 @@ namespace Vanubi {
 		}
 		
 		/* Returns the git directory that contains this file */
-		public async FileSource? get_repo (DataSource file, Cancellable? cancellable = null) {
-			try {
-				return yield run_in_thread<FileSource?> (() => {
-						if (file == null) {
-							return null;
-						}
-						var git_command = config.get_global_string ("git_command", "git");
-						string stdout;
-						string stderr;
-						int status;
-						try {
-							string[] argv;
-							Shell.parse_argv (@"$git_command rev-parse --show-cdup", out argv);
-							if (!Process.spawn_sync (file.parent.to_string (),
-													 argv, null, SpawnFlags.SEARCH_PATH,
-													 null, out stdout, out stderr, out status)) {
-								return null;
-							}
-							cancellable.set_error_if_cancelled ();
-							
-							if (stderr != null && stderr.strip() != "") {
-								return null;
-							}
-							if (status != 0) {
-								return null;
-							}
-							return (FileSource) file.parent.child (stdout.strip ());
-						} catch (IOError.CANCELLED e) {
-							return null;
-						} catch (Error e) {
-							warning (e.message);
-							return null;
-						}
-				});
-			} catch (Error e) {
-				warning (e.message);
+		public async FileSource? get_repo (FileSource dir, int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) {
+			var git_command = config.get_global_string ("git_command", "git");
+
+			int status;
+			var cmd = @"$git_command rev-parse --show-cdup";
+			var stdout = (string) yield dir.execute_shell (cmd, null, null, out status, io_priority, cancellable);
+			if (status != 0) {
 				return null;
 			}
+			return (FileSource) dir.child (stdout.strip ());
 		}
 
 		public async bool file_in_repo (FileSource file, int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) throws Error {
@@ -90,7 +62,7 @@ namespace Vanubi {
 			yield file.parent.execute_shell (cmd, null, null, out status, io_priority, cancellable);
 			return status == 0;
 		}
-			
+
 		public void grep () {
 			/* TODO */
 		}
@@ -148,7 +120,7 @@ namespace Vanubi {
 				return null;
 			}
 			
-			var repo = yield get_repo (file, cancellable);
+			var repo = yield get_repo ((FileSource) file.parent, io_priority, cancellable);
 			if (repo == null) {
 				return null;
 			}

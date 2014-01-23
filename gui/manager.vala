@@ -1956,8 +1956,12 @@ namespace Vanubi.UI {
 		}
 		
 		async void repo_grep (Editor editor) {
+			if (!(editor.source is FileSource)) {
+				return;
+			}
+			
 			Git git = new Git (conf);
-			var repo_dir = yield git.get_repo (editor.source);
+			var repo_dir = yield git.get_repo ((FileSource) editor.source.parent);
 			if (repo_dir == null) {
 				set_status ("Not in git repository");
 				return;
@@ -2027,8 +2031,12 @@ namespace Vanubi.UI {
 		}
 			
 		async void repo_open_file (Editor editor, int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) {
+			if (!(editor.source is FileSource)) {
+				return;
+			}
+			
 			Git git = new Git (conf);
-			var repo_dir = yield git.get_repo (editor.source);
+			var repo_dir = yield git.get_repo ((FileSource) editor.source.parent);
 			if (repo_dir == null) {
 				set_status ("Not in git repository");
 				return;
