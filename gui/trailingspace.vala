@@ -96,8 +96,6 @@ namespace Vanubi.UI {
 				}
 				
 				check_line (prev.get_line ());
-			} else {
-				check_line (pos.get_line ());
 			}
 		}
 		
