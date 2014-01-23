@@ -48,10 +48,13 @@ namespace Vanubi.UI {
 				return;
 			}
 			
-			while (!start.is_start () && start.get_char ().isspace ()) {
+			while (start.get_line_offset () != 0 && start.get_char ().isspace ()) {
 				start.backward_char ();
 			}
-			start.forward_char ();
+			
+			if (!start.get_char ().isspace ()) {
+				start.forward_char ();
+			}
 		}
 		
 		private void check_line (int line) {
@@ -65,7 +68,7 @@ namespace Vanubi.UI {
 		public void check_buffer ()
 		{
 			var tot_lines = view.buffer.get_line_count ();
-			for (var i=0; i<tot_lines; i++) {
+			for (var i=1; i<=tot_lines; i++) {
 				check_line (i);
 			}
 		}
@@ -79,23 +82,49 @@ namespace Vanubi.UI {
 			view.buffer.remove_tag_by_name (TAG_NAME, iter_start, iter_end);
 		}
 		
+		private void untrail_line (int line) {
+			cleanup_line (line);
+			
+			TextIter trail_start, trail_end;
+			find_line_trailing_spaces (line, out trail_start, out trail_end);
+			
+			if (trail_end.get_offset () > trail_start.get_offset ()) {
+				view.buffer.@delete (ref trail_start, ref trail_end);
+			}
+		}
+		
 		public void cleanup_buffer () {
 			var tot_lines = view.buffer.get_line_count ();
-			for (var i=0; i<tot_lines; i++) {
+			for (var i=1; i<=tot_lines; i++) {
 				cleanup_line (i);
 			}
 		}
 		
-		public void check_inserted_text (ref TextIter pos, string text) {
+		public void check_inserted_text (ref TextIter pos, string text, bool untrail) {
 			if (text == "\n") {
+				var line_num = pos.get_line ();
 				var prev = pos;
 				prev.backward_line ();
-				
+
 				if (prev.get_line () == pos.get_line ()) {
 					return;
 				}
-				
-				check_line (prev.get_line ());
+
+				if (untrail) {
+					untrail_line (prev.get_line ());
+
+					/* Revalidate the iter for other listeners */
+					TextIter new_iter;
+					view.buffer.get_iter_at_line (out new_iter, line_num);
+					pos.assign (new_iter);
+
+					/* Colorize next line because doesn't maintain the tag */
+					var next = pos;
+					next.forward_line ();
+					check_line (next.get_line ());
+				} else {
+					check_line (prev.get_line ());
+				}
 			}
 		}
 		

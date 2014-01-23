@@ -486,7 +486,8 @@ namespace Vanubi.UI {
 
 		void on_insert_text (ref TextIter pos, string new_text, int new_text_length) {
 			if (trailsp != null) {
-				trailsp.check_inserted_text (ref pos, new_text);
+				var untrail = conf.get_editor_bool ("auto_clean_trailing_spaces", true);
+				trailsp.check_inserted_text (ref pos, new_text, untrail);
 			}
 		}
 		

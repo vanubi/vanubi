@@ -472,6 +472,10 @@ namespace Vanubi.UI {
 			index_command ("toggle-trailing-spaces", "Toggle trailing spaces");
 			execute_command["toggle-trailing-spaces"].connect (on_toggle_trailing_spaces);
 			
+			bind_command (null, "toggle-auto-clean-trailing-spaces");
+			index_command ("toggle-auto-clean-trailing-spaces", "Toggle trailing spaces auto-clean");
+			execute_command["toggle-auto-clean-trailing-spaces"].connect (on_toggle_auto_clean_trailing_spaces);
+			
 			bind_command (null, "toggle-remote-file-server");
 			index_command ("toggle-remote-file-server", "Toggle the remote file service");
 			execute_command["toggle-remote-file-server"].connect (on_toggle_remote_file_server);
@@ -2398,6 +2402,12 @@ namespace Vanubi.UI {
 					ed.on_trailing_spaces ();
 					return true;
 			});
+		}
+		
+		void on_toggle_auto_clean_trailing_spaces (Editor editor) {
+			var val = !conf.get_editor_bool ("auto_clean_trailing_spaces", true);
+			conf.set_editor_bool ("auto_clean_trailing_spaces", val);
+			set_status (val ? "Enabled" : "Disabled");
 		}
 		
 		void on_remote_open_file (RemoteFileSource file) {
