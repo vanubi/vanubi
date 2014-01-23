@@ -48,6 +48,8 @@ def pool_conn ():
 		cmd = cmd.strip()
 		if cmd == "read":
 			process_read (f)
+		elif cmd == "write":
+			process_write (f)
 		elif cmd == "exists":
 			process_exists (f)
 		elif cmd == "is_directory":
@@ -114,17 +116,30 @@ def process_read (f, path):
 @autopath
 def process_write (f, path):
 	try:
-		file = open (path, "wb")
-		f.write ("ok\n")
-		f.flush ()
+		# first try appending to see if we can write to the file
+		tmp = open (path, "ab")
+		tmp.close ()
 	except Exception, e:
 		f.write ("error\n")
-		f.write ("Cannot open file for writing: %s\n" %e)
+		f.write ("Cannot open file for writing: %s\n" % e)
+		f.flush ()
+		return
+
+	try:
+		file = open (path+".tmp", "wb")
+	except Exception, e:
+		f.write ("error\n")
+		f.write ("Cannot open temp file for writing: %s\n" % e)
 		f.flush ()
 		return
 	
+	f.write ("ok\n")
+	f.flush ()
+	
 	while True:
 		size = int(f.readline ())
+		if not size:
+			break
 		while size > 0:
 			s = f.read (size)
 			if not s:
@@ -132,6 +147,7 @@ def process_write (f, path):
 			size -= len (s)
 			file.write (s)
 	file.close()
+	os.rename (path+".tmp", path)
 
 def sigint_handler(*args):
 	print 'exiting'

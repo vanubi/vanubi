@@ -298,7 +298,7 @@ namespace Vanubi.UI {
 			}
 			
 			bool uncertain;
-			var content_type = ContentType.guess (file.to_string (), null, out uncertain);
+			var content_type = ContentType.guess (file.local_path, null, out uncertain);
 			if (uncertain) {
 				content_type = null;
 			}

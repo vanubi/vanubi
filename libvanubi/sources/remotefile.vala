@@ -198,7 +198,7 @@ namespace Vanubi {
 			} else if (res == "false") {
 				return false;
 			} else {
-				throw new IOError.INVALID_ARGUMENT ("Invalid reply: %s", res);
+				throw new IOError.INVALID_ARGUMENT ("Invalid remote reply: %s", res);
 			}
 		}
 		
@@ -210,6 +210,26 @@ namespace Vanubi {
 		}
 		
 		public override async void write (uint8[] data, int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) throws Error {
+			var chan = yield remote.acquire ();
+			var os = chan.conn.output_stream;
+			var cmd = "write\n%s\n".printf (local_path);
+			yield os.write_async (cmd.data, io_priority, cancellable);
+			yield os.flush_async (io_priority, cancellable);
+			
+			var is = new AsyncDataInputStream (chan.conn.input_stream);
+			var res = yield is.read_line_async (io_priority, cancellable);
+			if (res == "error") {
+				var err = yield is.read_line_async (io_priority, cancellable);
+				throw new IOError.FAILED ("Remote error while writing file: %s".printf (err));
+			} else if (res == "ok") {
+				cmd = "%d\n".printf (data.length);
+				yield os.write_async (cmd.data, io_priority, cancellable);
+				yield os.write_async (data, io_priority, cancellable);
+				yield os.write_async ("0\n".data, io_priority, cancellable);
+				yield os.flush_async (io_priority, cancellable);
+			} else {
+				throw new IOError.INVALID_ARGUMENT ("Invalid remote reply: %s", res);
+			}
 		}
 		
 		public override async bool is_directory (int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) throws Error {
