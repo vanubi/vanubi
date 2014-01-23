@@ -43,6 +43,7 @@ def pool_conn ():
 		if not cmd:
 			f.close ()
 			return
+		cmd = cmd.strip()
 		if cmd == "read":
 			process_read (f)
 		elif cmd == "exists":
@@ -59,8 +60,9 @@ def autopath (func):
 		if not path:
 			f.close ()
 			return
-		path = os.path.abspath (path)
-		return func (f, args+[path], **kw)
+		path = os.path.abspath (path.strip())
+		args = list(args)+[path]
+		return func (f, *args, **kw)
 	return _wrap
 
 @autopath
@@ -69,6 +71,7 @@ def process_exists (f, path):
 		f.write ("true\n")
 	else:
 		f.write ("false\n")
+	f.flush ()
 
 @autopath
 def process_is_directory (f, path):
@@ -76,6 +79,7 @@ def process_is_directory (f, path):
 		f.write ("true\n")
 	else:
 		f.write ("false\n")
+	f.flush ()
 
 @autopath
 def process_read (f, path):
@@ -84,32 +88,47 @@ def process_read (f, path):
 	except Exception, e:
 		f.write ("error\n")
 		f.write ("Cannot read file: %s\n" % e)
+		f.flush ()
 		return
 
 	try:
-		file = open (path, "r+b")
+		file = open (path, "rb")
 	except Exception, e:
 		f.write ("error\n")
-		f.write ("Cannot read file: %s\n" %e)
+		f.write ("Cannot open file for reading: %s\n" %e)
+		f.flush ()
 
 	f.write ("%d\n" % size)
-	os.sendfile (f, file, 0, size)
+	while size > 0:
+		s = file.read (size)
+		if not s:
+			break
+		size -= len(s)
+		f.write (s)
 	f.write ("0\n")
+	f.flush ()
 	file.close ()
 	
 @autopath
 def process_write (f, path):
 	try:
-		file = open (path, "w+b")
+		file = open (path, "wb")
 		f.write ("ok\n")
+		f.flush ()
 	except Exception, e:
 		f.write ("error\n")
-		f.write ("Cannot read file: %s\n" %e)
+		f.write ("Cannot open file for writing: %s\n" %e)
+		f.flush ()
+		return
 	
 	while True:
 		size = int(f.readline ())
-		if size > 0:
-			os.sendfile (file, f, 0, size)
+		while size > 0:
+			s = f.read (size)
+			if not s:
+				break
+			size -= len (s)
+			file.write (s)
 	file.close()
 
 def sigint_handler(*args):

@@ -194,34 +194,41 @@ namespace Vanubi {
 		return false;
 	}
 	
+	// Unbuffered stream
 	public class AsyncDataInputStream : DataInputStream {
 		public AsyncDataInputStream (InputStream base_stream) {
-			Object (base_stream: base_stream, newline_type: DataStreamNewlineType.ANY);
+			Object (base_stream: base_stream, close_base_stream: false);
 		}
 		
-		public async void ensure_filled (ssize_t size, int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) throws Error {
-			if (get_available () < size) {
-				var res = yield fill_async (size, io_priority, cancellable);
-				if (res <= 0) {
-					throw new IOError.PARTIAL_INPUT ("Could not fill buffer for size: "+size.to_string ());
+		// Unbuffered line reader
+		public async string? read_line_async (int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) throws Error {
+			var buf = new uint8[1];
+			var b = new StringBuilder ();
+			while (true) {
+				var read = yield read_async (buf, io_priority, cancellable);
+				if (read <= 0) {
+					throw new IOError.CLOSED ("Stream already closed");
 				}
+				if (buf[0] == '\n') {
+					return b.str.strip();
+				}
+				b.append_c ((char) buf[0]);
 			}
 		}
 		
-		public async int32 read_int32_async (int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) throws Error {
-			yield ensure_filled ((ssize_t) sizeof (int32));
-			return read_int32 (cancellable);
-		}
-		
-		public async int32 read_byte_async (int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) throws Error {
-			yield ensure_filled ((ssize_t) sizeof (uint8));
-			return read_byte (cancellable);
-		}
-		
-		public async string read_zero_terminated_string (int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) throws Error {
-			var res = yield read_upto_async ("\0", 1, io_priority, cancellable, null);
-			read_byte (); // consume the null byte
-			return res;
+		public string? read_line (Cancellable? cancellable = null) throws Error {
+			var buf = new uint8[1];
+			var b = new StringBuilder ();
+			while (true) {
+				var r = read (buf, cancellable);
+				if (r <= 0) {
+					return null;
+				}
+				if (buf[0] == '\n') {
+					return b.str.strip ();
+				}
+				b.append_c ((char) buf[0]);
+			}
 		}
 	}
 	

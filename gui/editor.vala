@@ -386,6 +386,7 @@ namespace Vanubi.UI {
 						view.buffer.place_cursor (cursor);
 					}
 					
+					data.length = 4096;
 					var r = yield is.read_async (data, Priority.LOW, cancellable);
 					if (r == 0) {
 						break;

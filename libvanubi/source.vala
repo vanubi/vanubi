@@ -37,15 +37,15 @@ namespace Vanubi {
 		
 		public abstract DataSource? parent { owned get; }
 
-		public abstract async bool exists (int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) throws IOError.CANCELLED;
+		public abstract async bool exists (int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) throws Error;
 		public abstract async InputStream read (int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) throws Error;
 		
 		public abstract async void write (uint8[] data, int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) throws Error;
 		
 		public abstract async TimeVal? get_mtime (int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null);
-		public abstract async void monitor (int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) throws IOError.CANCELLED;
+		public abstract async void monitor (int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) throws Error;
 		
-		public abstract async bool is_directory (int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) throws IOError.CANCELLED;
+		public abstract async bool is_directory (int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) throws Error;
 		public abstract async uint8[] execute_shell (string command_line, uint8[]? input = null, out uint8[] errors = null, out int status = null, int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) throws Error;
 
 		public abstract DataSource child (string path);
@@ -55,7 +55,7 @@ namespace Vanubi {
 		public abstract bool equal (DataSource? s);		
 		public abstract string to_string ();
 		
-		public bool exists_sync (Cancellable? cancellable = null) throws IOError.CANCELLED {
+		public bool exists_sync (Cancellable? cancellable = null) throws Error {
 			var ctx = MainContext.default ();
 			var loop = new MainLoop (ctx, false);
 			Error? err = null;
@@ -73,7 +73,7 @@ namespace Vanubi {
 			loop.run ();
 
 			if (err != null) {
-				throw (IOError.CANCELLED) err;
+				throw err;
 			}
 			return ret;
 		}

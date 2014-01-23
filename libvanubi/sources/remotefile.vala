@@ -23,8 +23,8 @@ namespace Vanubi {
 		public SocketConnection conn { get; private set; }
 		
 		public RemoteChannel (owned RemoteConnection remote, owned SocketConnection conn) {
-			this.remote = remote;
-			this.conn = conn;
+			this.remote = (owned) remote;
+			this.conn = (owned) conn;
 		}
 		
 		~RemoteChannel () {
@@ -67,6 +67,79 @@ namespace Vanubi {
 			mutex.release ();
 		}
 	}
+
+	public class RemoteInputStream : InputStream {
+		RemoteChannel chan; // keep alive until done
+		AsyncDataInputStream stream;
+		int cursize = -1;
+		
+		public class RemoteInputStream (owned RemoteChannel chan, owned AsyncDataInputStream stream) {
+			this.chan = (owned) chan;
+			this.stream = (owned) stream;
+		}
+		
+		public override bool close (Cancellable? cancellable = null) throws IOError {
+			// FIXME: we should cleanup the channel, because the endpoint is still writing
+			chan = null;
+			return true;
+		}
+		
+		public override async bool close_async (int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) throws IOError {
+			// FIXME: we should cleanup the channel, because the endpoint is still writing
+			chan = null;
+			return true;
+		}
+
+		public override ssize_t read ([CCode (array_length_type = "gsize")] uint8[] buffer, GLib.Cancellable? cancellable = null) throws IOError {
+			if (cursize < 0) {
+				var strsize = stream.read_line (cancellable);
+				if (strsize == "error") {
+					var error = stream.read_line (cancellable);
+					throw new IOError.FAILED ("Remote error: %s".printf (error));
+				}
+				cursize = int.parse (strsize);
+			}
+			if (cursize == 0) {
+				// done
+				return 0;
+			}
+			
+			unowned uint8[] tmp = buffer;
+			tmp.length = int.min (buffer.length, cursize);
+			var read = stream.read (buffer, cancellable);
+			cursize -= (int) read;
+			if (cursize == 0 && read > 0) {
+				cursize = -1;
+			}
+			
+			return read;
+		}
+
+		public override async ssize_t read_async ([CCode (array_length_cname = "count", array_length_pos = 1.5, array_length_type = "gsize")] uint8[] buffer, int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) throws IOError {
+			if (cursize < 0) {
+				var strsize = yield stream.read_line_async (io_priority, cancellable);
+				if (strsize == "error") {
+					var error = yield stream.read_line_async (io_priority, cancellable);
+					throw new IOError.FAILED ("Remote error: %s".printf (error));
+				}
+				cursize = int.parse (strsize);
+			}
+			if (cursize == 0) {
+				// done
+				return 0;
+			}
+			
+			unowned uint8[] tmp = buffer;
+			tmp.length = int.min (buffer.length, cursize);
+			var read = yield stream.read_async (tmp, io_priority, cancellable);
+			cursize -= (int) read;
+			if (cursize == 0 && read > 0) {
+				cursize = -1;
+			}
+			
+			return read;
+		}
+	}		
 	
 	public class RemoteFileSource : FileSource {
 		RemoteConnection remote;
@@ -101,24 +174,45 @@ namespace Vanubi {
 		}
 		
 		public override async InputStream read (int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) throws Error {
-			return null;
+			var chan = yield remote.acquire ();
+			var os = chan.conn.output_stream;
+			var cmd = "read\n%s\n".printf (local_path);
+			yield os.write_async (cmd.data, io_priority, cancellable);
+			yield os.flush_async (io_priority, cancellable);
+			
+			return new RemoteInputStream (chan, new AsyncDataInputStream (chan.conn.input_stream));
+			
 		}
 		
-		public override async bool exists (int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) throws IOError.CANCELLED {
-			return false;
+		public override async bool exists (int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) throws Error {
+			var chan = yield remote.acquire ();
+			var os = chan.conn.output_stream;
+			var cmd = "exists\n%s\n".printf (local_path);
+			yield os.write_async (cmd.data, io_priority, cancellable);
+			yield os.flush_async (io_priority, cancellable);
+			
+			var is = new AsyncDataInputStream (chan.conn.input_stream);
+			var res = yield is.read_line_async (io_priority, cancellable);
+			if (res == "true") {
+				return true;
+			} else if (res == "false") {
+				return false;
+			} else {
+				throw new IOError.INVALID_ARGUMENT ("Invalid reply: %s", res);
+			}
 		}
 		
 		public override async TimeVal? get_mtime (int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) {
 			return null;
 		}
 		
-		public override async void monitor (int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) throws IOError.CANCELLED {
+		public override async void monitor (int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) throws Error {
 		}
 		
 		public override async void write (uint8[] data, int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) throws Error {
 		}
 		
-		public override async bool is_directory (int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) throws IOError.CANCELLED {
+		public override async bool is_directory (int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) throws Error {
 			return false;
 		}
 		
@@ -151,19 +245,15 @@ namespace Vanubi {
 		}
 	}
 	
-		public errordomain RemoteFileError {
-		UNKNOWN_COMMAND
-	}
-	
 	public class RemoteIdent {
 		public InetAddress address { get; private set; }
 		public string ident { get; private set; }
 		uint _hash;
 		
 		public RemoteIdent (owned InetAddress address, owned string ident) {
+			_hash = (address.to_string()+" "+ident).hash ();
 			this.address = (owned) address;
 			this.ident = (owned) ident;
-			_hash = (this.address.to_string()+" "+this.ident).hash ();
 		}
 		
 		public uint hash () {
@@ -185,12 +275,12 @@ namespace Vanubi {
 		
 		public signal void open_file (RemoteFileSource file);
 		
-		public RemoteFileServer (Configuration conf) throws Error {
-			this.conf = conf;
+		public RemoteFileServer (owned Configuration conf) throws Error {
 			add_inet_port ((uint16) conf.get_global_int ("remote_service_port", 62518), null);
+			this.conf = (owned) conf;
 		}
 
-		async string read_version (SocketConnection conn, AsyncDataInputStream is) throws Error {
+		async string read_version (owned SocketConnection conn, owned AsyncDataInputStream is) throws Error {
 			var ver = yield is.read_line_async ();
 			if (ver == null || ver == "") {
 				throw new IOError.PARTIAL_INPUT ("Expected protocol version");
@@ -198,7 +288,7 @@ namespace Vanubi {
 			return ver;
 		}
 		
-		async string read_ident (SocketConnection conn, AsyncDataInputStream is, out bool is_main) throws Error {
+		async string read_ident (owned SocketConnection conn, owned AsyncDataInputStream is, out bool is_main) throws Error {
 			var cmd = yield is.read_line_async ();
 			if (cmd == null) {
 				throw new IOError.PARTIAL_INPUT ("Expected main or ident command");
@@ -217,7 +307,6 @@ namespace Vanubi {
 			if (cmd == "ident") {
 				var ident = yield is.read_line_async ();
 				if (ident != null) {
-					message("identified %s", ident);
 					return ident;
 				}
 			}
@@ -225,7 +314,7 @@ namespace Vanubi {
 			throw new IOError.INVALID_ARGUMENT ("Expected ident command, got: %s", cmd);
 		}
 		
-		async void handle_client_wrapper (SocketConnection conn) {
+		async void handle_client_wrapper (owned SocketConnection conn) {
 			try {
 				yield handle_client (conn);
 			} catch (Error e) {
@@ -238,14 +327,14 @@ namespace Vanubi {
 			}
 		}
 		
-		async void handle_client (SocketConnection conn) throws Error {
+		async void handle_client (owned SocketConnection conn) throws Error {
 			var is = new AsyncDataInputStream (conn.input_stream);
 			string version = yield read_version (conn, is);
 			bool is_main;
 			string ident = yield read_ident (conn, is, out is_main);
 			
 			var inet = ((InetSocketAddress) conn.get_remote_address()).address;
-			var remote_ident = new RemoteIdent ((owned) inet, ident);
+			var remote_ident = new RemoteIdent (inet, ident);
 			var remote_connection = conns[remote_ident];
 			if (remote_connection == null) {
 				remote_connection = new RemoteConnection (ident);
@@ -261,7 +350,7 @@ namespace Vanubi {
 			}
 		}
 		
-		async void handle_remote_requests (RemoteConnection remote, SocketConnection conn, AsyncDataInputStream is) throws Error {
+		async void handle_remote_requests (owned RemoteConnection remote, owned SocketConnection conn, owned AsyncDataInputStream is) throws Error {
 			while (true) {
 				var cmd = yield is.read_line_async ();
 				if (cmd == null) {
@@ -274,19 +363,18 @@ namespace Vanubi {
 					yield handle_open (remote, is);
 					break;
 				default:
-					throw new RemoteFileError.UNKNOWN_COMMAND ("Unknown command "+cmd);
+					throw new IOError.INVALID_ARGUMENT ("Unknown command: "+cmd);
 				}
 			}
 		}
 		
-		async void handle_open (RemoteConnection remote, AsyncDataInputStream is) throws Error {
+		async void handle_open (owned RemoteConnection remote, owned AsyncDataInputStream is) throws Error {
 			var path = yield is.read_line_async ();
 			var file = new RemoteFileSource (path, remote);
 			open_file (file);
 		}
 		
 		public override bool incoming (SocketConnection conn, Object? source) {
-			message("connected");
 			handle_client_wrapper.begin (conn);
 			return false;
 		}

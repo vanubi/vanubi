@@ -62,7 +62,7 @@ namespace Vanubi {
 							}
 							cancellable.set_error_if_cancelled ();
 							
-							if (stderr.strip() != "") {
+							if (stderr != null && stderr.strip() != "") {
 								return null;
 							}
 							if (status != 0) {
@@ -102,7 +102,7 @@ namespace Vanubi {
 			int status;
 			var output = (string) yield source.parent.execute_shell (cmdline, null, null, out status, io_priority, cancellable);
 			
-			if (status != 0 || output.strip () == "") {
+			if (status != 0 || output == null || output.strip () == "") {
 				return null;
 			}
 			

@@ -727,7 +727,10 @@ namespace Vanubi.UI {
 					}
 					return;
 				}
+			} catch (IOError.CANCELLED e) {
+				return;
 			} catch (Error e) {
+				set_status_error (e.message);
 				return;
 			}
 
@@ -2398,7 +2401,8 @@ namespace Vanubi.UI {
 		}
 		
 		void on_remote_open_file (RemoteFileSource file) {
-			message(file.to_string ());
+			message(file.to_string());
+			open_source.begin (last_focused_editor, file);
 		}
 	}
 }
