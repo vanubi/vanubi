@@ -140,6 +140,58 @@ namespace Vanubi {
 			return read;
 		}
 	}		
+
+	public class RemoteFileIterator : SourceIterator {
+		RemoteChannel chan;
+		RemoteFileSource parent;
+		OutputStream os;
+		AsyncDataInputStream is;
+		bool at_end = false;
+		List<SourceInfo> children = null;
+		
+		public RemoteFileIterator (RemoteFileSource parent, RemoteChannel chan) {
+			this.parent = parent;
+			this.chan = chan;
+			this.os = chan.conn.output_stream;
+			this.is = new AsyncDataInputStream (chan.conn.input_stream); 
+		}
+		
+		public override SourceInfo? next (Cancellable? cancellable = null) throws Error {
+			if (children == null) {
+				if (at_end) {
+					// stream consumed
+					return null;
+				}
+				
+				// request new batch
+				os.write ("next_children\n".data, cancellable);
+				os.flush (cancellable);
+
+				while (true) {
+					var res = is.read_line (cancellable);
+					if (res == "next") {
+						var name = is.read_line (cancellable);
+						var isdir = is.read_line (cancellable);
+						children.append (new SourceInfo (parent.child (name), isdir == "true"));
+					} else if (res == "wait") {
+						break;
+					} else if (res == "end") {
+						at_end = true;
+						break;
+					} else {
+						throw new IOError.INVALID_ARGUMENT ("Invalid remote reply: %s", res);
+					}
+				}
+			}
+
+			if (children == null) {
+				return null;
+			}
+			var info = children.data;
+			children.delete_link (children.first ());
+			return info;
+		}
+	}
 	
 	public class RemoteFileSource : FileSource {
 		RemoteConnection remote;

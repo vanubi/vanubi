@@ -7,6 +7,42 @@ import sys, socket, os, os.path, struct, stat, getpass, threading, signal
 PORT = 62517
 VERSION = "1"
 
+################################
+# list directory incrementally #
+################################
+import ctypes
+
+DIR_p = ctypes.c_void_p
+ino_t = ctypes.c_long
+off_t = ctypes.c_long
+
+class DIRENT(ctypes.Structure):
+    _fields_ = [
+        ('d_ino', ino_t),                 # inode number
+        ('d_off', off_t),                 # offset to the next dirent
+        ('d_reclen', ctypes.c_ushort),    # length of this record
+        ('d_type', ctypes.c_ubyte),       # type of file; not supported
+                                          #   by all file system types
+        ('d_name', ctypes.c_char * 256),  # filename
+	]
+	
+DIRENT_p = ctypes.POINTER(DIRENT)
+
+C = ctypes.CDLL(None)
+
+opendir = C.opendir
+opendir.argtypes = [ctypes.c_char_p]
+
+readdir = C.readdir
+readdir.argtypes = [DIR_p]
+readdir.restype = DIRENT_p
+
+closedir = C.closedir
+closedir.argtypes = [DIR_p]
+closedir.restype = ctypes.c_int
+
+# Utils
+
 def thread (func):
 	class Th (threading.Thread):
 		def run (self):
@@ -28,18 +64,22 @@ def connect (is_main):
 	s.send (getpass.getuser()+"@"+socket.gethostname()+"\n")
 	return s
 
+# Main connection, for opening and monitoring files
+	
 def main_conn ():
 	s = connect (True)
-	if len (sys.argv) > 1:
-		# send open request
-		path = os.path.abspath (sys.argv[1])
-		s.sendall ("open\n%s\n" % path)
+	# send open request
+	path = os.path.abspath (sys.argv[1])
+	s.sendall ("open\n%s\n" % path)
 	s.close ()
 
+# Connection pool for user requests
+	
 def pool_conn ():
 	s = connect (False)
 	f = s.makefile ("r+b")
 	s.close ()
+	dirp = None
 	while True:
 		cmd = f.readline ()
 		if not cmd:
@@ -52,12 +92,17 @@ def pool_conn ():
 			process_write (f)
 		elif cmd == "exists":
 			process_exists (f)
+		elif cmd == "iterate_children":
+			dirp = process_iterate_children (f)
+		elif cmd == "next_children":
+			dirp = process_next_children (f, dirp)
 		elif cmd == "is_directory":
 			process_is_directory (f)
 		else:
 			print "Unknown command", cmd
 			return
 
+# Automatically read and pass the path to the decorated function
 def autopath (func):
 	def _wrap (f, *args, **kw):
 		path = f.readline ()
@@ -69,6 +114,48 @@ def autopath (func):
 		return func (f, *args, **kw)
 	return _wrap
 
+@autopath
+def process_iterate_children (f, path):
+	if not os.path.isdir (path):
+		f.write ("error\n")
+		f.write ("Not a directory: %s\n" % path)
+		f.flush ()
+		return
+
+	dirp = opendir(path)
+	if not dirp:
+		f.write ("error\n")
+		f.write ("Not a directory: %s\n" % path)
+		f.flush ()
+		return
+
+	process_next_children (f, dirp)
+
+def process_next_children (f, dirp):
+	if not dirp:
+		f.write ("error\n")
+		f.write ("No opened directory\n")
+		f.flush ()
+		return
+
+	# 50 files at once
+	for x in range(50):
+		dirent = readdir (dirp)
+		if not dirent:
+			f.write ("end\n")
+			f.flush ()
+			closedir (dirp)
+			return
+		else:
+			f.write ("next\n")
+			f.write ("%s\n", dirent[0].d_name)
+			f.write ("%s\n", (dirent[0].d_type == 4) and "true" or "false")
+
+	# wait for next() from the endpoint
+	f.write ("wait\n") 
+	f.flush ()
+	return dirp
+	
 @autopath
 def process_exists (f, path):
 	if os.path.exists (path):
@@ -149,11 +236,11 @@ def process_write (f, path):
 	file.close()
 	os.rename (path+".tmp", path)
 
-def sigint_handler(*args):
-	print 'exiting'
-	sys.exit(0)
-
 def main ():
+	if len (sys.argv) < 2:
+		print "Usage: %s FILE [FILE...]" % sys.argv[0]
+		sys.exit(1)
+		
 	ths = [thread (main_conn)]
 	for x in range(3):
 		ths.append (thread (pool_conn))
