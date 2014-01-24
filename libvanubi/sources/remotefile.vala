@@ -48,7 +48,7 @@ namespace Vanubi {
 			mutex.release ();
 		}
 		
-		public async RemoteChannel acquire () {
+		public async RemoteChannel acquire (int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) {
 			while (true) {
 				foreach (unowned SocketConnection conn in pool) {
 					bool acquired = conn.get_data ("acquired");
@@ -58,15 +58,15 @@ namespace Vanubi {
 					}
 				}
 
-				yield mutex.acquire ();
+				yield mutex.acquire (io_priority, cancellable);
 			}
 		}
 
-		public RemoteChannel acquire_sync () {
+		public RemoteChannel acquire_sync (Cancellable? cancellable = null) {
 			var ctx = MainContext.default ();
 			var loop = new MainLoop (ctx, false);
 			RemoteChannel? ret = null;
-			acquire.begin ((s,r) => {
+			acquire.begin (Priority.DEFAULT, cancellable, (s,r) => {
 					ret = acquire.end (r);
 					loop.quit ();
 			});
@@ -177,30 +177,36 @@ namespace Vanubi {
 				}
 				
 				// request new batch
-				os.write ("next children\n".data, cancellable);
-				os.flush (cancellable);
-				
-				while (true) {
-					var res = is.read_line (cancellable);
-					if (res == "next") {
-						var name = is.read_line (cancellable);
-						var isdir = is.read_line (cancellable);
-						children.append (new SourceInfo (parent.child (name), isdir == "true"));
-					} else if (res == "wait") {
-						break;
-					} else if (res == "end") {
-						at_end = true;
-						break;
-					} else if (res == "error") {
-						var err = is.read_line (cancellable);
-						at_end = true;
-						children = null;
-						throw new IOError.FAILED ("Remote error: %s".printf (err));
-					} else {
-						at_end = true;
-						children = null;
-						throw new IOError.INVALID_ARGUMENT ("Invalid remote reply while iterating directory: %s".printf (res));
+				try {
+					os.write ("next children\n".data, cancellable);
+					os.flush (cancellable);
+					
+					while (true) {
+						var res = is.read_line (cancellable);
+						if (res == "next") {
+							var name = is.read_line (cancellable);
+							var isdir = is.read_line (cancellable);
+							children.append (new SourceInfo (parent.child (name), isdir == "true"));
+						} else if (res == "wait") {
+							break;
+						} else if (res == "end") {
+							at_end = true;
+							break;
+						} else if (res == "error") {
+							var err = is.read_line (cancellable);
+							at_end = true;
+							children = null;
+							throw new IOError.FAILED ("Remote error: %s".printf (err));
+						} else {
+							at_end = true;
+							children = null;
+							throw new IOError.INVALID_ARGUMENT ("Invalid remote reply while iterating directory: %s".printf (res));
+						}
 					}
+				} catch (IOError.CANCELLED e) {
+					os.write ("cancel children\n".data, cancellable);
+					os.flush (cancellable);
+					throw e;
 				}
 			}
 
@@ -246,7 +252,7 @@ namespace Vanubi {
 		}
 		
 		public override async InputStream read (int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) throws Error {
-			var chan = yield remote.acquire ();
+			var chan = yield remote.acquire (io_priority, cancellable);
 			var os = chan.conn.output_stream;
 			var cmd = "read\n%s\n".printf (local_path);
 			yield os.write_async (cmd.data, io_priority, cancellable);
@@ -256,7 +262,7 @@ namespace Vanubi {
 		}
 		
 		public override async bool exists (int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) throws Error {
-			var chan = yield remote.acquire ();
+			var chan = yield remote.acquire (io_priority, cancellable);
 			var os = chan.conn.output_stream;
 			var cmd = "exists\n%s\n".printf (local_path);
 			yield os.write_async (cmd.data, io_priority, cancellable);
@@ -281,7 +287,7 @@ namespace Vanubi {
 		}
 		
 		public override async void write (uint8[] data, int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) throws Error {
-			var chan = yield remote.acquire ();
+			var chan = yield remote.acquire (io_priority, cancellable);
 			var os = chan.conn.output_stream;
 			var cmd = "write\n%s\n".printf (local_path);
 			yield os.write_async (cmd.data, io_priority, cancellable);
@@ -316,22 +322,28 @@ namespace Vanubi {
 		}
 		
 		public override SourceIterator iterate_children (Cancellable? cancellable = null) throws Error {
-			var chan = remote.acquire_sync ();
+			var chan = remote.acquire_sync (cancellable);
 			var os = chan.conn.output_stream;
 			var cmd = "iterate children\n%s\n".printf (local_path);
 			os.write (cmd.data, cancellable);
 			os.flush (cancellable);
 
 			var is = new AsyncDataInputStream (chan.conn.input_stream);
-			var res = is.read_line (cancellable);
-			if (res == "error") {
-				var err = is.read_line (cancellable);
-				throw new IOError.FAILED ("Remote error while listing directory: %s".printf (err));
-			} else if (res == "ok") {
-				var iterator = new RemoteFileIterator (this, chan);
-				return iterator;
-			} else {
-				throw new IOError.INVALID_ARGUMENT ("Invalid remote reply while listing directory: %s", res);
+			try {
+				var res = is.read_line (cancellable);
+				if (res == "error") {
+					var err = is.read_line (cancellable);
+					throw new IOError.FAILED ("Remote error while listing directory: %s".printf (err));
+				} else if (res == "ok") {
+					var iterator = new RemoteFileIterator (this, chan);
+					return iterator;
+				} else {
+					throw new IOError.INVALID_ARGUMENT ("Invalid remote reply while listing directory: %s", res);
+				}
+			} catch (IOError.CANCELLED e) {
+				os.write ("cancel children\n".data, cancellable);
+				os.flush (cancellable);
+				throw e;
 			}
 		}
 		

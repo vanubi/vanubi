@@ -243,27 +243,32 @@ namespace Vanubi {
 	public class AsyncMutex {
 		class CallbackObject {
 			internal SourceFunc resume;
+			internal int io_priority;
 			
-			public CallbackObject (owned SourceFunc resume) {
+			public CallbackObject (owned SourceFunc resume, int io_priority) {
 				this.resume = (owned) resume;
+				this.io_priority = io_priority;
 			}
 		}
 		List<CallbackObject> queue = new List<CallbackObject> ();
 		bool acquired = false;
 		
-		public async void acquire () {
+		public async void acquire (int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) throws Error {
 			if (!acquired) {
 				acquired = true;
 			} else {
-				queue.append (new CallbackObject ((SourceFunc) acquire.callback));
+				queue.append (new CallbackObject ((SourceFunc) acquire.callback, io_priority));
 			}
+			yield;
+			cancellable.set_error_if_cancelled ();
 		}
 		
 		public void release () {
 			if (queue != null) {
-				SourceFunc resume = (owned) queue.data.resume;
-				queue.delete_link (queue);
-				Idle.add ((owned) resume);
+				var data = queue.data;
+				SourceFunc resume = (owned) data.resume;
+				queue.delete_link (queue.first ());
+				Idle.add_full (data.io_priority, (owned) resume);
 			} else {
 				acquired = false;
 			}

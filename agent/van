@@ -97,6 +97,10 @@ def pool_conn ():
 			dirp = process_iterate_children (f)
 		elif cmd == "next children":
 			dirp = process_next_children (f, dirp)
+		elif cmd == "cancel children":
+			if dirp:
+				closedir (dirp)
+				dirp = None
 		elif cmd == "is_directory":
 			process_is_directory (f)
 		else:
@@ -188,6 +192,7 @@ def process_read (f, path):
 		f.write ("error\n")
 		f.write ("Cannot open file for reading: %s\n" %e)
 		f.flush ()
+		return
 
 	f.write ("%d\n" % size)
 	while size > 0:
