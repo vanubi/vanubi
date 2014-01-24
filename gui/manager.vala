@@ -111,6 +111,8 @@ namespace Vanubi.UI {
 			command_index.synonyms["editor"] = "file";
 			command_index.synonyms["switch"] = "change";
 			command_index.synonyms["search"] = "find";
+			command_index.synonyms["toggle"] = "enable";
+			command_index.synonyms["toggle"] = "disable";
 
 			// setup commands
 			bind_command ({
@@ -453,15 +455,15 @@ namespace Vanubi.UI {
 			execute_command["about"].connect (on_about);
 			
 			bind_command (null, "toggle-git-gutter");
-			index_command ("toggle-git-gutter", "Toggle git-gutter");
+			index_command ("toggle-git-gutter", "Git diff left sidebar");
 			execute_command["toggle-git-gutter"].connect (on_toggle_git_gutter);
 			
 			bind_command (null, "toggle-show-branch");
-			index_command ("toggle-show-branch", "Show repository branch in the file info bar");
+			index_command ("toggle-show-branch", "Show the repository branch in the file info bar");
 			execute_command["toggle-show-branch"].connect (on_toggle_show_branch);
 			
 			bind_command (null, "toggle-right-margin");
-			index_command ("toggle-right-margin", "Toggle right margin");
+			index_command ("toggle-right-margin", "Show the columns limit delimiter");
 			execute_command["toggle-right-margin"].connect (on_toggle_right_margin);
 			
 			bind_command (null, "set-right-margin-column");
@@ -469,15 +471,15 @@ namespace Vanubi.UI {
 			execute_command["set-right-margin-column"].connect (on_set_right_margin_column);
 			
 			bind_command (null, "toggle-trailing-spaces");
-			index_command ("toggle-trailing-spaces", "Toggle trailing spaces");
+			index_command ("toggle-trailing-spaces", "Show trailing spaces");
 			execute_command["toggle-trailing-spaces"].connect (on_toggle_trailing_spaces);
 			
 			bind_command (null, "toggle-auto-clean-trailing-spaces");
-			index_command ("toggle-auto-clean-trailing-spaces", "Toggle trailing spaces auto-clean");
+			index_command ("toggle-auto-clean-trailing-spaces", "Automatically clean trailing spaces while editing");
 			execute_command["toggle-auto-clean-trailing-spaces"].connect (on_toggle_auto_clean_trailing_spaces);
 			
 			bind_command (null, "toggle-remote-file-server");
-			index_command ("toggle-remote-file-server", "Toggle the remote file service");
+			index_command ("toggle-remote-file-server", "Service for opening files remotely with vsh and van");
 			execute_command["toggle-remote-file-server"].connect (on_toggle_remote_file_server);
 
 			// setup empty buffer

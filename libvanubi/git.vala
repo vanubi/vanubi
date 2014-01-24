@@ -48,7 +48,7 @@ namespace Vanubi {
 			int status;
 			var cmd = @"$git_command rev-parse --show-cdup";
 			var stdout = (string) yield dir.execute_shell (cmd, null, null, out status, io_priority, cancellable);
-			if (status != 0) {
+			if (status != 0 || stdout == null) {
 				return null;
 			}
 			return (FileSource) dir.child (stdout.strip ());

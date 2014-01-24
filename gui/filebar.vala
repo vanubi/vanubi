@@ -22,9 +22,11 @@ using Gtk;
 namespace Vanubi.UI {
 	class FileBar : CompletionBar<FileSource> {
 		string base_directory;
+		FileSource root;
 
 		public FileBar (FileSource base_source) {
-			base_directory = base_source.to_string ()+"/";
+			base_directory = base_source.local_path+"/";
+			root = (FileSource) base_source.root;
 			entry.set_text(base_directory);
 		}
 
@@ -38,18 +40,17 @@ namespace Vanubi.UI {
 		protected override async Annotated<FileSource>[]? complete (string pattern, out string common_choice, Cancellable cancellable) throws Error {
 			common_choice = pattern;
 			var absolute_pattern = absolute_path (base_directory, pattern);
-			var root = DataSource.new_from_string ("/");
-			var files = yield run_in_thread<GenericArray<FileSource>> (() => { return (GenericArray<FileSource>) source_complete (root, absolute_pattern, cancellable); });
+			var files = yield run_in_thread<GenericArray<FileSource>> (() => { return (GenericArray<FileSource>) file_complete (root, absolute_pattern, cancellable); });
 			if (files.length == 0) {
 				return null;
 			}
 				
 			// Common base directory
-			string[] common_comps = files[0].to_string().split("/");
+			string[] common_comps = files[0].local_path.split("/");
 			common_comps[common_comps.length-1] = null;
 			common_comps.length--;
 			for (var i=1; i < files.length; i++) {
-				var comps = files[i].to_string().split("/");
+				var comps = files[i].local_path.split("/");
 				for (var j=0; j < int.min(common_comps.length, comps.length); j++) {
 					if (comps[j] != common_comps[j]) {
 						common_comps.length = j;
@@ -62,7 +63,7 @@ namespace Vanubi.UI {
 			Annotated<FileSource>[] res = null;
 			// only display the uncommon part of the files
 			foreach (var file in files.data) {
-				var path = file.to_string().substring(common_comp_index);
+				var path = file.local_path.substring(common_comp_index);
 				var isdir = yield file.is_directory ();
 				if (isdir) {
 					// append / for hinting the user that this is a directory
@@ -73,9 +74,9 @@ namespace Vanubi.UI {
 
 			// common choice
 			// 1. compute the common prefix among all files
-			common_choice = files[0].to_string ();
+			common_choice = files[0].local_path;
 			for (var i=1; i < files.length; i++) {
-				compute_common_prefix (files[i].to_string (), ref common_choice);
+				compute_common_prefix (files[i].local_path, ref common_choice);
 			}
 			// 2. if the common prefix is shorter than the pattern, fill missing pieces with components from the pattern
 			var pat_comps = absolute_pattern.split("/");
@@ -94,7 +95,7 @@ namespace Vanubi.UI {
 
 		protected override void set_choice_to_entry () {
 			var choice = get_annotated_choice ();
-			var choicestr = choice.obj.to_string ();
+			var choicestr = choice.obj.local_path;
 			if (choice.str.has_suffix ("/")) {
 				// directory
 				choicestr += "/";

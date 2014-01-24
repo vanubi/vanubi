@@ -32,6 +32,7 @@ C = ctypes.CDLL(None)
 
 opendir = C.opendir
 opendir.argtypes = [ctypes.c_char_p]
+opendir.restype = DIR_p
 
 readdir = C.readdir
 readdir.argtypes = [DIR_p]
@@ -92,9 +93,9 @@ def pool_conn ():
 			process_write (f)
 		elif cmd == "exists":
 			process_exists (f)
-		elif cmd == "iterate_children":
+		elif cmd == "iterate children":
 			dirp = process_iterate_children (f)
-		elif cmd == "next_children":
+		elif cmd == "next children":
 			dirp = process_next_children (f, dirp)
 		elif cmd == "is_directory":
 			process_is_directory (f)
@@ -116,20 +117,18 @@ def autopath (func):
 
 @autopath
 def process_iterate_children (f, path):
-	if not os.path.isdir (path):
-		f.write ("error\n")
-		f.write ("Not a directory: %s\n" % path)
-		f.flush ()
-		return
-
 	dirp = opendir(path)
 	if not dirp:
 		f.write ("error\n")
-		f.write ("Not a directory: %s\n" % path)
+		f.write ("Cannot list directory: %s\n" % path)
 		f.flush ()
 		return
+	else:
+		f.write ("ok\n")
+		f.flush ()
 
 	process_next_children (f, dirp)
+	return dirp
 
 def process_next_children (f, dirp):
 	if not dirp:
@@ -138,8 +137,7 @@ def process_next_children (f, dirp):
 		f.flush ()
 		return
 
-	# 50 files at once
-	for x in range(50):
+	for x in range(52):
 		dirent = readdir (dirp)
 		if not dirent:
 			f.write ("end\n")
@@ -147,11 +145,13 @@ def process_next_children (f, dirp):
 			closedir (dirp)
 			return
 		else:
+			if dirent[0].d_name in ("..", "."):
+				continue
 			f.write ("next\n")
-			f.write ("%s\n", dirent[0].d_name)
-			f.write ("%s\n", (dirent[0].d_type == 4) and "true" or "false")
+			f.write ("%s\n" % dirent[0].d_name)
+			f.write ("%s\n" % ((dirent[0].d_type == 4) and "true" or "false"))
 
-	# wait for next() from the endpoint
+	# wait for next load request from the endpoint
 	f.write ("wait\n") 
 	f.flush ()
 	return dirp

@@ -18,24 +18,25 @@
  */
 
 namespace Vanubi {
-	void source_complete_pattern (DataSource source, int index, string[] pattern, GenericArray<DataSource> result, Cancellable? cancellable = null) throws Error {
-		DataSource child = source.child (pattern[index]);
+	void file_complete_pattern (FileSource source, int index, string[] pattern, GenericArray<FileSource> result, Cancellable? cancellable = null) throws Error {
+		FileSource child = (FileSource) source.child (pattern[index]);
 		if (index < pattern.length-1 && child.exists_sync ()) {
 			// perfect directory match
-			source_complete_pattern (child, index+1, pattern, result, cancellable);
+			file_complete_pattern (child, index+1, pattern, result, cancellable);
 			return;
 		}
 
-		DataSource[]? matches = null;
+		FileSource[]? matches = null;
 		try {
 			var iterator = source.iterate_children (cancellable);
-			Annotated<DataSource>[]? a = null;
+			Annotated<FileSource>[]? a = null;
 			while (true) {
 				var info = iterator.next (cancellable);
 				if (info == null) {
 					break;
 				}
-				a += new Annotated<DataSource> (info.source.to_string(), info.source);
+				var file = (FileSource) info.source;
+				a += new Annotated<FileSource> (file.basename, file);
 			}
 			cancellable.set_error_if_cancelled ();
 			if (pattern[index] == "") {
@@ -45,7 +46,7 @@ namespace Vanubi {
 				}
 			} else {
 				// pattern match
-				var res = pattern_match_many<DataSource> (pattern[index], a, cancellable);
+				var res = pattern_match_many<FileSource> (pattern[index], a, cancellable);
 				foreach (var an in res.data) {
 					matches += an.obj;
 				}
@@ -64,7 +65,7 @@ namespace Vanubi {
 		// recurse into next subdirectory
 		while (index < pattern.length-1 && pattern[++index] == null);
 		foreach (var match in matches) {
-			source_complete_pattern (match, index, pattern, result, cancellable);
+			file_complete_pattern (match, index, pattern, result, cancellable);
 			cancellable.set_error_if_cancelled ();
 		}
 	}
@@ -158,14 +159,14 @@ namespace Vanubi {
 	}
 	
 	/* The given pattern must be absolute */
-	public GenericArray<DataSource>? source_complete (DataSource root, string pattern, Cancellable? cancellable = null) throws Error requires (pattern[0] == '/') {
+	public GenericArray<FileSource>? file_complete (FileSource root, string pattern, Cancellable? cancellable = null) throws Error requires (pattern[0] == '/') {
 		string[] comps = pattern.split ("/");
 		if (comps.length == 0) {
 			return null;
 		}
 
-		var result = new GenericArray<DataSource> ();
-		source_complete_pattern (root, 1, comps, result, cancellable);
+		var result = new GenericArray<FileSource> ();
+		file_complete_pattern (root, 1, comps, result, cancellable);
 		return result;
 	}
 }

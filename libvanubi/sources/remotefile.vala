@@ -61,6 +61,19 @@ namespace Vanubi {
 				yield mutex.acquire ();
 			}
 		}
+
+		public RemoteChannel acquire_sync () {
+			var ctx = MainContext.default ();
+			var loop = new MainLoop (ctx, false);
+			RemoteChannel? ret = null;
+			acquire.begin ((s,r) => {
+					ret = acquire.end (r);
+					loop.quit ();
+			});
+			loop.run ();
+
+			return ret;
+		}
 		
 		internal void release (SocketConnection conn) {
 			conn.set_data ("acquired", false);
@@ -153,7 +166,7 @@ namespace Vanubi {
 			this.parent = parent;
 			this.chan = chan;
 			this.os = chan.conn.output_stream;
-			this.is = new AsyncDataInputStream (chan.conn.input_stream); 
+			this.is = new AsyncDataInputStream (chan.conn.input_stream);
 		}
 		
 		public override SourceInfo? next (Cancellable? cancellable = null) throws Error {
@@ -164,9 +177,9 @@ namespace Vanubi {
 				}
 				
 				// request new batch
-				os.write ("next_children\n".data, cancellable);
+				os.write ("next children\n".data, cancellable);
 				os.flush (cancellable);
-
+				
 				while (true) {
 					var res = is.read_line (cancellable);
 					if (res == "next") {
@@ -178,8 +191,15 @@ namespace Vanubi {
 					} else if (res == "end") {
 						at_end = true;
 						break;
+					} else if (res == "error") {
+						var err = is.read_line (cancellable);
+						at_end = true;
+						children = null;
+						throw new IOError.FAILED ("Remote error: %s".printf (err));
 					} else {
-						throw new IOError.INVALID_ARGUMENT ("Invalid remote reply: %s", res);
+						at_end = true;
+						children = null;
+						throw new IOError.INVALID_ARGUMENT ("Invalid remote reply while iterating directory: %s".printf (res));
 					}
 				}
 			}
@@ -249,7 +269,7 @@ namespace Vanubi {
 			} else if (res == "false") {
 				return false;
 			} else {
-				throw new IOError.INVALID_ARGUMENT ("Invalid remote reply: %s", res);
+				throw new IOError.INVALID_ARGUMENT ("Invalid remote reply while checking file existance: %s", res);
 			}
 		}
 		
@@ -279,7 +299,7 @@ namespace Vanubi {
 				yield os.write_async ("0\n".data, io_priority, cancellable);
 				yield os.flush_async (io_priority, cancellable);
 			} else {
-				throw new IOError.INVALID_ARGUMENT ("Invalid remote reply: %s", res);
+				throw new IOError.INVALID_ARGUMENT ("Invalid remote reply while writing to file: %s", res);
 			}
 		}
 		
@@ -296,7 +316,23 @@ namespace Vanubi {
 		}
 		
 		public override SourceIterator iterate_children (Cancellable? cancellable = null) throws Error {
-			return null;
+			var chan = remote.acquire_sync ();
+			var os = chan.conn.output_stream;
+			var cmd = "iterate children\n%s\n".printf (local_path);
+			os.write (cmd.data, cancellable);
+			os.flush (cancellable);
+
+			var is = new AsyncDataInputStream (chan.conn.input_stream);
+			var res = is.read_line (cancellable);
+			if (res == "error") {
+				var err = is.read_line (cancellable);
+				throw new IOError.FAILED ("Remote error while listing directory: %s".printf (err));
+			} else if (res == "ok") {
+				var iterator = new RemoteFileIterator (this, chan);
+				return iterator;
+			} else {
+				throw new IOError.INVALID_ARGUMENT ("Invalid remote reply while listing directory: %s", res);
+			}
 		}
 		
 		public override uint hash () {

@@ -54,6 +54,20 @@ namespace Vanubi {
 		public abstract uint hash ();
 		public abstract bool equal (DataSource? s);		
 		public abstract string to_string ();
+
+		public DataSource root {
+			owned get {
+				var cur = this;
+				// hope this does not loop infinitely :S
+				while (true) {
+					var parent = cur.parent;
+					if (parent == null) {
+						return cur;
+					}
+					cur = parent;
+				}
+			}
+		}
 		
 		public bool exists_sync (Cancellable? cancellable = null) throws Error {
 			var ctx = MainContext.default ();
