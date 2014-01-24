@@ -181,7 +181,6 @@ namespace Vanubi {
 			yield os.flush_async (io_priority, cancellable);
 			
 			return new RemoteInputStream (chan, new AsyncDataInputStream (chan.conn.input_stream));
-			
 		}
 		
 		public override async bool exists (int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) throws Error {

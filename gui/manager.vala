@@ -2419,7 +2419,6 @@ namespace Vanubi.UI {
 		}
 		
 		void on_remote_open_file (RemoteFileSource file) {
-			message(file.to_string());
 			open_source.begin (last_focused_editor, file);
 		}
 	}

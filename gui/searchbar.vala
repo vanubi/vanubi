@@ -162,7 +162,7 @@ namespace Vanubi.UI {
 				}
 			}
 			
-			// yield to gui every 50 iterations
+			// yield to gui every 1000 iterations
 			int iterations = 0;
 			bool displayed_searching = false;
 			
@@ -172,17 +172,16 @@ namespace Vanubi.UI {
 					return;
 				}
 				
-				if (iterations >= 1000000 && !displayed_searching) {
+				if (iterations >= 10000 && !displayed_searching) {
 					manager.set_status ("Searching...", "search");
 					displayed_searching = true;
 				}
 				
 				// use a mark when giving control back to the gui
 				TextMark? mark = null;
-				if (iterations++ % 50 == 0) {
+				if (iterations++ % 1000 == 0) {
 					mark = buf.create_mark (null, iter, false);
-					SourceFunc resume = search.callback;
-					Idle.add ((owned) resume);
+					Idle.add (search.callback);
 					yield;
 				}
 				
