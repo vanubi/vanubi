@@ -104,6 +104,42 @@ namespace Vanubi {
 			}
 			return ret;
 		}
+
+		public bool is_directory_sync (Cancellable? cancellable = null) throws Error {
+			Error? err = null;
+			bool ret = false;
+			var complete = false;
+
+			Mutex mutex = Mutex ();
+			Cond cond = Cond ();
+			mutex.lock ();
+			
+			Idle.add (() => {
+					is_directory.begin (Priority.DEFAULT, cancellable, (s,r) => {
+							try {
+								ret = is_directory.end (r);
+							} catch (Error e) {
+								err = e;
+							} finally {
+								mutex.lock ();
+								complete = true;
+								cond.signal ();
+								mutex.unlock ();
+							}
+					});
+					return false;
+			});
+
+			while (!complete) {
+				cond.wait (mutex);
+			}
+			mutex.unlock ();
+
+			if (err != null) {
+				throw err;
+			}
+			return ret;
+		}
 		
 		public int compare (DataSource? s) {
 			if (equal (s)) {

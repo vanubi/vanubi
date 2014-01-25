@@ -20,7 +20,7 @@
 namespace Vanubi {
 	void file_complete_pattern (FileSource source, int index, string[] pattern, GenericArray<FileSource> result, Cancellable? cancellable = null) throws Error {
 		FileSource child = (FileSource) source.child (pattern[index]);
-		if (index < pattern.length-1 && child.exists_sync ()) {
+		if (index < pattern.length-1 && child.is_directory_sync ()) {
 			// perfect directory match
 			file_complete_pattern (child, index+1, pattern, result, cancellable);
 			return;
