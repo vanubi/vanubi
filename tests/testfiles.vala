@@ -5,10 +5,6 @@
 
 using Vanubi;
 
-void test_basedir () {
-	assert (get_base_directory (File.new_for_path ("foo/bar")) == Environment.get_current_dir()+"/foo/");
-}
-
 void test_abspath () {
 	assert (absolute_path ("/foo/", "bar") == "/foo/bar");
 	assert (absolute_path ("/foo/", "/bar") == "/bar");
@@ -17,9 +13,9 @@ void test_abspath () {
 }
 
 void assert_sp (string[] filenames, string[] expected) {
-	File[] files = null;
+	DataSource[] files = null;
 	foreach (unowned string filename in filenames) {
-		files += File.new_for_path (filename);
+		files += DataSource.new_from_string (filename);
 	}
 	var shorts = short_paths (files);
 	assert (shorts.length == expected.length);
@@ -39,31 +35,30 @@ void test_short_paths () {
 }
 
 void test_lru () {
-	var lru = new FileLRU ();
-	lru.append (File.new_for_path ("/foo"));
-	assert (lru.list().data.equal (File.new_for_path ("/foo")));
+	var lru = new SourceLRU ();
+	lru.append (DataSource.new_from_string ("/foo"));
+	assert (lru.list().data.equal (DataSource.new_from_string ("/foo")));
 	
-	lru.append (File.new_for_path ("/bar"));
-	lru.used (File.new_for_path ("/bar"));
-	assert (lru.list().data.equal (File.new_for_path ("/bar")));
+	lru.append (DataSource.new_from_string ("/bar"));
+	lru.used (DataSource.new_from_string ("/bar"));
+	assert (lru.list().data.equal (DataSource.new_from_string ("/bar")));
 	
-	lru.used (File.new_for_path ("/foo"));
-	assert (lru.list().data.equal (File.new_for_path ("/foo")));
+	lru.used (DataSource.new_from_string ("/foo"));
+	assert (lru.list().data.equal (DataSource.new_from_string ("/foo")));
 	assert (lru.list().length() == 2);
 	
-	lru.remove (File.new_for_path ("/foo"));
-	assert (lru.list().data.equal (File.new_for_path ("/bar")));
+	lru.remove (DataSource.new_from_string ("/foo"));
+	assert (lru.list().data.equal (DataSource.new_from_string ("/bar")));
 	assert (lru.list().length() == 1);
 	
 	// test no duplicate
-	lru.append (File.new_for_path ("/bar"));
+	lru.append (DataSource.new_from_string ("/bar"));
 	assert (lru.list().length() == 1);
 }
 
 int main (string[] args) {
 	Test.init (ref args);
 
-	Test.add_func ("/files/basedir", test_basedir);
 	Test.add_func ("/files/abspath", test_abspath);
 	Test.add_func ("/files/short_paths", test_short_paths);
 	Test.add_func ("/files/lru", test_lru);

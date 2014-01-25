@@ -62,10 +62,34 @@ void test_parser () {
 	assert_expr ("{'foo': 'bar'}", "{ 'foo': 'bar' }");
 }
 
+public Vade.Value eval_sync (Scope scope, Expression expr) throws Error {
+	Vade.Value ret = null;
+	Error err = null;
+
+	var ctx = new MainContext ();
+	ctx.push_thread_default ();
+	var loop = new MainLoop (ctx, false);
+	scope.eval.begin (expr, new Cancellable(), (s,r) => {
+			try {
+				ret = scope.eval.end (r);
+			} catch (Error e) {
+				err = e;
+			} finally {
+				loop.quit ();
+			}
+	});
+	loop.run ();
+			
+	if (err != null) {
+		throw err;
+	}
+	return ret;
+}
+
 Vade.Value eval (Scope scope, string code) throws Error {
 	var parser = new Parser.for_string (code);
 	var expr = parser.parse_expression ();
-	var val = scope.eval_sync (expr);
+	var val = eval_sync (scope, expr);
 	return val;
 }
 
@@ -123,7 +147,7 @@ void test_native_functions () {
 void assert_embed (Scope scope, string code, Vade.Value expect) {
 	var parser = new Parser.for_string (code);
 	var expr = parser.parse_embedded ();
-	var val = scope.eval_sync (expr);
+	var val = eval_sync (scope, expr);
 	if (!val.equal (expect)) {
 		message (@"Expect $expect got $val");
 	}
