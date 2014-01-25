@@ -304,7 +304,7 @@ namespace Vanubi.UI {
 			}
 			
 			var default_lang = SourceLanguageManager.get_default().guess_language (file.local_path, content_type);
-			if (default_lang == null && file.local_path.has_suffix ("/COMMIT_EDITMSG")) {
+			if (default_lang == null && (file.local_path.has_suffix ("/COMMIT_EDITMSG") || file.local_path.has_suffix ("/MERGE_EDITMSG"))) {
 				default_lang = SourceLanguageManager.get_default().get_language ("commit message");
 			}
 			
