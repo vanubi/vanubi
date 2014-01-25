@@ -1181,7 +1181,7 @@ namespace Vanubi.UI {
 			var bar = new FileBar (base_source);
 			bar.activate.connect ((p) => {
 					abort (editor);
-					open_source.begin (editor, DataSource.new_from_string (p));
+					open_source.begin (editor, base_source.root.child (p));
 				});
 			bar.aborted.connect (() => { abort (editor); });
 			add_overlay (bar);

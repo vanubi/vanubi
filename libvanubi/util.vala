@@ -74,6 +74,7 @@ namespace Vanubi {
 		if (thread_pool != null) {
 			return;
 		}
+		
 		try {
 			thread_pool = new ThreadPool<ThreadWorker>.with_owned_data ((worker) => {
 					// Call worker.run () on thread-start
@@ -82,6 +83,7 @@ namespace Vanubi {
 		} catch (Error e) {
 			error ("Could not initialize thread pool: %s".printf (e.message));
 		}
+		
 		ThreadPool.set_max_unused_threads (2);
 	}
 
@@ -258,11 +260,11 @@ namespace Vanubi {
 				acquired = true;
 			} else {
 				queue.append (new CallbackObject ((SourceFunc) acquire.callback, io_priority));
+				yield;
+				cancellable.set_error_if_cancelled ();
 			}
-			yield;
-			cancellable.set_error_if_cancelled ();
 		}
-		
+
 		public void release () {
 			if (queue != null) {
 				var data = queue.data;

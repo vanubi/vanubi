@@ -91,7 +91,6 @@ namespace Vanubi.UI {
 					try {
 						var result = complete.end (r, out common_choice);
 						cancellable.set_error_if_cancelled ();
-						cancellable = null;
 						if (completion_box != null && completion_box.parent == this) {
 							remove (completion_box);
 						}
@@ -103,6 +102,10 @@ namespace Vanubi.UI {
 					} catch (IOError.CANCELLED e) {
 					} catch (Error e) {
 						message (e.message);
+					} finally {
+						if (cancellable == current_completion) {
+							current_completion = null;
+						}
 					}
 				});
 		}

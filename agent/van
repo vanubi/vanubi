@@ -131,7 +131,6 @@ def process_iterate_children (f, path):
 		f.write ("ok\n")
 		f.flush ()
 
-	process_next_children (f, dirp)
 	return dirp
 
 def process_next_children (f, dirp):
@@ -141,7 +140,7 @@ def process_next_children (f, dirp):
 		f.flush ()
 		return
 
-	for x in range(52):
+	for x in range(50):
 		dirent = readdir (dirp)
 		if not dirent:
 			f.write ("end\n")

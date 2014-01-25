@@ -28,10 +28,13 @@ namespace Vanubi {
 		}
 		
 		~RemoteChannel () {
-			remote.release (conn);
+			var conn = this.conn;
+			var remote = this.remote;
+			// be sure we release in the main thread
+			Idle.add (() => { remote.release (conn); return false; });
 		}
 	}
-			
+
 	public class RemoteConnection {
 		public string ident { get; private set; }
 		List<SocketConnection> pool = new List<SocketConnection> ();
@@ -63,14 +66,38 @@ namespace Vanubi {
 		}
 
 		public RemoteChannel acquire_sync (Cancellable? cancellable = null) {
-			var ctx = MainContext.default ();
-			var loop = new MainLoop (ctx, false);
 			RemoteChannel? ret = null;
-			acquire.begin (Priority.DEFAULT, cancellable, (s,r) => {
-					ret = acquire.end (r);
-					loop.quit ();
+			Error err = null;
+			var complete = false;
+
+			Mutex mutex = Mutex ();
+			Cond cond = Cond ();
+			mutex.lock ();
+			
+			Idle.add (() => {
+					acquire.begin (Priority.DEFAULT, cancellable, (s,r) => {
+							try {
+								ret = acquire.end (r);
+							} catch (Error e) {
+								err = e;
+							} finally {
+								mutex.lock ();
+								complete = true;
+								cond.signal ();
+								mutex.unlock ();
+							}
+					});
+					return false;
 			});
-			loop.run ();
+
+			while (!complete) {
+				cond.wait (mutex);
+			}
+			mutex.unlock ();
+			
+			if (err != null) {
+				throw err;
+			}
 
 			return ret;
 		}
@@ -161,12 +188,39 @@ namespace Vanubi {
 		AsyncDataInputStream is;
 		bool at_end = false;
 		List<SourceInfo> children = null;
+		bool is_cancelling = false;
 		
 		public RemoteFileIterator (RemoteFileSource parent, RemoteChannel chan) {
 			this.parent = parent;
 			this.chan = chan;
 			this.os = chan.conn.output_stream;
 			this.is = new AsyncDataInputStream (chan.conn.input_stream);
+		}
+
+		async void cancel_consume () {
+			is_cancelling = true;
+			try {
+				while (true) {
+					var res = yield is.read_line_async ();
+					if (res == "next") {
+						yield is.read_line_async (); // name
+						yield is.read_line_async (); // is dir
+					} else if (res == "wait") {
+						break;
+					} else if (res == "end") {
+						break;
+					} else if (res == "error") {
+						yield is.read_line_async (); // msg
+					}
+				}
+				
+				os.write ("cancel children\n".data);
+				os.flush ();
+			} catch (Error e) {
+			} finally {
+				chan = null;
+				is_cancelling = false;
+			}
 		}
 		
 		public override SourceInfo? next (Cancellable? cancellable = null) throws Error {
@@ -191,30 +245,46 @@ namespace Vanubi {
 							break;
 						} else if (res == "end") {
 							at_end = true;
+							/* chan = null; // free channel already, we have all the data buffered */
 							break;
 						} else if (res == "error") {
-							var err = is.read_line (cancellable);
 							at_end = true;
 							children = null;
+							var err = is.read_line (cancellable);
+							/* chan = null; */
 							throw new IOError.FAILED ("Remote error: %s".printf (err));
 						} else {
 							at_end = true;
 							children = null;
+							/* chan = null; */
 							throw new IOError.INVALID_ARGUMENT ("Invalid remote reply while iterating directory: %s".printf (res));
 						}
 					}
 				} catch (IOError.CANCELLED e) {
-					os.write ("cancel children\n".data, cancellable);
-					os.flush (cancellable);
+					// consume the rest of the stream
+					at_end = true;
+					children = null;
+					Idle.add (() => { cancel_consume.begin (); return false; });
 					throw e;
 				}
 			}
 
 			if (children == null) {
+				at_end = true;
+				if (!is_cancelling) {
+					/* chan = null; */
+				}
 				return null;
 			}
+			
 			var info = children.data;
 			children.delete_link (children.first ());
+			
+			if (children == null) {
+				if (!is_cancelling) {
+					/* chan = null; */
+				}
+			}
 			return info;
 		}
 	}

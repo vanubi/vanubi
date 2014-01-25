@@ -442,19 +442,29 @@ namespace Vanubi.Vade {
 		public Value eval_sync (Expression expr) throws Error {
 			Value ret = null;
 			Error err = null;
-			
-			var ctx = MainContext.default ();
-			var loop = new MainLoop (ctx, false);
+			var complete = false;
+
+			Mutex mutex = Mutex ();
+			Cond cond = Cond ();
+			mutex.lock ();
+
 			eval.begin (expr, new Cancellable(), (s,r) => {
 					try {
 						ret = eval.end (r);
 					} catch (Error e) {
 						err = e;
 					} finally {
-						loop.quit ();
+						mutex.lock ();
+						complete = true;
+						cond.signal ();
+						mutex.unlock ();
 					}
 			});
-			loop.run ();
+			
+			while (!complete) {
+				cond.wait (mutex);
+			}
+			mutex.unlock ();
 			
 			if (err != null) {
 				throw err;

@@ -51,6 +51,8 @@ namespace Vanubi {
 					matches += an.obj;
 				}
 			}
+		} catch (IOError.CANCELLED e) {
+			throw e;
 		} catch (Error e) {
 			// ignore errors due to file permissions
 		}

@@ -52,7 +52,7 @@ namespace Vanubi {
 		public abstract SourceIterator iterate_children (Cancellable? cancellable = null) throws Error;
 		
 		public abstract uint hash ();
-		public abstract bool equal (DataSource? s);		
+		public abstract bool equal (DataSource? s);
 		public abstract string to_string ();
 
 		public DataSource root {
@@ -70,21 +70,34 @@ namespace Vanubi {
 		}
 		
 		public bool exists_sync (Cancellable? cancellable = null) throws Error {
-			var ctx = MainContext.default ();
-			var loop = new MainLoop (ctx, false);
 			Error? err = null;
 			bool ret = false;
+			var complete = false;
+
+			Mutex mutex = Mutex ();
+			Cond cond = Cond ();
+			mutex.lock ();
 			
-			exists.begin (Priority.DEFAULT, cancellable, (s,r) => {
-					try {
-						ret = exists.end (r);
-					} catch (Error e) {
-						err = e;
-					} finally {
-						loop.quit ();
-					}
+			Idle.add (() => {
+					exists.begin (Priority.DEFAULT, cancellable, (s,r) => {
+							try {
+								ret = exists.end (r);
+							} catch (Error e) {
+								err = e;
+							} finally {
+								mutex.lock ();
+								complete = true;
+								cond.signal ();
+								mutex.unlock ();
+							}
+					});
+					return false;
 			});
-			loop.run ();
+
+			while (!complete) {
+				cond.wait (mutex);
+			}
+			mutex.unlock ();
 
 			if (err != null) {
 				throw err;
