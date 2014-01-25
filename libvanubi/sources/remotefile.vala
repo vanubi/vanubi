@@ -380,7 +380,21 @@ namespace Vanubi {
 		}
 		
 		public override async bool is_directory (int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) throws Error {
-			return false;
+			var chan = yield remote.acquire (io_priority, cancellable);
+			var os = chan.conn.output_stream;
+			var cmd = "is directory\n%s\n".printf (local_path);
+			yield os.write_async (cmd.data, io_priority, cancellable);
+			yield os.flush_async (io_priority, cancellable);
+			
+			var is = new AsyncDataInputStream (chan.conn.input_stream);
+			var res = yield is.read_line_async (io_priority, cancellable);
+			if (res == "true") {
+				return true;
+			} else if (res == "false") {
+				return false;
+			} else {
+				throw new IOError.INVALID_ARGUMENT ("Invalid remote reply while checking if file is a directory: %s", res);
+			}
 		}
 		
 		public override async uint8[] execute_shell (string command_line, uint8[]? input = null, out uint8[] errors = null, out int status = null, int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) throws Error {

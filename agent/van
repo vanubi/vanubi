@@ -101,7 +101,7 @@ def pool_conn ():
 			if dirp:
 				closedir (dirp)
 				dirp = None
-		elif cmd == "is_directory":
+		elif cmd == "is directory":
 			process_is_directory (f)
 		else:
 			print "Unknown command", cmd
