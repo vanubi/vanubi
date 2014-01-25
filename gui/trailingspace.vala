@@ -89,7 +89,10 @@ namespace Vanubi.UI {
 			find_line_trailing_spaces (line, out trail_start, out trail_end);
 			
 			if (trail_end.get_offset () > trail_start.get_offset ()) {
+				var buf = view.buffer;
+				buf.begin_user_action ();
 				view.buffer.@delete (ref trail_start, ref trail_end);
+				buf.end_user_action ();
 			}
 		}
 		
