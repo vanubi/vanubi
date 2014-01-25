@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE language SYSTEM "language.dtd">
-<language _name="Commit message" version="1.0" _section="Sources" globs="COMMIT_EDITMSG" mimetypes="text/plain">
+<language _name="Commit message" version="1.0" _section="Sources">
 	
 	<line-comment _name = "Line Comment" style= "Comment">
 		<start-regex>#</start-regex>
