@@ -413,7 +413,16 @@ namespace Vanubi.UI {
 			bind_command (null, "delete-session");
 			index_command ("delete-session", "Remove an existing session");
 			execute_command["delete-session"].connect (on_delete_session);
-			
+
+			bind_command ({ Key (Gdk.Key.u, Gdk.ModifierType.CONTROL_MASK) }, "copy-line-up");
+			index_command ("copy-line-up", "Duplicate the current line above");
+			execute_command["copy-line-up"].connect (on_copy_line);
+
+			bind_command ({ Key (Gdk.Key.x, Gdk.ModifierType.CONTROL_MASK),
+							Key (Gdk.Key.u, Gdk.ModifierType.CONTROL_MASK) }, "copy-line-down");
+			index_command ("copy-line-down", "Duplicate the current line below");
+			execute_command["copy-line-down"].connect (on_copy_line);
+
 			bind_command ({ Key (Gdk.Key.m, Gdk.ModifierType.CONTROL_MASK) }, "mark");
 			index_command ("mark", "Save the current location to the stack of positions");
 			execute_command["mark"].connect (on_mark);
@@ -1752,6 +1761,32 @@ namespace Vanubi.UI {
 				execute_command["indent"] (ed, "indent");
 			}
 			
+			buf.end_user_action ();
+		}
+
+		void on_copy_line (Editor ed, string command) {
+			var buf = ed.view.buffer;
+			buf.begin_user_action ();
+
+			TextIter iter;
+			buf.get_iter_at_mark (out iter, buf.get_insert ());
+			
+			var vbuf = new UI.Buffer (ed.view);
+			if (command == "copy-line-up") {
+				var viter = vbuf.line_start (iter.get_line ());
+				vbuf.insert (viter, vbuf.line_text (viter.line)+"\n");
+			} else {
+				// insert mark has right gravity, ensure we keep the cursor to stay
+				var mark = buf.create_mark (null, iter, true);
+				
+				var viter = vbuf.line_end (iter.get_line ());
+				vbuf.insert (viter, "\n"+vbuf.line_text (viter.line));
+
+				buf.get_iter_at_mark (out iter, mark);
+				buf.place_cursor (iter);
+			}
+
+			update_selection (ed);
 			buf.end_user_action ();
 		}
 
