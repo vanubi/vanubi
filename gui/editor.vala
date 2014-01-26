@@ -293,22 +293,33 @@ namespace Vanubi.UI {
 
 		public void reset_language () {
 			var file = source as FileSource;
-			if (file == null) {
-				return;
-			}
-			
+
+			// get the first 1k from the buffer
+			var buf = view.buffer;
+			Gtk.TextIter start, end;
+			buf.get_start_iter (out start);
+			end = start;
+			end.forward_chars (1024);
+			var first1k = buf.get_text (start, end, false);
+
 			bool uncertain;
-			var content_type = ContentType.guess (file.local_path, null, out uncertain);
+			var content_type = ContentType.guess (file != null ? file.local_path : null, first1k.data, out uncertain);
 			if (uncertain) {
 				content_type = null;
 			}
 			
-			var default_lang = SourceLanguageManager.get_default().guess_language (file.local_path, content_type);
-			if (default_lang == null && (file.local_path.has_suffix ("/COMMIT_EDITMSG") || file.local_path.has_suffix ("/MERGE_EDITMSG"))) {
+			var default_lang = SourceLanguageManager.get_default().guess_language (file != null ? file.local_path : null, content_type);
+			if (default_lang == null && file != null && (file.local_path.has_suffix ("/COMMIT_EDITMSG") || file.local_path.has_suffix ("/MERGE_EDITMSG"))) {
 				default_lang = SourceLanguageManager.get_default().get_language ("commit message");
 			}
+
+			string lang_id = null;
+			if (file != null) {
+				lang_id = conf.get_file_string (file, "language", default_lang != null ? default_lang.id : null);
+			} else if (default_lang != null) {
+				lang_id = default_lang.id;
+			}
 			
-			var lang_id = conf.get_file_string (file, "language", default_lang != null ? default_lang.id : null);
 			if (lang_id != null) {
 				var lang = SourceLanguageManager.get_default().get_language (lang_id);
 				((SourceBuffer) view.buffer).set_language (lang);
@@ -374,6 +385,8 @@ namespace Vanubi.UI {
 			TextIter cursor;
 			buf.get_iter_at_mark (out cursor, buf.get_insert ());
 			var cursor_offset = cursor.get_offset ();
+			var first_data = true;
+			
 			try {
 				var data = new uint8[4096];
 				string? default_charset = null;
@@ -411,6 +424,12 @@ namespace Vanubi.UI {
 					if (!undoable) {
 						buf.set_modified (old_modified);
 						buf.end_not_undoable_action ();
+					}
+
+					if (first_data) {
+						// try to guess from first data
+						first_data = false;
+						reset_language ();
 					}
 				}
 			} catch (IOError.CANCELLED e) {
