@@ -21,8 +21,13 @@ namespace Vanubi {
 	public class RemoteChannel {
 		public RemoteConnection remote { get; private set; }
 		public SocketConnection conn { get; private set; }
+		public OutputStream output_stream { get; private set; }
+		public AsyncDataInputStream input_stream { get; private set; }
+				
 		
 		public RemoteChannel (owned RemoteConnection remote, owned SocketConnection conn) {
+			output_stream = conn.output_stream;
+			input_stream = new AsyncDataInputStream (conn.input_stream);
 			this.remote = (owned) remote;
 			this.conn = (owned) conn;
 		}
@@ -51,7 +56,7 @@ namespace Vanubi {
 			mutex.release ();
 		}
 		
-		public async RemoteChannel acquire (int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) {
+		public async RemoteChannel acquire (int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) throws Error {
 			while (true) {
 				foreach (unowned SocketConnection conn in pool) {
 					bool acquired = conn.get_data ("acquired");
@@ -65,7 +70,7 @@ namespace Vanubi {
 			}
 		}
 
-		public RemoteChannel acquire_sync (Cancellable? cancellable = null) {
+		public RemoteChannel acquire_sync (Cancellable? cancellable = null) throws Error {
 			RemoteChannel? ret = null;
 			Error err = null;
 			var complete = false;
@@ -193,11 +198,12 @@ namespace Vanubi {
 		public RemoteFileIterator (RemoteFileSource parent, RemoteChannel chan) {
 			this.parent = parent;
 			this.chan = chan;
-			this.os = chan.conn.output_stream;
-			this.is = new AsyncDataInputStream (chan.conn.input_stream);
+			this.os = chan.output_stream;
+			this.is = chan.input_stream;
 		}
 
 		async void cancel_consume () {
+			// FIXME:
 			is_cancelling = true;
 			try {
 				while (true) {
@@ -272,7 +278,7 @@ namespace Vanubi {
 			if (children == null) {
 				at_end = true;
 				if (!is_cancelling) {
-					/* chan = null; */
+					chan = null;
 				}
 				return null;
 			}
@@ -323,22 +329,22 @@ namespace Vanubi {
 		
 		public override async InputStream read (int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) throws Error {
 			var chan = yield remote.acquire (io_priority, cancellable);
-			var os = chan.conn.output_stream;
+			var os = chan.output_stream;
 			var cmd = "read\n%s\n".printf (local_path);
 			yield os.write_async (cmd.data, io_priority, cancellable);
 			yield os.flush_async (io_priority, cancellable);
 			
-			return new RemoteInputStream (chan, new AsyncDataInputStream (chan.conn.input_stream));
+			return new RemoteInputStream (chan, chan.input_stream);
 		}
 		
 		public override async bool exists (int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) throws Error {
 			var chan = yield remote.acquire (io_priority, cancellable);
-			var os = chan.conn.output_stream;
+			var os = chan.output_stream;
 			var cmd = "exists\n%s\n".printf (local_path);
 			yield os.write_async (cmd.data, io_priority, cancellable);
 			yield os.flush_async (io_priority, cancellable);
 			
-			var is = new AsyncDataInputStream (chan.conn.input_stream);
+			var is = chan.input_stream;
 			var res = yield is.read_line_async (io_priority, cancellable);
 			if (res == "true") {
 				return true;
@@ -358,12 +364,12 @@ namespace Vanubi {
 		
 		public override async void write (uint8[] data, int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) throws Error {
 			var chan = yield remote.acquire (io_priority, cancellable);
-			var os = chan.conn.output_stream;
+			var os = chan.output_stream;
 			var cmd = "write\n%s\n".printf (local_path);
 			yield os.write_async (cmd.data, io_priority, cancellable);
 			yield os.flush_async (io_priority, cancellable);
 			
-			var is = new AsyncDataInputStream (chan.conn.input_stream);
+			var is = chan.input_stream;
 			var res = yield is.read_line_async (io_priority, cancellable);
 			if (res == "error") {
 				var err = yield is.read_line_async (io_priority, cancellable);
@@ -371,8 +377,10 @@ namespace Vanubi {
 			} else if (res == "ok") {
 				cmd = "%d\n".printf (data.length);
 				yield os.write_async (cmd.data, io_priority, cancellable);
-				yield os.write_async (data, io_priority, cancellable);
-				yield os.write_async ("0\n".data, io_priority, cancellable);
+				if (data.length > 0) {
+					yield os.write_async (data, io_priority, cancellable);
+					yield os.write_async ("0\n".data, io_priority, cancellable);
+				}
 				yield os.flush_async (io_priority, cancellable);
 			} else {
 				throw new IOError.INVALID_ARGUMENT ("Invalid remote reply while writing to file: %s", res);
@@ -381,12 +389,12 @@ namespace Vanubi {
 		
 		public override async bool is_directory (int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) throws Error {
 			var chan = yield remote.acquire (io_priority, cancellable);
-			var os = chan.conn.output_stream;
+			var os = chan.output_stream;
 			var cmd = "is directory\n%s\n".printf (local_path);
 			yield os.write_async (cmd.data, io_priority, cancellable);
 			yield os.flush_async (io_priority, cancellable);
 			
-			var is = new AsyncDataInputStream (chan.conn.input_stream);
+			var is = chan.input_stream;
 			var res = yield is.read_line_async (io_priority, cancellable);
 			if (res == "true") {
 				return true;
@@ -397,8 +405,83 @@ namespace Vanubi {
 			}
 		}
 		
-		public override async uint8[] execute_shell (string command_line, uint8[]? input = null, out uint8[] errors = null, out int status = null, int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) throws Error {
-			return null;
+		public override async uint8[] execute_shell (string command_line, uint8[]? input = null, out uint8[] stderr = null, out int status = null, int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) throws Error {
+			var chan = yield remote.acquire (io_priority, cancellable);
+			var os = chan.output_stream;
+			var cmd = "execute\n%s\n%s\n".printf (local_path, command_line);
+			yield os.write_async (cmd.data, io_priority, cancellable);
+			yield os.flush_async (io_priority, cancellable);
+
+			var is = chan.input_stream;
+			var res = yield is.read_line_async (io_priority, cancellable);
+			if (res == "error") {
+				var msg = yield is.read_line_async (io_priority, cancellable);
+				throw new IOError.FAILED ("Remote error while executing shell command: %s".printf (msg));
+			} else if (res != "ok") {
+				throw new IOError.INVALID_ARGUMENT ("Invalid remote reply while spawning remote command: %s", res);
+			}
+			
+			// stdin
+			cmd = "%d\n".printf (input.length);
+			yield os.write_async (cmd.data, io_priority, cancellable);
+			if (input.length > 0) {
+				yield os.write_async (input, io_priority, cancellable);
+				yield os.write_async ("0\n".data, io_priority, cancellable);
+			}
+			yield os.flush_async (io_priority, cancellable);
+			
+			var outstream = new MemoryOutputStream.resizable ();
+			var errstream = new MemoryOutputStream.resizable ();
+			var endout = false;
+			var enderr = false;
+
+			var buf = new uint8[4096];
+			uint8[] stdout = null;
+			
+			while (!endout || !enderr) {
+				MemoryOutputStream stream;
+
+				res = yield is.read_line_async (io_priority, cancellable);
+				if (res == "stdout") {
+					stream = outstream;
+				} else if (res == "stderr") {
+					stream = errstream;
+				} else if (res == "error") {
+					var msg = yield is.read_line_async (io_priority, cancellable);
+					throw new IOError.FAILED ("Remote error while reading remote shell command: %s".printf (msg));
+				} else {
+					throw new IOError.INVALID_ARGUMENT ("Invalid remote reply while reading remote shell command: %s", res);
+				}
+
+				res = yield is.read_line_async (io_priority, cancellable);
+				var size = int.parse (res);
+				if (size == 0) {
+					if (stream == outstream) {
+						endout = true;
+						outstream.close ();
+						stdout = outstream.steal_data ();
+					} else {
+						enderr = true;
+						errstream.close ();
+						stderr = errstream.steal_data ();
+					}
+				} else {
+					while (size > 0) {
+						buf.length = 4096;
+						var read = (int) yield is.read_async (buf, io_priority, cancellable);
+						if (read == 0) {
+							throw new IOError.PARTIAL_INPUT ("Unexpected eof while executing shell command");
+						}
+						buf.length = read;
+						stream.write (buf);
+						size -= read;
+					}
+				}
+			}
+
+			res = yield is.read_line_async (io_priority, cancellable);
+			status = int.parse (res);
+			return stdout;
 		}
 		
 		public override DataSource child (string path) {
@@ -407,12 +490,12 @@ namespace Vanubi {
 		
 		public override SourceIterator iterate_children (Cancellable? cancellable = null) throws Error {
 			var chan = remote.acquire_sync (cancellable);
-			var os = chan.conn.output_stream;
+			var os = chan.output_stream;
 			var cmd = "iterate children\n%s\n".printf (local_path);
 			os.write (cmd.data, cancellable);
 			os.flush (cancellable);
 
-			var is = new AsyncDataInputStream (chan.conn.input_stream);
+			var is = chan.input_stream;
 			try {
 				var res = is.read_line (cancellable);
 				if (res == "error") {

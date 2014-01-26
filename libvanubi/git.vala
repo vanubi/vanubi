@@ -57,7 +57,7 @@ namespace Vanubi {
 		public async bool file_in_repo (FileSource file, int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) throws Error {
 			var git_command = config.get_global_string ("git_command", "git");
 			int status;
-			var escaped = Shell.quote (file.to_string ());
+			var escaped = Shell.quote (file.local_path);
 			var cmd = @"$git_command ls-files --error-unmatch $escaped";
 			yield file.parent.execute_shell (cmd, null, null, out status, io_priority, cancellable);
 			return status == 0;

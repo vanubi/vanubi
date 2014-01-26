@@ -2,7 +2,7 @@
 
 # The little vanubi
 
-import sys, socket, os, os.path, struct, stat, getpass, threading, signal
+import sys, socket, os, os.path, struct, stat, getpass, threading, signal, subprocess
 
 PORT = 62517
 VERSION = "1"
@@ -97,6 +97,8 @@ def pool_conn ():
 			dirp = process_iterate_children (f)
 		elif cmd == "next children":
 			dirp = process_next_children (f, dirp)
+		elif cmd == "execute":
+			process_execute (f)
 		elif cmd == "cancel children":
 			if dirp:
 				closedir (dirp)
@@ -158,7 +160,74 @@ def process_next_children (f, dirp):
 	f.write ("wait\n") 
 	f.flush ()
 	return dirp
-	
+
+@autopath
+def process_execute (f, workdir):
+	cmd = f.readline ()
+	if not cmd:
+		f.close ()
+		return
+
+	try:
+		p = subprocess.Popen (['/bin/bash', '-c', cmd], close_fds=True, cwd=workdir,
+							  stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+	except Exception, e:
+		f.write ("error\n")
+		f.write ("%s\n" % e)
+		f.flush ()
+		return
+
+	# stdin
+	f.write ("ok\n")
+	f.flush ()
+	while True:
+		size = int(f.readline ())
+		if not size:
+			break
+		while size > 0:
+			s = f.read (size)
+			if not s:
+				break
+			size -= len (s)
+			p.stdin.write (s)
+
+	try:
+		endout = enderr = False
+
+		while not endout or not enderr:
+			if not endout:
+				s = p.stdout.read (4096)
+				f.write ("stdout\n")
+				if not s:
+					f.write ("0\n")
+					f.flush ()
+					endout = True
+				else:
+					f.write ("%d\n" % len(s))
+					f.write (s)
+					f.flush ()
+
+			if not enderr:
+				s = p.stderr.read (4096)
+				f.write ("stderr\n")
+				if not s:
+					f.write ("0\n")
+					f.flush ()
+					enderr = True
+				else:
+					f.write ("%d\n" % len(s))
+					f.write (s)
+					f.flush ()
+	except Exception, e:
+		f.write ("error\n")
+		f.write ("%s\n" % e)
+		f.flush ()
+		return
+
+	status = p.wait ()
+	f.write ("%d\n" % status)
+	f.flush ()
+
 @autopath
 def process_exists (f, path):
 	if os.path.exists (path):
