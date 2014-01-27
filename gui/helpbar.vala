@@ -83,11 +83,11 @@ namespace Vanubi.UI {
 			
 			// ugly :P
 			var keystr = keys_to_string (captured_keys);
-			shortcut_label.set_markup (@"<b>saving as <$keystr> in 3 seconds</b>");
+			shortcut_label.set_markup (@"<b>saving as &lt;$keystr&gt; in 3 seconds</b>");
 			capture_timeout = Timeout.add_seconds (1, () => {
-					shortcut_label.set_markup (@"<b>saving as <$keystr> in 2 seconds</b>");
+					shortcut_label.set_markup (@"<b>saving as &lt;$keystr&gt; in 2 seconds</b>");
 					capture_timeout = Timeout.add_seconds (1, () => {
-							shortcut_label.set_markup (@"<b>saving as <$keystr> in 1 second</b>");
+							shortcut_label.set_markup (@"<b>saving as &lt;$keystr&gt; in 1 second</b>");
 							capture_timeout = Timeout.add_seconds (1, () => {
 									save_shortcut (changing_command);
 									capturing = false;
