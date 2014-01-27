@@ -2017,7 +2017,12 @@ namespace Vanubi.UI {
 			}
 			
 			Git git = new Git (conf);
-			var repo_dir = yield git.get_repo ((FileSource) editor.source.parent);
+			FileSource repo_dir = null;
+			try {
+				repo_dir = yield git.get_repo ((FileSource) editor.source.parent);
+			} catch (Error e) {
+			}
+			
 			if (repo_dir == null) {
 				set_status ("Not in git repository");
 				return;
@@ -2092,7 +2097,12 @@ namespace Vanubi.UI {
 			}
 			
 			Git git = new Git (conf);
-			var repo_dir = yield git.get_repo ((FileSource) editor.source.parent);
+			FileSource repo_dir = null;
+			try {
+				repo_dir = yield git.get_repo ((FileSource) editor.source.parent);
+			} catch (Error e) {
+			}
+			
 			if (repo_dir == null) {
 				set_status ("Not in git repository");
 				return;
