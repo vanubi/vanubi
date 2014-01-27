@@ -1200,9 +1200,11 @@ namespace Vanubi.UI {
 					abort (editor);
 					var source = base_source.root.child (p);
 					if (command == "open-file-right") {
-						split_views (editor, Orientation.HORIZONTAL, source);
+						var ed = split_views (editor, Orientation.HORIZONTAL);
+						open_source.begin (ed, source);
 					} else if (command == "open-file-down") {
-						split_views (editor, Orientation.VERTICAL, source);
+						var ed = split_views (editor, Orientation.VERTICAL);
+						open_source.begin (ed, source);
 					} else {
 						open_source.begin (editor, source);
 					}
@@ -2128,10 +2130,11 @@ namespace Vanubi.UI {
 
 		
 		void on_split (Editor editor, string command) {
-			split_views (editor, command == "split-add-right" ? Orientation.HORIZONTAL : Orientation.VERTICAL, editor.source);
+			split_views (editor, command == "split-add-right" ? Orientation.HORIZONTAL : Orientation.VERTICAL);
 		}
 
-		void split_views (Editor editor, Orientation orient, DataSource source) {
+		// Returns the new editor on the splitted view
+		Editor split_views (Editor editor, Orientation orient) {
 			// get bounding box of the editor
 			Allocation alloc;
 			editor.get_allocation (out alloc);
@@ -2146,7 +2149,7 @@ namespace Vanubi.UI {
 			replace_widget (container, paned);
 
 			// get an editor for the same file
-			var ed = get_available_editor (source);
+			var ed = get_available_editor (editor.source);
 			if (ed.get_parent() != null) {
 				// ensure the new editor is unparented
 				((Container) ed.get_parent ()).remove (ed);
@@ -2163,8 +2166,9 @@ namespace Vanubi.UI {
 			paned.pack2 (newcontainer, true, false);	
 
 			paned.show_all ();
+			editor.grab_focus ();
 
-			open_source.begin (ed, source);
+			return ed;
 		}
 
 		static void find_editor(Widget node, bool dir_up, bool dir_left, bool forward)
