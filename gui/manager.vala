@@ -2092,14 +2092,15 @@ namespace Vanubi.UI {
 		}
 			
 		async void repo_open_file (Editor editor, int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) {
-			if (!(editor.source is FileSource)) {
+			var parent = editor.source.parent as FileSource;
+			if (parent == null) {
 				return;
 			}
 			
 			Git git = new Git (conf);
 			FileSource repo_dir = null;
 			try {
-				repo_dir = yield git.get_repo ((FileSource) editor.source.parent);
+				repo_dir = yield git.get_repo (parent);
 			} catch (Error e) {
 			}
 			
