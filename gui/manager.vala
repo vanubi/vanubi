@@ -127,6 +127,14 @@ namespace Vanubi.UI {
 			index_command ("open-file", "Open file for reading in the current buffer, or for creating a new file", "create");
 			execute_command["open-file"].connect (on_open_file);
 
+			bind_command (null, "open-file-right");
+			index_command ("open-file-right", "Split buffer and open file for reading in right view");
+			execute_command["open-file-right"].connect (on_open_file);
+
+			bind_command (null, "open-file-down");
+			index_command ("open-file-down", "Split buffer and open file for reading in bottom view");
+			execute_command["open-file-down"].connect (on_open_file);
+
 			bind_command ({
 					Key (Gdk.Key.x, Gdk.ModifierType.CONTROL_MASK),
 						Key (Gdk.Key.s, Gdk.ModifierType.CONTROL_MASK) },
@@ -1181,7 +1189,7 @@ namespace Vanubi.UI {
 			}, false);
 		}
 		
-		void on_open_file (Editor editor) {
+		void on_open_file (Editor editor, string command) {
 			var base_source = editor.source.parent as FileSource;
 			if (base_source == null) {
 				return;
@@ -1190,7 +1198,14 @@ namespace Vanubi.UI {
 			var bar = new FileBar (base_source);
 			bar.activate.connect ((p) => {
 					abort (editor);
-					open_source.begin (editor, base_source.root.child (p));
+					var source = base_source.root.child (p);
+					if (command == "open-file-right") {
+						split_views (editor, Orientation.HORIZONTAL, source);
+					} else if (command == "open-file-down") {
+						split_views (editor, Orientation.VERTICAL, source);
+					} else {
+						open_source.begin (editor, source);
+					}
 				});
 			bar.aborted.connect (() => { abort (editor); });
 			add_overlay (bar);
@@ -2113,6 +2128,10 @@ namespace Vanubi.UI {
 
 		
 		void on_split (Editor editor, string command) {
+			split_views (editor, command == "split-add-right" ? Orientation.HORIZONTAL : Orientation.VERTICAL, editor.source);
+		}
+
+		void split_views (Editor editor, Orientation orient, DataSource source) {
 			// get bounding box of the editor
 			Allocation alloc;
 			editor.get_allocation (out alloc);
@@ -2120,14 +2139,14 @@ namespace Vanubi.UI {
 			var container = editor.editor_container;
 
 			// create the GUI split
-			var paned = new Paned (command == "split-add-right" ? Orientation.HORIZONTAL : Orientation.VERTICAL);
+			var paned = new Paned (orient);
 			paned.expand = true;
 			// set the position of the split at half of the editor width/height
-			paned.position = command == "split-add-right" ? alloc.width/2 : alloc.height/2;
+			paned.position = orient == Orientation.HORIZONTAL ? alloc.width/2 : alloc.height/2;
 			replace_widget (container, paned);
 
 			// get an editor for the same file
-			var ed = get_available_editor (editor.source);
+			var ed = get_available_editor (source);
 			if (ed.get_parent() != null) {
 				// ensure the new editor is unparented
 				((Container) ed.get_parent ()).remove (ed);
@@ -2144,7 +2163,8 @@ namespace Vanubi.UI {
 			paned.pack2 (newcontainer, true, false);	
 
 			paned.show_all ();
-			editor.grab_focus ();
+
+			open_source.begin (ed, source);
 		}
 
 		static void find_editor(Widget node, bool dir_up, bool dir_left, bool forward)
