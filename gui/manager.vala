@@ -1774,7 +1774,9 @@ namespace Vanubi.UI {
 			update_selection (ed);
 			
 			var indent_engine = get_indent_engine (ed);
-			if (indent_engine != null && command != "tab" && !(indent_engine is Indent_Python)) {
+			// only auto indent only on return for python
+			var no_python_indent = indent_engine is Indent_Python && command != "return";
+			if (indent_engine != null && command != "tab" && !no_python_indent) {
 				execute_command["indent"] (ed, "indent");
 			}
 			

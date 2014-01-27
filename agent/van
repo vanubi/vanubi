@@ -59,9 +59,9 @@ def connect (is_main):
 	s.send ("%s\n" % VERSION)
 	
 	if is_main:
-		s.send ("main\n");
+		s.send ("main\n")
 	
-	s.send ("ident\n");
+	s.send ("ident\n")
 	s.send (getpass.getuser()+"@"+socket.gethostname()+"\n")
 	return s
 
