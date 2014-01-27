@@ -93,7 +93,7 @@ namespace Vanubi {
 			}
 		}
 		
-		async void restart_monitor () throws IOError.CANCELLED {
+		async void restart_monitor () throws Error {
 			if (_monitor != null) {
 				_monitor.changed.disconnect (on_monitor);
 				_monitor = null;
@@ -101,7 +101,7 @@ namespace Vanubi {
 			}
 		}
 		
-		public override async void monitor (int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) throws IOError.CANCELLED {
+		public override async void monitor (int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) throws Error {
 			if (_monitor != null) {
 				// already monitoring
 				return;

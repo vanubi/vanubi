@@ -42,7 +42,7 @@ namespace Vanubi {
 		}
 		
 		/* Returns the git directory that contains this file */
-		public async FileSource? get_repo (FileSource dir, int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) {
+		public async FileSource? get_repo (FileSource dir, int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) throws Error {
 			var git_command = config.get_global_string ("git_command", "git");
 
 			int status;

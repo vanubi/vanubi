@@ -53,7 +53,11 @@ namespace Vanubi {
 			backend = new KeyFile ();
 			file = File.new_for_path (filename);
 			if (file.query_exists ()) {
-				backend.load_from_file (filename, KeyFileFlags.NONE);
+				try {
+					backend.load_from_file (filename, KeyFileFlags.NONE);
+				} catch (Error e) {
+					warning ("Could not load configuration: %s".printf (e.message));
+				}
 				check_config ();
 			}
 		}
