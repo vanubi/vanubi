@@ -125,6 +125,8 @@ namespace Vanubi.UI {
 				string workdir;
 				if (base_source is LocalFileSource) {
 					workdir = config.get_file_string ((LocalFileSource) base_source, "shell_cwd", base_source.parent.to_string ());
+				} else if (base_source is StreamSource) {
+					workdir = base_source.parent.to_string ();
 				} else {
 					workdir = ScratchSource.instance.parent.to_string ();
 				}
