@@ -312,7 +312,7 @@ do_grab_key (struct Binding *binding)
 	success = grab_ungrab (rootwin, keysym, modifiers, TRUE /* grab */);
 
 	if (!success) {
-	   g_warning ("Binding '%s' failed!", binding->keystring);
+		TRACE (g_warning ("Binding '%s' failed!", binding->keystring));
 	}
 
 	return success;
