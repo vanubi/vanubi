@@ -74,8 +74,10 @@ namespace Vanubi.UI {
 		return res;
 	}
 	
-	public unowned TextMark get_start_mark_for_location (Location loc, TextBuffer buf) {
+	public unowned TextMark get_start_mark_for_location (Location loc, TextBuffer abuf) {
 		unowned TextMark? mark = loc.get_data ("start-mark");
+		unowned TextBuffer buf = abuf;
+		
 		if (mark != null) {
 			return mark;
 		}
@@ -92,6 +94,14 @@ namespace Vanubi.UI {
 
 		mark = buf.create_mark (null, iter, false);
 		loc.set_data ("start-mark", mark);
+
+		buf.add_weak_pointer (&buf);
+		loc.weak_ref (() => {
+				if (buf != null) {
+					buf.delete_mark (mark);
+					buf.remove_weak_pointer (&buf);
+				}
+		});
 
 		return mark;
 	}
