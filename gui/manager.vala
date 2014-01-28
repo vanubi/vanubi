@@ -1910,7 +1910,9 @@ namespace Vanubi.UI {
 								      selection_start.get_line_offset ());
 				var iter_end = vbuf.line_at_char (selection_end.get_line (),
 								      selection_end.get_line_offset ());
+				ed.view.buffer.begin_user_action ();
 				comment_engine.toggle_comment (iter_start, iter_end);
+				ed.view.buffer.end_user_action ();
 			}
 		}
 
