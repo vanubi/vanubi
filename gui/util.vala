@@ -98,11 +98,14 @@ namespace Vanubi.UI {
 		buf.add_weak_pointer (&buf);
 		buf.add_weak_pointer (&mark);
 		loc.weak_ref (() => {
-				if (buf != null && mark != null) {
-					buf.remove_weak_pointer (&mark);
-					buf.remove_weak_pointer (&buf);
-					buf.delete_mark (mark);
-				}
+				Idle.add (() => {
+						if (buf != null && mark != null) {
+							buf.remove_weak_pointer (&mark);
+							buf.remove_weak_pointer (&buf);
+							buf.delete_mark (mark);
+						}
+						return false;
+				});
 		});
 
 		return mark;
