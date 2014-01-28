@@ -96,10 +96,12 @@ namespace Vanubi.UI {
 		loc.set_data ("start-mark", mark);
 
 		buf.add_weak_pointer (&buf);
+		buf.add_weak_pointer (&mark);
 		loc.weak_ref (() => {
-				if (buf != null) {
-					buf.delete_mark (mark);
+				if (buf != null && mark != null) {
+					buf.remove_weak_pointer (&mark);
 					buf.remove_weak_pointer (&buf);
+					buf.delete_mark (mark);
 				}
 		});
 
