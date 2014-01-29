@@ -19,39 +19,44 @@
 
 namespace Vanubi {
 	// last recently used
-	public class SourceLRU {
-		List<DataSource> lru = new List<DataSource> ();
+	public class LRU<G> {
+		List<G> lru = new List<G> ();
+		unowned CompareFunc<G> compare;
 
-		public void append (DataSource f) {
-			unowned List<DataSource> link = lru.find_custom (f, DataSource.compare);
+		public LRU (CompareFunc<G> compare) {
+			this.compare = compare;
+		}
+		
+		public void append (G f) {
+			unowned List<G> link = lru.find_custom (f, compare);
 			// ensure we have no duplicates
 			if (link == null) {
 				lru.append (f);
 			}
 		}
 		
-		public void used (DataSource s) {
+		public void used (G s) {
 			// bring to head
-			unowned List<DataSource> link = lru.find_custom (s, DataSource.compare);
+			unowned List<G> link = lru.find_custom (s, compare);
 			if (link != null) {
 				lru.delete_link (link);
 				lru.prepend (s);
 			}
 		}
 		
-		public void remove (DataSource f) {
-			unowned List<DataSource> link = lru.find_custom (f, DataSource.compare);
+		public void remove (G f) {
+			unowned List<G> link = lru.find_custom (f, compare);
 			if (link != null) {
 				lru.delete_link (link);
 			}
 		}
 		
-		public unowned List<DataSource> list () {
+		public unowned List<G> list () {
 			return lru;
 		}
 		
-		public SourceLRU copy () {
-			var res = new SourceLRU ();
+		public LRU<G> copy () {
+			var res = new LRU<G> (compare);
 			res.lru = lru.copy ();
 			return res;
 		}

@@ -100,7 +100,7 @@ namespace Vanubi.UI {
 	}
 
 	public class EditorContainer : EventBox {
-		public SourceLRU lru = new SourceLRU ();
+		public LRU<DataSource> lru = new LRU<DataSource> (DataSource.compare);
 		
 		public Editor editor {
 			get {

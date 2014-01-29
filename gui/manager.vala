@@ -870,7 +870,7 @@ namespace Vanubi.UI {
 		}
 		
 		// iterate lru of all EditorContainer and perform the given operation on each of them
-		public bool each_lru (Operation<SourceLRU> op) {
+		public bool each_lru (Operation<LRU<DataSource>> op) {
 			return each_editor_container ((c) => {
 					return op (c.lru);
 			});

@@ -23,7 +23,7 @@ libvanubi_la_VALASOURCES = \
 	matching.vala 		\
 	search.vala 		\
 	source.vala			\
-	sourcelru.vala 		\
+	lru.vala	 		\
 	sources/localfile.vala	\
 	sources/remotefile.vala	\
 	sources/scratch.vala	\

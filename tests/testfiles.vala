@@ -35,7 +35,7 @@ void test_short_paths () {
 }
 
 void test_lru () {
-	var lru = new SourceLRU ();
+	var lru = new LRU<DataSource> (DataSource.compare);
 	lru.append (DataSource.new_from_string ("/foo"));
 	assert (lru.list().data.equal (DataSource.new_from_string ("/foo")));
 	
