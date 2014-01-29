@@ -1,5 +1,5 @@
 /*
- *  Copyright © 2011-2013 Luca Bruno
+ *  Copyright © 2011-2014 Luca Bruno
  *
  *  This file is part of Vanubi.
  *
@@ -85,7 +85,7 @@ namespace Vanubi {
 	}
 
 	/* Matches a pattern against objects, and returns a ranking of the objects that match */
-	public GenericArray<Annotated<G>> pattern_match_many<G> (string pattern, Annotated<G>[] objects, Cancellable cancellable) throws Error {
+	public GenericArray<Annotated<G>> pattern_match_many<G> (string pattern, Annotated<G>[] objects, Cancellable? cancellable = null) throws Error {
 		Match<Annotated<G>?>[] matches = null;
 		foreach (var object in objects) {
 			cancellable.set_error_if_cancelled ();

@@ -309,9 +309,14 @@ namespace Vanubi.UI {
 			index_command ("kill-line", "Delete the current line");
 			execute_command["kill-line"].connect (on_kill_line);
 
-			bind_command ({ Key (Gdk.Key.space, Gdk.ModifierType.CONTROL_MASK) }, "select-all");
+			bind_command ({ Key (Gdk.Key.x, Gdk.ModifierType.CONTROL_MASK),
+							Key (Gdk.Key.a, 0) }, "select-all");
 			index_command ("select-all", "Select all the text");
 			execute_command["select-all"].connect (on_select_all);
+
+			bind_command ({ Key (Gdk.Key.space, Gdk.ModifierType.CONTROL_MASK) }, "abbrev-complete");
+			index_command ("abbrev-complete", "Complete the current text based on words in the buffer");
+			execute_command["abbrev-complete"].connect (on_abbrev_complete);
 
 			bind_command ({ Key (Gdk.Key.e, Gdk.ModifierType.CONTROL_MASK) }, "end-line");
 			bind_command ({ Key (Gdk.Key.End, 0) }, "end-line");
@@ -1520,6 +1525,37 @@ namespace Vanubi.UI {
 
 		void on_select_all (Editor ed) {
 			ed.view.select_all(true);
+		}
+
+		void on_abbrev_complete (Editor ed) {
+			var buf = (EditorBuffer) ed.view.buffer;
+			// get current word
+			TextIter start;
+			buf.get_iter_at_mark (out start, buf.get_insert ());
+			// backward
+			while (!start.is_start() && (start.get_char().isalnum() || start.get_char() == '_')) start.backward_char ();
+			start.forward_char();
+
+			var end = start;
+			// forward
+			while (!end.is_end() && (end.get_char().isalnum() || end.get_char() == '_')) end.forward_char ();
+
+			var word = buf.get_text (start, end, false);
+			if (word == "") {
+				return;
+			}
+			
+			buf.abbrevs.complete.begin (word, Priority.DEFAULT, null, (s,r) => {
+					try {
+						var res = buf.abbrevs.complete.end (r);
+						if (res.length > 0) {
+							message (res[0]);
+						}
+					} catch (IOError.CANCELLED e) {
+					} catch (Error e) {
+						set_status_error (e.message);
+					}
+			});
 		}
 
 		void on_pipe_shell_clipboard (Editor ed) {

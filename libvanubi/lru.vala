@@ -50,6 +50,10 @@ namespace Vanubi {
 				lru.delete_link (link);
 			}
 		}
+
+		public void clear () {
+			lru = null;
+		}
 		
 		public unowned List<G> list () {
 			return lru;

@@ -12,6 +12,7 @@ lib_LTLIBRARIES = libvanubi@PACKAGE_SUFFIX@.la
 libvanubi_la_VALASOURCES = \
 	charset.vala 		\
 	config.vala 		\
+	completion.vala		\
 	filecluster.vala 	\
 	files.vala			\
 	buffer.vala 		\

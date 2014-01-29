@@ -20,6 +20,46 @@
 using Gtk;
 
 namespace Vanubi.UI {
+	public class EditorBuffer : SourceBuffer {
+		public AbbrevCompletion abbrevs { get; private set; default = new AbbrevCompletion (); }
+		uint abbrev_timeout = 0;
+		
+		public EditorBuffer () {
+		}
+
+		~EditorBuffer () {
+			if (abbrev_timeout > 0) {
+				Source.remove (abbrev_timeout);
+			}
+		}
+		
+		public override void changed () {
+			base.changed ();
+
+			/* queue_update_abbrevs (); */
+		}
+
+		public void queue_update_abbrevs () {
+			if (abbrev_timeout > 0) {
+				return;
+			}
+			
+			Timeout.add_seconds (1, () => {
+					abbrev_timeout = 0;
+					update_abbrevs ();
+					return false;
+			});
+		}
+
+		void update_abbrevs () {
+			TextIter start, end;
+			get_start_iter (out start);
+			get_end_iter (out end);
+			var text = get_text (start, end, false);
+			run_in_thread.begin<void*> (() => { abbrevs.index_text (text); return null; });
+		}
+	}
+	
 	public class EditorView : SourceView {
 #if 0
 		TextTag caret_text_tag;
@@ -28,7 +68,7 @@ namespace Vanubi.UI {
 
 		construct {
 			tab_width = 4;
-			buffer = new SourceBuffer (null);
+			buffer = new EditorBuffer ();
 			buffer.mark_set.connect (update_caret_position);
 			buffer.changed.connect (update_caret_position);
 #if 0
@@ -590,7 +630,7 @@ namespace Vanubi.UI {
 				});
 			}
 		}
-		
+
 		void on_file_count () {
 			TextIter insert;
 			var buf = view.buffer;
