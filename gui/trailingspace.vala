@@ -68,11 +68,28 @@ namespace Vanubi.UI {
 		public void check_buffer ()
 		{
 			var tot_lines = view.buffer.get_line_count ();
-			for (var i=1; i<=tot_lines; i++) {
-				check_line (i);
+			for (var i=0; i<=tot_lines; i++) {
+				if (get_cursor_line () != i) {
+					check_line (i);
+				}
 			}
 		}
-		
+
+		public void untrail_buffer ()
+		{
+			var tot_lines = view.buffer.get_line_count ();
+			for (var i=0; i<tot_lines; i++) {
+				untrail_line (i);
+			}
+		}
+
+		public void untrail_region (int line_start, int line_end)
+		{
+			for (var i=line_start; i<line_end; i++) {
+				untrail_line (i);
+			}
+		}
+
 		private void cleanup_line (int line) {
 			TextIter iter_start, iter_end;
 			view.buffer.get_iter_at_line_offset (out iter_start, line, 0);

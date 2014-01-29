@@ -227,7 +227,9 @@ namespace Vanubi.UI {
 			file_loading = new Label ("");
 			file_loading.margin_left = 20;
 			infobar.add (file_loading);
-			
+
+			((SourceBuffer)view.buffer).undo.connect_after (on_trailing_spaces);
+			((SourceBuffer)view.buffer).redo.connect_after (on_trailing_spaces);
 			view.buffer.insert_text.connect_after (on_insert_text);
 			view.notify["buffer"].connect_after (on_buffer_changed);
 			on_buffer_changed ();
@@ -505,6 +507,15 @@ namespace Vanubi.UI {
 				trailsp.check_buffer ();
 			}
 		}
+
+		public void clean_trailing_spaces (TextIter start, TextIter end) {
+			if (start.equal (end)) {
+				/* No selection */
+				trailsp.untrail_buffer ();
+			} else {
+				trailsp.untrail_region (start.get_line (), end.get_line ());
+			}
+		}
 		
 		/* events */
 
@@ -514,7 +525,7 @@ namespace Vanubi.UI {
 				trailsp.check_inserted_text (ref pos, new_text, untrail);
 			}
 		}
-		
+
 		void on_buffer_changed () {
 			if (!(view.buffer is SourceBuffer)) {
 				// very weird, done on textview disposal

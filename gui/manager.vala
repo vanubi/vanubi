@@ -495,6 +495,10 @@ namespace Vanubi.UI {
 			index_command ("toggle-auto-clean-trailing-spaces", "Automatically clean trailing spaces while editing");
 			execute_command["toggle-auto-clean-trailing-spaces"].connect (on_toggle_auto_clean_trailing_spaces);
 			
+			bind_command (null, "clean-trailing-spaces");
+			index_command ("clean-trailing-spaces", "Clean trailing spaces in the selection/buffer");
+			execute_command["clean-trailing-spaces"].connect (on_clean_trailing_spaces);
+			
 			bind_command (null, "toggle-remote-file-server");
 			index_command ("toggle-remote-file-server", "Service for opening files remotely with vsh and van");
 			execute_command["toggle-remote-file-server"].connect (on_toggle_remote_file_server);
@@ -2492,6 +2496,12 @@ namespace Vanubi.UI {
 			var val = !conf.get_editor_bool ("auto_clean_trailing_spaces", true);
 			conf.set_editor_bool ("auto_clean_trailing_spaces", val);
 			set_status (val ? "Enabled" : "Disabled");
+		}
+		
+		void on_clean_trailing_spaces (Editor editor) {
+			editor.view.buffer.begin_user_action ();
+			editor.clean_trailing_spaces (selection_start, selection_end);
+			editor.view.buffer.end_user_action ();
 		}
 		
 		void on_remote_open_file (RemoteFileSource file) {
