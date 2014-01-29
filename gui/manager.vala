@@ -1856,13 +1856,12 @@ namespace Vanubi.UI {
 			var indent_engine = get_indent_engine (ed);
 			var buf = (SourceBuffer) ed.view.buffer;
 
+			buf.begin_user_action ();		
 			if (indent_engine == null) {
 				// insert a tab
-				buf.begin_user_action ();		
 				buf.delete_selection (true, true);
 				buf.insert_at_cursor ("\t", -1);
 				ed.view.scroll_mark_onscreen (buf.get_insert ());
-				buf.end_user_action ();
 			} else {
 				var vbuf = indent_engine.buffer;
 				// indent every selected line
@@ -1875,6 +1874,7 @@ namespace Vanubi.UI {
 					indent_engine.indent (viter);
 				}
 			}
+			buf.end_user_action ();
 		}
 		
 		void on_comment_region (Editor ed) {

@@ -112,9 +112,7 @@ namespace Vanubi.UI {
 				}
 				return;
 			}
-			buf.begin_user_action ();
 			base.set_indent (line, indent);
-			buf.end_user_action ();
 		}
 	}
 
