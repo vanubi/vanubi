@@ -61,7 +61,11 @@ namespace Vanubi {
 		
 		public LRU<G> copy () {
 			var res = new LRU<G> (compare);
-			res.lru = lru.copy ();
+			unowned List<G> ptr = lru;
+			while (ptr != null) {
+				res.lru.append (ptr.data);
+				ptr = ptr.next;
+			}
 			return res;
 		}
 	}

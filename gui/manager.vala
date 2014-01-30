@@ -1306,12 +1306,15 @@ namespace Vanubi.UI {
 		}
 
 		/* Kill a buffer. The file of this buffer must not have any other editors visible. */
-		void kill_buffer (Editor editor, GenericArray<Editor> editors, DataSource next_source) {
-			if (!(editor.source is ScratchSource)) { // scratch never dies
-				// removed file, update all editor containers
-				each_lru ((lru) => { lru.remove (editor.source); return true; });
-				sources.remove (editor.source);
-				conf.cluster.closed_file ((FileSource) editor.source);
+		void kill_buffer (Editor editor, GenericArray<Editor> editors, owned DataSource next_source) {
+			var source = editor.source; // keep alive
+			if (!(source is ScratchSource)) { // scratch never dies
+				// update all editor containers
+				each_lru ((lru) => { lru.remove (source); return true; });
+				sources.remove (source);
+				if (source is FileSource) {
+					conf.cluster.closed_file ((FileSource) source);
+				}
 			}
 			
 			var container = editor.editor_container;

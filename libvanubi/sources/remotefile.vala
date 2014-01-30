@@ -406,6 +406,8 @@ namespace Vanubi {
 		}
 		
 		public override async uint8[] execute_shell (string command_line, uint8[]? input = null, out uint8[] stderr = null, out int status = null, int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) throws Error {
+			stderr = null;
+			
 			var chan = yield remote.acquire (io_priority, cancellable);
 			var os = chan.output_stream;
 			var cmd = "execute\n%s\n%s\n".printf (local_path, command_line);
