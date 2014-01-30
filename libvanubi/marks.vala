@@ -26,6 +26,10 @@
 			 current = null;
 			 stack = null;
 		 }
+
+		 public unowned List<Location> list () {
+			 return stack;
+		 }
 		 
 		 public void mark (Location loc) {
 			 if (current == null) {

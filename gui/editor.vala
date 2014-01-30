@@ -402,7 +402,7 @@ namespace Vanubi.UI {
 
 		Cancellable? loading_cancellable = null;
 		
-		public async void replace_contents (InputStream is, bool undoable = false, owned Cancellable? cancellable = null) throws Error {
+		public async void replace_contents (InputStream is, bool undoable = false, int io_priority = GLib.Priority.LOW, owned Cancellable? cancellable = null) throws Error {
 			if (cancellable == null) {
 				cancellable = new Cancellable ();
 			}
@@ -447,7 +447,7 @@ namespace Vanubi.UI {
 					}
 					
 					data.length = 4096;
-					var r = yield is.read_async (data, Priority.LOW, cancellable);
+					var r = yield is.read_async (data, io_priority, cancellable);
 					if (r == 0) {
 						break;
 					}

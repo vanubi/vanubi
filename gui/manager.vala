@@ -716,6 +716,26 @@ namespace Vanubi.UI {
 			}
 		}
 
+		public async void replace_editor_contents (Editor ed, InputStream is, bool undoable = false, int io_priority = GLib.Priority.LOW, owned Cancellable? cancellable = null) throws Error {
+			yield ed.replace_contents (is, undoable, io_priority, cancellable);
+
+			// reload user marks
+			Idle.add (() => {
+					foreach (var loc in marks.list ()) {
+						if (loc.source != null) {
+							each_source_editor (loc.source, (e) => {
+									loc.set_data ("start-mark", null);
+									loc.set_data ("end-mark", null);
+									get_start_mark_for_location (loc, e.view.buffer);
+									get_end_mark_for_location (loc, e.view.buffer);
+									return false; // the first editor is enough
+							});
+						}
+					}
+					return false;
+			});
+		}
+		
 		public async void open_source (Editor editor, owned DataSource source, bool focus = true) {
 			yield open_location (editor, new Location (source), focus);
 		}
@@ -775,7 +795,7 @@ namespace Vanubi.UI {
 					ed.grab_focus ();
 				}
 
-				yield ed.replace_contents (is);
+				yield replace_editor_contents (ed, is);
 				is.close ();
 				
 				var buf = ed.view.buffer;
@@ -1164,7 +1184,7 @@ namespace Vanubi.UI {
 			var old_offset = selection_start.get_offset ();
 			try {
 				var is = yield editor.source.read ();
-				yield editor.replace_contents (is);
+				yield replace_editor_contents (editor, is);
 				is.close ();
 
 				TextIter iter;
@@ -1583,7 +1603,7 @@ namespace Vanubi.UI {
 				var stream = new MemoryInputStream.from_data ((owned) output, GLib.free);
 
 				var buf = ed.view.buffer;
-				yield ed.replace_contents (stream, true);
+				yield replace_editor_contents (ed, stream, true);
 				stream.close ();
 				
 				TextIter iter;
