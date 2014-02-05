@@ -125,10 +125,12 @@ namespace Vanubi.UI {
 
 	class SimpleCompletionBar<G> : CompletionBar<G> {
 		protected Annotated[] choices;
+		bool sort;
 
-		public SimpleCompletionBar (owned Annotated[] choices, string default = "") {
+		public SimpleCompletionBar (owned Annotated[] choices, string default = "", bool sort = true) {
 			base (default);
 			this.choices = (owned) choices;
+			this.sort = sort;
 		}
 
 		protected override async Annotated[]? complete (string pattern, out string common_choice, Cancellable cancellable) {
@@ -140,7 +142,7 @@ namespace Vanubi.UI {
 			
 			GenericArray<Annotated<G>> matches;
 			try {
-				matches = yield run_in_thread (() => { return pattern_match_many<G> (pattern, choices, cancellable); });
+				matches = yield run_in_thread (() => { return pattern_match_many<G> (pattern, choices, sort, cancellable); });
 			} catch (IOError.CANCELLED e) {
 				return null;
 			} catch (Error e) {
@@ -166,7 +168,7 @@ namespace Vanubi.UI {
 	
 	class SwitchBufferBar : SimpleCompletionBar<DataSource> {
 		public SwitchBufferBar (owned Annotated[] choices) {
-			base ((owned) choices);
+			base ((owned) choices, "", false);
 		}
 	}
 	

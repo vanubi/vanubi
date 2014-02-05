@@ -70,7 +70,7 @@ namespace Vanubi {
 			
 			GenericArray<Annotated<string>> matches;
 			try {
-				matches = yield run_in_thread (() => { return pattern_match_many<string> (pattern, tags, cancellable); });
+				matches = yield run_in_thread (() => { return pattern_match_many<string> (pattern, tags, true, cancellable); });
 			} catch (IOError.CANCELLED e) {
 				return null;
 			}

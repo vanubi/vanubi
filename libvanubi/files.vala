@@ -46,7 +46,7 @@ namespace Vanubi {
 				}
 			} else {
 				// pattern match
-				var res = pattern_match_many<FileSource> (pattern[index], a, cancellable);
+				var res = pattern_match_many<FileSource> (pattern[index], a, true, cancellable);
 				foreach (var an in res.data) {
 					matches += an.obj;
 				}

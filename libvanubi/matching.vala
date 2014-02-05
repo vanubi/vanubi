@@ -85,7 +85,7 @@ namespace Vanubi {
 	}
 
 	/* Matches a pattern against objects, and returns a ranking of the objects that match */
-	public GenericArray<Annotated<G>> pattern_match_many<G> (string pattern, Annotated<G>[] objects, Cancellable? cancellable = null) throws Error {
+	public GenericArray<Annotated<G>> pattern_match_many<G> (string pattern, Annotated<G>[] objects, bool sort = true, Cancellable? cancellable = null) throws Error {
 		Match<Annotated<G>?>[] matches = null;
 		foreach (var object in objects) {
 			cancellable.set_error_if_cancelled ();
@@ -94,7 +94,11 @@ namespace Vanubi {
 				matches += new Match<Annotated<G>?> ((owned) object, score);
 			}
 		}
-		qsort_with_data<Match> (matches, sizeof (Match), (CompareDataFunc<Match>) match_compare_func);
+		
+		if (sort) {
+			qsort_with_data<Match> (matches, sizeof (Match), (CompareDataFunc<Match>) match_compare_func);
+		}
+		
 		cancellable.set_error_if_cancelled ();
 
 		var result = new GenericArray<Annotated<G>> ();
