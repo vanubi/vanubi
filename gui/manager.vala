@@ -858,6 +858,11 @@ namespace Vanubi.UI {
 		// iterate all editors of a given source and perform the given operation on each of them
 		public bool each_source_editor (DataSource source, Operation<Editor> op) {
 			unowned GenericArray<Editor> editors;
+			source = sources[source];
+			if (source == null) {
+				return true;
+			}
+			
 			editors = source.get_data ("editors");
 			if (editors == null) {
 				return true;
