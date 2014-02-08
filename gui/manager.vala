@@ -838,7 +838,6 @@ namespace Vanubi.UI {
 							return false;
 						}
 					}
-					return true;
 				} else if (!op (source)) {
 					return false;
 				}
@@ -858,7 +857,7 @@ namespace Vanubi.UI {
 		// iterate all editors of a given source and perform the given operation on each of them
 		public bool each_source_editor (DataSource source, Operation<Editor> op) {
 			unowned GenericArray<Editor> editors;
-			source = sources[source];
+			source = sources[source]; // normalize
 			if (source == null) {
 				return true;
 			}
@@ -926,8 +925,8 @@ namespace Vanubi.UI {
 				source.set_data ("editors", (owned) etors);
 			} else {
 				// get the editors of the source
-				editors = source.get_data ("editors");
 				source = s; // normalize
+				editors = source.get_data ("editors");
 			}
 
 			// first find an editor that is not visible, so we can reuse it
