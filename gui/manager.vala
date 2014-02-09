@@ -1451,90 +1451,91 @@ namespace Vanubi.UI {
 			saving_on_quit = true;
 			
 			var modified = get_modified_editors ();
-			if (modified.length == 0) {
-				// faster
-				quit ();
-			}
-			
-			execute_command["join-all"](ed, "join-all");
-
-			var save_all = false;
-			foreach (unowned Editor m in modified.data) {
-				if (ed.view.buffer != m.view.buffer) {
-					replace_widget (ed, m);
-				}
-				ed = m;
+			if (modified.length > 0) {
+				execute_command["join-all"](ed, "join-all");
 				
-				var discard = false;
-				var aborted = false;
-				var ignore_abort = false;
-
-				SourceFunc resume = ask_save_modified_editors.callback;
-
-				// ask user
-				var bar = new MessageBar ("<b>s = save, n = discard, ! = save-all, q = discard all</b>");
-				bar.key_pressed.connect ((e) => {
-						if (e.keyval == Gdk.Key.s) {
-							ignore_abort = true;
-							Idle.add ((owned) resume);
-							abort (ed);
-							return true;
-						} else if (e.keyval == Gdk.Key.n) {
-							ignore_abort = true;
-							discard = true;
-							Idle.add ((owned) resume);
-							abort (ed);
-							return true;
-						} else if (e.keyval == Gdk.Key.q) {
-							quit();
-							return true;
-						} else if (e.keyval == '!') {
-							ignore_abort = true;
-							save_all = true;
-							Idle.add ((owned) resume);
-							abort (ed);
-							return true;
-						}
-						return false;
-				});
-				bar.aborted.connect (() => {
-						aborted = true;
-						Idle.add ((owned) resume);
-						abort (ed);
-				});
-				// ensure this coroutine does not deadlock
-				bar.destroy.connect (() => {
-						if (!aborted) {
-							Idle.add ((owned) resume);
-						}
-						aborted = true;
-				});						
-				add_overlay (bar);
-				bar.show ();
-				bar.grab_focus ();
-				
-				yield;
-				if (aborted && !ignore_abort) {
-					saving_on_quit = false;
-					return;
-				}
-				if (discard) {
-					continue;
-				}
-				if (save_all) {
-					break;
-				}
-				
-				yield save_file (m);
-			}
-						
-			if (save_all) {
-				// get a fresh list of modified editors
-				modified = get_modified_editors ();
+				var save_all = false;
 				foreach (unowned Editor m in modified.data) {
+					if (ed.view.buffer != m.view.buffer) {
+						replace_widget (ed, m);
+					}
+					ed = m;
+					
+					var discard = false;
+					var aborted = false;
+					var ignore_abort = false;
+					
+					SourceFunc resume = ask_save_modified_editors.callback;
+					
+					// ask user
+					var bar = new MessageBar ("<b>s = save, n = discard, ! = save-all, q = discard all</b>");
+					bar.key_pressed.connect ((e) => {
+							if (e.keyval == Gdk.Key.s) {
+								ignore_abort = true;
+								Idle.add ((owned) resume);
+								abort (ed);
+								return true;
+							} else if (e.keyval == Gdk.Key.n) {
+								ignore_abort = true;
+								discard = true;
+								Idle.add ((owned) resume);
+								abort (ed);
+								return true;
+							} else if (e.keyval == Gdk.Key.q) {
+								quit();
+								return true;
+							} else if (e.keyval == '!') {
+								ignore_abort = true;
+								save_all = true;
+								Idle.add ((owned) resume);
+								abort (ed);
+								return true;
+							}
+							return false;
+					});
+					bar.aborted.connect (() => {
+							aborted = true;
+							Idle.add ((owned) resume);
+							abort (ed);
+					});
+					// ensure this coroutine does not deadlock
+					bar.destroy.connect (() => {
+							if (!aborted) {
+								Idle.add ((owned) resume);
+							}
+							aborted = true;
+					});						
+					add_overlay (bar);
+					bar.show ();
+					bar.grab_focus ();
+					
+					yield;
+					if (aborted && !ignore_abort) {
+						saving_on_quit = false;
+						return;
+					}
+					if (discard) {
+						continue;
+					}
+					if (save_all) {
+						break;
+					}
+					
 					yield save_file (m);
 				}
+				
+				if (save_all) {
+					// get a fresh list of modified editors
+					modified = get_modified_editors ();
+					foreach (unowned Editor m in modified.data) {
+						yield save_file (m);
+					}
+				}
 			}
+
+			// hide the window to fool the user, but we want to wait for writing the configuration bits
+			hide ();
+			yield conf.save_immediate ();
 			quit ();
 		}
 
