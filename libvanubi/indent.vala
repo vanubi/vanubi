@@ -675,7 +675,7 @@ namespace Vanubi {
 
 			// lua keywords
 			var prev_text = buf.line_text (prev_line).strip ();
-			if (prev_text.has_suffix (" do") || prev_text.has_suffix (" then") || prev_text == "else" || prev_text.has_prefix ("function ")) {
+			if (prev_text.has_suffix (" do") || prev_text.has_suffix (" then") || prev_text == "else" || prev_text.has_prefix ("function ") || prev_text.has_prefix ("local function ")) {
 				new_indent = prev_indent + tab_width;
 			}
 			
