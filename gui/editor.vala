@@ -558,6 +558,11 @@ namespace Vanubi.UI {
 		}
 
 		public void clean_trailing_spaces (TextIter start, TextIter end) {
+			if (trailsp == null) {
+				/* Not enabled */
+				return;
+			}
+
 			if (start.equal (end)) {
 				/* No selection */
 				trailsp.untrail_buffer ();
