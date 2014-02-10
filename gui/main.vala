@@ -197,7 +197,7 @@ namespace Vanubi.UI {
 				} else if (filename[0] == '+') {
 					// go to line for all the files
 					unowned string line = filename.offset (1);
-					start_line = int.parse (line);
+					start_line = int.parse (line)-1;
 					continue;
 				} else {
 					loc = new Location (new LocalFileSource (command_line.create_file_for_arg (filename)));
