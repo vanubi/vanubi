@@ -214,7 +214,7 @@ namespace Vanubi.UI {
 				manager.open_location.begin (manager.last_focused_editor, loc, focus, (s,r) => {
 						manager.open_source.end (r);
 						loaded++;
-						if (loaded == locations.length) {
+						if (loaded > 1 && loaded == locations.length) {
 							// mark sources as used in reverse order, except the first one; this is very convenient when opening multiple files
 							var lru = manager.last_focused_editor.editor_container.lru;
 							lru.used (locations[0].source);
