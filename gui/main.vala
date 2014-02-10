@@ -196,9 +196,23 @@ namespace Vanubi.UI {
 				}
 			}
 
+			// open the sources, focus the first source
 			var focus = true;
-			foreach (unowned DataSource file in sources) {
-				manager.open_source.begin (manager.last_focused_editor, file, focus);
+			var loaded = 0;
+
+			foreach (unowned DataSource source in sources) {
+				manager.open_source.begin (manager.last_focused_editor, source, focus, (s,r) => {
+						manager.open_source.end (r);
+						loaded++;
+						if (loaded == sources.length) {
+							// mark sources as used in reverse order, except the first one; this is very convenient when opening multiple files
+							var lru = manager.last_focused_editor.editor_container.lru;
+							lru.used (sources[0]);
+							for (var i=sources.length-1; i >= 1; i--) {
+								lru.used (sources[i]);
+							}
+						}
+				});
 				focus = false;
 			}
 
