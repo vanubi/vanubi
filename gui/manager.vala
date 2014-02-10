@@ -23,7 +23,7 @@ namespace Vanubi.UI {
 	public class Manager : Grid {
 		/* List of data sources opened. Work on unique DataSource instances. */
 		HashTable<DataSource, DataSource> sources = new HashTable<DataSource, DataSource> (DataSource.hash, DataSource.equal);
-		
+
 		internal KeyManager<Editor> keymanager;
 		string last_search_string = "";
 		string last_replace_string = "";
@@ -34,7 +34,7 @@ namespace Vanubi.UI {
 		TextIter selection_end;
 
 		bool saving_on_quit = false;
-		
+
 		[Signal (detailed = true)]
 		public signal void execute_command (Editor editor, string command);
 
@@ -56,17 +56,17 @@ namespace Vanubi.UI {
 		public Editor last_focused_editor = null; // must never be null
 		int next_stream_id = 1;
 		RemoteFileServer remote = null;
-		
+
 		Session last_session;
-		
+
 		class KeysWrapper {
 			public Key[] keys;
-			
+
 			public KeysWrapper (Key[] keys) {
 				this.keys = keys;
 			}
 		}
-		
+
 		HashTable<string, KeysWrapper> default_shortcuts = new HashTable<string, KeysWrapper> (str_hash, str_equal);
 
 		public Manager () {
@@ -80,11 +80,11 @@ namespace Vanubi.UI {
 			main_box = new EventBox();
 			main_box.expand = true;
 			add (main_box);
-			
+
 			// grid containing the editors
 			editors_grid = new Grid ();
 			main_box.add (editors_grid);
-			
+
 			// status bar
 			statusbar = new StatusBar ();
 			statusbar.margin_left = 10;
@@ -103,7 +103,7 @@ namespace Vanubi.UI {
 				var lang = lang_manager.get_language (lang_id);
 				lang_index.index_document (new StringSearchDocument (lang_id, {lang.name, lang.section}));
 			}
-			
+
 			// setup search index synonyms
 			command_index = new StringSearchIndex ();
 			command_index.synonyms["exit"] = "quit";
@@ -141,7 +141,7 @@ namespace Vanubi.UI {
 				"save-file");
 			index_command ("save-file", "Save or create the file of the current buffer");
 			execute_command["save-file"].connect (on_save_file);
-			
+
 			bind_command (null, "save-as-file");
 			index_command ("save-as-file", "Save the current buffer to another file but stay on this buffer");
 			execute_command["save-as-file"].connect (on_save_as_file);
@@ -228,12 +228,12 @@ namespace Vanubi.UI {
 			index_command ("split-add-down", "Split buffer on top and down buffers");
 			execute_command["split-add-down"].connect (on_split);
 
-			bind_command ({ 
+			bind_command ({
 				Key (Gdk.Key.l, Gdk.ModifierType.CONTROL_MASK) }, "next-editor");
 			index_command ("next-editor", "Move to the next buffer", "cycle right");
 			execute_command["next-editor"].connect (on_switch_editor);
 
-			bind_command ({ 
+			bind_command ({
 				Key (Gdk.Key.j, Gdk.ModifierType.CONTROL_MASK) }, "prev-editor");
 			index_command ("prev-editor", "Move to the previous buffer", "cycle left");
 			execute_command["prev-editor"].connect (on_switch_editor);
@@ -259,11 +259,11 @@ namespace Vanubi.UI {
 			bind_command ({	Key (Gdk.Key.p, Gdk.ModifierType.CONTROL_MASK) }, "backward-line");
 			index_command ("backward-line", "Move the cursor one line backward");
 			execute_command["backward-line"].connect (on_forward_backward_line);
-			
+
 			bind_command ({ Key (Gdk.Key.f, Gdk.ModifierType.CONTROL_MASK) }, "forward-char");
 			index_command ("forward-char", "Move the cursor one character forward");
 			execute_command["forward-char"].connect (on_forward_backward_char);
-			
+
 			bind_command ({ Key (Gdk.Key.b, Gdk.ModifierType.CONTROL_MASK) }, "backward-char");
 			index_command ("backward-char", "Move the cursor one character backward");
 			execute_command["backward-char"].connect (on_forward_backward_char);
@@ -287,11 +287,11 @@ namespace Vanubi.UI {
 							Key (Gdk.Key.r, 0) }, "replace-forward");
 			index_command ("replace-forward", "Replace text forward incrementally");
 			execute_command["replace-forward"].connect (on_search_replace);
-			
+
 			bind_command (null, "replace-backward");
 			index_command ("replace-backward", "Replace text backward incrementally");
 			execute_command["replace-backward"].connect (on_search_replace);
-			
+
 			bind_command (null, "replace-forward-regexp");
 			index_command ("replace-forward-regexp", "Replace text forward incrementally using a regular expression");
 			execute_command["replace-forward-regexp"].connect (on_search_replace);
@@ -303,7 +303,7 @@ namespace Vanubi.UI {
 			bind_command ({ Key (Gdk.Key.k, Gdk.ModifierType.CONTROL_MASK) }, "kill-line-right");
 			index_command ("kill-line-right", "Delete line contents on the right of the cursor");
 			execute_command["kill-line-right"].connect (on_kill_line_right);
-			
+
 			bind_command ({ Key (Gdk.Key.x, Gdk.ModifierType.CONTROL_MASK),
 							Key (Gdk.Key.k, Gdk.ModifierType.CONTROL_MASK) }, "kill-line");
 			index_command ("kill-line", "Delete the current line");
@@ -332,7 +332,7 @@ namespace Vanubi.UI {
 			index_command ("start-line", "Move the cursor to the start of the line, extending the selection");
 			execute_command["start-line"].connect (on_start_line);
 			execute_command["start-line-select"].connect (on_start_line);
-			
+
 			bind_command ({ Key (Gdk.Key.Down, Gdk.ModifierType.CONTROL_MASK) }, "move-block-down");
 			execute_command["move-block-down"].connect (on_move_block);
 
@@ -368,28 +368,28 @@ namespace Vanubi.UI {
 			bind_command (null, "set-shell-scrollback");
 			index_command ("set-shell-scrollback", "Maximum number of scrollback lines used by the terminal");
 			execute_command["set-shell-scrollback"].connect (on_set_shell_scrollback);
-			
+
 			bind_command ({ Key (Gdk.Key.x, Gdk.ModifierType.CONTROL_MASK),
 							Key (Gdk.Key.j, 0) }, "goto-line");
 			index_command ("goto-line", "Jump to a line");
 			execute_command["goto-line"].connect (on_goto_line);
-	
+
 			bind_command (null, "pipe-shell-clipboard");
 			index_command ("pipe-shell-clipboard", "Pass selected or whole text to a shell command and copy the output to the clipboard");
 			execute_command["pipe-shell-clipboard"].connect (on_pipe_shell_clipboard);
-			
+
 			bind_command (null, "pipe-shell-replace");
 			index_command ("pipe-shell-replace", "Pass selected or whole text to a shell command and replace the buffer with the output");
 			execute_command["pipe-shell-replace"].connect (on_pipe_shell_replace);
-			
+
 			bind_command (null, "set-language");
 			index_command ("set-language", "Set the syntax highlight for this file");
 			execute_command["set-language"].connect (on_set_language);
-			
+
 			bind_command (null, "reload-file");
 			index_command ("reload-file", "Reopen the current file");
 			execute_command["reload-file"].connect (on_reload_file);
-			
+
 			bind_command (null, "reload-all-files");
 			index_command ("reload-all-files", "Reopen all the files that have been changed");
 			execute_command["reload-all-files"].connect (on_reload_all_files);
@@ -398,15 +398,15 @@ namespace Vanubi.UI {
 							Key (Gdk.Key.s, 0) }, "repo-grep");
 			index_command ("repo-grep", "Search for text in repository");
 			execute_command["repo-grep"].connect (on_repo_grep);
-			
+
 			bind_command ({ Key (Gdk.Key.x, Gdk.ModifierType.CONTROL_MASK),
 							Key (Gdk.Key.f, 0) }, "repo-open-file");
 			index_command ("repo-open-file", "Find a file in a repository");
 			execute_command["repo-open-file"].connect (on_repo_open_file);
-			
+
 			index_command ("eval-expression", "Execute Vade code");
 			execute_command["eval-expression"].connect (on_eval_expression);
-			
+
 			bind_command ({ Key ('\'', Gdk.ModifierType.CONTROL_MASK) }, "next-error");
 			index_command ("next-error", "Jump to successive error in the compilation shell");
 			execute_command["next-error"].connect (on_goto_error);
@@ -418,11 +418,11 @@ namespace Vanubi.UI {
 			bind_command (null, "save-session");
 			index_command ("save-session", "Save currently opened the files in a session for being opened later");
 			execute_command["save-session"].connect (on_save_session);
-			
+
 			bind_command (null, "restore-session");
 			index_command ("restore-session", "Open the files of the last session");
 			execute_command["restore-session"].connect (on_restore_session);
-			
+
 			bind_command (null, "delete-session");
 			index_command ("delete-session", "Remove an existing session");
 			execute_command["delete-session"].connect (on_delete_session);
@@ -439,74 +439,78 @@ namespace Vanubi.UI {
 			bind_command ({ Key (Gdk.Key.m, Gdk.ModifierType.CONTROL_MASK) }, "mark");
 			index_command ("mark", "Save the current location to the stack of positions");
 			execute_command["mark"].connect (on_mark);
-			
+
 			bind_command (null, "clear-marks");
 			index_command ("clear-marks", "Delete the stack of all marked positions");
 			execute_command["clear-marks"].connect (on_clear_marks);
-			
+
 			bind_command (null, "unmark");
 			index_command ("unmark", "Delete the last used mark from the stack of marked positions");
 			execute_command["unmark"].connect (on_unmark);
-			
+
 			bind_command ({ Key ('.', Gdk.ModifierType.CONTROL_MASK) }, "next-mark");
 			index_command ("next-mark", "Go to the next saved position");
 			execute_command["next-mark"].connect (on_goto_mark);
-			
+
 			bind_command ({ Key (',', Gdk.ModifierType.CONTROL_MASK) }, "prev-mark");
 			index_command ("prev-mark", "Go to the previously saved position");
 			execute_command["prev-mark"].connect (on_goto_mark);
-			
+
 			bind_command ({ Key (Gdk.Key.F11, 0) }, "full-screen");
 			index_command ("full-screen", "Full-screen mode");
 			execute_command["full-screen"].connect (on_zen_mode);
-			
+
 			bind_command (null, "zen-mode");
 			index_command ("zen-mode", "Put yourself in meditation mode");
 			execute_command["zen-mode"].connect (on_zen_mode);
-			
+
 			bind_command (null, "update-copyright-year");
 			index_command ("update-copyright-year", "Update copyright year of the current file");
 			execute_command["update-copyright-year"].connect (on_update_copyright_year);
-			
+
 			bind_command (null, "toggle-autoupdate-copyright-year");
 			index_command ("toggle-autoupdate-copyright-year", "Auto update copyright year of modified files");
 			execute_command["toggle-autoupdate-copyright-year"].connect (on_toggle_autoupdate_copyright_year);
-			
+
 			bind_command (null, "about");
 			index_command ("about", "About");
 			execute_command["about"].connect (on_about);
-			
+
 			bind_command (null, "toggle-git-gutter");
 			index_command ("toggle-git-gutter", "Git diff left sidebar");
 			execute_command["toggle-git-gutter"].connect (on_toggle_git_gutter);
-			
+
 			bind_command (null, "toggle-show-branch");
 			index_command ("toggle-show-branch", "Show the repository branch in the file info bar");
 			execute_command["toggle-show-branch"].connect (on_toggle_show_branch);
-			
+
 			bind_command (null, "toggle-right-margin");
 			index_command ("toggle-right-margin", "Show the columns limit delimiter");
 			execute_command["toggle-right-margin"].connect (on_toggle_right_margin);
-			
+
 			bind_command (null, "set-right-margin-column");
 			index_command ("set-right-margin-column", "Set right margin column size");
 			execute_command["set-right-margin-column"].connect (on_set_right_margin_column);
-			
+
 			bind_command (null, "toggle-trailing-spaces");
 			index_command ("toggle-trailing-spaces", "Show trailing spaces");
 			execute_command["toggle-trailing-spaces"].connect (on_toggle_trailing_spaces);
-			
+
 			bind_command (null, "toggle-auto-clean-trailing-spaces");
 			index_command ("toggle-auto-clean-trailing-spaces", "Automatically clean trailing spaces while editing");
 			execute_command["toggle-auto-clean-trailing-spaces"].connect (on_toggle_auto_clean_trailing_spaces);
-			
+
 			bind_command (null, "clean-trailing-spaces");
 			index_command ("clean-trailing-spaces", "Clean trailing spaces in the selection/buffer");
 			execute_command["clean-trailing-spaces"].connect (on_clean_trailing_spaces);
-			
+
 			bind_command (null, "toggle-remote-file-server");
 			index_command ("toggle-remote-file-server", "Service for opening files remotely with vsh and van");
 			execute_command["toggle-remote-file-server"].connect (on_toggle_remote_file_server);
+
+			bind_command (null, "toggle-show-tabs");
+			index_command ("toggle-show-tabs", "Toggle show tab in the editor");
+			execute_command["toggle-show-tabs"].connect (on_toggle_show_tabs);
 
 			// setup empty buffer
 			unowned Editor ed = get_available_editor (ScratchSource.instance);
@@ -514,7 +518,7 @@ namespace Vanubi.UI {
 			container.lru.append (ScratchSource.instance);
 			editors_grid.add (container);
 			container.grab_focus ();
-			
+
 			// remote file server
 			try {
 				remote = new RemoteFileServer (conf);
@@ -522,14 +526,14 @@ namespace Vanubi.UI {
 			} catch (Error e) {
 				set_status_error ("Could not start the remote server: "+e.message);
 			}
-			
+
 			check_remote_file_server ();
 		}
-		
+
 		public string new_stdin_stream_name () {
 			return "*stdin %d*".printf (next_stream_id++);
 		}
-		
+
 		void check_remote_file_server () {
 			var flag = conf.get_global_bool ("remote_file_server", true);
 			if (flag && remote == null) {
@@ -545,14 +549,14 @@ namespace Vanubi.UI {
 				remote = null;
 			}
 		}
-		
+
 		public void clear_status (string? context = null) {
 			if (context == null || context == status_context) {
 				statusbar.set_markup ("");
 			}
 			status_context = null;
 		}
-		
+
 		public void set_status (string msg, string? context = null) {
 			status_context = context;
 			statusbar.set_markup (msg);
@@ -562,19 +566,19 @@ namespace Vanubi.UI {
 			}
 			statusbar.get_style_context().remove_class ("error");
 		}
-		
+
 		public void set_status_error (string msg, string? context = null) {
 			set_status (msg, context);
 			statusbar.get_style_context().add_class ("error");
 		}
-		
+
 		public string get_status (string? context = null) {
 			if (context == null || context == status_context) {
 				return statusbar.get_label ();
 			}
 			return "";
 		}
-		
+
 		public void update_selection (Editor ed) {
 			var buf = ed.view.buffer;
 			buf.get_selection_bounds (out selection_start, out selection_end);
@@ -592,7 +596,7 @@ namespace Vanubi.UI {
 			PANE_LEFT,
 			PANE_RIGHT
 		}
-		
+
 		public void add_overlay (Widget widget, OverlayMode mode = OverlayMode.FIXED) {
 			Allocation alloc;
 			get_allocation (out alloc);
@@ -648,7 +652,7 @@ namespace Vanubi.UI {
 				// so we can easily reset the default shortcut later in the helpbar
 				default_shortcuts[cmd] = new KeysWrapper (keyseq);
 			}
-			
+
 			// get a customized shortcut from the config
 			var keystring = conf.get_shortcut (cmd);
 			if (keystring != null) {
@@ -658,13 +662,13 @@ namespace Vanubi.UI {
 					set_status_error (e.message);
 				}
 			}
-			
+
 			// bother only if there's actually a shortcut for the command
 			if (keyseq.length > 0) {
 				keymanager.bind_command (keyseq, cmd);
 			}
 		}
-		
+
 		public unowned Key[]? get_default_shortcut (string cmd) {
 			var wrapped = default_shortcuts[cmd];
 			if (wrapped != null) {
@@ -676,7 +680,7 @@ namespace Vanubi.UI {
 		public void replace_widget (owned Widget old, Widget r) {
 			var parent = (Container) old.get_parent ();
 			var rparent = (Container) r.get_parent ();
-			
+
 			if (rparent != null) {
 				rparent.remove (r);
 			}
@@ -735,11 +739,11 @@ namespace Vanubi.UI {
 					return false;
 			});
 		}
-		
+
 		public async void open_source (Editor editor, owned DataSource source, bool focus = true) {
 			yield open_location (editor, new Location (source), focus);
 		}
-		
+
 		public async void open_location (Editor editor, owned Location location, bool focus = true) {
 			var source = location.source;
 
@@ -747,7 +751,7 @@ namespace Vanubi.UI {
 			var s = sources[source];
 			if (s != null) {
 				source = s; // normalize
-				
+
 				unowned Editor ed;
 				if (source != editor.source) {
 					ed = get_available_editor (source);
@@ -757,11 +761,11 @@ namespace Vanubi.UI {
 				} else {
 					ed = editor;
 				}
-				
+
 				if (ed.set_location (location)) {
 					Idle.add_full (Priority.HIGH, () => { ed.view.scroll_to_mark (ed.view.buffer.get_insert (), 0, true, 0.5, 0.5); return false; });
 				}
-				
+
 				if (focus) {
 					ed.grab_focus ();
 				}
@@ -797,7 +801,7 @@ namespace Vanubi.UI {
 
 				yield replace_editor_contents (ed, is);
 				is.close ();
-				
+
 				var buf = ed.view.buffer;
 				if (location.start_line < 0) {
 					location.start_line = location.start_column = 0;
@@ -819,7 +823,7 @@ namespace Vanubi.UI {
 				return;
 			}
 			clear_status ();
-			
+
 			var parent = (Container) editors_grid.get_parent();
 			parent.remove (editors_grid);
 			main_box.remove (main_box.get_child ());
@@ -828,7 +832,7 @@ namespace Vanubi.UI {
 		}
 
 		/* File/Editor/etc. COMBINATORS */
-		
+
 		// iterate all data sources and perform the given operation on each of them
 		public bool each_source (Operation<DataSource> op, bool include_scratch = true) {
 			foreach (var source in sources.get_keys ()) {
@@ -844,7 +848,7 @@ namespace Vanubi.UI {
 			}
 			return true;
 		}
-		
+
 		public bool each_file (Operation<FileSource> op) {
 			return each_source ((s) => {
 					if (s is FileSource && !op ((FileSource) s)) {
@@ -853,7 +857,7 @@ namespace Vanubi.UI {
 					return true;
 			});
 		}
-		
+
 		// iterate all editors of a given source and perform the given operation on each of them
 		public bool each_source_editor (DataSource source, Operation<Editor> op) {
 			unowned GenericArray<Editor> editors;
@@ -861,12 +865,12 @@ namespace Vanubi.UI {
 			if (source == null) {
 				return true;
 			}
-			
+
 			editors = source.get_data ("editors");
 			if (editors == null) {
 				return true;
 			}
-			
+
 			foreach (unowned Editor ed in editors.data) {
 				if (!op (ed)) {
 					return false;
@@ -874,7 +878,7 @@ namespace Vanubi.UI {
 			}
 			return true;
 		}
-		
+
 		public bool each_editor (Operation<Editor> op, bool include_scratch = true) {
 			return each_source ((s) => {
 					return each_source_editor (s, (ed) => {
@@ -882,7 +886,7 @@ namespace Vanubi.UI {
 					});
 			}, include_scratch);
 		}
-		
+
 		// iterate all editor containers and perform the given operation on each of them
 		public bool each_editor_container (Operation<EditorContainer> op) {
 			var looked = new EditorContainer[0];
@@ -897,14 +901,14 @@ namespace Vanubi.UI {
 					return true;
 			});
 		}
-		
+
 		// iterate lru of all EditorContainer and perform the given operation on each of them
 		public bool each_lru (Operation<LRU<DataSource>> op) {
 			return each_editor_container ((c) => {
 					return op (c.lru);
 			});
 		}
-		
+
 		/* Returns an Editor for the given file */
 		unowned Editor get_available_editor (DataSource source) {
 			// list of editors for the file
@@ -913,7 +917,7 @@ namespace Vanubi.UI {
 			if (s == null) {
 				// update lru of all existing containers
 				each_lru ((lru) => { lru.append (source); return true; });
-				
+
 				// this is a new source
 				sources[source] = source;
 				if (source is FileSource) {
@@ -935,7 +939,7 @@ namespace Vanubi.UI {
 					return ed;
 				}
 			}
-			
+
 			// no editor reusable, so create one
 			var ed = new Editor (this, conf, source);
 			// set the font according to the user/system configuration
@@ -967,7 +971,7 @@ namespace Vanubi.UI {
 			conf.save_session (session, name);
 			conf.save ();
 		}
-		
+
 		/* events */
 
 		const uint[] skip_keyvals = {Gdk.Key.Control_L, Gdk.Key.Control_R, Gdk.Key.Shift_L, Gdk.Key.Shift_R};
@@ -978,7 +982,7 @@ namespace Vanubi.UI {
 						status_timeout = 0; clear_status (); return false;
 				});
 			}
-			
+
 			var sv = (SourceView) w;
 			Editor editor = sv.get_data ("editor");
 			var keyval = e.keyval;
@@ -1035,7 +1039,7 @@ namespace Vanubi.UI {
 			foreach (unowned string session in sessions) {
 				annotated += new Annotated<string> (session, session);
 			}
-			
+
 			var bar = new SessionCompletionBar ((owned) annotated);
 			bar.activate.connect ((name) => {
 					abort (editor);
@@ -1049,8 +1053,8 @@ namespace Vanubi.UI {
 			bar.show ();
 			bar.grab_focus ();
 		}
-		
-		
+
+
 		async void restore_session (Editor editor, string name) {
 			Session session;
 			if (name == "default") {
@@ -1058,7 +1062,7 @@ namespace Vanubi.UI {
 			} else {
 				session = conf.get_session (name);
 			}
-			
+
 			if (session == null) {
 				set_status ("Session not found", "sessions");
 			} else {
@@ -1066,7 +1070,7 @@ namespace Vanubi.UI {
 				if (session.location != null) {
 					yield open_location (editor, session.location);
 				}
-				
+
 				FileSource? focused_file = session.location != null ? (FileSource) session.location.source : null;
 				foreach (var file in session.files.data) {
 					if (focused_file == null || !file.equal (focused_file)) {
@@ -1075,14 +1079,14 @@ namespace Vanubi.UI {
 				}
 			}
 		}
-		
+
 		void on_restore_session (Editor editor) {
 			var sessions = conf.get_sessions ();
 			var annotated = new Annotated<string>[0];
 			foreach (unowned string session in sessions) {
 				annotated += new Annotated<string> (session, session);
 			}
-			
+
 			var bar = new SessionCompletionBar ((owned) annotated);
 			bar.activate.connect (() => {
 					abort (editor);
@@ -1096,14 +1100,14 @@ namespace Vanubi.UI {
 			bar.show ();
 			bar.grab_focus ();
 		}
-		
+
 		void on_delete_session (Editor editor) {
 			var sessions = conf.get_sessions ();
 			var annotated = new Annotated<string>[0];
 			foreach (unowned string session in sessions) {
 				annotated += new Annotated<string> (session, session);
 			}
-			
+
 			var bar = new SessionCompletionBar ((owned) annotated);
 			bar.activate.connect (() => {
 					abort (editor);
@@ -1119,14 +1123,14 @@ namespace Vanubi.UI {
 			bar.show ();
 			bar.grab_focus ();
 		}
-		
+
 		void on_mark (Editor editor) {
 			var loc = editor.get_location ();
 			get_start_mark_for_location (loc, editor.view.buffer); // create a TextMark
 			marks.mark (loc);
 			set_status ("Mark saved", "marks");
 		}
-		
+
 		void on_unmark (Editor editor) {
 			if (!marks.unmark ()) {
 				set_status ("No mark to be deleted", "marks");
@@ -1134,12 +1138,12 @@ namespace Vanubi.UI {
 				set_status ("Mark deleted", "marks");
 			}
 		}
-		
+
 		void on_clear_marks (Editor editor) {
 			marks.clear ();
 			set_status ("Marks cleared", "marks");
 		}
-		
+
 		void on_goto_mark (Editor editor, string command) {
 			Location? loc;
 			if (command == "next-mark") {
@@ -1147,14 +1151,14 @@ namespace Vanubi.UI {
 			} else {
 				loc = marks.prev_mark ();
 			}
-			
+
 			if (loc == null) {
 				set_status ("No more marks", "marks");
 			} else {
 				open_location.begin (editor, loc);
 			}
 		}
-		
+
 		void on_set_language (Editor editor) {
 			var bar = new HelpBar (this, HelpBar.Type.LANGUAGE);
 			bar.activate.connect ((lang_id) => {
@@ -1179,11 +1183,11 @@ namespace Vanubi.UI {
 			bar.show ();
 			bar.grab_focus ();
 		}
-		
+
 		void on_reload_file (Editor editor) {
 			reload_file.begin (editor);
 		}
-		
+
 		async void reload_file (Editor editor) {
 			var old_offset = selection_start.get_offset ();
 			try {
@@ -1196,7 +1200,7 @@ namespace Vanubi.UI {
 				buf.get_iter_at_offset (out iter, old_offset);
 				buf.place_cursor (iter);
 				editor.view.scroll_mark_onscreen (buf.get_insert ());
-				
+
 				// in case of splitted editors
 				each_source_editor (editor.source, (ed) => {
 						ed.reset_external_changed.begin ();
@@ -1208,7 +1212,7 @@ namespace Vanubi.UI {
 				set_status_error (e.message);
 			}
 		}
-		
+
 		void on_reload_all_files (Editor editor) {
 			each_source ((s) => {
 					each_source_editor (s, (ed) => {
@@ -1221,13 +1225,13 @@ namespace Vanubi.UI {
 					return true;
 			}, false);
 		}
-		
+
 		void on_open_file (Editor editor, string command) {
 			var base_source = editor.source.parent as FileSource;
 			if (base_source == null) {
 				return;
 			}
-			
+
 			var bar = new FileBar (base_source);
 			bar.activate.connect ((p) => {
 					abort (editor);
@@ -1256,7 +1260,7 @@ namespace Vanubi.UI {
 				save_file.begin (editor);
 			}
 		}
-		
+
 		void on_save_as_file (Editor editor, string command) {
 			var base_source = editor.source.parent as FileSource;
 			if (base_source == null) {
@@ -1274,31 +1278,31 @@ namespace Vanubi.UI {
 			bar.show ();
 			bar.grab_focus ();
 		}
-		
+
 		async void save_file (Editor editor, DataSource? as_source = null, bool open_as_source = false) {
 			var buf = editor.view.buffer;
 			if (as_source == null) {
 				as_source = editor.source;
 			}
-			
+
 			if (as_source == null) {
 				return;
 			}
-			
+
 			if (!(buf.get_modified () || !as_source.equal (editor.source))) {
 				// should not save anything
 				return;
 			}
-			
+
 			if (conf.get_global_bool ("autoupdate_copyright_year")) {
 				execute_command["update-copyright-year"] (editor, "autoupdate-copyright-year");
 			}
-				
+
 			TextIter start, end;
 			buf.get_start_iter (out start);
 			buf.get_end_iter (out end);
 			string text = buf.get_text (start, end, false);
-								
+
 			try {
 				yield as_source.write (text.data);
 				if (as_source.equal (editor.source)) {
@@ -1331,16 +1335,16 @@ namespace Vanubi.UI {
 				// *scratch* again, no other opened files
 				return;
 			}
-			
+
 			var container = editor.editor_container;
-			
+
 			unowned Editor ed = get_available_editor (next_source);
 			replace_widget (editor, ed);
 			ed.grab_focus ();
 			foreach (unowned Editor old_ed in editors.data) {
 				((Container) old_ed.get_parent ()).remove (old_ed);
 			}
-			
+
 			unowned List<DataSource> lru_head = container.lru.list();
 			if (lru_head != null && lru_head.data != null && lru_head.next != null) {
 				if (lru_head.data == next_source || (next_source != null && lru_head.data.equal (next_source))) {
@@ -1357,7 +1361,7 @@ namespace Vanubi.UI {
 
 			GenericArray<Editor> editors;
 			editors = editor.source.get_data ("editors");
-			
+
 			bool other_visible = false;
 			foreach (unowned Editor ed in editors.data) {
 				if (editor != ed && ed.visible) {
@@ -1414,7 +1418,7 @@ namespace Vanubi.UI {
 			bar.show ();
 			bar.grab_focus ();
 		}
-		
+
 		void on_set_tab_width (Editor editor) {
 			var val = conf.get_editor_int("tab_width", 4);
 			var bar = new EntryBar (val.to_string());
@@ -1460,24 +1464,24 @@ namespace Vanubi.UI {
 				return;
 			}
 			saving_on_quit = true;
-			
+
 			var modified = get_modified_editors ();
 			if (modified.length > 0) {
 				execute_command["join-all"](ed, "join-all");
-				
+
 				var save_all = false;
 				foreach (unowned Editor m in modified.data) {
 					if (ed.view.buffer != m.view.buffer) {
 						replace_widget (ed, m);
 					}
 					ed = m;
-					
+
 					var discard = false;
 					var aborted = false;
 					var ignore_abort = false;
-					
+
 					SourceFunc resume = ask_save_modified_editors.callback;
-					
+
 					// ask user
 					var bar = new MessageBar ("<b>s = save, n = discard, ! = save-all, q = discard all</b>");
 					bar.key_pressed.connect ((e) => {
@@ -1515,11 +1519,11 @@ namespace Vanubi.UI {
 								Idle.add ((owned) resume);
 							}
 							aborted = true;
-					});						
+					});
 					add_overlay (bar);
 					bar.show ();
 					bar.grab_focus ();
-					
+
 					yield;
 					if (aborted && !ignore_abort) {
 						saving_on_quit = false;
@@ -1531,10 +1535,10 @@ namespace Vanubi.UI {
 					if (save_all) {
 						break;
 					}
-					
+
 					yield save_file (m);
 				}
-				
+
 				if (save_all) {
 					// get a fresh list of modified editors
 					modified = get_modified_editors ();
@@ -1583,7 +1587,7 @@ namespace Vanubi.UI {
 			if (word == "") {
 				return;
 			}
-			
+
 			buf.abbrevs.complete.begin (word, Priority.DEFAULT, null, (s,r) => {
 					try {
 						var res = buf.abbrevs.complete.end (r);
@@ -1609,27 +1613,27 @@ namespace Vanubi.UI {
 					}
 			});
 		}
-		
+
 		void on_pipe_shell_replace (Editor ed) {
 			pipe_shell_replace.begin (ed);
 		}
-		
+
 		async void pipe_shell_replace (Editor ed) {
 			var old_offset = selection_start.get_offset ();
 			try {
 				var output = yield pipe_shell (ed);
-				
+
 				var stream = new MemoryInputStream.from_data ((owned) output, GLib.free);
 
 				var buf = ed.view.buffer;
 				yield replace_editor_contents (ed, stream, true);
 				stream.close ();
-				
+
 				TextIter iter;
 				buf.get_iter_at_offset (out iter, old_offset);
 				buf.place_cursor (iter);
 				ed.view.scroll_mark_onscreen (buf.get_insert ());
-				
+
 				set_status ("Output of command has been replaced into the editor");
 			} catch (IOError.CANCELLED e) {
 			} catch (Error e) {
@@ -1647,9 +1651,9 @@ namespace Vanubi.UI {
 				buf.get_end_iter (out end);
 			}
 			var text = buf.get_text (start, end, false);
-			
+
 			SourceFunc resume = pipe_shell.callback;
-			uint8[]? output = null;			
+			uint8[]? output = null;
 			Error? error = null;
 
 			// prompt for shell command
@@ -1682,7 +1686,7 @@ namespace Vanubi.UI {
 			}
 			return output;
 		}
-		
+
 		void on_move_block (Editor ed, string command) {
 			var buf = ed.view.buffer;
 			string line = null;
@@ -1705,7 +1709,7 @@ namespace Vanubi.UI {
 				if (start_line != end_line) {
 					end.set_line_offset (0);
 				}
-				
+
 				line = start.get_text(end);
 
 				// move between logical lines, not display lines
@@ -1725,12 +1729,12 @@ namespace Vanubi.UI {
 
 		void on_start_line (Editor ed, string cmd) {
 			var extend_select = cmd.has_suffix ("select");
-			
+
 			/* Save the current cursor */
 			var buf = ed.view.buffer;
 			TextIter initial;
 			buf.get_iter_at_mark (out initial, buf.get_insert ());
-			
+
 			/* Move cursor at the start of the visual line */
 			ed.view.move_cursor (MovementStep.DISPLAY_LINE_ENDS, -1, extend_select);
 
@@ -1746,7 +1750,7 @@ namespace Vanubi.UI {
 			while (current.get_char().isspace ()) {
 				current.forward_char ();
 			}
-			
+
 			TextIter cursor;
 			buf.get_iter_at_mark (out cursor, buf.get_insert ());
 			if (current.get_offset() < initial.get_offset ()) {
@@ -1756,21 +1760,21 @@ namespace Vanubi.UI {
 					cursor.forward_char ();
 				}
 			}
-			
+
 			ed.view.scroll_mark_onscreen (buf.get_insert ());
 		}
 
 		void on_end_line (Editor ed, string cmd) {
 			var extend_select = cmd.has_suffix ("select");
-			
+
 			/* Save the original position of the cursor */
 			var buf = ed.view.buffer;
 			TextIter initial;
 			buf.get_iter_at_mark (out initial, buf.get_insert ());
-			
+
 			/* Move to the visual end of the line */
 			ed.view.move_cursor (MovementStep.DISPLAY_LINE_ENDS, 1, extend_select);
-			
+
 			TextIter current;
 			buf.get_iter_at_mark (out current, buf.get_insert ());
 
@@ -1794,7 +1798,7 @@ namespace Vanubi.UI {
 			var orig_line = insert.get_line ();
 			var orig_line_offset = insert.get_line_offset ();
 			buf.get_iter_at_line (out start, insert.get_line());
-			
+
 			var end = start;
 			while (!end.is_end () && start.get_line() == end.get_line()) {
 				end.forward_char ();
@@ -1802,7 +1806,7 @@ namespace Vanubi.UI {
 
 			buf.begin_user_action ();
 			buf.delete (ref start, ref end);
-			
+
 			// repositionate at the same line offset
 			buf.get_iter_at_line (out start, orig_line);
 			while (!start.ends_line () && start.get_line_offset () < orig_line_offset) {
@@ -1811,13 +1815,13 @@ namespace Vanubi.UI {
 			buf.place_cursor (start);
 			buf.end_user_action ();
 		}
-		
+
 		void on_kill_line_right (Editor ed) {
 			var buf = ed.view.buffer;
 
 			TextIter start;
 			buf.get_iter_at_mark (out start, buf.get_insert ());
-			
+
 			var end = start;
 			var start_line = start.get_line ();
 			end.forward_to_line_end ();
@@ -1825,7 +1829,7 @@ namespace Vanubi.UI {
 			if (start_line != end_line) {
 				end.set_line_offset (0);
 			}
-			
+
 			buf.begin_user_action ();
 			buf.delete (ref start, ref end);
 			buf.end_user_action ();
@@ -1833,10 +1837,10 @@ namespace Vanubi.UI {
 
 		void on_insert_simple (Editor ed, string command) {
 			var buf = ed.view.buffer;
-			buf.begin_user_action ();		
-			
+			buf.begin_user_action ();
+
 			buf.delete_selection (true, true);
-			
+
 			if (command == "return") {
 				buf.insert_at_cursor ("\n", -1);
 			} else if (command == "close-paren") {
@@ -1848,17 +1852,17 @@ namespace Vanubi.UI {
 			} else if (command == "tab") {
 				buf.insert_at_cursor ("\t", -1);
 			}
-			
+
 			ed.view.scroll_mark_onscreen (buf.get_insert ());
 			update_selection (ed);
-			
+
 			var indent_engine = get_indent_engine (ed);
 			// only auto indent only on return for python
 			var no_python_indent = indent_engine is Indent_Python && command != "return";
 			if (indent_engine != null && command != "tab" && !no_python_indent) {
 				execute_command["indent"] (ed, "indent");
 			}
-			
+
 			buf.end_user_action ();
 		}
 
@@ -1868,7 +1872,7 @@ namespace Vanubi.UI {
 
 			TextIter iter;
 			buf.get_iter_at_mark (out iter, buf.get_insert ());
-			
+
 			var vbuf = new UI.Buffer (ed.view);
 			if (command == "copy-line-up") {
 				var viter = vbuf.line_start (iter.get_line ());
@@ -1876,7 +1880,7 @@ namespace Vanubi.UI {
 			} else {
 				// insert mark has right gravity, ensure we keep the cursor to stay
 				var mark = buf.create_mark (null, iter, true);
-				
+
 				var viter = vbuf.line_end (iter.get_line ());
 				vbuf.insert (viter, "\n"+vbuf.line_text (viter.line));
 
@@ -1892,17 +1896,17 @@ namespace Vanubi.UI {
 			TextIter insert_iter;
 			var buf = (SourceBuffer) ed.view.buffer;
 			buf.get_iter_at_mark (out insert_iter, buf.get_insert ());
-			
+
 			var next_iter = insert_iter;
 			next_iter.forward_char ();
 			buf.delete (ref insert_iter, ref next_iter);
 		}
-		
+
 		Indent? get_indent_engine (Editor ed) {
 			var vbuf = new UI.Buffer ((SourceView) ed.view);
 			var buf = (SourceBuffer) ed.view.buffer;
 			var lang_id = buf.language != null ? buf.language.id : null;
-			
+
 			if (lang_id == null) {
 				return null;
 			} else {
@@ -1926,12 +1930,12 @@ namespace Vanubi.UI {
 				}
 			}
 		}
-		
+
 		void on_indent (Editor ed) {
 			var indent_engine = get_indent_engine (ed);
 			var buf = (SourceBuffer) ed.view.buffer;
 
-			buf.begin_user_action ();		
+			buf.begin_user_action ();
 			if (indent_engine == null) {
 				// insert a tab
 				buf.delete_selection (true, true);
@@ -1951,7 +1955,7 @@ namespace Vanubi.UI {
 			}
 			buf.end_user_action ();
 		}
-		
+
 		void on_comment_region (Editor ed) {
 			Comment comment_engine;
 			var vbuf = new UI.Buffer ((SourceView) ed.view);
@@ -2029,7 +2033,7 @@ namespace Vanubi.UI {
 				set_status_error (e.message, "eval");
 			}
 		}
-		
+
 		void on_eval_expression (Editor editor) {
 			var bar = new EntryBar (last_vade_code);
 			bar.activate.connect ((code) => {
@@ -2046,10 +2050,10 @@ namespace Vanubi.UI {
 		void on_goto_error (Editor editor, string cmd) {
 			goto_error.begin (editor, cmd);
 		}
-		
+
 		async void goto_error (Editor editor, string cmd) {
 			bool no_more_errors = true;
-			if (error_locations != null) {	
+			if (error_locations != null) {
 				if (error_locations.length() == 1) {
 					current_error = error_locations;
 					no_more_errors = false;
@@ -2087,31 +2091,31 @@ namespace Vanubi.UI {
 				}
 			}
 		}
-		
+
 		void on_repo_grep (Editor editor) {
 			repo_grep.begin (editor);
 		}
-		
+
 		async void repo_grep (Editor editor) {
 			if (!(editor.source is FileSource)) {
 				return;
 			}
-			
+
 			Git git = new Git (conf);
 			FileSource repo_dir = null;
 			try {
 				repo_dir = yield git.get_repo ((FileSource) editor.source.parent);
 			} catch (Error e) {
 			}
-			
+
 			if (repo_dir == null) {
 				set_status ("Not in git repository");
 				return;
 			}
-			
+
 			var git_command = conf.get_global_string ("git_command", "git");
 			InputStream? stream = null;
-			
+
 			var bar = new GrepBar (this, conf, repo_dir, last_grep_string);
 			bar.activate.connect (() => {
 					abort (editor);
@@ -2123,18 +2127,18 @@ namespace Vanubi.UI {
 			bar.changed.connect ((pat) => {
 					last_grep_string = pat;
 					clear_status ("repo-grep");
-					
+
 					if (stream != null) {
 						try {
 							stream.close ();
 						} catch (Error e) {
 						}
 					}
-					
+
 					if (pat == "") {
 						return;
 					}
-					
+
 					int stdout, stderr;
 					try {
 						Process.spawn_async_with_pipes (repo_dir.to_string(),
@@ -2148,7 +2152,7 @@ namespace Vanubi.UI {
 					}
 					stream = new UnixInputStream (stdout, true);
 					bar.stream = stream;
-					
+
 					read_all_async.begin (new UnixInputStream (stderr, true), Priority.DEFAULT, null, (s,r) => {
 							try {
 								var res = read_all_async.end (r);
@@ -2171,27 +2175,27 @@ namespace Vanubi.UI {
 		void on_repo_open_file (Editor editor) {
 			repo_open_file.begin (editor);
 		}
-			
+
 		async void repo_open_file (Editor editor, int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) {
 			var parent = editor.source.parent as FileSource;
 			if (parent == null) {
 				return;
 			}
-			
+
 			Git git = new Git (conf);
 			FileSource repo_dir = null;
 			try {
 				repo_dir = yield git.get_repo (parent);
 			} catch (Error e) {
 			}
-			
+
 			if (repo_dir == null) {
 				set_status ("Not in git repository");
 				return;
 			}
-			
+
 			var git_command = conf.get_global_string ("git_command", "git");
-			
+
 			string res;
 			try {
 				res = (string) yield repo_dir.execute_shell (@"$(git_command) ls-files");
@@ -2199,13 +2203,13 @@ namespace Vanubi.UI {
 				set_status_error (e.message, "repo-open-file");
 				return;
 			}
-					
+
 			var file_names = res.split ("\n");
 			var annotated = new Annotated<DataSource>[file_names.length];
 			for (var i=0; i < file_names.length; i++) {
 				annotated[i] = new Annotated<DataSource> (file_names[i], repo_dir.child (file_names[i]));
 			}
-			
+
 			var bar = new SimpleCompletionBar<DataSource> ((owned) annotated);
 			bar.activate.connect (() => {
 					abort (editor);
@@ -2222,7 +2226,7 @@ namespace Vanubi.UI {
 			bar.grab_focus ();
 		}
 
-		
+
 		void on_split (Editor editor, string command) {
 			split_views (editor, command == "split-add-right" ? Orientation.HORIZONTAL : Orientation.VERTICAL);
 		}
@@ -2257,7 +2261,7 @@ namespace Vanubi.UI {
 			paned.pack1 (container, true, false);
 
 			// pack the new editor container
-			paned.pack2 (newcontainer, true, false);	
+			paned.pack2 (newcontainer, true, false);
 
 			paned.show_all ();
 			editor.grab_focus ();
@@ -2279,16 +2283,16 @@ namespace Vanubi.UI {
 							find_editor((Widget)p.get_child2(), false, false, forward);
 						} else {
 							/* Goto the parent */
-							
+
 							var parent = p.get_parent() as Paned;
-							
+
 							if (parent == null) {
 								/* Reached the root node! */
 								return;
 							} else {
-								
+
 								var lchild = parent.get_child1() as Paned;
-								
+
 								if (lchild != null && lchild == p) { /* Left child */
 									find_editor((Widget)parent, true, true, forward);
 								} else { /* Right child */
@@ -2301,16 +2305,16 @@ namespace Vanubi.UI {
 
 						if (forward) {
 							/* Goto the parent */
-							
+
 							var parent = p.get_parent() as Paned;
-							
+
 							if (parent == null) {
 								/* Reached the root node! */
 								return;
 							} else {
-								
+
 								var lchild = parent.get_child1() as Paned;
-								
+
 								if (lchild != null && lchild == p) { /* Left child */
 									find_editor((Widget)parent, true, true, forward);
 								} else { /* Right child */
@@ -2318,13 +2322,13 @@ namespace Vanubi.UI {
 								}
 							}
 						} else { /* Backward */
-							
+
 							/* Goto left node */
 							find_editor((Widget)p.get_child1(), false, true, forward);
 						}
 					}
 				} else { /* Down */
-					
+
 					if (forward) {
 						/* Goto left node */
 						find_editor((Widget)p.get_child1(), false, true, forward);
@@ -2349,7 +2353,7 @@ namespace Vanubi.UI {
 			var paned = ed.get_parent().get_parent() as Paned;
 			bool fwd = (command == "next-editor") ? true : false;
 
-			if (paned == null) { 
+			if (paned == null) {
 				/* The curr editor is the root node! */
 				return;
 			}
@@ -2370,7 +2374,7 @@ namespace Vanubi.UI {
 				// already on front
 				return;
 			}
-			
+
 			var editor_container = editor.editor_container;
 			((Container) editor_container.get_parent()).remove (editor_container);
 
@@ -2448,7 +2452,7 @@ namespace Vanubi.UI {
 		void on_redo (Editor editor) {
 			editor.view.redo ();
 		}
-		
+
 		void on_forward_backward_line (Editor ed, string command) {
 			if (command == "forward-line") {
 				ed.view.move_cursor (MovementStep.DISPLAY_LINES, 1, false);
@@ -2463,7 +2467,7 @@ namespace Vanubi.UI {
 				ed.view.move_cursor (MovementStep.VISUAL_POSITIONS, -1, false);
 			}
 		}
-		
+
 		void on_zen_mode (Editor editor) {
 			var state = get_window().get_state ();
 			if (Gdk.WindowState.FULLSCREEN in state) {
@@ -2472,7 +2476,7 @@ namespace Vanubi.UI {
 				this.get_window().fullscreen();
 			}
 		}
-		
+
 		void on_update_copyright_year (Editor editor, string command) {
 			var vbuf = new UI.Buffer ((SourceView) editor.view);
 			if (update_copyright_year (vbuf)) {
@@ -2481,21 +2485,21 @@ namespace Vanubi.UI {
 				set_status ("No copyright year to update");
 			}
 		}
-		
+
 		void on_toggle_autoupdate_copyright_year (Editor editor) {
 			var autoupdate_copyright_year = !conf.get_global_bool ("autoupdate_copyright_year");
 			conf.set_global_bool ("autoupdate_copyright_year", autoupdate_copyright_year);
-			
+
 			set_status (autoupdate_copyright_year ? "Enabled" : "Disabled");
 		}
-		
+
 		void on_toggle_remote_file_server (Editor editor) {
 			var flag = !conf.get_global_bool ("remote_file_server", true);
 			conf.set_global_bool ("remote_file_server", flag);
 			set_status (flag ? "Enabled" : "Disabled");
 			check_remote_file_server ();
 		}
-		
+
 		void on_about (Editor editor) {
 			var bar = new AboutBar ();
 			bar.aborted.connect (() => {
@@ -2507,7 +2511,7 @@ namespace Vanubi.UI {
 			main_box.add (bar);
 			bar.grab_focus ();
 		}
-		
+
 		void on_toggle_git_gutter (Editor editor) {
 			var val = !conf.get_editor_bool ("git_gutter", true);
 			conf.set_editor_bool ("git_gutter", val);
@@ -2517,7 +2521,7 @@ namespace Vanubi.UI {
 					return true;
 			});
 		}
-		
+
 		void on_toggle_show_branch (Editor editor) {
 			var val = !conf.get_editor_bool ("show_branch", false);
 			conf.set_editor_bool ("show_branch", val);
@@ -2527,7 +2531,7 @@ namespace Vanubi.UI {
 					return true;
 			});
 		}
-		
+
 		void on_toggle_right_margin (Editor editor) {
 			var val = !conf.get_editor_bool ("right_margin", false);
 			conf.set_editor_bool ("right_margin", val);
@@ -2537,7 +2541,7 @@ namespace Vanubi.UI {
 					return true;
 			});
 		}
-		
+
 		void on_set_right_margin_column (Editor editor) {
 			var val = conf.get_editor_int("right_margin_column", 80);
 			var bar = new EntryBar (val.to_string());
@@ -2545,7 +2549,7 @@ namespace Vanubi.UI {
 					abort (editor);
 					conf.set_editor_int("right_margin_column", int.parse(text));
 					conf.save ();
-					
+
 					each_editor ((ed) => {
 							ed.update_right_margin ();
 							return true;
@@ -2556,7 +2560,7 @@ namespace Vanubi.UI {
 			bar.show ();
 			bar.grab_focus ();
 		}
-		
+
 		void on_toggle_trailing_spaces (Editor editor) {
 			var val = !conf.get_editor_bool ("trailing_spaces", true);
 			conf.set_editor_bool ("trailing_spaces", val);
@@ -2566,21 +2570,31 @@ namespace Vanubi.UI {
 					return true;
 			});
 		}
-		
+
 		void on_toggle_auto_clean_trailing_spaces (Editor editor) {
 			var val = !conf.get_editor_bool ("auto_clean_trailing_spaces", true);
 			conf.set_editor_bool ("auto_clean_trailing_spaces", val);
 			set_status (val ? "Enabled" : "Disabled");
 		}
-		
+
 		void on_clean_trailing_spaces (Editor editor) {
 			editor.view.buffer.begin_user_action ();
 			editor.clean_trailing_spaces (selection_start, selection_end);
 			editor.view.buffer.end_user_action ();
 		}
-		
+
 		void on_remote_open_file (RemoteFileSource file) {
 			open_source.begin (last_focused_editor, file);
+		}
+
+		void on_toggle_show_tabs (Editor editor) {
+			var val = !conf.get_editor_bool ("show_tabs", true);
+			conf.set_editor_bool ("show_tabs", val);
+			set_status (val ? "Enabled" : "Disabled");
+			each_editor ((ed) => {
+					ed.update_show_tabs ();
+					return true;
+			});
 		}
 	}
 }

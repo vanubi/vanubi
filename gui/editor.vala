@@ -23,7 +23,7 @@ namespace Vanubi.UI {
 	public class EditorBuffer : SourceBuffer {
 		public AbbrevCompletion abbrevs { get; private set; default = new AbbrevCompletion (); }
 		uint abbrev_timeout = 0;
-		
+
 		public EditorBuffer () {
 		}
 
@@ -32,7 +32,7 @@ namespace Vanubi.UI {
 				Source.remove (abbrev_timeout);
 			}
 		}
-		
+
 		public override void changed () {
 			base.changed ();
 
@@ -43,7 +43,7 @@ namespace Vanubi.UI {
 			if (abbrev_timeout > 0) {
 				return;
 			}
-			
+
 			Timeout.add_seconds (1, () => {
 					abbrev_timeout = 0;
 					update_abbrevs ();
@@ -59,7 +59,7 @@ namespace Vanubi.UI {
 			run_in_thread.begin<void*> (() => { abbrevs.index_text (text); return null; });
 		}
 	}
-	
+
 	public class EditorView : SourceView {
 #if 0
 		TextTag caret_text_tag;
@@ -141,7 +141,7 @@ namespace Vanubi.UI {
 
 	public class EditorContainer : EventBox {
 		public LRU<DataSource> lru = new LRU<DataSource> (DataSource.compare);
-		
+
 		public Editor editor {
 			get {
 				return (Editor) get_child ();
@@ -150,7 +150,7 @@ namespace Vanubi.UI {
 				add (value);
 			}
 		}
-		
+
 		public EditorContainer (Editor? ed) {
 			editor = ed;
 		}
@@ -165,7 +165,7 @@ namespace Vanubi.UI {
 			}
 			base.remove (w);
 		}
-		
+
 		/* Get sources in lru order */
 		public DataSource[] get_sources () {
 			DataSource[] res = null;
@@ -175,7 +175,7 @@ namespace Vanubi.UI {
 			return res;
 		}
 	}
-	
+
 	public class Editor : Grid {
 		public weak Manager manager;
 		Configuration conf;
@@ -199,7 +199,7 @@ namespace Vanubi.UI {
 		uint save_session_timer = 0;
 		Git git;
 		TrailingSpaces? trailsp = null;
-		
+
 		public Editor (Manager manager, Configuration conf, DataSource source) {
 			this.manager = manager;
 			this.source = source;
@@ -208,7 +208,7 @@ namespace Vanubi.UI {
 			expand = true;
 
 			git = new Git (conf);
-			
+
 			/* Style */
 			editor_style = new SourceStyleSchemeManager();
 			editor_style.set_search_path (get_styles_search_path ());
@@ -219,6 +219,7 @@ namespace Vanubi.UI {
 			view.set_data ("editor", (Editor*)this);
 			view.tab_width = conf.get_editor_int("tab_width", 4);
 			view.highlight_current_line = conf.get_editor_bool ("highlight_current_line", true);
+			update_show_tabs();
 			update_right_margin ();
 
 			SourceStyleScheme st = editor_style.get_scheme(conf.get_editor_string ("style", "zen"));
@@ -231,16 +232,16 @@ namespace Vanubi.UI {
 			sw.expand = true;
 			sw.add (view);
 			add (sw);
-			
+
 			on_git_gutter ();
 			on_trailing_spaces ();
-			
+
 			// lower information bar
 			infobar = new EditorInfoBar ();
 			infobar.expand = false;
 			infobar.orientation = Orientation.HORIZONTAL;
 			// initially not focused
-			infobar.get_style_context().add_class ("nonfocused"); 
+			infobar.get_style_context().add_class ("nonfocused");
 			add (infobar);
 
 			var file_label = new Label (get_editor_name ());
@@ -252,18 +253,18 @@ namespace Vanubi.UI {
 			file_count = new Label ("(0, 0)");
 			file_count.margin_left = 20;
 			infobar.add (file_count);
-			
+
 			file_status = new Label ("");
 			file_status.margin_left = 20;
 			infobar.add (file_status);
-			
+
 			git_branch = new Label ("");
 			infobar.add (git_branch);
-			
+
 			file_external_changed = new Label ("");
 			file_external_changed.margin_left = 20;
 			infobar.add (file_external_changed);
-			
+
 			file_loading = new Label ("");
 			file_loading.margin_left = 20;
 			infobar.add (file_loading);
@@ -274,7 +275,7 @@ namespace Vanubi.UI {
 			view.notify["buffer"].connect_after (on_buffer_changed);
 			on_buffer_changed ();
 
-			view.focus_in_event.connect(() => { 
+			view.focus_in_event.connect(() => {
 					manager.last_focused_editor = this;
 					if (old_selection_start_offset >= 0 && old_selection_end_offset >= 0) {
 						TextIter start, end;
@@ -293,12 +294,12 @@ namespace Vanubi.UI {
 					infobar.reset_style (); // GTK+ 3.4 bug, solved in 3.6
 					return false;
 			});
-			
+
 			source.changed.connect (on_external_changed);
 			source.monitor.begin ();
 		}
 
-		
+
 		public void update_old_selection () {
 			TextIter old_selection_start, old_selection_end;
 			view.buffer.get_selection_bounds (out old_selection_start,
@@ -310,16 +311,16 @@ namespace Vanubi.UI {
 		public bool is_externally_changed () {
 			return file_external_changed.label != "";
 		}
-		
+
 		public async void reset_external_changed () {
 			file_external_changed.set_label ("");
 			var mtime = yield source.get_mtime ();
 			source.set_data<TimeVal?> ("editing_mtime", mtime);
 		}
-		
+
 		public override void grab_focus () {
 			view.grab_focus ();
-			manager.save_session (this); // changed focused 
+			manager.save_session (this); // changed focused
 			manager.last_focused_editor = this;
 		}
 
@@ -349,7 +350,7 @@ namespace Vanubi.UI {
 			if (uncertain) {
 				content_type = null;
 			}
-			
+
 			var default_lang = SourceLanguageManager.get_default().guess_language (file != null ? file.local_path : null, content_type);
 			if (default_lang == null && file != null && (file.local_path.has_suffix ("/COMMIT_EDITMSG") || file.local_path.has_suffix ("/MERGE_EDITMSG") || file.local_path.has_suffix ("/COMMIT_MSG") || file.local_path.has_suffix ("/MERGE_MSG"))) {
 				default_lang = SourceLanguageManager.get_default().get_language ("commit message");
@@ -361,7 +362,7 @@ namespace Vanubi.UI {
 			} else if (default_lang != null) {
 				lang_id = default_lang.id;
 			}
-			
+
 			if (lang_id != null) {
 				var lang = SourceLanguageManager.get_default().get_language (lang_id);
 				((SourceBuffer) view.buffer).set_language (lang);
@@ -376,7 +377,7 @@ namespace Vanubi.UI {
 									iter.get_line_offset ());
 			return loc;
 		}
-		
+
 		// Returns true if location changed
 		public bool set_location (Location location) {
 			// set specific location
@@ -396,12 +397,12 @@ namespace Vanubi.UI {
 			buf.select_range (start_iter, end_iter);
 
 			update_old_selection ();
-			
+
 			return true;
 		}
 
 		Cancellable? loading_cancellable = null;
-		
+
 		public async void replace_contents (InputStream is, bool undoable = false, int io_priority = GLib.Priority.LOW, owned Cancellable? cancellable = null) throws Error {
 			if (cancellable == null) {
 				cancellable = new Cancellable ();
@@ -410,9 +411,9 @@ namespace Vanubi.UI {
 				loading_cancellable.cancel ();
 			}
 			loading_cancellable = cancellable;
-			
+
 			file_loaded = false;
-			
+
 			var buf = (SourceBuffer) view.buffer;
 			reset_language ();
 			buf.set_text ("", -1);
@@ -421,14 +422,14 @@ namespace Vanubi.UI {
 			if (cancellable.is_cancelled ()) {
 				return;
 			}
-			
+
 			file_loading.set_markup ("<i>loading...</i>");
-			
+
 			TextIter cursor;
 			buf.get_iter_at_mark (out cursor, buf.get_insert ());
 			var cursor_offset = cursor.get_offset ();
 			var first_data = true;
-			
+
 			try {
 				var data = new uint8[4096];
 				string? default_charset = null;
@@ -439,13 +440,13 @@ namespace Vanubi.UI {
 					cursor_offset = cursor.get_offset ();
 					TextIter iter;
 					view.buffer.get_end_iter (out iter);
-					
+
 					if (iter.equal (cursor)) {
 						// reset cursor
 						buf.get_iter_at_offset (out cursor, old_offset);
 						view.buffer.place_cursor (cursor);
 					}
-					
+
 					data.length = 4096;
 					var r = yield is.read_async (data, io_priority, cancellable);
 					if (r == 0) {
@@ -453,7 +454,7 @@ namespace Vanubi.UI {
 					}
 					data.length = (int)r;
 					data = convert_to_utf8 (data, ref default_charset, null, null);
-					
+
 					// write
 					if (!undoable) {
 						buf.begin_not_undoable_action ();
@@ -462,7 +463,7 @@ namespace Vanubi.UI {
 
 					view.buffer.get_end_iter (out iter);
 					buf.insert (ref iter, (string) data, (int) r);
-					
+
 					if (!undoable) {
 						buf.set_modified (old_modified);
 						buf.end_not_undoable_action ();
@@ -488,12 +489,12 @@ namespace Vanubi.UI {
 				}
 			}
 		}
-		
+
 		public void update_show_branch () {
 			if (!(source is FileSource)) {
 				return;
 			}
-			
+
 			if (conf.get_editor_bool ("show_branch", true)) {
 				git.current_branch.begin ((FileSource) source, Priority.DEFAULT, null, (s, r) => {
 						string bname;
@@ -505,7 +506,7 @@ namespace Vanubi.UI {
 							manager.set_status_error (e.message, "show-branch");
 							return;
 						}
-						
+
 						if (bname != null) {
 							git_branch.margin_left = 20;
 							git_branch.label = "git:" + bname;
@@ -519,7 +520,7 @@ namespace Vanubi.UI {
 				git_branch.label = "";
 			}
 		}
-		
+
 		public void update_right_margin () {
 			if (conf.get_editor_bool ("right_margin", false)) {
 				var col = conf.get_editor_int ("right_margin_column", 80);
@@ -529,7 +530,15 @@ namespace Vanubi.UI {
 				view.show_right_margin = false;
 			}
 		}
-		
+
+		public void update_show_tabs () {
+			if (conf.get_editor_bool ("show_tabs", true)) {
+				view.draw_spaces = SourceDrawSpacesFlags.TAB;
+			} else {
+				view.draw_spaces = 0;
+			}
+		}
+
 		public void on_trailing_spaces () {
 			if (!conf.get_editor_bool ("trailing_spaces", true)) {
 				if (trailsp != null) {
@@ -538,11 +547,11 @@ namespace Vanubi.UI {
 				}
 				return;
 			}
-			
+
 			if (trailsp == null) {
 				trailsp = new TrailingSpaces (view);
 			}
-			
+
 			if (file_loaded) {
 				trailsp.check_buffer ();
 			}
@@ -556,7 +565,7 @@ namespace Vanubi.UI {
 				trailsp.untrail_region (start.get_line (), end.get_line ());
 			}
 		}
-		
+
 		/* events */
 
 		void on_insert_text (ref TextIter pos, string new_text, int new_text_length) {
@@ -571,7 +580,7 @@ namespace Vanubi.UI {
 				// very weird, done on textview disposal
 				return;
 			}
-			
+
 			var buf = (SourceBuffer) view.buffer;
 			buf.mark_set.connect (on_file_count);
 			buf.changed.connect (on_file_count);
@@ -589,26 +598,26 @@ namespace Vanubi.UI {
 				}
 				return;
 			}
-			
+
 			if (gutter == null) {
 				gutter = view.get_gutter (TextWindowType.LEFT);
 				gutter_renderer = new GitGutterRenderer ();
 				gutter.insert (gutter_renderer, 0);
 			}
-			
+
 			if (file_loaded) {
 				if (diff_timer > 0) {
 					Source.remove (diff_timer);
 				}
-				
+
 				// this is needed to limit the number of spawned processes
 				diff_timer = Timeout.add (100, () => {
 						diff_timer = 0;
-						
+
 						if (diff_cancellable != null) {
 							diff_cancellable.cancel ();
 						}
-						
+
 						var cancellable = diff_cancellable = new Cancellable ();
 						git.diff_buffer.begin ((FileSource) source, view.buffer.text.data, Priority.DEFAULT, cancellable, (obj, res) => {
 								HashTable<int, DiffType> table;
@@ -620,12 +629,12 @@ namespace Vanubi.UI {
 									manager.set_status_error (e.message, "git-gutter");
 									return;
 								}
-								
+
 								diff_cancellable = null;
 								gutter_renderer.table = table;
 								gutter.queue_draw ();
 						});
-						
+
 						return false;
 				});
 			}
@@ -636,7 +645,7 @@ namespace Vanubi.UI {
 			var buf = view.buffer;
 			buf.get_iter_at_mark (out insert, buf.get_insert ());
 			int line = insert.get_line ();
-			
+
 			// we count tabs as tab_width
 			TextIter iter;
 			buf.get_iter_at_line (out iter, line);
@@ -651,7 +660,7 @@ namespace Vanubi.UI {
 			}
 
 			file_count.set_label ("(%d, %d)".printf (line+1, column+1));
-			
+
 			// update current location, use a timer to reduce the number of disk writes
 			if (save_session_timer > 0) {
 				Source.remove (save_session_timer);
@@ -661,7 +670,7 @@ namespace Vanubi.UI {
 					manager.save_session (this);
 					return false;
 			});
-			
+
 			if (trailsp != null) {
 				trailsp.check_cursor_line ();
 			}
@@ -671,11 +680,11 @@ namespace Vanubi.UI {
 			var buf = view.buffer;
 			file_status.set_label (buf.get_modified () ? "modified" : "");
 		}
-		
+
 		void on_external_changed () {
 			external_changed.begin ();
 		}
-		
+
 		async void external_changed () {
 			var cur = yield source.get_mtime ();
 			var editing = source.get_data<TimeVal?> ("editing_mtime");
@@ -684,7 +693,7 @@ namespace Vanubi.UI {
 				source.set_data<TimeVal?> ("editing_mtime", cur);
 				return;
 			}
-			
+
 			if (cur != editing) {
 				file_external_changed.set_markup ("<span fgcolor='black' bgcolor='red'> <b>file has changed</b> </span>");
 			}
