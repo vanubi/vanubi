@@ -187,29 +187,39 @@ namespace Vanubi.UI {
 			}
 
 			var manager = get_active_manager ();
-			DataSource[]? sources = null;
+			Location[]? locations = null;
+			int start_line = -1;
+			
 			foreach (unowned string filename in arg_filenames) {
+				Location loc;
 				if (filename == "-") {
-					sources += new StreamSource (manager.new_stdin_stream_name (), command_line.get_stdin (), DataSource.new_from_string (command_line.get_cwd ()));
+					loc = new Location (new StreamSource (manager.new_stdin_stream_name (), command_line.get_stdin (), DataSource.new_from_string (command_line.get_cwd ())));
+				} else if (filename[0] == '+') {
+					// go to line for all the files
+					unowned string line = filename.offset (1);
+					start_line = int.parse (line);
+					continue;
 				} else {
-					sources += new LocalFileSource (command_line.create_file_for_arg (filename));
+					loc = new Location (new LocalFileSource (command_line.create_file_for_arg (filename)));
 				}
+				locations += loc;
 			}
 
 			// open the sources, focus the first source
 			var focus = true;
 			var loaded = 0;
 
-			foreach (unowned DataSource source in sources) {
-				manager.open_source.begin (manager.last_focused_editor, source, focus, (s,r) => {
+			foreach (unowned Location loc in locations) {
+				loc.start_line = start_line;
+				manager.open_location.begin (manager.last_focused_editor, loc, focus, (s,r) => {
 						manager.open_source.end (r);
 						loaded++;
-						if (loaded == sources.length) {
+						if (loaded == locations.length) {
 							// mark sources as used in reverse order, except the first one; this is very convenient when opening multiple files
 							var lru = manager.last_focused_editor.editor_container.lru;
-							lru.used (sources[0]);
-							for (var i=sources.length-1; i >= 1; i--) {
-								lru.used (sources[i]);
+							lru.used (locations[0].source);
+							for (var i=locations.length-1; i >= 1; i--) {
+								lru.used (locations[i].source);
 							}
 						}
 				});
