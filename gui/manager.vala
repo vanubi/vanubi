@@ -1320,6 +1320,11 @@ namespace Vanubi.UI {
 					conf.cluster.closed_file ((FileSource) source);
 				}
 			}
+
+			if (source == next_source) {
+				// *scratch* again, no other opened files
+				return;
+			}
 			
 			var container = editor.editor_container;
 			
