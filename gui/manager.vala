@@ -1231,7 +1231,7 @@ namespace Vanubi.UI {
 			var bar = new FileBar (base_source);
 			bar.activate.connect ((p) => {
 					abort (editor);
-					var source = base_source.root.child (p);
+					var source = base_source.root.child (absolute_path (base_source.local_path, p));
 					if (command == "open-file-right") {
 						var ed = split_views (editor, Orientation.HORIZONTAL);
 						open_source.begin (ed, source);
@@ -1258,10 +1258,16 @@ namespace Vanubi.UI {
 		}
 		
 		void on_save_as_file (Editor editor, string command) {
-			var bar = new FileBar ((FileSource) editor.source.parent);
+			var base_source = editor.source.parent as FileSource;
+			if (base_source == null) {
+				return;
+			}
+			
+			var bar = new FileBar (base_source);
 			bar.activate.connect ((f) => {
 					abort (editor);
-					save_file.begin (editor, DataSource.new_from_string (f), command == "save-as-file-and-open");
+					var source = base_source.root.child (absolute_path (base_source.local_path, f));
+					save_file.begin (editor, source, command == "save-as-file-and-open");
 			});
 			bar.aborted.connect (() => { abort (editor); });
 			add_overlay (bar);
