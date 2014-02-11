@@ -2588,7 +2588,7 @@ namespace Vanubi.UI {
 		}
 
 		void on_toggle_show_tabs (Editor editor) {
-			var val = !conf.get_editor_bool ("show_tabs", true);
+			var val = !conf.get_editor_bool ("show_tabs", false);
 			conf.set_editor_bool ("show_tabs", val);
 			set_status (val ? "Enabled" : "Disabled");
 			each_editor ((ed) => {

@@ -532,7 +532,7 @@ namespace Vanubi.UI {
 		}
 
 		public void update_show_tabs () {
-			if (conf.get_editor_bool ("show_tabs", true)) {
+			if (conf.get_editor_bool ("show_tabs", false)) {
 				view.draw_spaces = SourceDrawSpacesFlags.TAB;
 			} else {
 				view.draw_spaces = 0;
