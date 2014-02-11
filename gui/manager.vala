@@ -1857,7 +1857,7 @@ namespace Vanubi.UI {
 			update_selection (ed);
 
 			var indent_engine = get_indent_engine (ed);
-			// only auto indent only on return for python
+			// only auto indent on return for python
 			var no_python_indent = indent_engine is Indent_Python && command != "return";
 			if (indent_engine != null && command != "tab" && !no_python_indent) {
 				execute_command["indent"] (ed, "indent");
@@ -1936,23 +1936,21 @@ namespace Vanubi.UI {
 			var buf = (SourceBuffer) ed.view.buffer;
 
 			buf.begin_user_action ();
-			if (indent_engine == null) {
-				// insert a tab
-				buf.delete_selection (true, true);
-				buf.insert_at_cursor ("\t", -1);
-				ed.view.scroll_mark_onscreen (buf.get_insert ());
-			} else {
-				var vbuf = indent_engine.buffer;
-				// indent every selected line
-				var min_line = int.min (selection_start.get_line(), selection_end.get_line());
-				var max_line = int.max (selection_start.get_line(), selection_end.get_line());
-				for (var line=min_line; line <= max_line; line++) {
-					TextIter iter;
-					buf.get_iter_at_line (out iter, line);
-					var viter = new UI.BufferIter (vbuf, iter);
+
+			// indent every selected line
+			var min_line = int.min (selection_start.get_line(), selection_end.get_line());
+			var max_line = int.max (selection_start.get_line(), selection_end.get_line());
+			for (var line=min_line; line <= max_line; line++) {
+				TextIter iter;
+				buf.get_iter_at_line (out iter, line);
+				if (indent_engine == null) {
+					buf.insert_text (ref iter, "\t", 1);
+				} else {
+					var viter = new UI.BufferIter (indent_engine.buffer, iter);
 					indent_engine.indent (viter);
 				}
 			}
+
 			buf.end_user_action ();
 		}
 
