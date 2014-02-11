@@ -78,9 +78,10 @@ namespace Vanubi {
 			res = path;
 		} else if (path[0] == '~' && path[1] == '/') {
 			res = Environment.get_home_dir()+path.substring(2);
+		} else {
+			res = base_directory+path;
 		}
-
-		res = base_directory+path;
+		
 		int abs = res.last_index_of ("//");
 		int home = res.last_index_of ("/~/");
 		if (abs > home) {
