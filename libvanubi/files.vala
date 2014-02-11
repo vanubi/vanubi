@@ -74,14 +74,12 @@ namespace Vanubi {
 
 	public string absolute_path (string base_directory, string path) {
 		string res;
-		if (path[0] == '/') {
-			res = path;
-		} else if (path[0] == '~' && path[1] == '/') {
-			res = Environment.get_home_dir()+path.substring(2);
+		if (!base_directory.has_suffix ("/")) {
+			res = base_directory+"/"+path;
 		} else {
 			res = base_directory+path;
 		}
-		
+
 		int abs = res.last_index_of ("//");
 		int home = res.last_index_of ("/~/");
 		if (abs > home) {
