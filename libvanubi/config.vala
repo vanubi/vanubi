@@ -59,6 +59,9 @@ namespace Vanubi {
 					warning ("Could not load configuration: %s".printf (e.message));
 				}
 				check_config ();
+			} else {
+				// last config version
+				set_global_int ("config_version", 1);
 			}
 		}
 
