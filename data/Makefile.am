@@ -9,7 +9,7 @@ logo_DATA = vanubi.png
 
 langdir = $(datadir)/vanubi/languages
 lang_DATA = languages/asm-intel.lang languages/i386asm.lang languages/asciidoc.lang \
-            languages/commitmsg.lang
+            languages/generic_comment.lang
 
 styledir = $(datadir)/vanubi/styles
 style_DATA = styles/zen.xml styles/zen-grep.xml

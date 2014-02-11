@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE language SYSTEM "language.dtd">
+<language id="generic_comment" _name="Generic comment" version="2.0" _section="Others">
+ <metadata>
+  <property name="globs">*.conf</property>
+  <property name="line-comment-start">#</property>
+ </metadata>
+ 
+ <styles>
+  <style id="comment" _name="Comment" map-to="def:comment"/>
+ </styles>
+ 
+ <definitions>
+  <context id="generic_comment" class="no-spell-check">
+   <include>
+	<context ref="def:shell-like-comment"/>
+   </include>
+  </context>
+ </definitions>
+ 
+</language>
