@@ -195,53 +195,21 @@ namespace Vanubi {
 		
 		return false;
 	}
-	
-	// Unbuffered stream
-	public class AsyncDataInputStream : FilterInputStream {
+
+	public class AsyncDataInputStream : DataInputStream {
 		public AsyncDataInputStream (InputStream base_stream) {
 			Object (base_stream: base_stream, close_base_stream: false);
 		}
 
-		public override ssize_t read ([CCode (array_length_type = "gsize")] uint8[] buffer, GLib.Cancellable? cancellable = null) throws GLib.IOError {
-			return base_stream.read (buffer, cancellable);
-		}
-		
-		public override bool close (Cancellable? cancellable = null) {
-			return true;
-		}
-		
-		// Unbuffered line reader
-		public async string? read_line_async (int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) throws Error {
-			var buf = new uint8[1];
-			var b = new StringBuilder ();
-			while (true) {
-				var read = yield read_async (buf, io_priority, cancellable);
-				if (read <= 0) {
-					throw new IOError.CLOSED ("Stream is closed");
-				}
-				if (buf[0] == '\n') {
-					return b.str.strip();
-				}
-				b.append_c ((char) buf[0]);
+		public async int read_int_async (int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) throws Error {
+			if (get_available () < sizeof (int)) {
+				yield fill_async ((ssize_t) sizeof (int), io_priority, cancellable);
 			}
-		}
-		
-		public string? read_line (Cancellable? cancellable = null) throws Error {
-			var buf = new uint8[1];
-			var b = new StringBuilder ();
-			while (true) {
-				var r = read (buf, cancellable);
-				if (r <= 0) {
-					throw new IOError.CLOSED ("Stream is closed");
-				}
-				if (buf[0] == '\n') {
-					return b.str.strip ();
-				}
-				b.append_c ((char) buf[0]);
-			}
+			
+			return read_int32 (cancellable);
 		}
 	}
-	
+
 	public class AsyncMutex {
 		class CallbackObject {
 			internal SourceFunc resume;

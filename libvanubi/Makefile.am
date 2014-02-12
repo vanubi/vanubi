@@ -10,21 +10,22 @@ BUILT_SOURCES = .libvanubi.vala.stamp
 lib_LTLIBRARIES = libvanubi@PACKAGE_SUFFIX@.la
 
 libvanubi_la_VALASOURCES = \
+	buffer.vala 		\
 	charset.vala 		\
+	chunked.vala		\
 	config.vala 		\
+	comment.vala 		\
 	completion.vala		\
 	filecluster.vala 	\
 	files.vala			\
-	buffer.vala 		\
-	indent.vala			\
-	comment.vala 		\
 	git.vala			\
+	indent.vala			\
 	keys.vala 			\
-	marks.vala			\
-	matching.vala 		\
 	search.vala 		\
 	source.vala			\
 	lru.vala	 		\
+	marks.vala			\
+	matching.vala 		\
 	sources/localfile.vala	\
 	sources/remotefile.vala	\
 	sources/scratch.vala	\

@@ -137,9 +137,9 @@ namespace Vanubi {
 
 		public override ssize_t read ([CCode (array_length_type = "gsize")] uint8[] buffer, GLib.Cancellable? cancellable = null) throws IOError {
 			if (cursize < 0) {
-				var strsize = stream.read_line (cancellable);
+				var strsize = stream.read_line (null, cancellable);
 				if (strsize == "error") {
-					var error = stream.read_line (cancellable);
+					var error = stream.read_line (null, cancellable);
 					throw new IOError.FAILED ("Remote error: %s".printf (error));
 				}
 				cursize = int.parse (strsize);
@@ -242,10 +242,10 @@ namespace Vanubi {
 					os.flush (cancellable);
 					
 					while (true) {
-						var res = is.read_line (cancellable);
+						var res = is.read_line (null, cancellable);
 						if (res == "next") {
-							var name = is.read_line (cancellable);
-							var isdir = is.read_line (cancellable);
+							var name = is.read_line (null, cancellable);
+							var isdir = is.read_line (null, cancellable);
 							children.append (new SourceInfo (parent.child (name), isdir == "true"));
 						} else if (res == "wait") {
 							break;
@@ -256,7 +256,7 @@ namespace Vanubi {
 						} else if (res == "error") {
 							at_end = true;
 							children = null;
-							var err = is.read_line (cancellable);
+							var err = is.read_line (null, cancellable);
 							/* chan = null; */
 							throw new IOError.FAILED ("Remote error: %s".printf (err));
 						} else {
@@ -499,9 +499,9 @@ namespace Vanubi {
 
 			var is = chan.input_stream;
 			try {
-				var res = is.read_line (cancellable);
+				var res = is.read_line (null, cancellable);
 				if (res == "error") {
-					var err = is.read_line (cancellable);
+					var err = is.read_line (null, cancellable);
 					throw new IOError.FAILED ("Remote error while listing directory: %s".printf (err));
 				} else if (res == "ok") {
 					var iterator = new RemoteFileIterator (this, chan);
