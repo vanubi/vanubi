@@ -30,6 +30,7 @@ libvanubi_la_VALASOURCES = \
 	sources/remotefile.vala	\
 	sources/scratch.vala	\
 	sources/stream.vala		\
+	streams.vala		\
 	util.vala			\
 	vade/ast.vala		\
 	vade/eval.vala		\
