@@ -77,7 +77,6 @@ namespace Vanubi {
 					size_t ret;
 					chan.read_chars ((char[]) buffer, out ret);
 					something_to_read = false;
-					cancellable.set_error_if_cancelled ();
 					
 					return (ssize_t) ret;
 				}
@@ -109,7 +108,6 @@ namespace Vanubi {
 					size_t ret;
 					chan.read_chars ((char[]) buffer, out ret);
 					something_to_read = false;
-					cancellable.set_error_if_cancelled ();
 					
 					return (ssize_t) ret;
 				}
