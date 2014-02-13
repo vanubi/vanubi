@@ -64,11 +64,11 @@ namespace Vanubi {
 				os.write_all ("continue\n".data, null);
 			}
 			ask_continue = true;
-
+	
 			ulong cancel_id = 0;
 			var sem = Mutex ();
 			sem.lock ();
-
+			
 			if (chunk_size == 0) {
 				// wait new chunk
 
@@ -140,7 +140,7 @@ namespace Vanubi {
 
 			if (ask_continue) {
 				// we wrongly assume that write does not block and does not require cancellation
-				os.write_all ("continue\n".data, null);
+				os.write_all ("continuen".data, null);
 			}
 			ask_continue = true;
 
@@ -149,6 +149,7 @@ namespace Vanubi {
 
 			if (chunk_size == 0) {
 				// wait new chunk
+				resume = read_async.callback;
 
 				if (cancellable != null) {
 					cancel_id = cancellable.cancelled.connect (() => {
@@ -162,7 +163,7 @@ namespace Vanubi {
 							});
 					});
 				}
-				
+
 				read_int_async.begin (Priority.DEFAULT, null, (s,r) => {
 						chunk_size = read_int_async.end (r);
 						if (resume != null) {
@@ -170,7 +171,6 @@ namespace Vanubi {
 						}
 				});
 
-				resume = read_async.callback;
 				yield; // wait until cancelled or data available
 				resume = null;
 				if (cancellable != null && cancel_id > 0) {
@@ -186,7 +186,8 @@ namespace Vanubi {
 			ssize_t ret = 0;
 			unowned uint8[] buf = buffer;
 			buf.length = int.min ((int) chunk_size, buffer.length);
-			
+			resume = read_async.callback;
+
 			cancel_id = cancellable.cancelled.connect (() => {
 					Idle.add (() => {
 							cancellable.disconnect (cancel_id);
@@ -206,7 +207,6 @@ namespace Vanubi {
 					}
 			});
 
-			resume = read_async.callback;
 			yield; // wait until cancelled or data available
 			resume = null;
 			if (cancel_id > 0) {
@@ -224,36 +224,6 @@ namespace Vanubi {
 			consume_and_cancel.begin ();
 			cancellable.set_error_if_cancelled ();
 			return true;
-		}
-		
-		public async string? read_line_async (int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) throws Error {
-			var buf = new uint8[1];
-			var b = new StringBuilder ();
-			while (true) {
-				var read = yield read_async (buf, io_priority, cancellable);
-				if (read <= 0) {
-					throw new IOError.CLOSED ("Stream is closed");
-				}
-				if (buf[0] == '\n') {
-					return b.str.strip();
-				}
-				b.append_c ((char) buf[0]);
-			}
-		}
-		
-		public string? read_line (Cancellable? cancellable = null) throws Error {
-			var buf = new uint8[1];
-			var b = new StringBuilder ();
-			while (true) {
-				var r = read (buf, cancellable);
-				if (r <= 0) {
-					throw new IOError.CLOSED ("Stream is closed");
-				}
-				if (buf[0] == '\n') {
-					return b.str.strip ();
-				}
-				b.append_c ((char) buf[0]);
-			}
 		}
 	}
 }
