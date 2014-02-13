@@ -10,7 +10,7 @@ keywords:[downloads installation building make clone]
 [source,console]
 :args: -O style=native,noclasses
 -------
-# apt-get install autotools-dev libtool valac libgtksourceview-3.0-dev libvte-2.90-dev libwnck-3-dev
+# apt-get install autotools-dev autoconf libtool valac libgtksourceview-3.0-dev libvte-2.90-dev libwnck-3-dev
 $ git clone http://github.com/vanubi/vanubi.git
 $ cd vanubi
 $ ./autogen.sh
@@ -19,6 +19,8 @@ $ gui/vanubi     # to run without installing
 # make install
 # ldconfig
 -------
+
+Instead of using `git`, you can also link:https://github.com/vanubi/vanubi/releases[grab tarballs here].
 
 Vanubi is only tested on Linux systems.
 
