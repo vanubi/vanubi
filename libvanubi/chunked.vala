@@ -30,9 +30,9 @@ namespace Vanubi {
 		Object cancel_ref = null;
 		bool ask_continue = false;
 		
-		public ChunkedInputStream (IOStream stream, Object refobj) {
-			base (stream.input_stream);
-			os = stream.output_stream;
+		public ChunkedInputStream (InputStream is, OutputStream os, Object? refobj) {
+			base (is);
+			this.os = os;
 			this.refobj = refobj;
 		}
 
@@ -72,6 +72,39 @@ namespace Vanubi {
 			if (chunk_size == 0) {
 				// wait new chunk
 
+				if (cancellable != null) {
+					cancel_id = cancellable.cancelled.connect (() => {
+							Idle.add (() => {
+									cancellable.disconnect (cancel_id);
+									cancel_id = 0;
+									sem.unlock ();
+									return false;
+							});
+					});
+				}
+				
+				read_int_async.begin (Priority.DEFAULT, null, (s,r) => {
+						chunk_size = read_int_async.end (r);
+						sem.unlock ();
+				});
+				
+				sem.lock (); // block until cancelled or data available
+				if (cancellable != null && cancel_id > 0) {
+					cancellable.disconnect (cancel_id);
+				}
+				cancel_id = 0;
+
+				if (cancellable != null && cancellable.is_cancelled ()) {
+					consume_and_cancel.begin ();
+					cancellable.set_error_if_cancelled ();
+				}
+			}
+
+			ssize_t ret = 0;
+			unowned uint8[] buf = buffer;
+			buf.length = int.min ((int) chunk_size, buffer.length);
+
+			if (cancellable != null) {
 				cancel_id = cancellable.cancelled.connect (() => {
 						Idle.add (() => {
 								cancellable.disconnect (cancel_id);
@@ -80,35 +113,7 @@ namespace Vanubi {
 								return false;
 						});
 				});
-				
-				read_int_async.begin (Priority.DEFAULT, null, (s,r) => {
-						chunk_size = read_int_async.end (r);
-						sem.unlock ();
-				});
-				
-				sem.lock (); // block until cancelled or data available
-				if (cancel_id > 0) {
-					cancellable.disconnect (cancel_id);
-				}
-
-				if (cancellable.is_cancelled ()) {
-					consume_and_cancel ();
-					cancellable.set_error_if_cancelled ();
-				}
 			}
-
-			ssize_t ret = 0;
-			unowned uint8[] buf = buffer;
-			buf.length = int.min ((int) chunk_size, buffer.length);
-			
-			cancel_id = cancellable.cancelled.connect (() => {
-					Idle.add (() => {
-							cancellable.disconnect (cancel_id);
-							cancel_id = 0;
-							sem.unlock ();
-							return false;
-					});
-			});
 			
 			read_async.begin (buf, Priority.DEFAULT, null, (s, r) => {
 					ret = read_async.end (r);
@@ -117,19 +122,19 @@ namespace Vanubi {
 			});
 
 			sem.lock (); // block until cancelled or data available
-			if (cancel_id > 0) {
+			if (cancellable != null && cancel_id > 0) {
 				cancellable.disconnect (cancel_id);
 			}
+			cancel_id = 0;
 
-			if (cancellable.is_cancelled ()) {
-				consume_and_cancel ();
+			if (cancellable != null && cancellable.is_cancelled ()) {
+				consume_and_cancel.begin ();
 				cancellable.set_error_if_cancelled ();
 			}
 			
 			return ret;
 		}
 		
-		// DANGER: this breaks a lot of assumptions, code must necessarily run in a thread different than the main thread
 		public override async ssize_t read_async ([CCode (array_length_type = "gsize")] uint8[] buffer, int io_priority = Priority.DEFAULT, GLib.Cancellable? cancellable = null) throws GLib.IOError {
 			cancellable.set_error_if_cancelled ();
 
@@ -145,16 +150,18 @@ namespace Vanubi {
 			if (chunk_size == 0) {
 				// wait new chunk
 
-				cancel_id = cancellable.cancelled.connect (() => {
-						Idle.add (() => {
-								cancellable.disconnect (cancel_id);
-								cancel_id = 0;
-								if (resume != null) {
-									resume ();
-								}
-								return false;
-						});
-				});
+				if (cancellable != null) {
+					cancel_id = cancellable.cancelled.connect (() => {
+							Idle.add (() => {
+									cancellable.disconnect (cancel_id);
+									cancel_id = 0;
+									if (resume != null) {
+										resume ();
+									}
+									return false;
+							});
+					});
+				}
 				
 				read_int_async.begin (Priority.DEFAULT, null, (s,r) => {
 						chunk_size = read_int_async.end (r);
@@ -166,12 +173,12 @@ namespace Vanubi {
 				resume = read_async.callback;
 				yield; // wait until cancelled or data available
 				resume = null;
-				if (cancel_id > 0) {
+				if (cancellable != null && cancel_id > 0) {
 					cancellable.disconnect (cancel_id);
 				}
 
-				if (cancellable.is_cancelled ()) {
-					consume_and_cancel ();
+				if (cancellable != null && cancellable.is_cancelled ()) {
+					consume_and_cancel.begin ();
 					cancellable.set_error_if_cancelled ();
 				}
 			}
@@ -207,14 +214,14 @@ namespace Vanubi {
 			}
 
 			if (cancellable.is_cancelled ()) {
-				consume_and_cancel ();
+				consume_and_cancel.begin ();
 				cancellable.set_error_if_cancelled ();
 			}
 			return ret;
 		}
 
 		public override bool close (Cancellable? cancellable = null) {
-			consume_and_cancel ();
+			consume_and_cancel.begin ();
 			cancellable.set_error_if_cancelled ();
 			return true;
 		}
