@@ -23,7 +23,7 @@ namespace Vanubi {
 	 * Send: continue\n or cancel\n
 	 */
 	 
-	public class ChunkedInputStream : AsyncDataInputStream {
+	public class ChunkedInputStream : BinaryInputStream {
 		int chunk_size = 0;
 		OutputStream os;
 		unowned Object refobj = null;
@@ -83,8 +83,8 @@ namespace Vanubi {
 					});
 				}
 				
-				read_int_async.begin (Priority.DEFAULT, null, (s,r) => {
-						chunk_size = read_int_async.end (r);
+				read_int32_async.begin (Priority.DEFAULT, null, (s,r) => {
+						chunk_size = read_int32_async.end (r);
 						sem.unlock ();
 				});
 				
@@ -164,8 +164,8 @@ namespace Vanubi {
 					});
 				}
 
-				read_int_async.begin (Priority.DEFAULT, null, (s,r) => {
-						chunk_size = read_int_async.end (r);
+				read_int32_async.begin (Priority.DEFAULT, null, (s,r) => {
+						chunk_size = read_int32_async.end (r);
 						if (resume != null) {
 							resume ();
 						}

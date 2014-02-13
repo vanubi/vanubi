@@ -18,16 +18,17 @@
  */
 
 namespace Vanubi {
-	public class RemoteChannel {
+	public class RemoteChannel : Object {
 		public RemoteConnection remote { get; private set; }
 		public SocketConnection conn { get; private set; }
 		public OutputStream output_stream { get; private set; }
-		public AsyncDataInputStream input_stream { get; private set; }
+		public BufferInputStream input_stream { get; private set; }
 				
 		
 		public RemoteChannel (owned RemoteConnection remote, owned SocketConnection conn) {
 			output_stream = conn.output_stream;
-			input_stream = new AsyncDataInputStream (conn.input_stream);
+			// FIXME: chunkedinputstream is stateful on the connection
+			input_stream = new BufferInputStream (new ChunkedInputStream (conn.input_stream, output_stream, this));
 			this.remote = (owned) remote;
 			this.conn = (owned) conn;
 		}
@@ -115,10 +116,10 @@ namespace Vanubi {
 
 	public class RemoteInputStream : InputStream {
 		RemoteChannel chan; // keep alive until done
-		AsyncDataInputStream stream;
+		BufferInputStream stream;
 		int cursize = -1;
 		
-		public class RemoteInputStream (owned RemoteChannel chan, owned AsyncDataInputStream stream) {
+		public class RemoteInputStream (owned RemoteChannel chan, owned BufferInputStream stream) {
 			this.chan = (owned) chan;
 			this.stream = (owned) stream;
 		}
@@ -137,9 +138,9 @@ namespace Vanubi {
 
 		public override ssize_t read ([CCode (array_length_type = "gsize")] uint8[] buffer, GLib.Cancellable? cancellable = null) throws IOError {
 			if (cursize < 0) {
-				var strsize = stream.read_line (null, cancellable);
+				var strsize = stream.read_line (cancellable);
 				if (strsize == "error") {
-					var error = stream.read_line (null, cancellable);
+					var error = stream.read_line (cancellable);
 					throw new IOError.FAILED ("Remote error: %s".printf (error));
 				}
 				cursize = int.parse (strsize);
@@ -190,7 +191,7 @@ namespace Vanubi {
 		RemoteChannel chan;
 		RemoteFileSource parent;
 		OutputStream os;
-		AsyncDataInputStream is;
+		BufferInputStream is;
 		bool at_end = false;
 		List<SourceInfo> children = null;
 		bool is_cancelling = false;
@@ -242,10 +243,10 @@ namespace Vanubi {
 					os.flush (cancellable);
 					
 					while (true) {
-						var res = is.read_line (null, cancellable);
+						var res = is.read_line (cancellable);
 						if (res == "next") {
-							var name = is.read_line (null, cancellable);
-							var isdir = is.read_line (null, cancellable);
+							var name = is.read_line (cancellable);
+							var isdir = is.read_line (cancellable);
 							children.append (new SourceInfo (parent.child (name), isdir == "true"));
 						} else if (res == "wait") {
 							break;
@@ -256,7 +257,7 @@ namespace Vanubi {
 						} else if (res == "error") {
 							at_end = true;
 							children = null;
-							var err = is.read_line (null, cancellable);
+							var err = is.read_line (cancellable);
 							/* chan = null; */
 							throw new IOError.FAILED ("Remote error: %s".printf (err));
 						} else {
@@ -499,9 +500,9 @@ namespace Vanubi {
 
 			var is = chan.input_stream;
 			try {
-				var res = is.read_line (null, cancellable);
+				var res = is.read_line (cancellable);
 				if (res == "error") {
-					var err = is.read_line (null, cancellable);
+					var err = is.read_line (cancellable);
 					throw new IOError.FAILED ("Remote error while listing directory: %s".printf (err));
 				} else if (res == "ok") {
 					var iterator = new RemoteFileIterator (this, chan);
@@ -568,7 +569,7 @@ namespace Vanubi {
 			this.conf = (owned) conf;
 		}
 
-		async string read_version (owned SocketConnection conn, owned AsyncDataInputStream is) throws Error {
+		async string read_version (owned SocketConnection conn, owned BufferInputStream is) throws Error {
 			var ver = yield is.read_line_async ();
 			if (ver == null || ver == "") {
 				throw new IOError.PARTIAL_INPUT ("Expected protocol version");
@@ -576,7 +577,7 @@ namespace Vanubi {
 			return ver;
 		}
 		
-		async string read_ident (owned SocketConnection conn, owned AsyncDataInputStream is, out bool is_main) throws Error {
+		async string read_ident (owned SocketConnection conn, owned BufferInputStream is, out bool is_main) throws Error {
 			var cmd = yield is.read_line_async ();
 			if (cmd == null) {
 				throw new IOError.PARTIAL_INPUT ("Expected main or ident command");
@@ -616,7 +617,7 @@ namespace Vanubi {
 		}
 		
 		async void handle_client (owned SocketConnection conn) throws Error {
-			var is = new AsyncDataInputStream (conn.input_stream);
+			var is = new BufferInputStream (conn.input_stream);
 			string version = yield read_version (conn, is);
 			bool is_main;
 			string ident = yield read_ident (conn, is, out is_main);
@@ -638,7 +639,7 @@ namespace Vanubi {
 			}
 		}
 		
-		async void handle_remote_requests (owned RemoteConnection remote, owned SocketConnection conn, owned AsyncDataInputStream is) throws Error {
+		async void handle_remote_requests (owned RemoteConnection remote, owned SocketConnection conn, owned BufferInputStream is) throws Error {
 			while (true) {
 				var cmd = yield is.read_line_async ();
 				if (cmd == null) {
@@ -656,7 +657,7 @@ namespace Vanubi {
 			}
 		}
 		
-		async void handle_open (owned RemoteConnection remote, owned AsyncDataInputStream is) throws Error {
+		async void handle_open (owned RemoteConnection remote, owned BufferInputStream is) throws Error {
 			var path = yield is.read_line_async ();
 			var file = new RemoteFileSource (path, remote);
 			open_file (file);

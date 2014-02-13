@@ -196,20 +196,6 @@ namespace Vanubi {
 		return false;
 	}
 
-	public class AsyncDataInputStream : DataInputStream {
-		public AsyncDataInputStream (InputStream base_stream) {
-			Object (base_stream: base_stream, close_base_stream: false);
-		}
-
-		public async int read_int_async (int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) throws Error {
-			if (get_available () < sizeof (int)) {
-				yield fill_async ((ssize_t) sizeof (int), io_priority, cancellable);
-			}
-			
-			return read_int32 (cancellable);
-		}
-	}
-
 	public class AsyncMutex {
 		class CallbackObject {
 			internal SourceFunc resume;

@@ -89,7 +89,7 @@ namespace Vanubi {
 			}
 		}
 
-		public virtual async ssize_t read_async ([CCode (array_length_cname = "count", array_length_pos = 1.5, array_length_type = "gsize")] uint8[] buffer, int io_priority = GLib.Priority.DEFAULT, GLib.Cancellable? cancellable = null) throws GLib.IOError {
+		public override async ssize_t read_async ([CCode (array_length_cname = "count", array_length_pos = 1.5, array_length_type = "gsize")] uint8[] buffer, int io_priority = GLib.Priority.DEFAULT, GLib.Cancellable? cancellable = null) throws GLib.IOError {
 			if (has_pending ()) {
 				throw new IOError.PENDING ("Stream operation pending");
 			}
@@ -327,6 +327,205 @@ namespace Vanubi {
 		public override async bool close_async (int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) throws IOError {
 			chan.shutdown (false);
 			return true;
+		}
+	}
+
+	public class BinaryInputStream : FilterInputStream {
+		public BinaryInputStream (InputStream base_stream) {
+			Object (base_stream: base_stream, close_base_stream: false);
+		}
+
+		public override bool close (Cancellable? cancellable = null) throws IOError {
+			return base_stream.close (cancellable);
+		}
+
+		public override async bool close_async (int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) throws IOError {
+			return yield base_stream.close_async (io_priority, cancellable);
+		}
+
+		public override ssize_t read ([CCode (array_length_type = "gsize")] uint8[] buffer, GLib.Cancellable? cancellable = null) throws GLib.IOError {
+			return base_stream.read (buffer, cancellable);
+		}
+
+		public override async ssize_t read_async ([CCode (array_length_cname = "count", array_length_pos = 1.5, array_length_type = "gsize")] uint8[] buffer, int io_priority = GLib.Priority.DEFAULT, GLib.Cancellable? cancellable = null) throws GLib.IOError {
+			return yield base_stream.read_async (buffer, io_priority, cancellable);
+		}
+
+		public int read_int32 (Cancellable? cancellable = null) throws GLib.IOError {
+			int32 val = 0;
+			ssize_t rsize = 0;
+
+			while (rsize < sizeof(int32)) {
+				int32* ptr = &val;
+				uint8* ptr8 = (uint8*) ptr;
+				unowned uint8[] buf = (uint8[]) (ptr+rsize);
+				buf.length = (int) sizeof (int32);
+				rsize += read (buf, cancellable);
+			}
+			return val;
+		}
+		
+		public async int read_int32_async (int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) throws GLib.IOError {
+			int32 val = 0;
+			ssize_t rsize = 0;
+
+			while (rsize < sizeof(int32)) {
+				int32* ptr = &val;
+				uint8* ptr8 = (uint8*) ptr;
+				unowned uint8[] buf = (uint8[]) (ptr+rsize);
+				buf.length = (int) sizeof (int32);
+				rsize += yield read_async (buf, io_priority, cancellable);
+			}
+			return val;
+		}
+	}
+
+	public class BufferInputStream : FilterInputStream {
+		uint8[] buffer = null;
+		
+		public BufferInputStream (InputStream base_stream) {
+			Object (base_stream: base_stream, close_base_stream: false);
+			buffer = new uint8[1024*8];
+			buffer.length = 0;
+		}
+
+		public override bool close (Cancellable? cancellable = null) throws IOError {
+			return base_stream.close (cancellable);
+		}
+
+		public override async bool close_async (int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) throws IOError {
+			return yield base_stream.close_async (io_priority, cancellable);
+		}
+
+		public size_t fill (size_t count, GLib.Cancellable? cancellable) throws GLib.IOError {
+			if (buffer.length > count) {
+				return 0;
+			}
+
+			size_t total = 0;
+			while (count > 0) {
+				var cnt = int.min ((int) count-buffer.length, 1024*8-buffer.length);
+				if (cnt == 0) {
+					break;
+				}
+				
+				uint8* ptr = buffer;
+				unowned uint8[] cur = (uint8[]) (ptr+buffer.length);
+				cur.length = cnt;
+				var ret = base_stream.read (cur, cancellable);
+				if (ret == 0) {
+					break;
+				}
+
+				count -= ret;
+				total += ret;
+			}
+
+			return total;
+		}
+		
+		public async size_t fill_async (size_t count, int io_priority = GLib.Priority.DEFAULT, GLib.Cancellable? cancellable) throws GLib.IOError {
+			if (buffer.length > count) {
+				return 0;
+			}
+
+			size_t total = 0;
+			while (count > 0) {
+				var cnt = int.min ((int)count-buffer.length, 1024*8-buffer.length);
+				if (cnt == 0) {
+					break;
+				}
+				
+				uint8* ptr = buffer;
+				unowned uint8[] cur = (uint8[]) (ptr+buffer.length);
+				cur.length = cnt;
+				var ret = yield base_stream.read_async (cur, io_priority, cancellable);
+				if (ret == 0) {
+					break;
+				}
+				
+				count -= ret;
+				total += ret;
+			}
+
+			return total;
+		}
+
+		public override ssize_t read ([CCode (array_length_type = "gsize")] uint8[] buffer, GLib.Cancellable? cancellable = null) throws GLib.IOError {
+			fill (buffer.length, cancellable);
+			var ret = int.min (this.buffer.length, buffer.length);
+			uint8* ptr = (uint8*) this.buffer;
+			ptr += ret;
+
+			// slide buffer
+			var rest = this.buffer.length - ret;
+			Posix.memmove ((void*) this.buffer, (void*) ptr, rest);
+			this.buffer.length = rest;
+
+			return ret;
+		}
+
+		public override async ssize_t read_async ([CCode (array_length_cname = "count", array_length_pos = 1.5, array_length_type = "gsize")] uint8[] buffer, int io_priority = GLib.Priority.DEFAULT, GLib.Cancellable? cancellable = null) throws GLib.IOError {
+			yield fill_async (buffer.length, io_priority, cancellable);
+			var ret = int.min (this.buffer.length, buffer.length);
+			Posix.memcpy ((void*) buffer, (void*) this.buffer, ret);
+
+			slide (ret);
+			return ret;
+		}
+
+		void slide (int cnt) {
+			// slide buffer
+			uint8* ptr = (uint8*) this.buffer;
+			ptr += cnt;
+
+			var rest = this.buffer.length - cnt;
+			Posix.memmove ((void*) this.buffer, (void*) ptr, rest);
+			this.buffer.length = rest;
+		}
+
+		// FIXME: we could go OOM here
+		public string? read_line (Cancellable? cancellable = null) throws GLib.IOError {
+			var b = new StringBuilder ();
+
+			while (true) {
+				fill (1024*8, cancellable);
+				if (buffer.length == 0) {
+					return null;
+				}
+				
+				for (var i=0; i < buffer.length; i++) {
+					if (buffer[i] == '\n') {
+						b.append ((string) buffer[0:i]);
+						slide (i);
+						return (owned) b.str;
+					}
+				}
+				b.append ((string) buffer[0:buffer.length]);
+				slide (buffer.length);
+			}
+		}
+
+		// FIXME: we could go OOM here
+		public async string? read_line_async (int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) throws GLib.IOError {
+			var b = new StringBuilder ();
+
+			while (true) {
+				fill_async (1024*8, io_priority, cancellable);
+				if (buffer.length == 0) {
+					return null;
+				}
+				
+				for (var i=0; i < buffer.length; i++) {
+					if (buffer[i] == '\n') {
+						b.append ((string) buffer[0:i]);
+						slide (i);
+						return (owned) b.str;
+					}
+				}
+				b.append ((string) buffer[0:buffer.length]);
+				slide (buffer.length);
+			}
 		}
 	}
 }
