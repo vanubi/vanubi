@@ -23,7 +23,7 @@
 namespace Vanubi {
 	public class ChannelInputStream : InputStream {
 		IOChannel chan;
-		bool something_to_read = false;
+		bool readable = false;
 		IOSource source;
 		SourceFunc resume = null;
 
@@ -32,16 +32,16 @@ namespace Vanubi {
 			chan.set_encoding (null); // always assume binary
 			source = chan.create_watch (IOCondition.IN);
 			source.set_callback ((source, condition) => {
-				if (condition == IOCondition.IN || condition == IOCondition.PRI) {
-					something_to_read = true;
-					if (resume != null) {
-						resume ();
+					if (condition == IOCondition.IN || condition == IOCondition.PRI) {
+						readable = true;
+						if (resume != null) {
+							resume ();
+						}
+						return true;
+					} else {
+						close ();
+						return false;
 					}
-					return true;
-				} else {
-					close ();
-					return false;
-				}
 			});
 		}
 
@@ -51,6 +51,10 @@ namespace Vanubi {
 
 		public ChannelInputStream.for_file (string filename, string mode) {
 			this (new IOChannel.file (filename, mode));
+		}
+
+		~ChannelInputStream () {
+			source.destroy ();
 		}
 
 		public override ssize_t read ([CCode (array_length_type = "gsize")] uint8[] buffer, GLib.Cancellable? cancellable = null) throws GLib.IOError {
@@ -63,7 +67,7 @@ namespace Vanubi {
 				cancellable.set_error_if_cancelled ();
 				var sem = Mutex ();
 				sem.lock ();
-				if (!something_to_read) {
+				if (!readable) {
 					resume = () => { sem.unlock (); return false; };
 					sem.lock ();
 					resume = null;
@@ -71,12 +75,12 @@ namespace Vanubi {
 				
 				cancellable.set_error_if_cancelled ();
 				
-				if (!something_to_read) {
+				if (!readable) {
 					throw new IOError.BROKEN_PIPE ("Broken pipe");
 				} else {
 					size_t ret;
 					chan.read_chars ((char[]) buffer, out ret);
-					something_to_read = false;
+					readable = false;
 					
 					return (ssize_t) ret;
 				}
@@ -94,7 +98,7 @@ namespace Vanubi {
 
 			try {
 				cancellable.set_error_if_cancelled ();
-				if (!something_to_read) {
+				if (!readable) {
 					resume = read_async.callback;
 					yield;
 					resume = null;
@@ -102,12 +106,12 @@ namespace Vanubi {
 				
 				cancellable.set_error_if_cancelled ();
 				
-				if (!something_to_read) {
+				if (!readable) {
 					throw new IOError.BROKEN_PIPE ("Broken pipe");
 				} else {
 					size_t ret;
 					chan.read_chars ((char[]) buffer, out ret);
-					something_to_read = false;
+					readable = false;
 					
 					return (ssize_t) ret;
 				}
@@ -146,6 +150,175 @@ namespace Vanubi {
 			return total;
 		}
 
+		public override bool close (Cancellable? cancellable = null) throws IOError {
+			chan.shutdown (false);
+			return true;
+		}
+
+		public override async bool close_async (int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) throws IOError {
+			chan.shutdown (false);
+			return true;
+		}
+	}
+
+	public class ChannelOutputStream : OutputStream {
+		IOChannel chan;
+		bool writable = false;
+		IOSource source;
+		SourceFunc resume = null;
+
+		public ChannelOutputStream (IOChannel chan) {
+			this.chan = chan;
+			chan.set_encoding (null); // always assume binary
+			source = chan.create_watch (IOCondition.OUT);
+			source.set_callback ((source, condition) => {
+					if (condition == IOCondition.OUT) {
+						writable = true;
+						if (resume != null) {
+							resume ();
+						}
+						return true;
+					} else {
+						close ();
+						return false;
+					}
+			});
+		}
+
+		~ChannelOutputStream () {
+			source.destroy ();
+		}
+		
+		public ChannelOutputStream.for_unix_fd (int fd) {
+			this (new IOChannel.unix_new (fd));
+		}
+
+		public ChannelOutputStream.for_file (string filename, string mode) {
+			this (new IOChannel.file (filename, mode));
+		}
+
+		public override ssize_t write ([CCode (array_length_type = "gsize")] uint8[] buffer, GLib.Cancellable? cancellable = null) throws GLib.IOError {
+			if (has_pending ()) {
+				throw new IOError.PENDING ("Stream operation pending");
+			}
+			set_pending ();
+			
+			try {
+				cancellable.set_error_if_cancelled ();
+				var sem = Mutex ();
+				sem.lock ();
+				if (!writable) {
+					resume = () => { sem.unlock (); return false; };
+					sem.lock ();
+					resume = null;
+				}
+				
+				cancellable.set_error_if_cancelled ();
+				
+				if (!writable) {
+					throw new IOError.BROKEN_PIPE ("Broken pipe");
+				} else {
+					size_t ret;
+					chan.write_chars ((char[]) buffer, out ret);
+					writable = false;
+					
+					return (ssize_t) ret;
+				}
+			} finally {
+				clear_pending ();
+			}
+		}
+
+		public override async ssize_t write_async ([CCode (array_length_cname = "count", array_length_pos = 1.5, array_length_type = "gsize")] uint8[] buffer, int io_priority = GLib.Priority.DEFAULT, GLib.Cancellable? cancellable = null) throws GLib.IOError {
+			if (has_pending ()) {
+				throw new IOError.PENDING ("Stream operation pending");
+			}
+			set_pending ();
+			source.set_priority (io_priority);
+
+			try {
+				cancellable.set_error_if_cancelled ();
+				if (!writable) {
+					resume = write_async.callback;
+					yield;
+					resume = null;
+				}
+				
+				cancellable.set_error_if_cancelled ();
+				
+				if (!writable) {
+					throw new IOError.BROKEN_PIPE ("Broken pipe");
+				} else {
+					size_t ret;
+					chan.write_chars ((char[]) buffer, out ret);
+					writable = false;
+					
+					return (ssize_t) ret;
+				}
+			} finally {
+				clear_pending ();
+			}
+		}
+
+		public override bool flush (GLib.Cancellable? cancellable = null) throws GLib.Error {
+			if (has_pending ()) {
+				throw new IOError.PENDING ("Stream operation pending");
+			}
+			set_pending ();
+			
+			try {
+				cancellable.set_error_if_cancelled ();
+				var sem = Mutex ();
+				sem.lock ();
+				if (!writable) {
+					resume = () => { sem.unlock (); return false; };
+					sem.lock ();
+					resume = null;
+				}
+				
+				cancellable.set_error_if_cancelled ();
+				
+				if (!writable) {
+					throw new IOError.BROKEN_PIPE ("Broken pipe");
+				} else {
+					chan.flush ();
+					writable = false;
+					return true;
+				}
+			} finally {
+				clear_pending ();
+			}
+		}
+		
+		public override async bool flush_async (int io_priority = GLib.Priority.DEFAULT, GLib.Cancellable? cancellable = null) throws GLib.Error {
+			if (has_pending ()) {
+				throw new IOError.PENDING ("Stream operation pending");
+			}
+			set_pending ();
+			source.set_priority (io_priority);
+
+			try {
+				cancellable.set_error_if_cancelled ();
+				if (!writable) {
+					resume = flush_async.callback;
+					yield;
+					resume = null;
+				}
+				
+				cancellable.set_error_if_cancelled ();
+				
+				if (!writable) {
+					throw new IOError.BROKEN_PIPE ("Broken pipe");
+				} else {
+					chan.flush ();
+					writable = false;
+					return true;
+				}
+			} finally {
+				clear_pending ();
+			}
+		}
+		
 		public override bool close (Cancellable? cancellable = null) throws IOError {
 			chan.shutdown (false);
 			return true;
