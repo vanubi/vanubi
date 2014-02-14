@@ -419,6 +419,7 @@ namespace Vanubi {
 
 				count -= ret;
 				total += ret;
+				buffer.length += (int) ret;
 			}
 
 			return total;
@@ -496,12 +497,12 @@ namespace Vanubi {
 				
 				for (var i=0; i < buffer.length; i++) {
 					if (buffer[i] == '\n') {
-						b.append ((string) buffer[0:i]);
-						slide (i);
+						b.append_len ((string) buffer, i);
+						slide (i+1);
 						return (owned) b.str;
 					}
 				}
-				b.append ((string) buffer[0:buffer.length]);
+				b.append_len ((string) buffer, buffer.length);
 				slide (buffer.length);
 			}
 		}
@@ -509,21 +510,20 @@ namespace Vanubi {
 		// FIXME: we could go OOM here
 		public async string? read_line_async (int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) throws GLib.IOError {
 			var b = new StringBuilder ();
-
+			
 			while (true) {
 				fill_async (1024*8, io_priority, cancellable);
 				if (buffer.length == 0) {
 					return null;
 				}
-				
 				for (var i=0; i < buffer.length; i++) {
 					if (buffer[i] == '\n') {
-						b.append ((string) buffer[0:i]);
-						slide (i);
+						b.append_len ((string) buffer, i);
+						slide (i+1);
 						return (owned) b.str;
 					}
 				}
-				b.append ((string) buffer[0:buffer.length]);
+				b.append_len ((string) buffer, buffer.length);
 				slide (buffer.length);
 			}
 		}

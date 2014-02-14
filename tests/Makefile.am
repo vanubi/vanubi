@@ -15,23 +15,23 @@ AM_VALAFLAGS = \
 test_programs = \
 	testbuffer 	\
 	testcharset	\
-	testchunked \
 	testfiles	\
 	testindent	\
 	testcomment	\
 	testmarks	\
 	testmatch	\
 	testsearch	\
+	teststreams \
 	testvade	\
 	$(NULL)
 
 testbuffer_SOURCES = testbuffer.vala
 testcharset_SOURCES = testcharset.vala
-testchunked_SOURCES = testchunked.vala
 testfiles_SOURCES = testfiles.vala
 testindent_SOURCES = testindent.vala
 testcomment_SOURCES = testcomment.vala
 testmarks_SOURCES = testmarks.vala
 testmatch_SOURCES = testmatch.vala
 testsearch_SOURCES = testsearch.vala
+teststreams_SOURCES = teststreams.vala
 testvade_SOURCES = testvade.vala
