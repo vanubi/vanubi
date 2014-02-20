@@ -1191,21 +1191,30 @@ namespace Vanubi.UI {
 		async void reload_file (Editor editor) {
 			var old_offset = selection_start.get_offset ();
 			try {
-				var is = yield editor.source.read ();
-				yield replace_editor_contents (editor, is);
-				is.close ();
-
-				TextIter iter;
-				var buf = editor.view.buffer;
-				buf.get_iter_at_offset (out iter, old_offset);
-				buf.place_cursor (iter);
-				editor.view.scroll_mark_onscreen (buf.get_insert ());
-
-				// in case of splitted editors
-				each_source_editor (editor.source, (ed) => {
-						ed.reset_external_changed.begin ();
-						return true;
-				});
+				var exists = yield editor.source.exists ();
+				if (!exists && editor.moved_to != null) {
+					var loc = editor.get_location ();
+					loc.source = editor.moved_to;
+					kill_source (editor.source);
+					var focused = last_focused_editor;
+					yield open_location (focused, loc);
+				} else {
+					var is = yield editor.source.read ();
+					yield replace_editor_contents (editor, is);
+					is.close ();
+					
+					TextIter iter;
+					var buf = editor.view.buffer;
+					buf.get_iter_at_offset (out iter, old_offset);
+					buf.place_cursor (iter);
+					editor.view.scroll_mark_onscreen (buf.get_insert ());
+					
+					// in case of splitted editors
+					each_source_editor (editor.source, (ed) => {
+							ed.reset_external_changed.begin ();
+							return true;
+					});
+				}
 			} catch (IOError.CANCELLED e) {
 			} catch (IOError.NOT_SUPPORTED e) {
 			} catch (Error e) {
@@ -1319,6 +1328,20 @@ namespace Vanubi.UI {
 			}
 		}
 
+		// Destroy this source from vanubi
+		void kill_source (DataSource source) {
+			if (source is ScratchSource) {
+				return;
+			}
+			
+			GenericArray<Editor> editors = source.get_data ("editors");
+			foreach (var ed in editors.data) {
+				if (ed.visible) {
+					execute_command["kill-buffer"](ed, "kill-buffer");
+				}
+			}
+		}
+		
 		/* Kill a buffer. The file of this buffer must not have any other editors visible. */
 		void kill_buffer (Editor editor, GenericArray<Editor> editors, owned DataSource next_source) {
 			var source = editor.source; // keep alive

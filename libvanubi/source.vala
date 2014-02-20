@@ -33,7 +33,7 @@ namespace Vanubi {
 	}
 	
 	public abstract class DataSource : Object {
-		public signal void changed ();
+		public signal void changed (DataSource? moved_to);
 		
 		public abstract DataSource? parent { owned get; }
 

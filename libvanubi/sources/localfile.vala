@@ -108,7 +108,7 @@ namespace Vanubi {
 			}
 			
 			try {
-				_monitor = file.monitor (FileMonitorFlags.NONE, cancellable);
+				_monitor = file.monitor (FileMonitorFlags.SEND_MOVED, cancellable);
 				_monitor.changed.connect (on_monitor);
 			} catch (IOError.CANCELLED e) {
 				throw e;
@@ -183,9 +183,13 @@ namespace Vanubi {
 			return iterator;
 		}
 		
-		public void on_monitor () {
+		public void on_monitor (File file, File? other_file, FileMonitorEvent event) {
 			restart_monitor.begin ();
-			changed ();
+			if (FileMonitorEvent.MOVED in event) {
+				changed (new LocalFileSource (other_file));
+			} else {
+				changed (null);
+			}
 		}
 		
 		public override uint hash () {

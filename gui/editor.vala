@@ -182,6 +182,7 @@ namespace Vanubi.UI {
 		public weak DataSource source { get; private set; }
 		public SourceView view { get; private set; }
 		public SourceStyleSchemeManager editor_style { get; private set; }
+		public DataSource? moved_to;
 		ScrolledWindow sw;
 		Label file_count;
 		Label file_status;
@@ -314,6 +315,7 @@ namespace Vanubi.UI {
 
 		public async void reset_external_changed () {
 			file_external_changed.set_label ("");
+			moved_to = null;
 			var mtime = yield source.get_mtime ();
 			source.set_data<TimeVal?> ("editing_mtime", mtime);
 		}
@@ -690,7 +692,8 @@ namespace Vanubi.UI {
 			file_status.set_label (buf.get_modified () ? "modified" : "");
 		}
 
-		void on_external_changed () {
+		void on_external_changed (DataSource? moved_to) {
+			this.moved_to = moved_to;
 			external_changed.begin ();
 		}
 
