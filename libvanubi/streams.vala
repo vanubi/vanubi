@@ -39,7 +39,11 @@ namespace Vanubi {
 						}
 						return true;
 					} else {
+						readable = false;
 						close ();
+						if (resume != null) {
+							resume ();
+						}
 						return false;
 					}
 			});
@@ -179,7 +183,11 @@ namespace Vanubi {
 						}
 						return true;
 					} else {
+						writable = false;
 						close ();
+						if (resume != null) {
+							resume ();
+						}
 						return false;
 					}
 			});
@@ -512,10 +520,11 @@ namespace Vanubi {
 			var b = new StringBuilder ();
 			
 			while (true) {
-				fill_async (1024*8, io_priority, cancellable);
+				yield fill_async (1024*8, io_priority, cancellable);
 				if (buffer.length == 0) {
 					return null;
 				}
+
 				for (var i=0; i < buffer.length; i++) {
 					if (buffer[i] == '\n') {
 						b.append_len ((string) buffer, i);
