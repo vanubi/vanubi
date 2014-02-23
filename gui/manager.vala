@@ -1993,6 +1993,7 @@ namespace Vanubi.UI {
 				case "sh":
 				case "makefile":
 				case "python":
+				case "generic_comment":
 					comment_engine = new Comment_Hash (vbuf);
 					break;
 				case "html":
