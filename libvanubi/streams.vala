@@ -455,6 +455,7 @@ namespace Vanubi {
 				
 				count -= ret;
 				total += ret;
+				buffer.length += (int) ret;
 			}
 
 			return total;
