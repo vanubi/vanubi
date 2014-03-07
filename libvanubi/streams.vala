@@ -368,7 +368,14 @@ namespace Vanubi {
 				uint8* ptr8 = (uint8*) ptr;
 				unowned uint8[] buf = (uint8[]) (ptr+rsize);
 				buf.length = (int) sizeof (int32);
-				rsize += read (buf, cancellable);
+				var res = base_stream.read (buf, cancellable);
+				rsize += res;
+				if (res <= 0) {
+					if (rsize > 0 && rsize < sizeof(int32)) {
+						throw new IOError.PARTIAL_INPUT ("Partial input, got %d bytes, expected %d", rsize, sizeof(int32));
+					}
+					return 0;
+				}
 			}
 			return val;
 		}
@@ -382,7 +389,14 @@ namespace Vanubi {
 				uint8* ptr8 = (uint8*) ptr;
 				unowned uint8[] buf = (uint8[]) (ptr+rsize);
 				buf.length = (int) sizeof (int32);
-				rsize += yield read_async (buf, io_priority, cancellable);
+				var res = yield base_stream.read_async (buf, io_priority, cancellable);
+				rsize += res;
+				if (res <= 0) {
+					if (rsize > 0 && rsize < sizeof(int32)) {
+						throw new IOError.PARTIAL_INPUT ("Partial input, got %d bytes, expected %d", rsize, sizeof(int32));
+					}
+					return 0;
+				}
 			}
 			return val;
 		}
@@ -448,7 +462,9 @@ namespace Vanubi {
 				uint8* ptr = buffer;
 				unowned uint8[] cur = (uint8[]) (ptr+buffer.length);
 				cur.length = cnt;
+				message("%p", cur);
 				var ret = yield base_stream.read_async (cur, io_priority, cancellable);
+				message("filled %d", (int)ret);
 				if (ret == 0) {
 					break;
 				}
@@ -503,7 +519,7 @@ namespace Vanubi {
 				if (buffer.length == 0) {
 					return null;
 				}
-				
+
 				for (var i=0; i < buffer.length; i++) {
 					if (buffer[i] == '\n') {
 						b.append_len ((string) buffer, i);
@@ -519,12 +535,12 @@ namespace Vanubi {
 		// FIXME: we could go OOM here
 		public async string? read_line_async (int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) throws GLib.IOError {
 			var b = new StringBuilder ();
-			
 			while (true) {
 				yield fill_async (1024*8, io_priority, cancellable);
 				if (buffer.length == 0) {
 					return null;
 				}
+				message("%d", buffer.length);
 
 				for (var i=0; i < buffer.length; i++) {
 					if (buffer[i] == '\n') {

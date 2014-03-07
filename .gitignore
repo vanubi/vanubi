@@ -52,11 +52,13 @@ tests/testsearch
 tests/testindent
 tests/testvade
 tests/testcomment
-test-driver
 tests/testcharset
+tests/testbuffer
+tests/testchunked
+tests/teststreams
+tests/testmarks
+test-driver
 docs/manual.html
 web/
-tests/testmarks
 docs/manual-stripped.html
-tests/testbuffer
 data/vanubi.desktop
