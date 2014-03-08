@@ -29,6 +29,44 @@ Make sure to have the most recent Vala compiler at your disposal.
 [CAUTION]
 Vanubi is a young and unstable software. Vanubi crashes may lead to data loss. Save, double check and backup your files often!
 
+== Screenshots
+keywords:[screenshots snapshots]
+.How Vanubi looks like
+--
+--
+
+=== Vanubi startup window
+--
+On the bottom left, the file name followed by the row and column number. The `*scratch*` buffer does not refer to any file, and it's used for your own notetaking.
+--
+
+image::images/shots/main.jpg[]
+
+=== A more complex window
+--
+Opening a file with `C-x C-f` shows a bar at the bottom. This bar contains the list of the files in the directory, and a textbox where you can type the name of the file to open. Typing part of the file will show the files in the directory that match the pattern.
+
+On the left side, you can see a green line: that refers to the new lines added to a file indexed by git. Also, the information bar at the bottom shows that the file belongs to a git repository within the master branch.
+--
+
+image::images/shots/openfile.jpg[]
+
+=== The commands help bar
+--
+Open the help bar with `C-h` and start typing what you want to do. Here typing `clea` showed some commands about managing trailing whitespaces, and clearing text marks.
+
+In this context you can also read and manage the keybindings related to a command.
+--
+
+image::images/shots/helpbar.jpg[]
+
+=== Split views
+--
+Split the view with `C-x 2` or `C-x 3`, and navigate with `C-j` and `C-l`. Join all the views with `C-x 1` or only two adjacent views with `C-x C-1`.
+--
+
+image::images/shots/splitviews.jpg[]
+
 == Key/mouse bindings
 keywords:[keys keybindings mousebindings mouse]
 .Basics of key and mouse bindings
