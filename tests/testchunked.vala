@@ -19,6 +19,9 @@ async void test_simple_async_helper (MainLoop loop) {
 	var buf = new BufferInputStream (ch);
 	var line = yield buf.read_line_async ();
 	assert(line == "xxxx");
+
+	unowned uint8[] outdata = os.get_data ();
+	assert (((string) outdata) == "continue\n");
 	
 	loop.quit ();
 }	
@@ -42,6 +45,9 @@ void test_simple_sync_helper (MainLoop loop) {
 	var line = buf.read_line ();
 	assert(line == "xxxx");
 
+	unowned uint8[] outdata = os.get_data ();
+	assert (((string) outdata) == "continue\n");
+
 	loop.quit ();
 }
 
@@ -58,6 +64,10 @@ void test_simple_sync_mainloop () {
 	Idle.add (() => {
 			var line = buf.read_line ();
 			assert (line == "xxxx");
+
+			unowned uint8[] outdata = os.get_data ();
+			assert (((string) outdata) == "continue\n");
+
 			loop.quit();
 			return false;
 	});

@@ -179,7 +179,7 @@ namespace Vanubi {
 			
 			if (ask_continue) {
 				// we wrongly assume that write does not block and does not require cancellation
-				os.write_all ("continue".data, null);
+				os.write_all ("continue\n".data, null);
 			}
 			ask_continue = true;
 
