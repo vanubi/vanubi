@@ -62,6 +62,10 @@ header h1 {
 	background: url("../images/blacktocat.png") 0 0 no-repeat;
 }
 
+#topics img {
+	max-width: 100%;
+	height: auto;
+}
 
 .topic-preview {
 	display: inline-block;
