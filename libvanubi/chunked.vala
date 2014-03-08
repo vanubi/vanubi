@@ -202,7 +202,7 @@ namespace Vanubi {
 							});
 					});
 				}
-				message("wewe");
+				
 				read_int32_async.begin (Priority.DEFAULT, null, (s,r) => {
 						chunk_size = read_int32_async.end (r);
 						if (resume != null) {
