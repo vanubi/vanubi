@@ -55,7 +55,6 @@ namespace Vanubi {
 			}
 		}
 		
-		// DANGER: this breaks a lot of assumptions, code must necessarily run in a thread different than the main thread
 		public override ssize_t read ([CCode (array_length_type = "gsize")] uint8[] buffer, GLib.Cancellable? cancellable = null) throws GLib.IOError {
 			cancellable.set_error_if_cancelled ();
 
@@ -68,7 +67,12 @@ namespace Vanubi {
 			ulong cancel_id = 0;
 			var sem = Mutex ();
 			sem.lock ();
-			
+
+			var ctx = MainContext.default();
+
+			bool ctx_iteration = ctx.is_owner ();
+			bool ctx_blocked = true;
+
 			if (chunk_size == 0) {
 				// wait new chunk
 
@@ -77,7 +81,11 @@ namespace Vanubi {
 							Idle.add (() => {
 									cancellable.disconnect (cancel_id);
 									cancel_id = 0;
-									sem.unlock ();
+									if (ctx_iteration) {
+										ctx_blocked = false;
+									} else {
+										sem.unlock ();
+									}
 									return false;
 							});
 					});
@@ -85,10 +93,23 @@ namespace Vanubi {
 				
 				read_int32_async.begin (Priority.DEFAULT, null, (s,r) => {
 						chunk_size = read_int32_async.end (r);
-						sem.unlock ();
+						if (ctx_iteration) {
+							ctx_blocked = false;
+						} else {
+							sem.unlock ();
+						}
 				});
+
+				// block until cancelled or data available
+				if (ctx_iteration) {
+					ctx_blocked = true;
+					while (ctx_blocked) {
+						ctx.iteration (true);
+					}
+				} else {
+					sem.lock ();
+				}
 				
-				sem.lock (); // block until cancelled or data available
 				if (cancellable != null && cancel_id > 0) {
 					cancellable.disconnect (cancel_id);
 				}
@@ -109,7 +130,11 @@ namespace Vanubi {
 						Idle.add (() => {
 								cancellable.disconnect (cancel_id);
 								cancel_id = 0;
-								sem.unlock ();
+								if (ctx_iteration) {
+									ctx_blocked = false;
+								} else {
+									sem.unlock ();
+								}
 								return false;
 						});
 				});
@@ -118,10 +143,23 @@ namespace Vanubi {
 			base_stream.read_async.begin (buf, Priority.DEFAULT, null, (s, r) => {
 					ret = base_stream.read_async.end (r);
 					chunk_size -= (int) ret;
-					sem.unlock ();
+					if (ctx_iteration) {
+						ctx_blocked = false;
+					} else {
+						sem.unlock ();
+					}
 			});
 
-			sem.lock (); // block until cancelled or data available
+			// block until cancelled or data available
+			if (ctx_iteration) {
+				ctx_blocked = true;
+				while (ctx_blocked) {
+					ctx.iteration (true);
+				}
+			} else {
+				sem.lock ();
+			}
+			
 			if (cancellable != null && cancel_id > 0) {
 				cancellable.disconnect (cancel_id);
 			}

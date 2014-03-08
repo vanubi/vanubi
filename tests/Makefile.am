@@ -10,6 +10,7 @@ AM_CPPFLAGS = \
 AM_VALAFLAGS = \
 	--pkg vanubi \
 	--vapidir $(top_srcdir)/libvanubi \
+	--target-glib 2.32 \
 	$(NULL)
 
 test_programs = \
