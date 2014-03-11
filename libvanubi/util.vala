@@ -201,9 +201,12 @@ namespace Vanubi {
 			Object (base_stream: base_stream, close_base_stream: false);
 		}
 
-		public async int read_int_async (int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) throws Error {
-			if (get_available () < sizeof (int)) {
-				yield fill_async ((ssize_t) sizeof (int), io_priority, cancellable);
+		public async int read_int32_async (int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) throws Error {
+			while (get_available () < sizeof (int)) {
+				var res = yield fill_async ((ssize_t) sizeof (int), io_priority, cancellable);
+				if (res == 0) {
+					throw new IOError.PARTIAL_INPUT ("Partial input while reading int32");
+				}
 			}
 			
 			return read_int32 (cancellable);

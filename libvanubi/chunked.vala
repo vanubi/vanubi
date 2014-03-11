@@ -23,15 +23,17 @@ namespace Vanubi {
 	 * Send: continue\n or cancel\n
 	 */
 	 
-	public class ChunkedInputStream : AsyncDataInputStream {
+	public class ChunkedInputStream : FilterInputStream {
 		int chunk_size = 0;
+		AsyncDataInputStream is;
 		OutputStream os;
 		unowned Object refobj = null;
 		Object cancel_ref = null;
-		bool ask_continue = false;
+		bool can_ask_continue = false;
 		
-		public ChunkedInputStream (InputStream is, OutputStream os, Object? refobj) {
-			base (is);
+		public ChunkedInputStream (AsyncDataInputStream is, OutputStream os, Object? refobj) {
+			Object (base_stream: is, close_base_stream: false);
+			this.is = is;
 			this.os = os;
 			this.refobj = refobj;
 		}
@@ -55,174 +57,119 @@ namespace Vanubi {
 			}
 		}
 		
-		// DANGER: this breaks a lot of assumptions, code must necessarily run in a thread different than the main thread
 		public override ssize_t read ([CCode (array_length_type = "gsize")] uint8[] buffer, GLib.Cancellable? cancellable = null) throws GLib.IOError {
 			cancellable.set_error_if_cancelled ();
-
-			if (ask_continue) {
-				// we wrongly assume that write does not require cancellation
-				os.write_all ("continue\n".data, null);
-			}
-			ask_continue = true;
-	
-			ulong cancel_id = 0;
-			var sem = Mutex ();
-			sem.lock ();
 			
-			if (chunk_size == 0) {
-				// wait new chunk
+			ulong cancel_id = 0;
+			Cancellable mycancellable = null;
+			SourceFunc? resume = null;
 
+			if (chunk_size == 0) {
+				if (can_ask_continue) {
+					os.write_all ("continue\n".data, null);
+				}
+				
+				// wait new chunk
 				if (cancellable != null) {
-					cancel_id = cancellable.cancelled.connect (() => {
-							Idle.add (() => {
-									cancellable.disconnect (cancel_id);
-									cancel_id = 0;
-									sem.unlock ();
-									return false;
-							});
+					mycancellable = new Cancellable ();
+					cancel_id = cancellable.connect (() => {
+							cancellable.disconnect (cancel_id);
+							consume_and_cancel.begin ();
+							mycancellable.cancel ();
+							mycancellable = null;
 					});
 				}
 				
-				read_int_async.begin (Priority.DEFAULT, null, (s,r) => {
-						chunk_size = read_int_async.end (r);
-						sem.unlock ();
-				});
-				
-				sem.lock (); // block until cancelled or data available
+				chunk_size = is.read_int32 (mycancellable);
 				if (cancellable != null && cancel_id > 0) {
 					cancellable.disconnect (cancel_id);
-				}
-				cancel_id = 0;
-
-				if (cancellable != null && cancellable.is_cancelled ()) {
-					consume_and_cancel.begin ();
-					cancellable.set_error_if_cancelled ();
+					mycancellable = null;
 				}
 			}
-
-			ssize_t ret = 0;
+			can_ask_continue = true;
+			
 			unowned uint8[] buf = buffer;
 			buf.length = int.min ((int) chunk_size, buffer.length);
 
+			mycancellable = null;
 			if (cancellable != null) {
-				cancel_id = cancellable.cancelled.connect (() => {
-						Idle.add (() => {
-								cancellable.disconnect (cancel_id);
-								cancel_id = 0;
-								sem.unlock ();
-								return false;
-						});
+				mycancellable = new Cancellable ();
+				cancel_id = cancellable.connect (() => {
+						cancellable.disconnect (cancel_id);
+						consume_and_cancel.begin ();
+						mycancellable.cancel ();
+						mycancellable = null;
 				});
 			}
-			
-			read_async.begin (buf, Priority.DEFAULT, null, (s, r) => {
-					ret = read_async.end (r);
-					chunk_size -= (int) ret;
-					sem.unlock ();
-			});
 
-			sem.lock (); // block until cancelled or data available
+			var res = is.read (buf, cancellable);
 			if (cancellable != null && cancel_id > 0) {
 				cancellable.disconnect (cancel_id);
+				mycancellable = null;
 			}
-			cancel_id = 0;
-
-			if (cancellable != null && cancellable.is_cancelled ()) {
-				consume_and_cancel.begin ();
-				cancellable.set_error_if_cancelled ();
-			}
+			chunk_size -= (int) res;
 			
-			return ret;
+			return res;
 		}
 		
 		public override async ssize_t read_async ([CCode (array_length_type = "gsize")] uint8[] buffer, int io_priority = Priority.DEFAULT, GLib.Cancellable? cancellable = null) throws GLib.IOError {
 			cancellable.set_error_if_cancelled ();
-
-			if (ask_continue) {
-				// we wrongly assume that write does not block and does not require cancellation
-				os.write_all ("continuen".data, null);
-			}
-			ask_continue = true;
-
+			
 			ulong cancel_id = 0;
+			Cancellable mycancellable = null;
 			SourceFunc? resume = null;
 
 			if (chunk_size == 0) {
+				if (can_ask_continue) {
+					yield os.write_async ("continue\n".data, io_priority, null);
+				}
+				
 				// wait new chunk
-				resume = read_async.callback;
-
 				if (cancellable != null) {
-					cancel_id = cancellable.cancelled.connect (() => {
-							Idle.add (() => {
-									cancellable.disconnect (cancel_id);
-									cancel_id = 0;
-									if (resume != null) {
-										resume ();
-									}
-									return false;
-							});
+					mycancellable = new Cancellable ();
+					cancel_id = cancellable.connect (() => {
+							cancellable.disconnect (cancel_id);
+							consume_and_cancel.begin ();
+							mycancellable.cancel ();
+							mycancellable = null;
 					});
 				}
-
-				read_int_async.begin (Priority.DEFAULT, null, (s,r) => {
-						chunk_size = read_int_async.end (r);
-						if (resume != null) {
-							resume ();
-						}
-				});
-
-				yield; // wait until cancelled or data available
-				resume = null;
+				
+				chunk_size = yield is.read_int32_async (io_priority, mycancellable);
 				if (cancellable != null && cancel_id > 0) {
 					cancellable.disconnect (cancel_id);
-				}
-
-				if (cancellable != null && cancellable.is_cancelled ()) {
-					consume_and_cancel.begin ();
-					cancellable.set_error_if_cancelled ();
+					mycancellable = null;
 				}
 			}
-
-			ssize_t ret = 0;
+			can_ask_continue = true;
+			
 			unowned uint8[] buf = buffer;
 			buf.length = int.min ((int) chunk_size, buffer.length);
-			resume = read_async.callback;
 
-			cancel_id = cancellable.cancelled.connect (() => {
-					Idle.add (() => {
-							cancellable.disconnect (cancel_id);
-							cancel_id = 0;
-							if (resume != null) {
-								resume ();
-							}
-							return false;
-					});
-			});
-			
-			read_async.begin (buf, Priority.DEFAULT, null, (s, r) => {
-					ret = read_async.end (r);
-					chunk_size -= (int) ret;
-					if (resume != null) {
-						resume ();
-					}
-			});
+			mycancellable = null;
+			if (cancellable != null) {
+				mycancellable = new Cancellable ();
+				cancel_id = cancellable.connect (() => {
+						cancellable.disconnect (cancel_id);
+						consume_and_cancel.begin ();
+						mycancellable.cancel ();
+						mycancellable = null;
+				});
+			}
 
-			yield; // wait until cancelled or data available
-			resume = null;
-			if (cancel_id > 0) {
+			var res = yield is.read_async (buf, io_priority, cancellable);
+			if (cancellable != null && cancel_id > 0) {
 				cancellable.disconnect (cancel_id);
+				mycancellable = null;
 			}
-
-			if (cancellable.is_cancelled ()) {
-				consume_and_cancel.begin ();
-				cancellable.set_error_if_cancelled ();
-			}
-			return ret;
+			chunk_size -= (int) res;
+			
+			return res;
 		}
 
 		public override bool close (Cancellable? cancellable = null) {
-			consume_and_cancel.begin ();
 			cancellable.set_error_if_cancelled ();
+			consume_and_cancel.begin ();
 			return true;
 		}
 	}
