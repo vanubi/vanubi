@@ -52,6 +52,7 @@ tests/testsearch
 tests/testindent
 tests/testvade
 tests/testcomment
+tests/testchunked
 test-driver
 tests/testcharset
 docs/manual.html
