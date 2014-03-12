@@ -75,7 +75,17 @@ def main_conn ():
 	s.close ()
 
 # Connection pool for user requests
-	
+
+class Cancelled (RuntimeError):
+	pass
+
+def write_chunk (f, data):
+	f.write (struct.pack("<i", len(data)))
+	f.write (data);
+	f.flush ()
+	if f.readline().strip() != "continue":
+		raise Cancelled()
+
 def pool_conn ():
 	s = connect (False)
 	f = s.makefile ("r+b")
@@ -163,103 +173,95 @@ def process_next_children (f, dirp):
 
 @autopath
 def process_execute (f, workdir):
-	cmd = f.readline ()
-	if not cmd:
-		f.close ()
-		return
-
+	p = None
 	try:
-		p = subprocess.Popen (['/bin/bash', '-c', cmd], close_fds=True, cwd=workdir,
-							  stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-	except Exception, e:
-		f.write ("error\n")
-		f.write ("%s\n" % e)
-		f.flush ()
-		return
+		cmd = f.readline ()
+		if not cmd:
+			f.close ()
+			return
 
-	# stdin
-	f.write ("ok\n")
-	f.flush ()
-	while True:
-		size = int(f.readline ())
-		if not size:
-			break
-		while size > 0:
-			s = f.read (size)
-			if not s:
+		try:
+			p = subprocess.Popen (['/bin/bash', '-c', cmd], close_fds=True, cwd=workdir,
+								  stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+		except Exception, e:
+			write_chunk ("error\n%s\n" % e)
+			return
+
+		# stdin
+		write_chunk ("ok\n")
+		while True:
+			size = int(f.readline ())
+			if not size:
 				break
-			size -= len (s)
-			p.stdin.write (s)
-
-	try:
-		endout = enderr = False
-
-		while not endout or not enderr:
-			if not endout:
-				s = p.stdout.read (4096)
-				f.write ("stdout\n")
+			while size > 0:
+				s = f.read (size)
 				if not s:
-					f.write ("0\n")
-					f.flush ()
-					endout = True
-				else:
-					f.write ("%d\n" % len(s))
-					f.write (s)
-					f.flush ()
+					break
+				size -= len (s)
+				p.stdin.write (s)
 
-			if not enderr:
-				s = p.stderr.read (4096)
-				f.write ("stderr\n")
-				if not s:
-					f.write ("0\n")
-					f.flush ()
-					enderr = True
-				else:
-					f.write ("%d\n" % len(s))
-					f.write (s)
-					f.flush ()
-	except Exception, e:
-		f.write ("error\n")
-		f.write ("%s\n" % e)
-		f.flush ()
+			try:
+				endout = enderr = False
+
+				while not endout or not enderr:
+					if not endout:
+						s = p.stdout.read (4096)
+						write_chunk (f, "stdout\n")
+						if not s:
+							write_chunk (f, "0\n")
+							endout = True
+						else:
+							write_chunk (f, "%d\n%s" % len(s))
+
+					if not enderr:
+						s = p.stderr.read (4096)
+						f.write ("stderr\n")
+						if not s:
+							write_chunk (f, "0\n")
+							enderr = True
+						else:
+							write_chunk (f, "%d\n%s" % len(s))
+			except Exception, e:
+				write_chunk (f, "error\n%s\n" % e)
+				return
+
+		status = p.wait ()
+		write_chunk (f, "%d\n" % status)
+	except Cancelled:
+		if p:
+			try:
+				p.kill ()
+			except:
+				pass
+			p = None
 		return
-
-	status = p.wait ()
-	f.write ("%d\n" % status)
-	f.flush ()
 
 @autopath
 def process_exists (f, path):
 	if os.path.exists (path):
-		f.write ("true\n")
+		write_chunk (f, "true\n")
 	else:
-		f.write ("false\n")
-	f.flush ()
+		write_chunk (f, "false\n")
 
 @autopath
 def process_is_directory (f, path):
 	if os.path.isdir (path):
-		f.write ("true\n")
+		write_chunk (f, "true\n")
 	else:
-		f.write ("false\n")
-	f.flush ()
+		write_chunk (f, "false\n")
 
 @autopath
 def process_read (f, path):
 	try:
 		size = os.path.getsize (path)
 	except Exception, e:
-		f.write ("error\n")
-		f.write ("Cannot read file: %s\n" % e)
-		f.flush ()
+		write_chunk (f, "error\nCannot read file: %s\n" % e)
 		return
 
 	try:
 		file = open (path, "rb")
 	except Exception, e:
-		f.write ("error\n")
-		f.write ("Cannot open file for reading: %s\n" %e)
-		f.flush ()
+		write_chunk (f, "error\nCannot open file for reading: %s\n" %e)
 		return
 
 	f.write ("%d\n" % size)
@@ -268,9 +270,8 @@ def process_read (f, path):
 		if not s:
 			break
 		size -= len(s)
-		f.write (s)
-	f.write ("0\n")
-	f.flush ()
+		if not write_chunk (f, s):
+			break
 	file.close ()
 	
 @autopath
@@ -280,22 +281,15 @@ def process_write (f, path):
 		tmp = open (path, "ab")
 		tmp.close ()
 	except Exception, e:
-		f.write ("error\n")
-		f.write ("Cannot open file for writing: %s\n" % e)
-		f.flush ()
+		write_chunk (f, "error\nCannot open file for writing: %s\n" % e)
 		return
 
 	try:
 		file = open (path+".tmp", "wb")
 	except Exception, e:
-		f.write ("error\n")
-		f.write ("Cannot open temp file for writing: %s\n" % e)
-		f.flush ()
-		return
+		write_chunk (f, "error\nCannot open temp file for writing: %s\n" % e)
 	
-	f.write ("ok\n")
-	f.flush ()
-	
+	write_chunk (f, "ok\n")
 	while True:
 		size = int(f.readline ())
 		if not size:

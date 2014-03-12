@@ -46,7 +46,7 @@ namespace Vanubi {
 						var ret = yield skip_async (chunk_size, io_priority);
 						chunk_size -= (int) ret;
 					} catch (Error e) {
-						// TODO:
+					// TODO:
 						return;
 					}
 				}
