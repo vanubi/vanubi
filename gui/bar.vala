@@ -77,7 +77,7 @@ namespace Vanubi.UI {
 	}
 
 	public class EntryBar : Bar {
-		protected Entry entry;
+		public Entry entry { get; private set; }
 
 		public new signal void activate (string s);
 		public signal void changed (string s);

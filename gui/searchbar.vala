@@ -309,7 +309,8 @@ namespace Vanubi.UI {
 				aborted ();
 				return true;
 			} else if (mode == Mode.SEARCH_FORWARD || mode == Mode.SEARCH_BACKWARD) {
-				if ((e.keyval == Gdk.Key.Up || e.keyval == Gdk.Key.Down) || ((e.keyval == Gdk.Key.s || e.keyval == Gdk.Key.r) && Gdk.ModifierType.CONTROL_MASK in e.state)) {
+				if (((e.keyval == Gdk.Key.Up || e.keyval == Gdk.Key.Down) && !(Gdk.ModifierType.MOD1_MASK in e.state))
+					|| ((e.keyval == Gdk.Key.s || e.keyval == Gdk.Key.r) && Gdk.ModifierType.CONTROL_MASK in e.state)) {
 					// step search
 					first_search = false;
 					mode = (e.keyval == Gdk.Key.Down || e.keyval == Gdk.Key.s) ? Mode.SEARCH_FORWARD : Mode.SEARCH_BACKWARD;

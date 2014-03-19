@@ -22,6 +22,7 @@ vanubi_VALASOURCES = \
 	filebar.vala \
 	grepbar.vala \
 	helpbar.vala \
+	history.vala \
 	buffer.vala \
 	main.vala \
 	manager.vala \

@@ -69,6 +69,8 @@ namespace Vanubi.UI {
 
 		HashTable<string, KeysWrapper> default_shortcuts = new HashTable<string, KeysWrapper> (str_hash, str_equal);
 
+		HashTable<string, History> entry_history_map = new HashTable<string, History> (str_hash, str_equal);
+		
 		public Manager () {
 			conf = new Configuration ();
 			orientation = Orientation.VERTICAL;
@@ -667,6 +669,15 @@ namespace Vanubi.UI {
 			if (keyseq.length > 0) {
 				keymanager.bind_command (keyseq, cmd);
 			}
+		}
+
+		public void attach_entry_history (Entry entry, string name) {
+			History? hist = entry_history_map[name];
+			if (hist == null) {
+				hist = new History<string> (conf.get_global_int ("entry_history_limit", 1000));
+				entry_history_map[name] = hist;
+			}
+			new EntryHistory (hist, entry);
 		}
 
 		public unowned Key[]? get_default_shortcut (string cmd) {
@@ -2436,6 +2447,7 @@ namespace Vanubi.UI {
 			}
 			is_regex = command.has_suffix ("-regexp");
 			var bar = new SearchBar (this, editor, mode, is_regex, last_search_string, last_replace_string);
+			attach_entry_history (bar.entry, "search");
 			bar.activate.connect (() => {
 				last_search_string = bar.text;
 				if (command.has_prefix ("replace")) {
