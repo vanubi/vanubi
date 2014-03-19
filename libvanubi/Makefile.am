@@ -19,6 +19,7 @@ libvanubi_la_VALASOURCES = \
 	filecluster.vala 	\
 	files.vala			\
 	git.vala			\
+	history.vala		\
 	indent.vala			\
 	keys.vala 			\
 	search.vala 		\

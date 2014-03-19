@@ -20,6 +20,7 @@ test_programs = \
 	testfiles	\
 	testindent	\
 	testcomment	\
+	testhistory \
 	testmarks	\
 	testmatch	\
 	testsearch	\
@@ -30,6 +31,7 @@ testbuffer_SOURCES = testbuffer.vala
 testcharset_SOURCES = testcharset.vala
 testchunked_SOURCES = testchunked.vala
 testfiles_SOURCES = testfiles.vala
+testhistory_SOURCES = testhistory.vala
 testindent_SOURCES = testindent.vala
 testcomment_SOURCES = testcomment.vala
 testmarks_SOURCES = testmarks.vala
