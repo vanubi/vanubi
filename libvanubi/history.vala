@@ -33,6 +33,9 @@ namespace Vanubi {
 
 		public void add (owned G g) {
 			hist.add ((owned) g);
+			if (length > limit) {
+				hist.remove_index (0);
+			}
 		}
 
 		public G get (int n) {
