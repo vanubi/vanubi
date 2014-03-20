@@ -2004,6 +2004,7 @@ namespace Vanubi.UI {
 				case "sh":
 				case "makefile":
 				case "python":
+				case "ruby":
 				case "generic_comment":
 					comment_engine = new Comment_Hash (vbuf);
 					break;
