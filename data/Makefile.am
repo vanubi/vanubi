@@ -2,7 +2,7 @@ desktopdir = $(datadir)/applications
 desktop_DATA = vanubi.desktop
 
 cssdir = $(datadir)/vanubi/css
-css_DATA = zen.css
+css_DATA = css/zen.css css/tango.css
 
 logodir = $(datadir)/vanubi/logo
 logo_DATA = vanubi.png
@@ -12,7 +12,7 @@ lang_DATA = languages/asm-intel.lang languages/i386asm.lang languages/asciidoc.l
             languages/generic_comment.lang
 
 styledir = $(datadir)/vanubi/styles
-style_DATA = styles/zen.xml styles/zen-grep.xml
+style_DATA = styles/zen.xml styles/zen-grep.xml styles/tango.xml
 
 EXTRA_DIST = vanubi.desktop.in vanubi.css vanubi.png languages/asm-intel.lang \
              languages/i386asm.lang languages/asciidoc.lang languages/commitmsg.lang styles/zen.xml

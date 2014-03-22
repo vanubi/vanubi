@@ -592,7 +592,7 @@ namespace Vanubi.UI {
 				provider.load_from_path ("~/.local/share/vanubi/css/%s.css".printf (theme));
 			} catch (Error e) {
 				try {
-					provider.load_from_path ("./data/%s.css".printf (theme));
+					provider.load_from_path ("./data/css/%s.css".printf (theme));
 				} catch (Error e) {
 					try {
 						provider.load_from_path (Configuration.VANUBI_DATADIR + "/vanubi/css/%s.css".printf (theme));

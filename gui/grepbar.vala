@@ -25,8 +25,11 @@ namespace Vanubi.UI {
 		public GrepView (Configuration conf) {
 			Object (buffer: new GrepBuffer ());
 			var style_manager = SourceStyleSchemeManager.get_default ();
+			// try a specific style for grep first
 			var st = style_manager.get_scheme (conf.get_global_string ("theme", "zen")+"-grep");
-		
+			if (st == null) {
+				style_manager.get_scheme (conf.get_global_string ("theme", "zen"));
+			}
 			if (st != null) { /* Use default if not found */
 				((SourceBuffer) buffer).set_style_scheme (st);
 			}
