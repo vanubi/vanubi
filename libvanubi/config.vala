@@ -32,6 +32,7 @@ namespace Vanubi {
 		string last_saved_data = null;
 		
 		const int SAVE_TIMEOUT = 500;
+		const int LATEST_CONFIG_VERSION = 2;
 
 		[CCode (cname = "VERSION", cheader_filename = "config.h")]
 		public extern const string VANUBI_VERSION;
@@ -61,7 +62,7 @@ namespace Vanubi {
 				check_config ();
 			} else {
 				// last config version
-				set_global_int ("config_version", 1);
+				set_global_int ("config_version", LATEST_CONFIG_VERSION);
 			}
 		}
 
@@ -125,6 +126,20 @@ namespace Vanubi {
 							}
 						}
 					}
+				}
+
+				version++;
+			}
+
+			if (version == 1) {
+				// backup, synchronous
+				var bak = File.new_for_path (file.get_path()+".bak."+version.to_string());
+				file.copy (bak, FileCopyFlags.OVERWRITE);
+
+				if (has_group_key ("editor", "style")) {
+					var val = backend.get_value ("editor", "style");
+					backend.set_value ("global", "theme", val);
+					backend.remove_key ("editor", "style");
 				}
 
 				version++;

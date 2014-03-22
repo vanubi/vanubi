@@ -78,7 +78,9 @@ namespace Vanubi.UI {
 			keymanager = new KeyManager<Editor> (conf, on_command);
 			base_scope = Vade.create_base_scope ();
 			last_session = conf.get_session ();
-			set_theme (conf.get_global_string ("theme"));
+			var style_manager = SourceStyleSchemeManager.get_default ();
+			style_manager.set_search_path (get_styles_search_path ());
+			set_theme (conf.get_global_string ("theme", "zen"));
 
 			// placeholder for the editors grid
 			main_box = new EventBox();
@@ -583,14 +585,11 @@ namespace Vanubi.UI {
 			return "";
 		}
 
-		public bool set_theme (string? theme) {
-			if (theme == null) {
-				theme = "zen";
-			}
-
+		public bool set_theme (string theme) {
+			/* css */
 			var provider = new CssProvider ();
 			try {
-				provider.load_from_path ("~/.local/share/vanubi/css/%s.css");
+				provider.load_from_path ("~/.local/share/vanubi/css/%s.css".printf (theme));
 			} catch (Error e) {
 				try {
 					provider.load_from_path ("./data/%s.css".printf (theme));
@@ -604,12 +603,27 @@ namespace Vanubi.UI {
 				}
 			}
 
+			/* source style */
+			var style_manager = SourceStyleSchemeManager.get_default ();
+			var source_style = style_manager.get_scheme (theme);
+			if (source_style == null) {
+				set_status_error ("Sourceview style %s not found".printf (theme));
+				return false;
+			}
+
+			/* apply css */
 			if (current_css != null) {
 				StyleContext.remove_provider_for_screen (Gdk.Screen.get_default(), current_css);
 			}
 
 			StyleContext.add_provider_for_screen (Gdk.Screen.get_default(), provider, STYLE_PROVIDER_PRIORITY_APPLICATION);
 			current_css = provider;
+
+			/* apply sourceview style */
+			each_editor ((ed) => {
+					((SourceBuffer)ed.view.buffer).style_scheme = source_style;
+					return true;
+			});
 
 			StyleContext.reset_widgets (Gdk.Screen.get_default());
 			return true;

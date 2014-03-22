@@ -24,9 +24,8 @@ namespace Vanubi.UI {
 	public class GrepView : SourceView {
 		public GrepView (Configuration conf) {
 			Object (buffer: new GrepBuffer ());
-			var sm = new SourceStyleSchemeManager();
-			sm.set_search_path (get_styles_search_path ());
-			var st = sm.get_scheme (conf.get_editor_string ("style", "zen-grep"));
+			var style_manager = SourceStyleSchemeManager.get_default ();
+			var st = style_manager.get_scheme (conf.get_global_string ("theme", "zen")+"-grep");
 		
 			if (st != null) { /* Use default if not found */
 				((SourceBuffer) buffer).set_style_scheme (st);
