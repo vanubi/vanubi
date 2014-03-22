@@ -224,8 +224,9 @@ namespace Vanubi.UI {
 			update_right_margin ();
 
 			SourceStyleScheme st = editor_style.get_scheme(conf.get_editor_string ("style", "zen"));
-			if (st != null) { /* Use default if not found */
-					  ((SourceBuffer)view.buffer).set_style_scheme(st);
+			if (st != null) {
+				/* Use default if not found */
+				((SourceBuffer)view.buffer).set_style_scheme(st);
 			}
 
 			// scrolled window

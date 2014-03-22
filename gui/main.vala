@@ -41,7 +41,6 @@ namespace Vanubi.UI {
 
 		Window new_window () {
 			var is_main_window = get_active_window () == null;
-			var provider = new CssProvider ();
 			
 			var slm = SourceLanguageManager.get_default();
 			var search_path = slm.get_search_path();
@@ -49,17 +48,6 @@ namespace Vanubi.UI {
 			search_path += Configuration.VANUBI_DATADIR + "/vanubi/languages";
 			slm.set_search_path (search_path);
 			
-			try {
-				provider.load_from_path ("./data/vanubi.css");
-			} catch (Error e) {
-				try {
-					provider.load_from_path (Configuration.VANUBI_DATADIR + "/vanubi/css/vanubi.css");
-				} catch (Error e) {
-					warning ("Could not load vanubi css: %s", e.message);
-				}
-			}
-			StyleContext.add_provider_for_screen (Gdk.Screen.get_default(), provider, STYLE_PROVIDER_PRIORITY_USER);
-
 			var manager = new Manager ();
 
 			var win = new ApplicationWindow (this);

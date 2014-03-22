@@ -56,6 +56,7 @@ namespace Vanubi.UI {
 		public Editor last_focused_editor = null; // must never be null
 		int next_stream_id = 1;
 		RemoteFileServer remote = null;
+		CssProvider current_css = null;
 
 		Session last_session;
 
@@ -77,6 +78,7 @@ namespace Vanubi.UI {
 			keymanager = new KeyManager<Editor> (conf, on_command);
 			base_scope = Vade.create_base_scope ();
 			last_session = conf.get_session ();
+			set_theme (conf.get_global_string ("theme"));
 
 			// placeholder for the editors grid
 			main_box = new EventBox();
@@ -581,6 +583,38 @@ namespace Vanubi.UI {
 			return "";
 		}
 
+		public bool set_theme (string? theme) {
+			if (theme == null) {
+				theme = "zen";
+			}
+
+			var provider = new CssProvider ();
+			try {
+				provider.load_from_path ("~/.local/share/vanubi/css/%s.css");
+			} catch (Error e) {
+				try {
+					provider.load_from_path ("./data/%s.css".printf (theme));
+				} catch (Error e) {
+					try {
+						provider.load_from_path (Configuration.VANUBI_DATADIR + "/vanubi/css/%s.css".printf (theme));
+					} catch (Error e) {
+						set_status_error ("Could not load %s css: %s".printf (theme, e.message), "theme");
+						return false;
+					}
+				}
+			}
+
+			if (current_css != null) {
+				StyleContext.remove_provider_for_screen (Gdk.Screen.get_default(), current_css);
+			}
+
+			StyleContext.add_provider_for_screen (Gdk.Screen.get_default(), provider, STYLE_PROVIDER_PRIORITY_APPLICATION);
+			current_css = provider;
+
+			StyleContext.reset_widgets (Gdk.Screen.get_default());
+			return true;
+		}
+		
 		public void update_selection (Editor ed) {
 			var buf = ed.view.buffer;
 			buf.get_selection_bounds (out selection_start, out selection_end);

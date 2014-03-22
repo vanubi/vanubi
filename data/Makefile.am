@@ -2,7 +2,7 @@ desktopdir = $(datadir)/applications
 desktop_DATA = vanubi.desktop
 
 cssdir = $(datadir)/vanubi/css
-css_DATA = vanubi.css
+css_DATA = zen.css
 
 logodir = $(datadir)/vanubi/logo
 logo_DATA = vanubi.png

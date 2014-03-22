@@ -133,6 +133,6 @@ namespace Vanubi.UI {
 	}
 	
 	public string[] get_styles_search_path () {
-		return {absolute_path("", "~/.vanubi/styles/"), "./data/styles/", Configuration.VANUBI_DATADIR + "/vanubi/styles/"};
+		return {absolute_path("", "~/.local/share/vanubi/styles/"), "./data/styles/", Configuration.VANUBI_DATADIR + "/vanubi/styles/"};
 	}
 }
