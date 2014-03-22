@@ -136,10 +136,10 @@ namespace Vanubi {
 				var bak = File.new_for_path (file.get_path()+".bak."+version.to_string());
 				file.copy (bak, FileCopyFlags.OVERWRITE);
 
-				if (has_group_key ("editor", "style")) {
-					var val = backend.get_value ("editor", "style");
-					backend.set_value ("global", "theme", val);
-					backend.remove_key ("editor", "style");
+				if (has_group_key ("Editor", "style")) {
+					var val = backend.get_value ("Editor", "style");
+					backend.set_value ("Global", "theme", val);
+					backend.remove_key ("Editor", "style");
 				}
 
 				version++;
@@ -231,6 +231,10 @@ namespace Vanubi {
 		/* Global */
 		public string get_global_string (string key, string? default = null) {
 			return get_group_string ("Global", key, default);
+		}
+
+		public void set_global_string (string key, string value) {
+			set_group_string ("Global", key, value);
 		}
 		
 		public int get_global_int (string key, int default = 0) {

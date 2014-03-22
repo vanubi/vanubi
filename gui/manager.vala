@@ -213,6 +213,9 @@ namespace Vanubi.UI {
 			index_command ("cut", "Cut text to clipboard");
 			execute_command["cut"].connect (on_cut);
 
+			index_command ("set-theme", "Switch color style of the editor");
+			execute_command["set-theme"].connect (on_set_theme);
+			
 			bind_command ({
 					Key (Gdk.Key.x, Gdk.ModifierType.CONTROL_MASK),
 						Key (Gdk.Key.b, 0)},
@@ -585,6 +588,26 @@ namespace Vanubi.UI {
 			return "";
 		}
 
+		public Annotated<string>[] get_themes () {
+			Annotated<string>[] themes = { new Annotated<string> ("zen", "zen"),
+										   new Annotated<string> ("tango", "tango") };
+			Dir dir;
+			try {
+				dir = Dir.open ("~/.local/share/vanubi/css");
+			} catch {
+				return themes;
+			}
+			
+			unowned string filename = null;
+			while ((filename = dir.read_name ()) != null) {
+				if (filename.has_suffix (".css")) {
+					var theme = filename.substring (0, filename.length-4);
+					themes += new Annotated<string> (theme, theme);
+				}
+			}
+			return themes;
+		}
+		
 		public bool set_theme (string theme) {
 			/* css */
 			var provider = new CssProvider ();
@@ -2081,6 +2104,29 @@ namespace Vanubi.UI {
 			}
 		}
 
+		void on_set_theme (Editor editor) {
+			Annotated<string>[] themes;
+			try {
+				themes = get_themes ();
+			} catch (Error e) {
+				set_status_error (e.message, "theme");
+				return;
+			}
+			
+			var bar = new SimpleCompletionBar<string> ((owned) themes, conf.get_global_string ("theme", "zen"));
+			bar.activate.connect (() => {
+					abort (editor);
+					var theme = bar.get_choice();
+					if (set_theme (theme)) {
+						conf.set_global_string ("theme", theme);
+					}
+			});
+			bar.aborted.connect (() => { abort (editor); });
+			add_overlay (bar);
+			bar.show ();
+			bar.grab_focus ();
+		}
+		
 		void on_switch_buffer (Editor editor) {
 			var sp = short_paths (editor.editor_container.get_sources ());
 			var bar = new SwitchBufferBar ((owned) sp);
