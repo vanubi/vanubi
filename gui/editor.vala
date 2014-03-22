@@ -210,10 +210,6 @@ namespace Vanubi.UI {
 
 			git = new Git (conf);
 
-			/* Style */
-			editor_style = new SourceStyleSchemeManager();
-			editor_style.set_search_path (get_styles_search_path ());
-
 			// view
 			view = new EditorView ();
 			view.wrap_mode = WrapMode.CHAR;
@@ -223,10 +219,12 @@ namespace Vanubi.UI {
 			update_show_tabs();
 			update_right_margin ();
 
-			SourceStyleScheme st = editor_style.get_scheme(conf.get_editor_string ("style", "zen"));
+			/* Style */
+			var style_manager = SourceStyleSchemeManager.get_default ();
+			var st = style_manager.get_scheme (conf.get_global_string ("theme", "zen"));
 			if (st != null) {
 				/* Use default if not found */
-				((SourceBuffer)view.buffer).set_style_scheme(st);
+				((SourceBuffer)view.buffer).set_style_scheme (st);
 			}
 
 			// scrolled window

@@ -2113,7 +2113,7 @@ namespace Vanubi.UI {
 				return;
 			}
 			
-			var bar = new SimpleCompletionBar<string> ((owned) themes, conf.get_global_string ("theme", "zen"));
+			var bar = new SimpleCompletionBar<string> ((owned) themes);
 			bar.activate.connect (() => {
 					abort (editor);
 					var theme = bar.get_choice();
