@@ -173,6 +173,10 @@ namespace Vanubi.UI {
 			index_command ("delete-char-forward", "Delete the char next to the cursor");
 			execute_command["delete-char-forward"].connect (on_delete_char_forward);
 
+			bind_command ({ Key (Gdk.Key.BackSpace, Gdk.ModifierType.SHIFT_MASK) }, "delete-white-backward");
+			index_command ("delete-white-backward", "Delete whitespaces and empty lines backwards");
+			execute_command["delete-white-backward"].connect (on_delete_white_backward);
+			
 			bind_command ({ Key (Gdk.Key.Tab, 0) }, "indent");
 			index_command ("indent", "Indent the current line");
 			execute_command["indent"].connect (on_indent);
@@ -2005,6 +2009,19 @@ namespace Vanubi.UI {
 			var next_iter = insert_iter;
 			next_iter.forward_char ();
 			buf.delete (ref insert_iter, ref next_iter);
+		}
+
+		void on_delete_white_backward (Editor ed) {
+			TextIter end_iter;
+			var buf = ed.view.buffer;
+			buf.get_iter_at_mark (out end_iter, buf.get_insert ());
+			
+			TextIter start_iter = end_iter;
+			while (start_iter.backward_char() && start_iter.get_char().isspace());
+			if (!start_iter.get_char().isspace()) {
+				start_iter.forward_char ();
+			}
+			buf.delete (ref start_iter, ref end_iter);
 		}
 
 		Indent? get_indent_engine (Editor ed) {
