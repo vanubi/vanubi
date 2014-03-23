@@ -1969,8 +1969,18 @@ namespace Vanubi.UI {
 
 			buf.delete_selection (true, true);
 
+			bool do_indent = true;
+			// check if this is the first non-white char of the line
+			TextIter iter;
+			buf.get_iter_at_mark (out iter, buf.get_insert ());
+			while (!iter.starts_line () && iter.backward_char() && iter.get_char().isspace ());
+			if (!iter.starts_line ()) {
+				do_indent = false;
+			}
+			
 			if (command == "return") {
 				buf.insert_at_cursor ("\n", -1);
+				do_indent = true;
 			} else if (command == "close-paren") {
 				buf.insert_at_cursor (")", -1);
 			} else if (command == "close-curly-brace") {
@@ -1979,6 +1989,7 @@ namespace Vanubi.UI {
 				buf.insert_at_cursor ("]", -1);
 			} else if (command == "tab") {
 				buf.insert_at_cursor ("\t", -1);
+				do_indent = false;
 			}
 
 			ed.view.scroll_mark_onscreen (buf.get_insert ());
@@ -1986,8 +1997,10 @@ namespace Vanubi.UI {
 
 			var indent_engine = get_indent_engine (ed);
 			// only auto indent on return for python
-			var no_python_indent = indent_engine is Indent_Python && command != "return";
-			if (indent_engine != null && command != "tab" && !no_python_indent) {
+			if (indent_engine is Indent_Python && command != "return") {
+				do_indent = false;
+			}
+			if (indent_engine != null && do_indent) {
 				execute_command["indent"] (ed, "indent");
 			}
 
