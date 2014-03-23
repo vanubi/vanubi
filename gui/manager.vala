@@ -346,6 +346,18 @@ namespace Vanubi.UI {
 			execute_command["start-line"].connect (on_start_line);
 			execute_command["start-line-select"].connect (on_start_line);
 
+			bind_command ({ Key (Gdk.Key.f, Gdk.ModifierType.MOD1_MASK) }, "forward-word");
+			execute_command["forward-word"].connect (on_move_word);
+
+			bind_command ({ Key (Gdk.Key.b, Gdk.ModifierType.MOD1_MASK) }, "backward-word");
+			execute_command["backward-word"].connect (on_move_word);
+			
+			bind_command ({ Key (Gdk.Key.F, Gdk.ModifierType.MOD1_MASK|Gdk.ModifierType.SHIFT_MASK) }, "select-word-forward");
+			execute_command["select-word-forward"].connect (on_move_word);
+
+			bind_command ({ Key (Gdk.Key.B, Gdk.ModifierType.MOD1_MASK|Gdk.ModifierType.SHIFT_MASK) }, "select-word-backward");
+			execute_command["select-word-backward"].connect (on_move_word);
+
 			bind_command ({ Key (Gdk.Key.Down, Gdk.ModifierType.CONTROL_MASK) }, "move-block-down");
 			execute_command["move-block-down"].connect (on_move_block);
 
@@ -1073,7 +1085,8 @@ namespace Vanubi.UI {
 			Editor editor = sv.get_data ("editor");
 			var keyval = e.keyval;
 			var modifiers = e.state;
-			modifiers &= Gdk.ModifierType.SHIFT_MASK | Gdk.ModifierType.CONTROL_MASK;
+			/* message("%u %u", keyval, modifiers); */
+			modifiers &= Gdk.ModifierType.SHIFT_MASK | Gdk.ModifierType.CONTROL_MASK | Gdk.ModifierType.MOD1_MASK;
 			if (keyval == Gdk.Key.Escape || (keyval == Gdk.Key.g && modifiers == Gdk.ModifierType.CONTROL_MASK)) {
 				// abort
 				clear_status ("keybinding");
@@ -1796,6 +1809,12 @@ namespace Vanubi.UI {
 			return output;
 		}
 
+		void on_move_word (Editor ed, string command) {
+			int direction = "forward" in command ? 1 : -1;
+			bool is_select = "select" in command;
+			ed.view.move_cursor (MovementStep.WORDS, direction, is_select);
+		}
+		
 		void on_move_block (Editor ed, string command) {
 			var buf = ed.view.buffer;
 			string line = null;
