@@ -75,7 +75,7 @@ Most of programming in Vanubi happens on the keyboard. It's important to have me
 Key bindings are made up of one or multiple key combinations: for example `C-x C-s` has to be interpreted as press `Ctrl+x` then press `Ctrl+s`, or keep `Ctrl+x` pressed then press `s`.
 Pressing them at the same time is not needed, the important thing is to press keys in the correct order.
 
-Currently supported modifiers are Shift (S-) and Ctrl (C-). Note that `C-x k`, `C-x C-k` and `C-k` and three different key bindings.
+Currently supported modifiers are Shift (S-), Ctrl (C-) and Mod1 (M-) which is usually Alt. Note that `C-x k`, `C-x C-k` and `C-k` and three different key bindings.
 
 == Ideas and principles
 keywords:[ideas principles todos questions answers]
@@ -156,6 +156,17 @@ Mouse bindings:
 | Combo | Action
 |C-scroll| Increase/decrease the font size
 |==================
+
+== Hidden features
+keywords:[global keybinding font size keyboard navigation hidden]
+.Commands that are not visible in the help bar
+
+The help bar opened with `C-h` is missing some actions such as:
+
+	- Global desktop keybinding for activating Vanubi: `C-M-v` (`M` is usually Alt). This will switch to the workspace of the main Vanubi window and grab the focus.
+	- Change font size with `C-scroll`, that is Ctrl `+` mouse scroll.
+	- There are a number of navigation keybindings similar to the shell, like: `C-left`, `M-f`, `C-b`, `C-n`, `C-p`, `M-p`, `C-d`, ...
+	- Move selected rows around with `M-up` and `M-down`.
 
 == Fuzzy search
 keywords:[fuzzy searching]
