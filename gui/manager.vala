@@ -352,17 +352,21 @@ namespace Vanubi.UI {
 			index_command ("end-line", "Move the cursor to the end of the line");
 			execute_command["end-line"].connect (on_end_line);
 			
+			bind_command ({ Key (Gdk.Key.E, Gdk.ModifierType.CONTROL_MASK|Gdk.ModifierType.SHIFT_MASK) }, "end-line-select");
 			bind_command ({ Key (Gdk.Key.End, Gdk.ModifierType.SHIFT_MASK) }, "end-line-select");
 			index_command ("end-line-select", "Move the cursor to the end of the line, extending the selection");
 			execute_command["end-line-select"].connect (on_end_line);
 
 			bind_command ({ Key (Gdk.Key.a, Gdk.ModifierType.CONTROL_MASK) }, "start-line");
 			bind_command ({ Key (Gdk.Key.Home, 0) }, "start-line");
-			bind_command ({ Key (Gdk.Key.Home, Gdk.ModifierType.SHIFT_MASK) }, "start-line-select");
-			index_command ("start-line", "Move the cursor to the start of the line, extending the selection");
+			index_command ("start-line", "Move the cursor to the start of the line");
 			execute_command["start-line"].connect (on_start_line);
-			execute_command["start-line-select"].connect (on_start_line);
 
+			bind_command ({ Key (Gdk.Key.A, Gdk.ModifierType.CONTROL_MASK|Gdk.ModifierType.SHIFT_MASK) }, "start-line-select");
+			bind_command ({ Key (Gdk.Key.Home, Gdk.ModifierType.SHIFT_MASK) }, "start-line-select");
+			index_command ("start-line-select-", "Move the cursor to the start of the line, extending the selection");
+			execute_command["start-line-select"].connect (on_start_line);
+			
 			bind_command ({ Key (Gdk.Key.f, Gdk.ModifierType.MOD1_MASK) }, "forward-word");
 			execute_command["forward-word"].connect (on_move_word);
 
