@@ -181,7 +181,10 @@ namespace Vanubi {
 				if (!paren_iter.eol) {
 					paren_iter.forward_char ();
 				}
-				paren_iter.forward_spaces ();
+				// skip spaces, comments and backslash
+				while (!paren_iter.eol && (paren_iter.char.isspace() || !paren_iter.is_in_code || (paren_iter.is_in_code && paren_iter.char == '\\'))) {
+					paren_iter.forward_char ();
+				}
 				if (paren_iter.line != prev_line || paren_iter.eol || paren_iter.line > prev_line) {
 					new_indent = buf.get_indent (paren_iter.line) + unclosed * tab_width;
 				} else {
@@ -348,7 +351,10 @@ namespace Vanubi {
 				if (!paren_iter.eol) {
 					paren_iter.forward_char ();
 				}
-				paren_iter.forward_spaces ();
+				// skip spaces and comments
+				while (!paren_iter.eol && (paren_iter.char.isspace() || !paren_iter.is_in_code)) {
+					paren_iter.forward_char ();
+				}
 				if (paren_iter.line != prev_line || paren_iter.eol || paren_iter.line > prev_line) {
 					new_indent = buf.get_indent (paren_iter.line) + unclosed * tab_width;
 				} else {
@@ -503,7 +509,10 @@ namespace Vanubi {
 				if (!paren_iter.eol) {
 					paren_iter.forward_char ();
 				}
-				paren_iter.forward_spaces ();
+				// skip spaces and comments
+				while (!paren_iter.eol && (paren_iter.char.isspace() || !paren_iter.is_in_code)) {
+					paren_iter.forward_char ();
+				}
 				if (paren_iter.line != prev_line || paren_iter.eol || paren_iter.line > prev_line) {
 					new_indent = buf.get_indent (paren_iter.line) + unclosed * tab_width;
 				} else {
@@ -656,7 +665,10 @@ namespace Vanubi {
 				if (!paren_iter.eol) {
 					paren_iter.forward_char ();
 				}
-				paren_iter.forward_spaces ();
+				// skip spaces and comments
+				while (!paren_iter.eol && (paren_iter.char.isspace() || !paren_iter.is_in_code)) {
+					paren_iter.forward_char ();
+				}
 				if (paren_iter.line != prev_line || paren_iter.eol || paren_iter.line > prev_line) {
 					new_indent = buf.get_indent (paren_iter.line) + unclosed * tab_width;
 				} else {
@@ -799,7 +811,10 @@ namespace Vanubi {
 				if (!paren_iter.eol) {
 					paren_iter.forward_char ();
 				}
-				paren_iter.forward_spaces ();
+				// skip spaces and comments
+				while (!paren_iter.eol && (paren_iter.char.isspace() || !paren_iter.is_in_code)) {
+					paren_iter.forward_char ();
+				}
 				if (paren_iter.line != prev_line || paren_iter.eol || paren_iter.line > prev_line) {
 					new_indent = buf.get_indent (paren_iter.line) + unclosed * tab_width;
 				} else {
