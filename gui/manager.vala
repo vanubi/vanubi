@@ -273,6 +273,14 @@ namespace Vanubi.UI {
 			index_command ("backward-line", "Move the cursor one line backward");
 			execute_command["backward-line"].connect (on_forward_backward_line);
 
+			bind_command ({ Key (Gdk.Key.N, Gdk.ModifierType.CONTROL_MASK|Gdk.ModifierType.SHIFT_MASK) }, "forward-line-select");
+			index_command ("forward-line-select", "Select text from the cursor to one line forward");
+			execute_command["forward-line-select"].connect (on_forward_backward_line);
+
+			bind_command ({	Key (Gdk.Key.P, Gdk.ModifierType.CONTROL_MASK|Gdk.ModifierType.SHIFT_MASK) }, "backward-line-select");
+			index_command ("backward-line-select", "Select text from the cursor to one line backward");
+			execute_command["backward-line-select"].connect (on_forward_backward_line);
+
 			bind_command ({ Key (Gdk.Key.f, Gdk.ModifierType.CONTROL_MASK) }, "forward-char");
 			index_command ("forward-char", "Move the cursor one character forward");
 			execute_command["forward-char"].connect (on_forward_backward_char);
@@ -280,6 +288,14 @@ namespace Vanubi.UI {
 			bind_command ({ Key (Gdk.Key.b, Gdk.ModifierType.CONTROL_MASK) }, "backward-char");
 			index_command ("backward-char", "Move the cursor one character backward");
 			execute_command["backward-char"].connect (on_forward_backward_char);
+
+			bind_command ({ Key (Gdk.Key.F, Gdk.ModifierType.CONTROL_MASK|Gdk.ModifierType.SHIFT_MASK) }, "forward-char-select");
+			index_command ("forward-char-select", "Select the char next to the cursor");
+			execute_command["forward-char-select"].connect (on_forward_backward_char);
+
+			bind_command ({ Key (Gdk.Key.B, Gdk.ModifierType.CONTROL_MASK|Gdk.ModifierType.SHIFT_MASK) }, "backward-char-select");
+			index_command ("backward-char-select", "Select the char before the cursor");
+			execute_command["backward-char-select"].connect (on_forward_backward_char);
 
 			bind_command ({ Key (Gdk.Key.s, Gdk.ModifierType.CONTROL_MASK) }, "search-forward");
 			index_command ("search-forward", "Search text forward incrementally");
@@ -333,10 +349,11 @@ namespace Vanubi.UI {
 
 			bind_command ({ Key (Gdk.Key.e, Gdk.ModifierType.CONTROL_MASK) }, "end-line");
 			bind_command ({ Key (Gdk.Key.End, 0) }, "end-line");
-			bind_command ({ Key (Gdk.Key.End, Gdk.ModifierType.SHIFT_MASK) }, "end-line-select");
 			index_command ("end-line", "Move the cursor to the end of the line");
-			index_command ("end-line-select", "Move the cursor to the end of the line, extending the selection");
 			execute_command["end-line"].connect (on_end_line);
+			
+			bind_command ({ Key (Gdk.Key.End, Gdk.ModifierType.SHIFT_MASK) }, "end-line-select");
+			index_command ("end-line-select", "Move the cursor to the end of the line, extending the selection");
 			execute_command["end-line-select"].connect (on_end_line);
 
 			bind_command ({ Key (Gdk.Key.a, Gdk.ModifierType.CONTROL_MASK) }, "start-line");
@@ -352,22 +369,26 @@ namespace Vanubi.UI {
 			bind_command ({ Key (Gdk.Key.b, Gdk.ModifierType.MOD1_MASK) }, "backward-word");
 			execute_command["backward-word"].connect (on_move_word);
 			
-			bind_command ({ Key (Gdk.Key.F, Gdk.ModifierType.MOD1_MASK|Gdk.ModifierType.SHIFT_MASK) }, "select-word-forward");
-			execute_command["select-word-forward"].connect (on_move_word);
+			bind_command ({ Key (Gdk.Key.F, Gdk.ModifierType.MOD1_MASK|Gdk.ModifierType.SHIFT_MASK) }, "forward-word-select");
+			execute_command["forward-word-select"].connect (on_move_word);
 
-			bind_command ({ Key (Gdk.Key.B, Gdk.ModifierType.MOD1_MASK|Gdk.ModifierType.SHIFT_MASK) }, "select-word-backward");
-			execute_command["select-word-backward"].connect (on_move_word);
+			bind_command ({ Key (Gdk.Key.B, Gdk.ModifierType.MOD1_MASK|Gdk.ModifierType.SHIFT_MASK) }, "backward-word-select");
+			execute_command["backward-word-select"].connect (on_move_word);
 
 			bind_command ({ Key (Gdk.Key.Down, Gdk.ModifierType.CONTROL_MASK) }, "move-block-down");
+			bind_command ({ Key (Gdk.Key.n, Gdk.ModifierType.MOD1_MASK) }, "move-block-down");
 			execute_command["move-block-down"].connect (on_move_block);
 
 			bind_command ({ Key (Gdk.Key.Up, Gdk.ModifierType.CONTROL_MASK) }, "move-block-up");
+			bind_command ({ Key (Gdk.Key.p, Gdk.ModifierType.MOD1_MASK) }, "move-block-up");
 			execute_command["move-block-up"].connect (on_move_block);
 
 			bind_command ({ Key (Gdk.Key.Down, Gdk.ModifierType.CONTROL_MASK|Gdk.ModifierType.SHIFT_MASK) }, "select-block-down");
+			bind_command ({ Key (Gdk.Key.N, Gdk.ModifierType.MOD1_MASK|Gdk.ModifierType.SHIFT_MASK) }, "select-block-down");
 			execute_command["select-block-down"].connect (on_move_block);
 
 			bind_command ({ Key (Gdk.Key.Up, Gdk.ModifierType.CONTROL_MASK|Gdk.ModifierType.SHIFT_MASK) }, "select-block-up");
+			bind_command ({ Key (Gdk.Key.P, Gdk.ModifierType.MOD1_MASK|Gdk.ModifierType.SHIFT_MASK) }, "select-block-up");
 			execute_command["select-block-up"].connect (on_move_block);
 
 			bind_command ({ Key (Gdk.Key.F9, 0) }, "compile-shell");
@@ -1072,7 +1093,9 @@ namespace Vanubi.UI {
 
 		/* events */
 
-		const uint[] skip_keyvals = {Gdk.Key.Control_L, Gdk.Key.Control_R, Gdk.Key.Shift_L, Gdk.Key.Shift_R};
+		const uint[] skip_keyvals = {Gdk.Key.Control_L, Gdk.Key.Control_R,
+									 Gdk.Key.Shift_L, Gdk.Key.Shift_R,
+									 Gdk.Key.Alt_L, Gdk.Key.Alt_R};
 		bool on_key_press_event (Widget w, Gdk.EventKey e) {
 			if (status_timeout == 0) {
 				// reset status bar
@@ -2632,18 +2655,15 @@ namespace Vanubi.UI {
 		}
 
 		void on_forward_backward_line (Editor ed, string command) {
-			if (command == "forward-line") {
-				ed.view.move_cursor (MovementStep.DISPLAY_LINES, 1, false);
-			} else {
-				ed.view.move_cursor (MovementStep.DISPLAY_LINES, -1, false);
-			}
+			int direction = "forward" in command ? 1 : -1;
+			bool select = "select" in command;
+			ed.view.move_cursor (MovementStep.DISPLAY_LINES, direction, select);
 		}
+		
 		void on_forward_backward_char (Editor ed, string command) {
-			if (command == "forward-char") {
-				ed.view.move_cursor (MovementStep.VISUAL_POSITIONS, 1, false);
-			} else {
-				ed.view.move_cursor (MovementStep.VISUAL_POSITIONS, -1, false);
-			}
+			int direction = "forward" in command ? 1 : -1;
+			bool select = "select" in command;
+			ed.view.move_cursor (MovementStep.VISUAL_POSITIONS, direction, select);
 		}
 
 		void on_zen_mode (Editor editor) {
