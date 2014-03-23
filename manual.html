@@ -76,7 +76,7 @@
 <h3 id="split_views">Split views</h3>
 <div class="openblock">
 <div class="content">
-<div class="paragraph"><p>Split the view with <span class="monospaced">C-x 2</span> and <span class="monospaced">C-x 3</span>, and navigate with <span class="monospaced">C-j</span> and <span class="monospaced">C-l</span>. Join all the views with <span class="monospaced">C-x 1</span> or only two adjacent views with <span class="monospaced">C-x C-1</span>.</p></div>
+<div class="paragraph"><p>Split the view with <span class="monospaced">C-x 2</span> or <span class="monospaced">C-x 3</span>, and navigate with <span class="monospaced">C-j</span> and <span class="monospaced">C-l</span>. Join all the views with <span class="monospaced">C-x 1</span> or only two adjacent views with <span class="monospaced">C-x C-1</span>.</p></div>
 </div></div>
 <div class="imageblock">
 <div class="content">
@@ -93,7 +93,7 @@
 <div class="paragraph"><div class="title">Basics of key and mouse bindings</div><p>Most of programming in Vanubi happens on the keyboard. It&#8217;s important to have meaningful key bindings. In this regard, Vanubi inherits some of Emacs key bindings.
 Key bindings are made up of one or multiple key combinations: for example <span class="monospaced">C-x C-s</span> has to be interpreted as press <span class="monospaced">Ctrl+x</span> then press <span class="monospaced">Ctrl+s</span>, or keep <span class="monospaced">Ctrl+x</span> pressed then press <span class="monospaced">s</span>.
 Pressing them at the same time is not needed, the important thing is to press keys in the correct order.</p></div>
-<div class="paragraph"><p>Currently supported modifiers are Shift (S-) and Ctrl (C-). Note that <span class="monospaced">C-x k</span>, <span class="monospaced">C-x C-k</span> and <span class="monospaced">C-k</span> and three different key bindings.</p></div>
+<div class="paragraph"><p>Currently supported modifiers are Shift (S-), Ctrl (C-) and Mod1 (M-) which is usually Alt. Note that <span class="monospaced">C-x k</span>, <span class="monospaced">C-x C-k</span> and <span class="monospaced">C-k</span> and three different key bindings.</p></div>
 </div>
 </div>
 <div class="sect1">
@@ -378,6 +378,35 @@ width:100%;
 </tr>
 </tbody>
 </table>
+</div>
+</div>
+<div class="sect1">
+<h2 id="hidden_features">Hidden features</h2>
+<div class="sectionbody">
+<div class="vareskeywords" style='display:none;'>global keybinding font size keyboard navigation hidden</div>
+<div class="paragraph"><div class="title">Commands that are not visible in the help bar</div><p>The help bar opened with <span class="monospaced">C-h</span> is missing some actions such as:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+Global desktop keybinding for activating Vanubi: <span class="monospaced">C-M-v</span> (<span class="monospaced">M</span> is usually Alt). This will switch to the workspace of the main Vanubi window and grab the focus.
+</p>
+</li>
+<li>
+<p>
+Change font size with <span class="monospaced">C-scroll</span>, that is Ctrl <span class="monospaced">+</span> mouse scroll.
+</p>
+</li>
+<li>
+<p>
+There are a number of navigation keybindings similar to the shell, like: <span class="monospaced">C-left</span>, <span class="monospaced">M-f</span>, <span class="monospaced">C-b</span>, <span class="monospaced">C-n</span>, <span class="monospaced">C-p</span>, <span class="monospaced">M-p</span>, <span class="monospaced">C-d</span>, &#8230;
+</p>
+</li>
+<li>
+<p>
+Move selected rows around with <span class="monospaced">M-up</span> and <span class="monospaced">M-down</span>.
+</p>
+</li>
+</ul></div>
 </div>
 </div>
 <div class="sect1">
