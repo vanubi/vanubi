@@ -37,11 +37,15 @@ namespace Vanubi {
 				return base_source;
 			}
 		}
-		
+
 		public override async bool exists (int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) throws IOError.CANCELLED {
 			return true;
 		}
 		
+		public override async bool read_only (int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) throws IOError.CANCELLED {
+			return false;
+		}
+
 		public override async InputStream read (int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) throws Error {
 			if (stream == null) {
 				throw new IOError.NOT_SUPPORTED ("Cannot re-read the stream");

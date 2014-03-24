@@ -83,6 +83,17 @@ namespace Vanubi {
 				return false;
 			}
 		}
+
+		public override async bool read_only (int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) throws IOError.CANCELLED {
+			try {
+				var info = yield file.query_info_async (FileAttribute.ACCESS_CAN_READ, FileQueryInfoFlags.NONE, io_priority, cancellable);
+				return info.get_attribute_boolean (FileAttribute.ACCESS_CAN_READ);
+			} catch (IOError.CANCELLED e) {
+				throw e;
+			} catch (Error e) {
+				return false;
+			}
+		}
 		
 		public override async TimeVal? get_mtime (int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) {
 			try {

@@ -355,6 +355,10 @@ namespace Vanubi {
 			}
 		}
 		
+		public override async bool read_only (int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) throws Error {
+			throw new IOError.NOT_SUPPORTED ("Remote read_only property not yet supported");
+		}
+
 		public override async TimeVal? get_mtime (int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) {
 			return null;
 		}

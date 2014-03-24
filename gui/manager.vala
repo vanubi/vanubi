@@ -2181,13 +2181,7 @@ namespace Vanubi.UI {
 		}
 
 		void on_set_theme (Editor editor) {
-			Annotated<string>[] themes;
-			try {
-				themes = get_themes ();
-			} catch (Error e) {
-				set_status_error (e.message, "theme");
-				return;
-			}
+			var themes = get_themes ();
 			
 			var bar = new SimpleCompletionBar<string> ((owned) themes);
 			bar.activate.connect (() => {

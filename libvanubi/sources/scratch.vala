@@ -43,6 +43,10 @@ namespace Vanubi {
 			return false;
 		}
 		
+		public override async bool read_only (int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) throws IOError.CANCELLED {
+			return false;
+		}
+
 		public override async InputStream read (int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) throws Error {
 			throw new IOError.NOT_SUPPORTED ("*scratch* is not readable");
 		}

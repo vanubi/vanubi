@@ -189,6 +189,7 @@ namespace Vanubi.UI {
 		Label file_external_changed;
 		Label git_branch;
 		Label file_loading;
+		Label file_read_only;
 		EditorInfoBar infobar;
 		int old_selection_start_offset = -1;
 		int old_selection_end_offset = -1;
@@ -253,6 +254,10 @@ namespace Vanubi.UI {
 			file_count = new Label ("(0, 0)");
 			file_count.margin_left = 20;
 			infobar.add (file_count);
+
+			file_read_only = new Label ("");
+			file_read_only.margin_left = 0;
+			infobar.add (file_read_only);
 
 			file_status = new Label ("");
 			file_status.margin_left = 20;
@@ -489,9 +494,27 @@ namespace Vanubi.UI {
 					update_show_branch ();
 					on_git_gutter ();
 					on_trailing_spaces ();
+					update_read_only ();
 
 					loading_cancellable = null;
 				}
+			}
+		}
+
+		public async void update_read_only () {
+			bool read_only;
+			try {
+				read_only = yield source.read_only ();
+			} catch {
+				return;
+			}
+			
+			if (read_only) {
+				file_read_only.margin_left = 20;
+				file_read_only.label = "ro";
+			} else {
+				file_read_only.margin_left = 0;
+				file_read_only.label = "";
 			}
 		}
 

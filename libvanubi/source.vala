@@ -38,6 +38,7 @@ namespace Vanubi {
 		public abstract DataSource? parent { owned get; }
 
 		public abstract async bool exists (int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) throws Error;
+		public abstract async bool read_only (int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) throws Error;
 		public abstract async InputStream read (int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) throws Error;
 		
 		public abstract async void write (uint8[] data, int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) throws Error;
