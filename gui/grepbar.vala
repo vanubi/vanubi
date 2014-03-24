@@ -192,25 +192,31 @@ namespace Vanubi.UI {
 			}
 			base.dispose ();
 		}
-		
-		protected override void on_activate () {
-			TextIter insert, start, end;
-			view.buffer.get_iter_at_mark (out insert, view.buffer.get_insert ());
-			view.buffer.get_iter_at_line (out start, insert.get_line ());
+
+		public Location? get_location_at_line (int lineiter) {
+			TextIter start, end;
+			view.buffer.get_iter_at_line (out start, lineiter);
 			end = start;
 			end.forward_to_line_end ();
 			var line = view.buffer.get_text (start, end, false);
 			if (line == null || line.strip() == "") {
-				return;
+				return null;
 			}
 			var data = line.strip().split(":");
 			if (data.length < 2) {
-				return;
+				return null;
 			}
 			
 			var filename = data[0];
 			var lineno = int.parse (data[1]) - 1;
-			location = new Location (base_source.child (filename), lineno);
+
+			return new Location (base_source.child (filename), lineno);
+		}
+		
+		protected override void on_activate () {
+			TextIter insert;
+			view.buffer.get_iter_at_mark (out insert, view.buffer.get_insert ());
+			location = get_location_at_line (insert.get_line ());
 			
 			base.on_activate ();
 		}
@@ -218,17 +224,44 @@ namespace Vanubi.UI {
 		protected override bool on_key_press_event (Gdk.EventKey e) {
 			TextIter insert;
 			view.buffer.get_iter_at_mark (out insert, view.buffer.get_insert ());
+			
 			switch (e.keyval) {
 			case Gdk.Key.Up:
-				insert.backward_line ();
+				if (Gdk.ModifierType.CONTROL_MASK in e.state) {
+					var loc = get_location_at_line (insert.get_line ());
+					string curfile = loc != null ? loc.source.to_string () : null;
+					while (insert.backward_line ()) {
+						loc = get_location_at_line (insert.get_line ());
+						if (loc != null && loc.source.to_string () != curfile) {
+							break;
+						}
+					}
+				} else {
+					insert.backward_line ();
+				}
+
 				view.buffer.place_cursor (insert);
 				view.scroll_mark_onscreen (view.buffer.get_insert ());
 				return true;
+				
 			case Gdk.Key.Down:
-				insert.forward_line ();
+				if (Gdk.ModifierType.CONTROL_MASK in e.state) {
+					var loc = get_location_at_line (insert.get_line ());
+					string curfile = loc != null ? loc.source.to_string () : null;
+					while (insert.forward_line ()) {
+						loc = get_location_at_line (insert.get_line ());
+						if (loc != null && loc.source.to_string () != curfile) {
+							break;
+						}
+					}
+				} else {
+					insert.forward_line ();
+				}
+				
 				view.buffer.place_cursor (insert);
 				view.scroll_mark_onscreen (view.buffer.get_insert ());
 				return true;
+				
 			case Gdk.Key.Page_Down:
 			case Gdk.Key.Page_Up:		
 				var pos = entry.cursor_position;
@@ -238,6 +271,7 @@ namespace Vanubi.UI {
 				entry.set_position (pos);
 				return res;
 			}
+			
 			return base.on_key_press_event (e);
 		}
 		
