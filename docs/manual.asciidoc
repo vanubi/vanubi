@@ -234,6 +234,14 @@ keywords:[marks marking jumping code places]
 Vanubi keeps a stack of marks among files that are set by the user, and are never implicitly set.
 You can set a mark on the current location with `mark` (`C-m`). You can go to the last mark set with `prev-mark` (`C-,`). Marks are added to a stack, so you can go back to previously set marks, and go forward with `next-mark` (`C-.`), until no more marks are available.
 
+== Trailing whitespaces
+keywords:[cleanup whitespaces trailing]
+.Support for cleaning whitespaces at the end of lines
+
+To cleanup trailing whitespaces on the whole file, execute the `clean-trailing-spaces` command from the `C-h` help bar.
+
+There's also basic support for cleaning up trailing whitespaces while writing by executing the `toggle-auto-clean-trailing-spaces` command. This behavior will then be enabled globally for every file.
+
 == Vade scripting language
 keywords:[vade language programming scripting scripts]
 .Embed simple expressions anywhere to do useful tasks
