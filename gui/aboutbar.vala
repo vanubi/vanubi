@@ -28,67 +28,76 @@ namespace Vanubi.UI {
 			var system_size = style.font_desc.get_size () / Pango.SCALE;
 			override_font (Pango.FontDescription.from_string ("Monospace %d".printf (system_size)));
 		}
-		
+
+		/* TODO: get color from the style */
 		public void colorize_text () {
-			TextTag tag = buffer.create_tag("fg_green", foreground: "#00CC00");
-			TextIter start, end;
-			
+			TextTag white_tag = buffer.create_tag("fg_white", foreground: "#FFFFFF");
+			TextTag green_tag = buffer.create_tag("fg_green", foreground: "#00CC00");
+			TextIter green_start, green_end;
+			TextIter white_start, white_end;
+
 			for (var i=0; i<buffer.get_line_count (); i++) {
-				buffer.get_iter_at_line_offset (out start, i, 0);
-				while (start.get_char () != '|') {
-					start.forward_char ();
-					if (start.ends_line ()) {
+
+				buffer.get_iter_at_line_offset (out white_start, i, 0);
+				white_end = white_start;
+
+				while (white_end.get_char () != '|') {
+					white_end.forward_char ();
+					if (white_end.ends_line ()) {
 						break;
 					}
 				}
-				
-				if (start.ends_line ()) {
+
+				if (white_end.ends_line ()) {
+					buffer.apply_tag (white_tag, white_start, white_end);
 					continue;
 				}
-				
-				start.forward_char (); /* Skip '|' */
-				
+
+				white_end.forward_char (); /* Skip '|' */
+				buffer.apply_tag (white_tag, white_start, white_end);
+
 				/* Go to the end of line */
-				end = start;
-				while (!end.ends_line ()) {
-					end.forward_char ();
+				green_start = white_end;
+				green_end = green_start;
+				while (!green_end.ends_line ()) {
+					green_end.forward_char ();
 				}
-				
-				buffer.apply_tag (tag, start, end);
+
+				buffer.apply_tag (green_tag, green_start, green_end);
 			}
 		}
 	}
-	
+
 	public class AboutBar : Bar {
 		AboutView view;
-		
+
 		string text = """
-		
-                                                                              |                          :o/                     
-                                                                              |                        :soss  `//                
-                                                                              |                      `+sody/ -ss+                
-                                                                              |                      ooommy:-shs-                
-                                                                              |                     /s+mmmy+shho                 
-                                                                              |                    .s+ymmmyshmy:                 
-                                                                              |                    /s/mmmmdhmds                  
-                      --[ Vanubi Programming editor ]--                       |                    +o+mmmmmmmho                  
-                                                                              |                    +oommmmmmmy/                  
-     "All editors suck. This one just sucks less." -mutt like, circa 1995     |                  -oo+ymmmmmmmyo.                 
-                                                                              |               `:oooymNNNNNNNNmdyo.               
-                                                                              |             `/soohNNNNNNNNNNNNNNdy/`             
-                                                                              |           `/sosdNNNNNNNNNNNNNNNNNNdy/`           
-                                                                              |         `/sosmNNNNNNNNNNNNNNNNNNNNNNdyo:.        
-                                                                              |       `/sosmNNNNNNNNNNNmmmmmmmmmNNNNNNmdhs/.     
-                                                                              |     `/sosmNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNds:    
-                                                                              |    .ooomNNNNNNNNNNNNNNNNNNNmmddmmNNNNNNmdhs:`    
-                                                                              |    :s+shmNNNNNNNNNNNNNNNNNy+:---/+osooo/-.       
-                                                                              |     `:ooooosyhdmNNNNNNNNNms`                     
-                                                                              |         .-:/+ooooshmNMMMMds`                     
-                  ** Vanubi is licensed under GPLv3+ **                       |                `-/oooyNMMds`                     
-                                                                              |                    -+o+hMds`                     
-                                                                              |                      :sosho                      
-                                                                              |                       `oos/                      
-                                                                              |                         /o`                     
+
+                                                                              |                          :o/
+                                                                              |                        :soss  `//
+                                                                              |                      `+sody/ -ss+
+                                                                              |                      ooommy:-shs-
+                                                                              |                     /s+mmmy+shho
+                                                                              |                    .s+ymmmyshmy:
+                                                                              |                    /s/mmmmdhmds
+                      --[ Vanubi Programming editor ]--                       |                    +o+mmmmmmmho
+                                                                              |                    +oommmmmmmy/
+     "All editors suck. This one just sucks less." -mutt like, circa 1995     |                  -oo+ymmmmmmmyo.
+                                                                              |               `:oooymNNNNNNNNmdyo.
+                                                                              |             `/soohNNNNNNNNNNNNNNdy/`
+                                                                              |           `/sosdNNNNNNNNNNNNNNNNNNdy/`
+                                                                              |         `/sosmNNNNNNNNNNNNNNNNNNNNNNdyo:.
+                                                                              |       `/sosmNNNNNNNNNNNmmmmmmmmmNNNNNNmdhs/.
+                                                                              |     `/sosmNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNds:
+                                                                              |    .ooomNNNNNNNNNNNNNNNNNNNmmddmmNNNNNNmdhs:`
+                                                                              |    :s+shmNNNNNNNNNNNNNNNNNy+:---/+osooo/-.
+                                                                              |     `:ooooosyhdmNNNNNNNNNms`
+                                                                              |         .-:/+ooooshmNMMMMds`
+                  ** Vanubi is licensed under GPLv3+ **                       |                `-/oooyNMMds`
+                                                                              |                    -+o+hMds`
+                                                                              |                      :sosho
+                                                                              |                       `oos/
+                                                                              |                         /o`
    v%s --- %s
 """.printf (Configuration.VANUBI_VERSION, Configuration.VANUBI_WEBSITE);
 
@@ -108,7 +117,7 @@ namespace Vanubi.UI {
 			add (view);
 			show_all ();
 		}
-		
+
 		public override void grab_focus () {
 			view.grab_focus ();
 		}
