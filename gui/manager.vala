@@ -2223,7 +2223,10 @@ namespace Vanubi.UI {
 				var expr = parser.parse_expression ();
 				var val = yield get_editor_scope(editor).eval (expr, new Cancellable ());
 				if (val != null) {
-					set_status (val.to_string (), "eval");
+					var text = val.to_string ();
+					var clipboard = Clipboard.get (Gdk.SELECTION_CLIPBOARD);
+					clipboard.set_text (text, -1);
+					set_status (text, "eval");
 				} else {
 					clear_status ("eval");
 				}
