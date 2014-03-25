@@ -364,7 +364,7 @@ namespace Vanubi.UI {
 
 			bind_command ({ Key (Gdk.Key.A, Gdk.ModifierType.CONTROL_MASK|Gdk.ModifierType.SHIFT_MASK) }, "start-line-select");
 			bind_command ({ Key (Gdk.Key.Home, Gdk.ModifierType.SHIFT_MASK) }, "start-line-select");
-			index_command ("start-line-select-", "Move the cursor to the start of the line, extending the selection");
+			index_command ("start-line-select", "Move the cursor to the start of the line, extending the selection");
 			execute_command["start-line-select"].connect (on_start_line);
 			
 			bind_command ({ Key (Gdk.Key.f, Gdk.ModifierType.MOD1_MASK) }, "forward-word");
