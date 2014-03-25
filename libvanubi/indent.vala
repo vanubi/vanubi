@@ -338,7 +338,6 @@ namespace Vanubi {
 				return;
 			}
 
-			var prev_indent = buf.get_indent (prev_line);
 			var prev_text = buf.line_text(prev_line);
 			
 			// indent

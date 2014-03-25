@@ -37,6 +37,9 @@ namespace Vanubi {
 			}
 		}
 		
+		[Signal (detailed = true)]
+		public signal void special_file_changed (FileSource dir, string refname);
+		
 		public Git (Configuration config) {
 			this.config = config;
 		}
@@ -52,6 +55,19 @@ namespace Vanubi {
 				return null;
 			}
 			return (FileSource) dir.child (stdout.strip ());
+		}
+
+		public async void monitor_special_file (FileSource dir, string refname, int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) throws Error {
+			var repo = yield get_repo (dir, io_priority, cancellable);
+			if (repo == null) {
+				return;
+			}
+
+			var refsource = repo.child(".git").child(refname);
+			refsource.changed.connect (() => {
+					special_file_changed (repo, refname);
+			});
+			yield refsource.monitor ();
 		}
 
 		public async bool file_in_repo (FileSource file, int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) throws Error {
