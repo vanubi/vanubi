@@ -23,11 +23,15 @@ using Gtk;
 namespace Vanubi.UI {
 	public string key_to_string (Key key) {
 		var res = "";
-		if (Gdk.ModifierType.CONTROL_MASK in (Gdk.ModifierType) key.modifiers) {
+		var mods = (Gdk.ModifierType) key.modifiers;
+		if (Gdk.ModifierType.CONTROL_MASK in mods) {
 			res = "C-";
 		}
-		if (Gdk.ModifierType.SHIFT_MASK in (Gdk.ModifierType) key.modifiers) {
+		if (Gdk.ModifierType.SHIFT_MASK in mods) {
 			res += "S-";
+		}
+		if (Gdk.ModifierType.MOD1_MASK in mods) {
+			res += "M-";
 		}
 		res += Gdk.keyval_name (key.keyval);
 		return res;
