@@ -86,8 +86,8 @@ namespace Vanubi {
 
 		public override async bool read_only (int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) throws IOError.CANCELLED {
 			try {
-				var info = yield file.query_info_async (FileAttribute.ACCESS_CAN_READ, FileQueryInfoFlags.NONE, io_priority, cancellable);
-				return info.get_attribute_boolean (FileAttribute.ACCESS_CAN_READ);
+				var info = yield file.query_info_async (FileAttribute.ACCESS_CAN_WRITE, FileQueryInfoFlags.NONE, io_priority, cancellable);
+				return !info.get_attribute_boolean (FileAttribute.ACCESS_CAN_WRITE);
 			} catch (IOError.CANCELLED e) {
 				throw e;
 			} catch (Error e) {
