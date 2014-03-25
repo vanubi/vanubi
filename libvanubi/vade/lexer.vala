@@ -219,15 +219,58 @@ namespace Vanubi.Vade {
 			if (char.isdigit ()) {
 				// number
 				double num = 0;
-				while (char.isdigit ()) {
-					num += char-'0';
-					num *= 10;
+				int numbase = 10;
+				if (char == '0') {
 					pos++;
+					if (char == 'x') {
+						// hex
+						numbase = 16;
+						pos++;
+						while (char.isxdigit ()) {
+							if (char.isdigit ()) {
+								num += char-'0';
+								num *= 16;
+							} else {
+								num += char.tolower()-'a'+10;
+								num *= 16;
+							}
+							pos++;
+						}
+					} else if (char == 'b') {
+						// bin
+						numbase = 2;
+						pos++;
+						while (char == '0' || char == '1') {
+							num += char-'0';
+							num *= 2;
+							pos++;
+						}
+					} else if (char.isdigit () && (char-'0' < 8)) {
+						numbase = 8;
+						// octal
+						while (char.isdigit () && (char-'0' < 8)) {
+							num += char-'0';
+							num *= 8;
+							pos++;
+						}
+					} else if (char == '.') {
+						// decimal
+					} else {
+						throw new VError.SYNTAX_ERROR ("Unsupported number literal format");
+					}						
+				} else {
+					// decimal
+					while (char.isdigit ()) {
+						num += char-'0';
+						num *= 10;
+						pos++;
+					}
 				}
-				if (char == '.') {
+				
+				if (numbase == 10 && char == '.') {
 					pos++;
 					var ndec = 1;
-					while (char.isdigit ()) {					
+					while (char.isdigit ()) {
 						num += char-'0';
 						num *= 10;
 						ndec *= 10;
@@ -235,7 +278,7 @@ namespace Vanubi.Vade {
 					}
 					num /= ndec;
 				}
-				num /= 10;
+				num /= numbase;
 				var tok = Token (TType.NUM, orig, pos);
 				tok.num = num;
 				return tok;
