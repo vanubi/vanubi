@@ -20,10 +20,12 @@
 namespace Vanubi {
 	public class History<G> {
 		GenericArray<G> hist;
+		EqualFunc<G> eqfunc;
 		int limit;
 
-		public History (int limit) {
+		public History (owned EqualFunc<G> eqfunc, int limit) {
 			init ();
+			this.eqfunc = (owned) eqfunc;
 			this.limit = limit;
 		}
 
@@ -32,14 +34,23 @@ namespace Vanubi {
 		}
 
 		public void add (owned G g) {
+			unowned G? last = get (0);
+			if (last != null && eqfunc (g, last)) {
+				return;
+			}
+			
 			hist.add ((owned) g);
 			if (length > limit) {
 				hist.remove_index (0);
 			}
 		}
 
-		public G get (int n) {
-			return hist[hist.length-n-1];
+		public unowned G? get (int n) {
+			int i = hist.length-n-1;
+			if (i < 0 || i >= hist.length) {
+				return null;
+			}
+			return hist[i];
 		}
 
 		public int length { get { return hist.length; } }

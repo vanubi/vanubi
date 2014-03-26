@@ -6,7 +6,7 @@ void test_history () {
 	var str3 = "baz";
 	var str4 = "qux";
 
-	var hist = new History<string> (3);
+	var hist = new History<string> (str_equal, 3);
 	assert (hist.length == 0);
 
 	hist.add (str1);
@@ -26,6 +26,9 @@ void test_history () {
 	assert (hist[0] == str4);
 	assert (hist[1] == str3);
 	assert (hist.length == 3);
+
+	hist.add (str4);
+	assert (hist[1] == str3);
 }
 
 int main (string[] args) {

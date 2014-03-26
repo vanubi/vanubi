@@ -790,7 +790,7 @@ namespace Vanubi.UI {
 		public void attach_entry_history (Entry entry, string name) {
 			History? hist = entry_history_map[name];
 			if (hist == null) {
-				hist = new History<string> (conf.get_global_int ("entry_history_limit", 1000));
+				hist = new History<string> (str_equal, conf.get_global_int ("entry_history_limit", 1000));
 				entry_history_map[name] = hist;
 			}
 			new EntryHistory (hist, entry);
