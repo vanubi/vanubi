@@ -45,15 +45,15 @@ namespace Vanubi {
 				s += source.to_string ();
 			}
 			if (start_line >= 0) {
-				s += ":"+start_line.to_string ();
+				s += ":"+(start_line+1).to_string ();
 				if (start_column >= 0) {
-					s += "."+start_column.to_string();
+					s += "."+(start_column+1).to_string();
 				}
 			}
 			if (end_line >= 0) {
-				s += "-"+end_line.to_string ();
+				s += "-"+(end_line+1).to_string ();
 				if (end_column >= 0) {
-					s += "."+end_column.to_string();
+					s += "."+(end_column+1).to_string();
 				}
 			}
 			return s;

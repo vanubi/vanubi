@@ -34,7 +34,18 @@ namespace Vanubi.UI {
 			{ "", 0, 0, OptionArg.FILENAME_ARRAY, ref arg_filenames, null, "[FILE...]" },
 			{ null }
 		};
+
+		static Regex file_pos_regex = null;
 		
+		static construct {
+			try {
+				var file_pos = """^(?<f>.+?)(?::(?<sl>\d+)(?::(?<sc>\d+))?)?$""";
+				file_pos_regex = new Regex (file_pos, RegexCompileFlags.CASELESS|RegexCompileFlags.OPTIMIZE);
+			} catch (Error e) {
+				error (e.message);
+			}
+		}
+
 		public Application () {
 			Object (application_id: "org.vanubi", flags: ApplicationFlags.HANDLES_COMMAND_LINE);
 		}
@@ -188,7 +199,22 @@ namespace Vanubi.UI {
 					start_line = int.parse (line)-1;
 					continue;
 				} else {
-					loc = new Location (new LocalFileSource (command_line.create_file_for_arg (filename)));
+					MatchInfo info;
+					if (file_pos_regex.match (filename, 0, out info)) {
+						var fname = info.fetch_named ("f");
+						var line_str = info.fetch_named ("sl");
+						var column_str = info.fetch_named ("sc");
+
+						loc = new Location (new LocalFileSource (command_line.create_file_for_arg (fname)));
+						if (line_str != null) {
+							loc.start_line = int.parse (line_str)-1;
+							if (column_str != null) {
+								loc.start_column = int.parse (column_str)-1;
+							}
+						}
+					} else {
+						loc = new Location (new LocalFileSource (command_line.create_file_for_arg (filename)));
+					}
 				}
 				locations += loc;
 			}
@@ -198,7 +224,9 @@ namespace Vanubi.UI {
 			var loaded = 0;
 
 			foreach (unowned Location loc in locations) {
-				loc.start_line = start_line;
+				if (loc.start_line < 0) {
+					loc.start_line = start_line;
+				}
 				manager.open_location.begin (manager.last_focused_editor, loc, focus, (s,r) => {
 						manager.open_source.end (r);
 						loaded++;
