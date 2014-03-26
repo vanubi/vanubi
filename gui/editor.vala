@@ -632,21 +632,13 @@ namespace Vanubi.UI {
 		void on_check_endline () {
 			var buf = view.buffer;
 			TextIter start, end;
-			bool endline = true;
 
 			buf.get_iter_at_line_index (out start, buf.get_line_count (), 0);
 			end = start;
 			end.forward_to_line_end ();
 			string line = start.get_text (end);
 
-			for (var i = 0; i < line.char_count (); i++) {
-				if (!line.get (i).isspace ()) {
-					endline = false;
-					break;
-				}
-			}
-
-			if (endline) {
+			if (line.char_count () == 0) {
 				endline_status.set_label ("");
 				endline_status.margin_left = 0;
 			} else {
