@@ -190,6 +190,7 @@ namespace Vanubi.UI {
 		Label git_branch;
 		Label file_loading;
 		Label file_read_only;
+		Label endline_status;
 		EditorInfoBar infobar;
 		int old_selection_start_offset = -1;
 		int old_selection_end_offset = -1;
@@ -258,6 +259,10 @@ namespace Vanubi.UI {
 			file_read_only = new Label ("");
 			file_read_only.margin_left = 0;
 			infobar.add (file_read_only);
+
+			endline_status = new Label("");
+			endline_status.margin_left = 0;
+			infobar.add (endline_status);
 
 			file_status = new Label ("");
 			file_status.margin_left = 20;
@@ -508,7 +513,7 @@ namespace Vanubi.UI {
 			} catch {
 				return;
 			}
-			
+
 			if (read_only) {
 				file_read_only.margin_left = 20;
 				file_read_only.label = "ro";
@@ -618,8 +623,36 @@ namespace Vanubi.UI {
 			buf.mark_set.connect (on_file_count);
 			buf.changed.connect (on_file_count);
 			buf.changed.connect (on_git_gutter);
+			buf.changed.connect (on_check_endline);
 			buf.modified_changed.connect (on_modified_changed);
 			on_file_count ();
+			on_check_endline();
+		}
+
+		void on_check_endline () {
+			var buf = view.buffer;
+			TextIter start, end;
+			bool endline = true;
+
+			buf.get_iter_at_line_index (out start, buf.get_line_count (), 0);
+			end = start;
+			end.forward_to_line_end ();
+			string line = start.get_text (end);
+
+			for (var i = 0; i < line.char_count (); i++) {
+				if (!line.get (i).isspace ()) {
+					endline = false;
+					break;
+				}
+			}
+
+			if (endline) {
+				endline_status.set_label ("");
+				endline_status.margin_left = 0;
+			} else {
+				endline_status.set_label ("nonl");
+				endline_status.margin_left = 20;
+			}
 		}
 
 		public void on_git_gutter () {
