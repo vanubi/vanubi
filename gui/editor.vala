@@ -631,14 +631,11 @@ namespace Vanubi.UI {
 
 		void on_check_endline () {
 			var buf = view.buffer;
-			TextIter start, end;
+			TextIter iter;
 
-			buf.get_iter_at_line_index (out start, buf.get_line_count (), 0);
-			end = start;
-			end.forward_to_line_end ();
-			string line = start.get_text (end);
+			buf.get_end_iter (out iter);
 
-			if (line.char_count () == 0) {
+			if (iter.get_chars_in_line () == 0) {
 				endline_status.set_label ("");
 				endline_status.margin_left = 0;
 			} else {
