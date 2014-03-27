@@ -383,7 +383,7 @@ width:100%;
 <div class="sect1">
 <h2 id="hidden_features">Hidden features</h2>
 <div class="sectionbody">
-<div class="vareskeywords" style='display:none;'>global keybinding font size keyboard navigation hidden</div>
+<div class="vareskeywords" style='display:none;'>global keybinding font size keyboard navigation hidden history</div>
 <div class="paragraph"><div class="title">Commands that are not visible in the help bar</div><p>The help bar opened with <span class="monospaced">C-h</span> is missing some actions such as:</p></div>
 <div class="ulist"><ul>
 <li>
@@ -404,6 +404,11 @@ There are a number of navigation keybindings similar to the shell, like: <span c
 <li>
 <p>
 Move selected rows around with <span class="monospaced">M-up</span> and <span class="monospaced">M-down</span>.
+</p>
+</li>
+<li>
+<p>
+Navigate history of command bars like search or grep with <span class="monospaced">M-up</span> and <span class="monospaced">M-down</span>.
 </p>
 </li>
 </ul></div>
@@ -473,6 +478,14 @@ It is possible to save a named session with <span class="monospaced">save-sessio
 <div class="vareskeywords" style='display:none;'>marks marking jumping code places</div>
 <div class="paragraph"><div class="title">Mark your places in the code and jump between locations</div><p>Vanubi keeps a stack of marks among files that are set by the user, and are never implicitly set.
 You can set a mark on the current location with <span class="monospaced">mark</span> (<span class="monospaced">C-m</span>). You can go to the last mark set with <span class="monospaced">prev-mark</span> (<span class="monospaced">C-,</span>). Marks are added to a stack, so you can go back to previously set marks, and go forward with <span class="monospaced">next-mark</span> (<span class="monospaced">C-.</span>), until no more marks are available.</p></div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="trailing_whitespaces">Trailing whitespaces</h2>
+<div class="sectionbody">
+<div class="vareskeywords" style='display:none;'>cleanup whitespaces trailing</div>
+<div class="paragraph"><div class="title">Support for cleaning whitespaces at the end of lines</div><p>To cleanup trailing whitespaces on the whole file, execute the <span class="monospaced">clean-trailing-spaces</span> command from the <span class="monospaced">C-h</span> help bar.</p></div>
+<div class="paragraph"><p>There&#8217;s also basic support for cleaning up trailing whitespaces while writing by executing the <span class="monospaced">toggle-auto-clean-trailing-spaces</span> command. This behavior will then be enabled globally for every file.</p></div>
 </div>
 </div>
 <div class="sect1">
