@@ -34,7 +34,7 @@ namespace Vanubi.UI {
 		int original_bound;
 		Label at_end_label;
 		Mode mode;
-		Entry replace_entry;
+		public Entry replace_entry { get; private set; }
 		EventBox replace_box;
 		bool first_search = true;
 		bool is_replacing = false;

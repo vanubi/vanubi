@@ -25,7 +25,6 @@ namespace Vanubi.UI {
 		HashTable<DataSource, DataSource> sources = new HashTable<DataSource, DataSource> (DataSource.hash, DataSource.equal);
 
 		internal KeyManager<Editor> keymanager;
-		string last_replace_string = "";
 		string last_pipe_command = "";
 		string last_vade_code = "";
 		// Editor selection before calling a command
@@ -2640,20 +2639,28 @@ namespace Vanubi.UI {
 				mode = SearchBar.Mode.REPLACE_BACKWARD;
 			}
 			is_regex = command.has_suffix ("-regexp");
-			var hist = get_entry_history ("search");
-			var bar = new SearchBar (this, editor, mode, is_regex, hist.get(0) ?? "", last_replace_string);
-			attach_entry_history (bar.entry, hist);
+			
+			var search_hist = get_entry_history ("search");
+			var replace_hist = get_entry_history ("replace");
+			var bar = new SearchBar (this, editor, mode, is_regex,
+									 search_hist.get(0) ?? "",
+									 replace_hist.get(0) ?? "");
+			attach_entry_history (bar.entry, search_hist);
+			if (command.has_prefix ("replace")) {
+				attach_entry_history (bar.replace_entry, replace_hist);
+			}
+			
 			bar.activate.connect (() => {
-					hist.add (bar.text);
+					search_hist.add (bar.text);
 					if (command.has_prefix ("replace")) {
-						last_replace_string = bar.replace_text;
+						replace_hist.add (bar.replace_text);
 					}
 					abort (editor);
 			});
 			bar.aborted.connect (() => {
-					hist.add (bar.text);
+					search_hist.add (bar.text);
 					if (command.has_prefix ("replace")) {
-						last_replace_string = bar.replace_text;
+						replace_hist.add (bar.replace_text);
 					}
 					abort (editor);
 			});
