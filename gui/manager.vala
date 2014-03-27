@@ -787,12 +787,16 @@ namespace Vanubi.UI {
 			}
 		}
 
-		public void attach_entry_history (Entry entry, string name) {
-			History? hist = entry_history_map[name];
+		public History<string> get_entry_history (string name) {
+			History<string>? hist = entry_history_map[name];
 			if (hist == null) {
 				hist = new History<string> (str_equal, conf.get_global_int ("entry_history_limit", 1000));
 				entry_history_map[name] = hist;
 			}
+			return hist;
+		}			
+		
+		public void attach_entry_history (Entry entry, History<string> hist) {
 			new EntryHistory (hist, entry);
 		}
 
@@ -2637,8 +2641,9 @@ namespace Vanubi.UI {
 				mode = SearchBar.Mode.REPLACE_BACKWARD;
 			}
 			is_regex = command.has_suffix ("-regexp");
-			var bar = new SearchBar (this, editor, mode, is_regex, last_search_string, last_replace_string);
-			attach_entry_history (bar.entry, "search");
+			var hist = get_entry_history ("search");
+			var bar = new SearchBar (this, editor, mode, is_regex, hist.get(0) ?? "", last_replace_string);
+			attach_entry_history (bar.entry, hist);
 			bar.activate.connect (() => {
 				last_search_string = bar.text;
 				if (command.has_prefix ("replace")) {
