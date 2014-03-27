@@ -224,6 +224,11 @@ namespace Vanubi.UI {
 		protected override bool on_key_press_event (Gdk.EventKey e) {
 			TextIter insert;
 			view.buffer.get_iter_at_mark (out insert, view.buffer.get_insert ());
+
+			if (Gdk.ModifierType.MOD1_MASK in e.state) {
+				// ALT+key used for history
+				return base.on_key_press_event (e);
+			}
 			
 			switch (e.keyval) {
 			case Gdk.Key.Up:

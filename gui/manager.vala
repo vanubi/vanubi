@@ -50,7 +50,6 @@ namespace Vanubi.UI {
 		uint status_timeout;
 		string status_context;
 		MarkManager marks = new MarkManager ();
-		string last_grep_string = "";
 		public Editor last_focused_editor = null; // must never be null
 		int next_stream_id = 1;
 		RemoteFileServer remote = null;
@@ -2342,8 +2341,11 @@ namespace Vanubi.UI {
 			var git_command = conf.get_global_string ("git_command", "git");
 			InputStream? stream = null;
 
-			var bar = new GrepBar (this, conf, repo_dir, last_grep_string);
+			var grep_hist = get_entry_history ("grep");
+			var bar = new GrepBar (this, conf, repo_dir, grep_hist.get(0) ?? "");
+			attach_entry_history (bar.entry, grep_hist);
 			bar.activate.connect (() => {
+					grep_hist.add (bar.text);
 					abort (editor);
 					var loc = bar.location;
 					if (loc != null && loc.source != null) {
@@ -2351,7 +2353,6 @@ namespace Vanubi.UI {
 					}
 			});
 			bar.changed.connect ((pat) => {
-					last_grep_string = pat;
 					clear_status ("repo-grep");
 
 					if (stream != null) {
@@ -2392,7 +2393,10 @@ namespace Vanubi.UI {
 							}
 					});
 			});
-			bar.aborted.connect (() => { abort (editor); });
+			bar.aborted.connect (() => {
+					grep_hist.add (bar.text);
+					abort (editor);
+			});
 			add_overlay (bar, OverlayMode.PANE_BOTTOM);
 			bar.show ();
 			bar.grab_focus ();
