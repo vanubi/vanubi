@@ -29,7 +29,6 @@ namespace Vanubi.UI {
 			// connect like this for keeping a reference to self
 			var self = this;
 			entry.key_press_event.connect ((w, e) => { return self.on_key_press_event (w, e); });
-			entry.activate.connect ((w) => { self.on_activate (w); });
 			changed_signal = entry.changed.connect ((w) => { self.on_changed (w); });
 		}
 
@@ -78,12 +77,6 @@ namespace Vanubi.UI {
 			var entry = (Gtk.Entry) widget;
 
 			user_text = entry.text;
-		}
-		
-		void on_activate (Gtk.Widget widget) {
-			var entry = (Gtk.Entry) widget;
-
-			history.add (entry.text);
 		}
 	}
 }

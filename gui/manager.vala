@@ -25,7 +25,6 @@ namespace Vanubi.UI {
 		HashTable<DataSource, DataSource> sources = new HashTable<DataSource, DataSource> (DataSource.hash, DataSource.equal);
 
 		internal KeyManager<Editor> keymanager;
-		string last_search_string = "";
 		string last_replace_string = "";
 		string last_pipe_command = "";
 		string last_vade_code = "";
@@ -2645,18 +2644,18 @@ namespace Vanubi.UI {
 			var bar = new SearchBar (this, editor, mode, is_regex, hist.get(0) ?? "", last_replace_string);
 			attach_entry_history (bar.entry, hist);
 			bar.activate.connect (() => {
-				last_search_string = bar.text;
-				if (command.has_prefix ("replace")) {
-					last_replace_string = bar.replace_text;
-				}
-				abort (editor);
+					hist.add (bar.text);
+					if (command.has_prefix ("replace")) {
+						last_replace_string = bar.replace_text;
+					}
+					abort (editor);
 			});
 			bar.aborted.connect (() => {
-				last_search_string = bar.text;
-				if (command.has_prefix ("replace")) {
-					last_replace_string = bar.replace_text;
-				}
-				abort (editor);
+					hist.add (bar.text);
+					if (command.has_prefix ("replace")) {
+						last_replace_string = bar.replace_text;
+					}
+					abort (editor);
 			});
 			add_overlay (bar);
 			bar.show ();
