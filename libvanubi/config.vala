@@ -19,8 +19,8 @@
 
 namespace Vanubi {
 	public class Session {
-		public GenericArray<FileSource> files = new GenericArray<FileSource> ();
-		public Location? location;
+		public GenericArray<Location> locations = new GenericArray<Location> ();
+		public Location? focused_location;
 	}
 	
 	public class Configuration {
@@ -32,7 +32,7 @@ namespace Vanubi {
 		string last_saved_data = null;
 		
 		const int SAVE_TIMEOUT = 500;
-		const int LATEST_CONFIG_VERSION = 2;
+		const int LATEST_CONFIG_VERSION = 3;
 
 		[CCode (cname = "VERSION", cheader_filename = "config.h")]
 		public extern const string VANUBI_VERSION;
@@ -140,6 +140,36 @@ namespace Vanubi {
 					var val = backend.get_value ("Editor", "style");
 					backend.set_value ("Global", "theme", val);
 					backend.remove_key ("Editor", "style");
+				}
+
+				version++;
+			}
+
+			if (version == 2) {
+				// backup, synchronous
+				var bak = File.new_for_path (file.get_path()+".bak."+version.to_string());
+				file.copy (bak, FileCopyFlags.OVERWRITE);
+				
+				var groups = backend.get_groups ();
+				foreach (unowned string group in groups) {
+					if (group.has_prefix ("session:")) {
+						// convert sources to locations
+						if (has_group_key (group, "focused_source")) {
+							var val = backend.get_value (group, "focused_source");
+							backend.set_value (group, "focused_location", val);
+							backend.remove_key (group, "focused_source");
+							backend.remove_key (group, "focused_line");
+							backend.remove_key (group, "focused_column");
+						}
+						
+						foreach (unowned string key in backend.get_keys (group)) {
+							if (key.has_prefix ("source")) {
+								var val = backend.get_value (group, key);
+								backend.set_value (group, "location"+key.substring ("source".length), val);
+								backend.remove_key (group, key);
+							}
+						}
+					}
 				}
 
 				version++;
@@ -257,13 +287,14 @@ namespace Vanubi {
 		public void save_session (Session session, string name = "default") {
 			var group = "session:"+name;
 			remove_group (group);
-			if (session.location != null && session.location.source is FileSource) {
-				set_group_string (group, "focused_source", session.location.source.to_string ());
-				set_group_int (group, "focused_line", session.location.start_line);
-				set_group_int (group, "focused_column", session.location.start_column);
+			if (session.focused_location != null && session.focused_location.source is LocalFileSource) {
+				set_group_string (group, "focused_location", session.focused_location.to_cli_arg ());
 			}
-			for (var i=0; i < session.files.length; i++) {
-				set_group_string (group, "source"+(i+1).to_string(), session.files[i].to_string ());
+			for (var i=0; i < session.locations.length; i++) {
+				unowned Location loc = session.locations[i];
+				if (loc.source is LocalFileSource) {
+					set_group_string (group, "location"+(i+1).to_string(), loc.to_cli_arg ());
+				}
 			}
 		}
 		
@@ -271,15 +302,12 @@ namespace Vanubi {
 			var group = "session:"+name;
 			var session = new Session ();
 			if (backend.has_group (group)) {
-				if (has_group_key (group, "focused_source")) {
-					var file = DataSource.new_from_string (get_group_string (group, "focused_source"));
-					session.location = new Location (file,
-													 get_group_int (group, "focused_line"),
-													 get_group_int (group, "focused_column"));
+				if (has_group_key (group, "focused_location")) {
+					session.focused_location = new Location.from_cli_arg (get_group_string (group, "focused_location"));
 				}
 				foreach (var key in get_group_keys (group)) {
-					if (key.has_prefix ("source")) {
-						session.files.add ((FileSource) DataSource.new_from_string (get_group_string (group, key)));
+					if (key.has_prefix ("location")) {
+						session.locations.add (new Location.from_cli_arg (get_group_string (group, key)));
 					}
 				}
 			}

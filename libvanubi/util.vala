@@ -90,6 +90,20 @@ namespace Vanubi {
 			}
 			return s;
 		}
+
+		public string to_cli_arg () {
+			var s = "";
+			if (source != null) {
+				s += source.to_string ();
+			}
+			if (start_line >= 0) {
+				s += ":"+(start_line+1).to_string ();
+				if (start_column >= 0) {
+					s += ":"+(start_column+1).to_string();
+				}
+			}
+			return s;
+		}
 	}
 	
 	ThreadPool<ThreadWorker> thread_pool = null;

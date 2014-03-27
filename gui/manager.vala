@@ -1091,10 +1091,16 @@ namespace Vanubi.UI {
 		public void save_session (Editor ed, string name = "default") {
 			var session = new Session ();
 			each_file ((f) => {
-					session.files.add (f);
+					Location loc = null;
+					each_source_editor (f, (ed) => {
+							loc = ed.get_location ();
+							// just take the first editor
+							return false;
+					});
+					session.locations.add (loc);
 					return true;
 			});
-			session.location = ed.get_location ();
+			session.focused_location = ed.get_location ();
 			conf.save_session (session, name);
 			conf.save ();
 		}
@@ -1197,14 +1203,15 @@ namespace Vanubi.UI {
 				set_status ("Session not found", "sessions");
 			} else {
 				/* Load the first file */
-				if (session.location != null) {
-					yield open_location (editor, session.location);
+				FileSource? focused_file = null;
+				if (session.focused_location != null) {
+					focused_file = session.focused_location.source as FileSource;
+					yield open_location (editor, session.focused_location);
 				}
 
-				FileSource? focused_file = session.location != null ? (FileSource) session.location.source : null;
-				foreach (var file in session.files.data) {
-					if (focused_file == null || !file.equal (focused_file)) {
-						open_source.begin (editor, file, false);
+				foreach (unowned Location loc in session.locations.data) {
+					if (focused_file == null || !loc.source.equal (focused_file)) {
+						open_location.begin (editor, loc, false);
 					}
 				}
 			}
