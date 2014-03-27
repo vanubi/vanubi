@@ -158,7 +158,7 @@ Mouse bindings:
 |==================
 
 == Hidden features
-keywords:[global keybinding font size keyboard navigation hidden]
+keywords:[global keybinding font size keyboard navigation hidden history]
 .Commands that are not visible in the help bar
 
 The help bar opened with `C-h` is missing some actions such as:
@@ -167,6 +167,7 @@ The help bar opened with `C-h` is missing some actions such as:
 	- Change font size with `C-scroll`, that is Ctrl `+` mouse scroll.
 	- There are a number of navigation keybindings similar to the shell, like: `C-left`, `M-f`, `C-b`, `C-n`, `C-p`, `M-p`, `C-d`, ...
 	- Move selected rows around with `M-up` and `M-down`.
+	- Navigate history of command bars like search or grep with `M-up` and `M-down`.
 
 == Fuzzy search
 keywords:[fuzzy searching]
