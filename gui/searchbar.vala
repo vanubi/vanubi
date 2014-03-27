@@ -42,7 +42,9 @@ namespace Vanubi.UI {
 		bool is_regex = false;
 		string matching_string; // keep alive for regex
 		MatchInfo current_match;
-		Cancellable cancellable;
+		Cancellable search_cancellable;
+		Cancellable replace_cancellable;
+		bool found_occurrence;
 
 		public SearchBar (Manager manager, Editor editor, Mode mode, bool is_regex, string search_initial = "", string replace_initial = "") {
 			base (search_initial);
@@ -129,11 +131,12 @@ namespace Vanubi.UI {
 		}
 
 		async void search (TextIter iter) {
-			if (cancellable != null) {
-				cancellable.cancel ();
+			if (search_cancellable != null) {
+				search_cancellable.cancel ();
 			}
-			cancellable = new Cancellable ();
-			var cur_cancellable = cancellable;
+			search_cancellable = new Cancellable ();
+			var cur_cancellable = search_cancellable;
+			found_occurrence = false;
 			
 			// inefficient naive implementation
 			var buf = editor.view.buffer;
@@ -184,14 +187,17 @@ namespace Vanubi.UI {
 					Idle.add (search.callback);
 					yield;
 				}
+
+				if (cur_cancellable.is_cancelled ()) {
+					return;
+				}
 				
 				TextIter subiter;
 				if (mark != null) {
-					buf.get_iter_at_mark (out subiter, mark);
+					buf.get_iter_at_mark (out iter, mark);
 					buf.delete_mark (mark);
-				} else {
-					subiter = iter;
 				}
+				subiter = iter;
 				
 				bool found = true;
 				if (is_regex) {
@@ -220,6 +226,7 @@ namespace Vanubi.UI {
 				}
 				if (found) {
 					// found
+					found_occurrence = true;
 					buf.select_range (iter, subiter);
 					editor.update_old_selection ();
 					editor.view.scroll_to_mark (buf.get_insert (), 0, true, 0.5, 0.5);
@@ -256,11 +263,11 @@ namespace Vanubi.UI {
 		}
 
 		async void replace () {
-			if (cancellable != null) {
-				cancellable.cancel ();
+			if (replace_cancellable != null) {
+				replace_cancellable.cancel ();
 			}
-			cancellable = new Cancellable ();
-			var cur_cancellable = cancellable;
+			replace_cancellable = new Cancellable ();
+			var cur_cancellable = replace_cancellable;
 			
 			// replace occurrence
 			var r = replace_text;
@@ -280,7 +287,16 @@ namespace Vanubi.UI {
 			} catch (Error e) {
 				// do not parse in case of any error during parsing or evaluating the expression
 			}
-			
+
+			if (cur_cancellable.is_cancelled ()) {
+				return;
+			}
+
+			if (search_cancellable != null && search_cancellable.is_cancelled ()) {
+				// search has been cancelled, we are probably in the wrong place
+				return;
+			}
+
 			var buf = editor.view.buffer;
 			buf.begin_user_action ();		
 			buf.delete_selection (true, true);
@@ -295,8 +311,11 @@ namespace Vanubi.UI {
 		protected override bool on_key_press_event (Gdk.EventKey e) {
 			if (e.keyval == Gdk.Key.Escape || (e.keyval == Gdk.Key.g && Gdk.ModifierType.CONTROL_MASK in e.state)) {
 				// abort
-				if (cancellable != null) {
-					cancellable.cancel ();
+				if (search_cancellable != null) {
+					search_cancellable.cancel ();
+				}
+				if (replace_cancellable != null) {
+					replace_cancellable.cancel ();
 				}
 				
 				TextIter insert, bound;
@@ -338,17 +357,19 @@ namespace Vanubi.UI {
 				}
 			} else if (is_replacing && (mode == Mode.REPLACE_FORWARD || mode == Mode.REPLACE_BACKWARD)) {
 				if (!replace_complete) {
-					if (e.keyval == Gdk.Key.r) {
-						replace.begin ();
-						return true;
-					} else if (e.keyval == Gdk.Key.s) {
-						// skip occurrence
-						var buf = editor.view.buffer;
-						TextIter iter;
-						buf.get_iter_at_mark (out iter, buf.get_insert ());
-						iter.forward_char ();
-						search.begin (iter);
-						return true;
+					if (found_occurrence) {
+						if (e.keyval == Gdk.Key.r) {
+							replace.begin ();
+							return true;
+						} else if (e.keyval == Gdk.Key.s) {
+							// skip occurrence
+							var buf = editor.view.buffer;
+							TextIter iter;
+							buf.get_iter_at_mark (out iter, buf.get_insert ());
+							iter.forward_char ();
+							search.begin (iter);
+							return true;
+						}
 					}
 				}
 				if (e.keyval == Gdk.Key.Return) {

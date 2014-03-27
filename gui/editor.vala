@@ -630,6 +630,10 @@ namespace Vanubi.UI {
 		}
 
 		void on_check_endline () {
+			if (!file_loaded) {
+				return;
+			}
+			
 			var buf = view.buffer;
 			TextIter iter;
 
