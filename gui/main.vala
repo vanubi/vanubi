@@ -199,21 +199,11 @@ namespace Vanubi.UI {
 					start_line = int.parse (line)-1;
 					continue;
 				} else {
-					MatchInfo info;
-					if (file_pos_regex.match (filename, 0, out info)) {
-						var fname = info.fetch_named ("f");
-						var line_str = info.fetch_named ("sl");
-						var column_str = info.fetch_named ("sc");
-
-						loc = new Location (new LocalFileSource (command_line.create_file_for_arg (fname)));
-						if (line_str != null) {
-							loc.start_line = int.parse (line_str)-1;
-							if (column_str != null) {
-								loc.start_column = int.parse (column_str)-1;
-							}
-						}
-					} else {
-						loc = new Location (new LocalFileSource (command_line.create_file_for_arg (filename)));
+					loc = new Location.from_cli_arg (filename);
+					if (loc.source is LocalFileSource) {
+						var fs = (LocalFileSource) loc.source;
+						// replace with real filename based on calling process workdir
+						loc.source = new LocalFileSource (command_line.create_file_for_arg (fs.file.get_path()));
 					}
 				}
 				locations += loc;

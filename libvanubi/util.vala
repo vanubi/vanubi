@@ -30,7 +30,18 @@ namespace Vanubi {
 		public int start_column;
 		public int end_line;
 		public int end_column;
+
+		static Regex file_pos_regex = null;
 		
+		static construct {
+			try {
+				var file_pos = """^(?<f>.+?)(?::(?<sl>\d+)(?::(?<sc>\d+))?)?$""";
+				file_pos_regex = new Regex (file_pos, RegexCompileFlags.CASELESS|RegexCompileFlags.OPTIMIZE);
+			} catch (Error e) {
+				error (e.message);
+			}
+		}
+
 		public Location (owned DataSource? source, int start_line = -1, int start_column = -1, int end_line = -1, int end_column = -1) {
 			this.source = (owned) source;
 			this.start_line = start_line;
@@ -38,7 +49,28 @@ namespace Vanubi {
 			this.end_line = end_line;
 			this.end_column = end_column;
 		}
-		
+
+		public Location.from_cli_arg (string arg) {
+			start_line = start_column = end_line = end_column = -1;
+			
+			MatchInfo info;
+			if (file_pos_regex.match (arg, 0, out info)) {
+				var filename = info.fetch_named ("f");
+				var line_str = info.fetch_named ("sl");
+				var column_str = info.fetch_named ("sc");
+				
+				source = DataSource.new_from_string (filename);
+				if (line_str != null) {
+					start_line = int.parse (line_str)-1;
+					if (column_str != null) {
+						start_column = int.parse (column_str)-1;
+					}
+				}
+			} else {
+				source = DataSource.new_from_string (arg);
+			}
+		}
+			
 		public string to_string () {
 			var s = "";
 			if (source != null) {
