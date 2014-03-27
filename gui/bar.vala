@@ -93,7 +93,9 @@ namespace Vanubi.UI {
 			}
 			entry.set_activates_default (true);
 			entry.expand = false;
-			entry.activate.connect (on_activate);
+			/* because others may connect to activate, */
+			/* but in the while the widget may get destroyed */
+			entry.activate.connect_after (on_activate);
 			entry.changed.connect (on_changed);
 			entry.key_press_event.connect (on_key_press_event);
 			add (entry);

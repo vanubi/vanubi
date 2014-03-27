@@ -53,6 +53,22 @@ namespace Vanubi {
 			return hist[i];
 		}
 
+		public unowned G? older (ref int n) {
+			unowned G? g = get (n);
+			if (g != null) {
+				n++;
+			}
+			return g;
+		}
+
+		public unowned G? newer (ref int n) {
+			unowned G? g = get (n-1);
+			if (g != null) {
+				n--;
+			}
+			return g;
+		}
+		
 		public int length { get { return hist.length; } }
 	}
 }
