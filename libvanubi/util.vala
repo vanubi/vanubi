@@ -50,12 +50,12 @@ namespace Vanubi {
 			this.end_column = end_column;
 		}
 
-		public Location.from_cli_arg (string arg) {
+		public Location.from_cli_arg (string arg, out string filename = null) {
 			start_line = start_column = end_line = end_column = -1;
 			
 			MatchInfo info;
 			if (file_pos_regex.match (arg, 0, out info)) {
-				var filename = info.fetch_named ("f");
+				filename = info.fetch_named ("f");
 				var line_str = info.fetch_named ("sl");
 				var column_str = info.fetch_named ("sc");
 				
@@ -67,7 +67,8 @@ namespace Vanubi {
 					}
 				}
 			} else {
-				source = DataSource.new_from_string (arg);
+				filename = arg;
+				source = DataSource.new_from_string (filename);
 			}
 		}
 			

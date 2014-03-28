@@ -189,21 +189,21 @@ namespace Vanubi.UI {
 			Location[]? locations = null;
 			int start_line = -1;
 			
-			foreach (unowned string filename in arg_filenames) {
+			foreach (unowned string arg in arg_filenames) {
 				Location loc;
-				if (filename == "-") {
+				if (arg == "-") {
 					loc = new Location (new StreamSource (manager.new_stdin_stream_name (), command_line.get_stdin (), DataSource.new_from_string (command_line.get_cwd ())));
-				} else if (filename[0] == '+') {
+				} else if (arg[0] == '+') {
 					// go to line for all the files
-					unowned string line = filename.offset (1);
+					unowned string line = arg.offset (1);
 					start_line = int.parse (line)-1;
 					continue;
 				} else {
-					loc = new Location.from_cli_arg (filename);
+					string filename;
+					loc = new Location.from_cli_arg (arg, out filename);
 					if (loc.source is LocalFileSource) {
-						var fs = (LocalFileSource) loc.source;
 						// replace with real filename based on calling process workdir
-						loc.source = new LocalFileSource (command_line.create_file_for_arg (fs.file.get_path()));
+						loc.source = new LocalFileSource (command_line.create_file_for_arg (filename));
 					}
 				}
 				locations += loc;
