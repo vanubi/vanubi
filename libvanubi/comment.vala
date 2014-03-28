@@ -82,13 +82,27 @@ namespace Vanubi {
 
 		protected void escape_line (int line) {
 			var iter = buf.line_start (line);
+
 			iter.forward_spaces ();
+
 			while (!iter.eol) {
 				if (iter.char == '/') {
-					buf.insert (iter, "\\");
+					iter.forward_char ();
+
+					if (!iter.eol && iter.char == '*') {
+						buf.insert (iter, "\\");
+						iter.forward_char ();
+					}
+				} else if (iter.char == '*') {
+					iter.forward_char ();
+
+					if (!iter.eol && iter.char == '/') {
+						buf.insert (iter, "\\");
+						iter.forward_char ();
+					}
+				} else {
 					iter.forward_char ();
 				}
-				iter.forward_char ();
 			}
 		}
 
