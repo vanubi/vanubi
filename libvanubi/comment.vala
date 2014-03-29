@@ -20,11 +20,28 @@
 
 namespace Vanubi {
 	public abstract class Comment {
+		protected Buffer buf;
+		protected int common_offset;
+
 		protected abstract bool is_line_commented (int line);
 		protected abstract int count_commented_lines (int start_line, int end_line);
 		protected abstract void comment_line (int line);
 		protected abstract void decomment_line (int line);
-		
+
+		private void find_common_offset (int start_line, int end_line) {
+			for (var i=start_line; i<=end_line; i++) {
+				if (buf.empty_line (i)) {
+					continue;
+				}
+
+				var iter = buf.line_start (i);
+				iter.forward_spaces ();
+				if (iter.line_offset < common_offset) {
+					common_offset = iter.line_offset;
+				}
+			}
+		}
+
 		public virtual void toggle_comment (BufferIter start_iter, BufferIter end_iter) {
 			var start_line = start_iter.line;
 			var end_line = end_iter.line;
@@ -51,6 +68,8 @@ namespace Vanubi {
 						decomment_line (i);
 					}
 				} else { /* Comment all and escape already commented lines */
+					common_offset = int.MAX;
+					find_common_offset (start_line, end_line);
 					for (var i=start_line; i<=end_line; i++) {
 						comment_line (i);
 					}
@@ -60,8 +79,6 @@ namespace Vanubi {
 	}
 
 	public class Comment_Default : Comment {
-		Buffer buf;
-
 		public Comment_Default (Buffer buf) {
 			this.buf = buf;
 		}
@@ -183,8 +200,9 @@ namespace Vanubi {
 			if (is_line_commented (line)) {
 				escape_line (line);
 			}
-			var start_iter = buf.line_start (line);
-			start_iter.forward_spaces ();
+			/* var start_iter = buf.line_start (line); */
+			/* start_iter.forward_spaces (); */
+			var start_iter = buf.line_at_char (line, common_offset);
 			buf.insert (start_iter, "/* ");
 			var end_iter = buf.line_end (start_iter.line);
 			buf.insert (end_iter, " */");
@@ -216,8 +234,6 @@ namespace Vanubi {
 	}
 
 	public class Comment_Hash : Comment {
-		Buffer buf;
-
 		public Comment_Hash (Buffer buf) {
 			this.buf = buf;
 		}
@@ -237,8 +253,9 @@ namespace Vanubi {
 		}
 
 		protected override void comment_line (int line) {
-			var iter = buf.line_start (line);
-			iter.forward_spaces ();
+			/* var iter = buf.line_start (line); */
+			/* iter.forward_spaces (); */
+			var iter = buf.line_at_char (line, common_offset);
 			buf.insert (iter, "# ");
 		}
 
@@ -255,8 +272,6 @@ namespace Vanubi {
 	}
 
 	public class Comment_Asm : Comment {
-		Buffer buf;
-
 		public Comment_Asm (Buffer buf) {
 			this.buf = buf;
 		}
@@ -276,8 +291,9 @@ namespace Vanubi {
 		}
 
 		protected override void comment_line (int line) {
-			var iter = buf.line_start (line);
-			iter.forward_spaces ();
+			/* var iter = buf.line_start (line); */
+			/* iter.forward_spaces (); */
+			var iter = buf.line_at_char (line, common_offset);
 			buf.insert (iter, "; ");
 		}
 
@@ -294,8 +310,6 @@ namespace Vanubi {
 	}
 
 	public class Comment_Lua : Comment {
-		Buffer buf;
-
 		public Comment_Lua (Buffer buf) {
 			this.buf = buf;
 		}
@@ -316,8 +330,9 @@ namespace Vanubi {
 		}
 
 		protected override void comment_line (int line) {
-			var iter = buf.line_start (line);
-			iter.forward_spaces ();
+			/* var iter = buf.line_start (line); */
+			/* iter.forward_spaces (); */
+			var iter = buf.line_at_char (line, common_offset);
 			buf.insert (iter, "-- ");
 		}
 
@@ -333,10 +348,8 @@ namespace Vanubi {
 			}
 		}
 	}
-	
-	public class Comment_Markup : Comment {
-		Buffer buf;
 
+	public class Comment_Markup : Comment {
 		public Comment_Markup (Buffer buf) {
 			this.buf = buf;
 		}
@@ -371,8 +384,9 @@ namespace Vanubi {
 			if (is_line_commented (line)) {
 				escape_line (line);
 			}
-			var start_iter = buf.line_start (line);
-			start_iter.forward_spaces ();
+			/* var start_iter = buf.line_start (line); */
+			/* start_iter.forward_spaces (); */
+			var start_iter = buf.line_at_char (line, common_offset);
 			buf.insert (start_iter, "<!-- ");
 			var end_iter = buf.line_end (start_iter.line);
 			buf.insert (end_iter, " -->");
@@ -387,7 +401,7 @@ namespace Vanubi {
 				iter.forward_spaces ();
 				var del_iter = iter.forward_string ("<!-- ");
 				buf.delete (iter, del_iter);
-				
+
 				iter = buf.line_end (line);
 				iter.backward_spaces ();
 				iter.forward_char(); /* Must point after '>' */

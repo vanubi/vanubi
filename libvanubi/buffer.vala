@@ -104,7 +104,7 @@ namespace Vanubi {
 			}
 			return cp;
 		}
-		
+
 		/* Backwards a copy of the iter until the whole reverse string is consumed, otherwise returns the original iter
 		 * Works on a line only */
 		public virtual BufferIter backward_string (string str) {
@@ -121,11 +121,11 @@ namespace Vanubi {
 			}
 			return cp;
 		}
-		
+
 		public virtual BufferIter forward_spaces () {
 			while (!eol && char.isspace()) forward_char ();
 			return this;
-		}																					
+		}
 
 		public virtual BufferIter backward_spaces () {
 			while (!sol && char.isspace()) backward_char ();
@@ -196,12 +196,12 @@ namespace Vanubi {
 			unowned string l = lines[line];
 			return new StringBufferIter (this, line, l.length-1);
 		}
-		
+
 		// assume latin1
 		public override BufferIter line_at_char (int line, int line_offset) {
 			return new StringBufferIter (this, line, line_offset);
 		}
-		
+
 		// assume latin1
 		public override BufferIter line_at_byte (int line, int line_offset) {
 			return new StringBufferIter (this, line, line_offset);
@@ -281,19 +281,19 @@ namespace Vanubi {
 			_line = int.min (buf.lines.length-1, _line+1);
 			return this;
 		}
-		
+
 		public override BufferIter backward_line () requires (valid) {
 			_line = int.max (0, _line-1);
 			return this;
 		}
-		
+
 		public override bool is_in_code {
 			get {
 				// assume no strings and no comments for the tests
 				return !buf.force_in_comment;
 			}
 		}
-		
+
 		public override bool is_in_comment {
 			get {
 				// assume no comments for the tests
@@ -322,7 +322,7 @@ namespace Vanubi {
 				return line_offset >= l.length-1;
 			}
 		}
-		
+
 		public override bool eof {
 			get {
 				warn_if_fail (valid);
