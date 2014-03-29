@@ -28,6 +28,11 @@ namespace Vanubi {
 		protected abstract void comment_line (int line);
 		protected abstract void decomment_line (int line);
 
+		public Comment (Buffer buf) {
+			this.buf = buf;
+			this.common_offset = int.MAX;
+		}
+
 		private void find_common_offset (int start_line, int end_line) {
 			for (var i=start_line; i<=end_line; i++) {
 				if (buf.empty_line (i)) {
@@ -68,7 +73,6 @@ namespace Vanubi {
 						decomment_line (i);
 					}
 				} else { /* Comment all and escape already commented lines */
-					common_offset = int.MAX;
 					find_common_offset (start_line, end_line);
 					for (var i=start_line; i<=end_line; i++) {
 						comment_line (i);
@@ -80,7 +84,7 @@ namespace Vanubi {
 
 	public class Comment_Default : Comment {
 		public Comment_Default (Buffer buf) {
-			this.buf = buf;
+			base (buf);
 		}
 
 		protected override bool is_line_commented (int line) {
@@ -235,7 +239,7 @@ namespace Vanubi {
 
 	public class Comment_Hash : Comment {
 		public Comment_Hash (Buffer buf) {
-			this.buf = buf;
+			base (buf);
 		}
 
 		protected override bool is_line_commented (int line) {
@@ -273,7 +277,7 @@ namespace Vanubi {
 
 	public class Comment_Asm : Comment {
 		public Comment_Asm (Buffer buf) {
-			this.buf = buf;
+			base (buf);
 		}
 
 		protected override bool is_line_commented (int line) {
@@ -311,7 +315,7 @@ namespace Vanubi {
 
 	public class Comment_Lua : Comment {
 		public Comment_Lua (Buffer buf) {
-			this.buf = buf;
+			base (buf);
 		}
 
 		protected override bool is_line_commented (int line) {
@@ -351,7 +355,7 @@ namespace Vanubi {
 
 	public class Comment_Markup : Comment {
 		public Comment_Markup (Buffer buf) {
-			this.buf = buf;
+			base (buf);
 		}
 
 		protected override bool is_line_commented (int line) {
