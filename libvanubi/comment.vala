@@ -83,6 +83,8 @@ namespace Vanubi {
 		protected void escape_line (int line) {
 			var iter = buf.line_start (line);
 
+			/* Escape forward */
+
 			iter.forward_spaces ();
 
 			while (!iter.eol) {
@@ -91,31 +93,85 @@ namespace Vanubi {
 
 					if (!iter.eol && iter.char == '*') {
 						buf.insert (iter, "\\");
-						iter.forward_char ();
-					}
-				} else if (iter.char == '*') {
-					iter.forward_char ();
-
-					if (!iter.eol && iter.char == '/') {
-						buf.insert (iter, "\\");
-						iter.forward_char ();
+						break;
 					}
 				} else {
 					iter.forward_char ();
+				}
+			}
+
+			iter = buf.line_end (line);
+
+			/* Escape backward */
+
+			iter.backward_spaces ();
+
+			while (!iter.sol) {
+				if (!iter.sol && iter.char == '/') {
+					iter.backward_char ();
+
+					if (!iter.sol && iter.char == '*') {
+						iter.forward_char ();
+						buf.insert (iter, "\\");
+						break;
+					}
+				} else {
+					iter.backward_char ();
 				}
 			}
 		}
 
 		protected void unescape_line (int line) {
 			var iter = buf.line_start (line);
+
+			/* Unescape forward */
+
 			iter.forward_spaces ();
+
 			while (!iter.eol) {
-				if (iter.char == '\\') {
-					var end_iter = iter.copy ();
-					end_iter.forward_char ();
-					buf.delete (iter, end_iter);
+				if (iter.char == '/') {
+					iter.forward_char ();
+
+					if (!iter.eol && iter.char == '\\') {
+						iter.forward_char ();
+
+						if (!iter.eol && iter.char == '*') {
+							/* End iter point to '*' */
+							var end_iter = iter.copy ();
+							iter.backward_char (); /* Got to '\' */
+							buf.delete (iter, end_iter);
+							break;
+						}
+					}
+				} else {
+					iter.forward_char ();
 				}
-				iter.forward_char ();
+			}
+
+			iter = buf.line_end(line);
+
+			/* Unescape backward */
+
+			iter.backward_spaces ();
+
+			while (!iter.sol) {
+				if (iter.char == '/') {
+					iter.backward_char ();
+
+					if (!iter.sol && iter.char == '\\') {
+						iter.backward_char ();
+
+						if (!iter.sol && iter.char == '*') {
+							iter.forward_char (); /* Got to '\' */
+							var start_iter = iter.copy ();
+							iter.forward_char (); /* Got to '/' */
+							buf.delete (start_iter, iter);
+							break;
+						}
+					}
+				} else {
+					iter.backward_char ();
+				}
 			}
 		}
 

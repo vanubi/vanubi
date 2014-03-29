@@ -49,18 +49,24 @@ void test_default_region () {
 foo bar
 /* asd asd */
    
+/* /\\* asd asd *\\/ */
+printf(\"foo\\t\\n\");
 ");
 	var commenter = new Comment_Default (buffer);
 
-	commenter.toggle_comment (buffer.line_start (1), buffer.line_start (3));
+	commenter.toggle_comment (buffer.line_start (1), buffer.line_start (6));
 	assert (/\/\* .+ \*\//.match(buffer.line_text (1)));
-	assert (buffer.line_text (2) == "/* \\/* asd asd *\\/ */\n");
+	assert (buffer.line_text (2) == "/* /\\* asd asd *\\/ */\n");
 	assert (buffer.line_text (3) == "   \n");
+	assert (buffer.line_text (4) == "/* /\\* /\\* asd asd *\\/ *\\/ */\n");
+	assert (buffer.line_text (5) == "/* printf(\"foo\\t\\n\"); */\n");
 
-	commenter.toggle_comment (buffer.line_start (1), buffer.line_start (3));
+	commenter.toggle_comment (buffer.line_start (1), buffer.line_start (6));
 	assert (buffer.line_text (1) == "foo bar\n");
 	assert (buffer.line_text (2) == "/* asd asd */\n");
 	assert (buffer.line_text (3) == "   \n");
+	assert (buffer.line_text (4) == "/* /\\* asd asd *\\/ */\n");
+	assert (buffer.line_text (5) == "printf(\"foo\\t\\n\");\n");
 }
 
 void test_hash () {
