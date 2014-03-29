@@ -132,7 +132,7 @@ Below a list of basic keyboard bindings with relative commands to get started:
 |TAB       |indent|       Indent current line  
 |C-TAB |tab| Insert a tab character
 |F9         |compile-shell|      Run compile shell
-|C-c C-c     |comment-region|     Comment a region  
+|C-c C-c     |comment-lines|     Comment selected lines
 |C-n           |forward-line|   Go to next line  
 |C-p            |backward-line|  Go to previous line  
 |C-k    |kill-line-right|          Delete line contents on the right of the cursor

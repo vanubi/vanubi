@@ -185,13 +185,13 @@ namespace Vanubi.UI {
 			bind_command ({
 					Key (Gdk.Key.c, Gdk.ModifierType.CONTROL_MASK),
 						Key (Gdk.Key.c, Gdk.ModifierType.CONTROL_MASK) },
-				"comment-region");
+				"comment-lines");
 			bind_command ({
 					Key (Gdk.Key.c, Gdk.ModifierType.CONTROL_MASK),
 						Key (Gdk.Key.Return, Gdk.ModifierType.CONTROL_MASK) },
-				"comment-region");
-			index_command ("comment-region", "Comment region");
-			execute_command["comment-region"].connect (on_comment_region);
+				"comment-lines");
+			index_command ("comment-lines", "Comment selected lines");
+			execute_command["comment-lines"].connect (on_comment_lines);
 
 			bind_command ({ Key (Gdk.Key.Tab, Gdk.ModifierType.CONTROL_MASK) }, "tab");
 			index_command ("tab", "Insert a tab");
@@ -2159,7 +2159,7 @@ namespace Vanubi.UI {
 			buf.end_user_action ();
 		}
 
-		void on_comment_region (Editor ed) {
+		void on_comment_lines (Editor ed) {
 			Comment comment_engine;
 			var vbuf = new UI.Buffer ((SourceView) ed.view);
 			var buf = (SourceBuffer) ed.view.buffer;
@@ -2195,9 +2195,9 @@ namespace Vanubi.UI {
 
 			if (comment_engine != null) {
 				var iter_start = vbuf.line_at_char (selection_start.get_line (),
-								      selection_start.get_line_offset ());
+													selection_start.get_line_offset ());
 				var iter_end = vbuf.line_at_char (selection_end.get_line (),
-								      selection_end.get_line_offset ());
+												  selection_end.get_line_offset ());
 				ed.view.buffer.begin_user_action ();
 				comment_engine.toggle_comment (iter_start, iter_end);
 				ed.view.buffer.end_user_action ();
