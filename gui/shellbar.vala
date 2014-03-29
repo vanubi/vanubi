@@ -26,6 +26,7 @@ namespace Vanubi.UI {
 		Terminal term;
 		Configuration config;
 		Editor editor;
+		Cancellable pty_cancellable;
 		bool is_first_line = true;
 		
 		static Regex error_regex = null;
@@ -57,18 +58,33 @@ namespace Vanubi.UI {
 			this.manager = manager;
 			this.editor = editor;
 			this.config = manager.conf;
-			
+
+			init ();
+		}
+
+		public void init () {
 			expand = true;
-			term = editor.source.get_data<Terminal> ("shell");
+			term = editor.source.get_data ("shell");
 			var is_new = false;
 			if (term == null) {
 				is_new = true;
 				term = create_new_term (editor.source);
-				editor.source.set_data ("shell", term.ref ());
+				editor.source.set_data ("shell", term);
 			}
 			term.expand = true;
 			term.key_press_event.connect (on_key_press_event);
-				
+
+			term.child_exited.connect (() => {
+					pty_cancellable.cancel ();
+					Idle.add (() => {
+							term.destroy ();
+							editor.source.set_data ("shell", null);
+							init ();
+							grab_focus ();
+							return false;
+					});
+			});
+			
 			term.commit.connect ((bin, size) => {				
 					var text = bin.substring (0, size);
 
@@ -134,7 +150,8 @@ namespace Vanubi.UI {
 				Pid pid;
 				term.fork_command_full (PtyFlags.DEFAULT, workdir, {shell}, null, SpawnFlags.SEARCH_PATH, null, out pid);
 				term.set_data ("pid", pid);
-				read_sh.begin (term.pty_object.fd);
+				pty_cancellable = new Cancellable ();
+				read_sh.begin (term.pty_object.fd, pty_cancellable);
 
 				mouse_match (term, """^.+error:""");
 				mouse_match (term, """^.+warning:""");
@@ -145,7 +162,7 @@ namespace Vanubi.UI {
 			return term;
 		}
 
-		async void read_sh (int fd) {
+		async void read_sh (int fd, Cancellable cancellable) {
 			try {
 				var is = new UnixInputStream (fd, true);
 				var buf = new uint8[1024];
@@ -154,7 +171,7 @@ namespace Vanubi.UI {
 				var curdir = base_file != null ? base_file.to_string () : ".";
 				
 				while (true) {
-					var r = yield is.read_async (buf);
+					var r = yield is.read_async (buf, Priority.DEFAULT, cancellable);
 					if (r <= 0) {
 						// eof
 						break;
@@ -226,8 +243,9 @@ namespace Vanubi.UI {
 						}
 					}
 				}
+			} catch (IOError.CANCELLED e) {
 			} catch (Error e) {
-				warning(e.message);
+				manager.set_status_error ("Error while reading pty: %s".printf (e.message), "shell");
 			}
 		}
 		
