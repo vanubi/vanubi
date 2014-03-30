@@ -213,6 +213,31 @@ namespace Vanubi.UI {
 			return "cursor move_chars (cursor, num_chars)";
 		}
 	}
+
+	public class NativeCursorInsert : NativeFunction  {
+		public override async Vade.Value eval (Scope scope, Vade.Value[]? a, out Vade.Value? error, Cancellable? cancellable) {
+			error = null;
+
+			NativeCursor cursor = a.length > 0 ? ((NativeCursor) a[0]) : null;
+			if (cursor == null) {
+				error = new StringValue ("argument 1 must be a Cursor");
+				return NullValue.instance;
+			}
+
+			string? s = get_string (a, 1);
+			if (s == null) {
+				error = new StringValue ("argument 2 must be a string");
+				return NullValue.instance;
+			}
+
+			cursor.insert (s);
+			return cursor;
+		}
+
+		public override string to_string () {
+			return "cursor insert (cursor, text)";
+		}
+	}
 	
 	public class NativeCursor : NativeObject {
 		public unowned Editor editor;
@@ -222,11 +247,20 @@ namespace Vanubi.UI {
 		}
 		
 		class construct {
-			vtable["move_chars"] =  new FunctionValue (new NativeCursorMoveChars ());
+			vtable["move_chars"] = new FunctionValue (new NativeCursorMoveChars ());
+			vtable["insert"] = new FunctionValue (new NativeCursorInsert ());
 		}
 			
 		internal void move_chars (int n) {
 			editor.view.move_cursor (MovementStep.LOGICAL_POSITIONS, n, false);
+		}
+
+		internal void insert (string text) {
+			var buf = editor.view.buffer;
+			var mark = buf.get_insert ();
+			TextIter iter;
+			buf.get_iter_at_mark (out iter, mark);
+			buf.insert (ref iter, text, -1);
 		}
 		
 		public override string to_string () {
