@@ -28,6 +28,7 @@ namespace Vanubi {
 	public class Git {
 		unowned Configuration config;
 		static Regex hunk_regex;
+		static HashTable<DataSource, bool> monitored = new HashTable<DataSource, bool> (DataSource.hash, DataSource.equal);
 		
 		static construct {
 			try {
@@ -57,17 +58,25 @@ namespace Vanubi {
 			return (FileSource) dir.child (stdout.strip ());
 		}
 
-		public async void monitor_special_file (FileSource dir, string refname, int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) throws Error {
+		public async bool monitor_special_file (FileSource dir, string refname, int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) throws Error {
 			var repo = yield get_repo (dir, io_priority, cancellable);
 			if (repo == null) {
-				return;
+				return false;
 			}
 
-			var refsource = repo.child(".git").child(refname);
+			var refsource = repo.child(".git").child (refname);
+			if (refsource in monitored) {
+				return true;
+			}
+
 			refsource.changed.connect (() => {
 					special_file_changed (repo, refname);
 			});
+			
 			yield refsource.monitor ();
+			monitored[refsource] = true;
+			
+			return true;
 		}
 
 		public async bool file_in_repo (FileSource file, int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) throws Error {

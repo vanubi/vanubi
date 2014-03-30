@@ -307,8 +307,33 @@ namespace Vanubi.UI {
 
 			source.changed.connect (on_external_changed);
 			source.monitor.begin ();
+
+			git.special_file_changed.connect ((repo, refname) => {
+					on_git_gutter ();
+					if (refname == "HEAD") {
+						// branch changed, monitor new ref
+						update_show_branch ();
+						monitor_git_head.begin ();
+					}
+			});
+			monitor_git_head.begin ();
 		}
 
+		async void monitor_git_head () {
+			var file = source as FileSource;
+			if (file == null) {
+				return;
+			}
+			var parent = (FileSource) file.parent;
+			
+			var branch = yield git.current_branch (parent);
+			if (branch == null) {
+				return;
+			}
+
+			yield git.monitor_special_file (parent, "HEAD");
+			yield git.monitor_special_file (parent, "refs/heads/"+branch);
+		}
 
 		public void update_old_selection () {
 			TextIter old_selection_start, old_selection_end;
