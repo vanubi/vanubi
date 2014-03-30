@@ -243,6 +243,14 @@ To cleanup trailing whitespaces on the whole file, execute the `clean-trailing-s
 
 There's also basic support for cleaning up trailing whitespaces while writing by executing the `toggle-auto-clean-trailing-spaces` command. This behavior will then be enabled globally for every file.
 
+== Right margin
+keywords:[right margin column vertical line]
+.Display a vertical line at a fixed column in the text
+
+The right margin provided by Vanubi is currently a global setting and it's only used as a hint to the programmer, it does not actually limit the text length.
+
+It can be enabled with `C-h` `toggle-right-margin`, and you can set the column with `C-h` `set-right-margin-column`.
+
 == Vade scripting language
 keywords:[vade language programming scripting scripts]
 .Embed simple expressions anywhere to do useful tasks
