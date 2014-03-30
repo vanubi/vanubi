@@ -2145,11 +2145,29 @@ namespace Vanubi.UI {
 			// indent every selected line
 			var min_line = int.min (selection_start.get_line(), selection_end.get_line());
 			var max_line = int.max (selection_start.get_line(), selection_end.get_line());
+			
+			var is_python = indent_engine is Indent_Python;
+			/* Auto indent of each line in python simply does not work.
+			 * We therefore indent the first line, remember the indent variation, and adjust the following
+			 * lines by this variation. */
+			int indent_diff = 0;
+			
 			for (var line=min_line; line <= max_line; line++) {
 				TextIter iter;
 				buf.get_iter_at_line (out iter, line);
+				
 				if (indent_engine == null) {
 					buf.insert_text (ref iter, "\t", 1);
+				} else if (is_python) {
+					var old_indent = indent_engine.buffer.get_indent (line);
+					if (line == min_line) {
+						// indent the first line
+						var viter = new UI.BufferIter (indent_engine.buffer, iter);
+						indent_engine.indent (viter);
+						indent_diff = indent_engine.buffer.get_indent (line) - old_indent;
+					} else {
+						indent_engine.buffer.set_indent (line, old_indent + indent_diff);
+					}
 				} else {
 					var viter = new UI.BufferIter (indent_engine.buffer, iter);
 					indent_engine.indent (viter);
