@@ -351,7 +351,7 @@ namespace Vanubi {
 					paren_iter.forward_char ();
 				}
 				// skip spaces and comments
-				while (!paren_iter.eol && (paren_iter.char.isspace() || !paren_iter.is_in_code)) {
+				while (!paren_iter.eol && (paren_iter.char.isspace() || paren_iter.is_in_comment)) {
 					paren_iter.forward_char ();
 				}
 				if (paren_iter.line != prev_line || paren_iter.eol || paren_iter.line > prev_line) {
@@ -509,7 +509,7 @@ namespace Vanubi {
 					paren_iter.forward_char ();
 				}
 				// skip spaces and comments
-				while (!paren_iter.eol && (paren_iter.char.isspace() || !paren_iter.is_in_code)) {
+				while (!paren_iter.eol && (paren_iter.char.isspace() || paren_iter.is_in_comment)) {
 					paren_iter.forward_char ();
 				}
 				if (paren_iter.line != prev_line || paren_iter.eol || paren_iter.line > prev_line) {
@@ -665,7 +665,7 @@ namespace Vanubi {
 					paren_iter.forward_char ();
 				}
 				// skip spaces and comments
-				while (!paren_iter.eol && (paren_iter.char.isspace() || !paren_iter.is_in_code)) {
+				while (!paren_iter.eol && (paren_iter.char.isspace() || paren_iter.is_in_comment)) {
 					paren_iter.forward_char ();
 				}
 				if (paren_iter.line != prev_line || paren_iter.eol || paren_iter.line > prev_line) {
@@ -811,7 +811,7 @@ namespace Vanubi {
 					paren_iter.forward_char ();
 				}
 				// skip spaces and comments
-				while (!paren_iter.eol && (paren_iter.char.isspace() || !paren_iter.is_in_code)) {
+				while (!paren_iter.eol && (paren_iter.char.isspace() || paren_iter.is_in_comment)) {
 					paren_iter.forward_char ();
 				}
 				if (paren_iter.line != prev_line || paren_iter.eol || paren_iter.line > prev_line) {
