@@ -128,7 +128,7 @@ namespace Vanubi.Vade {
 				return NullValue.instance;
 			}
 
-			char bin[64];
+			char bin[65];
 			int len = 0;
 			while (s > 0) {
 				bin[len++] = (char)(s & 1) + '0';
