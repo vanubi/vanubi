@@ -182,7 +182,7 @@ namespace Vanubi {
 					paren_iter.forward_char ();
 				}
 				// skip spaces, comments and backslash
-				while (!paren_iter.eol && (paren_iter.char.isspace() || !paren_iter.is_in_code || (paren_iter.is_in_code && paren_iter.char == '\\'))) {
+				while (!paren_iter.eol && (paren_iter.char.isspace() || paren_iter.is_in_comment || (paren_iter.is_in_code && paren_iter.char == '\\'))) {
 					paren_iter.forward_char ();
 				}
 				if (paren_iter.line != prev_line || paren_iter.eol || paren_iter.line > prev_line) {
