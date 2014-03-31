@@ -98,7 +98,25 @@ namespace Vanubi.Vade {
 			return "hex (int)";
 		}
 	}
-	
+
+	public class NativeOct : NativeFunction {
+		public override async Value eval (Scope scope, Value[]? a, out Value? error, Cancellable? cancellable) {
+			error = null;
+
+			var s = get_int (a, 0);
+			if (s == null) {
+				error = new StringValue ("argument 1 must be an int");
+				return NullValue.instance;
+			}
+
+			return new StringValue ("0%o".printf (s));
+		}
+
+		public override string to_string () {
+			return "oct (int)";
+		}
+	}
+
 	public Scope create_base_scope (Scope? parent = null) {
 		var scope = new Scope (parent, true);
 		
@@ -106,6 +124,7 @@ namespace Vanubi.Vade {
 		scope.set_local ("lower", new FunctionValue (new NativeLower ()));
 		scope.set_local ("upper", new FunctionValue (new NativeUpper ()));
 		scope.set_local ("hex", new FunctionValue (new NativeHex ()));
+		scope.set_local ("oct", new FunctionValue (new NativeOct ()));
 		
 		return scope;
 	}
