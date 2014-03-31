@@ -117,6 +117,33 @@ namespace Vanubi.Vade {
 		}
 	}
 
+	
+	public class NativeBin : NativeFunction {
+		public override async Value eval (Scope scope, Value[]? a, out Value? error, Cancellable? cancellable) {
+			error = null;
+
+			var s = get_int (a, 0);
+			if (s == null) {
+				error = new StringValue ("argument 1 must be an int");
+				return NullValue.instance;
+			}
+
+			char bin[64];
+			int len = 0;
+			while (s > 0) {
+				bin[len++] = (char)(s & 1) + '0';
+				s >>= 1;
+			}
+			bin[len] = '\0';
+			
+			return new StringValue ("0b%s".printf ((string) bin));
+		}
+
+		public override string to_string () {
+			return "bin (int)";
+		}
+	}
+
 	public Scope create_base_scope (Scope? parent = null) {
 		var scope = new Scope (parent, true);
 		
@@ -125,6 +152,7 @@ namespace Vanubi.Vade {
 		scope.set_local ("upper", new FunctionValue (new NativeUpper ()));
 		scope.set_local ("hex", new FunctionValue (new NativeHex ()));
 		scope.set_local ("oct", new FunctionValue (new NativeOct ()));
+		scope.set_local ("bin", new FunctionValue (new NativeBin ()));
 		
 		return scope;
 	}
