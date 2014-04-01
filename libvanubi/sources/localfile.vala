@@ -128,7 +128,21 @@ namespace Vanubi {
 		}
 		
 		public override async void write (uint8[] data, int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) throws Error {
-			yield file.replace_contents_async (data, null, true, FileCreateFlags.NONE, cancellable, null);
+			// TODO: preserve perms and ownership when possible
+			
+			// write to a temp file
+			var tmp = File.new_for_path (file.get_path()+"#van.new");
+			yield tmp.replace_contents_async (data, null, true, FileCreateFlags.PRIVATE, cancellable, null);
+			
+			// backup
+			var exists = yield exists (io_priority, cancellable);
+			if (exists) {
+				var bak = File.new_for_path (file.get_path()+"~");
+				file.move (bak, FileCopyFlags.OVERWRITE, cancellable, null);
+			}
+			
+			// rename temp to file
+			tmp.move (file, FileCopyFlags.OVERWRITE, cancellable, null);
 		}
 		
 		public override async bool is_directory (int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) throws IOError.CANCELLED {
