@@ -80,9 +80,15 @@ namespace Vanubi {
 		}
 	}
 
+	#if VALA_0_24
+	public int match_compare_func (Match a, Match b) {
+		return a.score - b.score;
+	}
+	#else
 	public int match_compare_func (Match** a, Match** b) {
 		return (*a)->score - (*b)->score;
 	}
+	#endif
 
 	/* Matches a pattern against objects, and returns a ranking of the objects that match */
 	public GenericArray<Annotated<G>> pattern_match_many<G> (string pattern, Annotated<G>[] objects, bool sort = true, Cancellable? cancellable = null) throws Error {

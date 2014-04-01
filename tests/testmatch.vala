@@ -44,6 +44,15 @@ void test_common_prefix () {
 	assert (common == "f");
 }
 
+void test_many () {
+	Annotated<string>[] objs = null;
+	objs += new Annotated<string> ("asd~", "asd~");
+	objs += new Annotated<string> ("asd", "asd");
+	
+	var res = pattern_match_many<string> ("asd", objs);
+	assert (res[0] == objs[1]);
+}
+
 int main (string[] args) {
 	Test.init (ref args);
 
@@ -54,6 +63,7 @@ int main (string[] args) {
 	Test.add_func ("/match/similar", test_similar);
 	Test.add_func ("/match/count", test_count);
 	Test.add_func ("/match/common-prefix", test_common_prefix);
+	Test.add_func ("/match/many", test_many);
 
 	return Test.run ();
 }
