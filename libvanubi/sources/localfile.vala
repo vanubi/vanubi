@@ -137,7 +137,11 @@ namespace Vanubi {
 			// backup
 			var exists = yield exists (io_priority, cancellable);
 			if (exists) {
-				file.copy_attributes (tmp, FileCopyFlags.ALL_METADATA, cancellable);
+				try {
+					file.copy_attributes (tmp, FileCopyFlags.ALL_METADATA, cancellable);
+				} catch (Error e) {
+					warning ("Could not copy attributes of %s: %s", file.get_path(), e.message);
+				}
 				
 				var bak = File.new_for_path (file.get_path()+"~");
 				file.move (bak, FileCopyFlags.OVERWRITE, cancellable, null);
