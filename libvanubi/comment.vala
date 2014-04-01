@@ -205,8 +205,7 @@ namespace Vanubi {
 			if (is_line_commented (line)) {
 				escape_line (line);
 			}
-			/* var start_iter = buf.line_start (line); */
-			/* start_iter.forward_spaces (); */
+
 			var start_iter = buf.line_at_char (line, common_offset);
 			buf.insert (start_iter, "/* ");
 			var end_iter = buf.line_end (start_iter.line);
@@ -258,8 +257,6 @@ namespace Vanubi {
 		}
 
 		protected override void comment_line (int line) {
-			/* var iter = buf.line_start (line); */
-			/* iter.forward_spaces (); */
 			var iter = buf.line_at_char (line, common_offset);
 			buf.insert (iter, "# ");
 		}
@@ -296,8 +293,6 @@ namespace Vanubi {
 		}
 
 		protected override void comment_line (int line) {
-			/* var iter = buf.line_start (line); */
-			/* iter.forward_spaces (); */
 			var iter = buf.line_at_char (line, common_offset);
 			buf.insert (iter, "; ");
 		}
@@ -335,8 +330,6 @@ namespace Vanubi {
 		}
 
 		protected override void comment_line (int line) {
-			/* var iter = buf.line_start (line); */
-			/* iter.forward_spaces (); */
 			var iter = buf.line_at_char (line, common_offset);
 			buf.insert (iter, "-- ");
 		}
@@ -389,8 +382,7 @@ namespace Vanubi {
 			if (is_line_commented (line)) {
 				escape_line (line);
 			}
-			/* var start_iter = buf.line_start (line); */
-			/* start_iter.forward_spaces (); */
+
 			var start_iter = buf.line_at_char (line, common_offset);
 			buf.insert (start_iter, "<!-- ");
 			var end_iter = buf.line_end (start_iter.line);
