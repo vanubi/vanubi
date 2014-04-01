@@ -137,6 +137,8 @@ namespace Vanubi {
 			// backup
 			var exists = yield exists (io_priority, cancellable);
 			if (exists) {
+				file.copy_attributes (tmp, FileCopyFlags.ALL_METADATA, cancellable);
+				
 				var bak = File.new_for_path (file.get_path()+"~");
 				file.move (bak, FileCopyFlags.OVERWRITE, cancellable, null);
 			}
