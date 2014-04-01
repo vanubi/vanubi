@@ -60,6 +60,7 @@ namespace Vanubi {
 				warning ("Invalid comment region [%d]", tot_lines);
 				return;
 			} else if (tot_lines == 1) { /* Commenting single line */
+				find_common_offset (start_line, start_line + 1);
 				if (is_line_commented (start_line)) {
 					decomment_line (start_line);
 				} else {
