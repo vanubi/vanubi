@@ -366,7 +366,9 @@ namespace Vanubi {
 		public override async void monitor (int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) throws Error {
 		}
 		
-		public override async void write (uint8[] data, int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) throws Error {
+		public override async void write (uint8[] data, bool atomic, int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) throws Error {
+			// TODO: honor atomic
+			
 			var chan = yield remote.acquire (io_priority, cancellable);
 			var os = chan.output_stream;
 			var cmd = "write\n%s\n".printf (local_path);

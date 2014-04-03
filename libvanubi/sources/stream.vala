@@ -63,7 +63,7 @@ namespace Vanubi {
 		public override async void monitor (int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) throws IOError.CANCELLED {
 		}
 		
-		public override async void write (uint8[] data, int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) throws Error {
+		public override async void write (uint8[] data, bool atomic, int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) throws Error {
 			throw new IOError.NOT_SUPPORTED ("Stream is not writable");
 		}
 		

@@ -41,7 +41,7 @@ namespace Vanubi {
 		public abstract async bool read_only (int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) throws Error;
 		public abstract async InputStream read (int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) throws Error;
 		
-		public abstract async void write (uint8[] data, int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) throws Error;
+		public abstract async void write (uint8[] data, bool atomic, int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) throws Error;
 		
 		public abstract async TimeVal? get_mtime (int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null);
 		public abstract async void monitor (int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) throws Error;

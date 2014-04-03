@@ -1451,7 +1451,7 @@ namespace Vanubi.UI {
 			string text = buf.get_text (start, end, false);
 
 			try {
-				yield as_source.write (text.data);
+				yield as_source.write (text.data, conf.get_global_bool ("atomic_file_save", true));
 				if (as_source.equal (editor.source)) {
 					buf.set_modified (false);
 					yield editor.reset_external_changed ();
