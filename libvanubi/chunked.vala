@@ -112,7 +112,7 @@ namespace Vanubi {
 			return res;
 		}
 		
-		public override async ssize_t read_async ([CCode (array_length_type = "gsize")] uint8[] buffer, int io_priority = Priority.DEFAULT, GLib.Cancellable? cancellable = null) throws GLib.IOError {
+		public override async ssize_t read_async ([CCode (array_length_type = "gsize")] uint8[] buffer, int io_priority = GLib.Priority.DEFAULT, GLib.Cancellable? cancellable = null) throws GLib.IOError {
 			cancellable.set_error_if_cancelled ();
 			
 			ulong cancel_id = 0;
