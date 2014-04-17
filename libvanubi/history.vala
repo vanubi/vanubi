@@ -25,7 +25,11 @@ namespace Vanubi {
 
 		public History (owned EqualFunc<G> eqfunc, int limit) {
 			init ();
+			#if VALA_0_22
 			this.eqfunc = (owned) eqfunc;
+			#else
+			this.eqfunc = eqfunc;
+			#endif
 			this.limit = limit;
 		}
 
