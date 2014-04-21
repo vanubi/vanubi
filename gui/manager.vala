@@ -523,6 +523,10 @@ namespace Vanubi.UI {
 			index_command ("toggle-autoupdate-copyright-year", "Auto update copyright year of modified files");
 			execute_command["toggle-autoupdate-copyright-year"].connect (on_toggle_autoupdate_copyright_year);
 
+			bind_command (null, "toggle-atomic-save");
+			index_command ("toggle-atomic-save", "Whether to save files atomically");
+			execute_command["toggle-atomic-save"].connect (on_toggle_atomic_save);
+
 			bind_command (null, "about");
 			index_command ("about", "About");
 			execute_command["about"].connect (on_about);
@@ -2746,6 +2750,13 @@ namespace Vanubi.UI {
 			conf.set_global_bool ("autoupdate_copyright_year", autoupdate_copyright_year);
 
 			set_status (autoupdate_copyright_year ? "Enabled" : "Disabled");
+		}
+
+		void on_toggle_atomic_save (Editor editor) {
+			var atomic_save = !conf.get_global_bool ("atomic_file_save", true);
+			conf.set_global_bool ("atomic_file_save", atomic_save);
+
+			set_status (atomic_save ? "Enabled" : "Disabled");
 		}
 
 		void on_toggle_remote_file_server (Editor editor) {
