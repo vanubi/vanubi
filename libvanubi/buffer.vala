@@ -19,7 +19,7 @@
 namespace Vanubi {
 	public abstract class Buffer {
 		public abstract int tab_width { get; set; }
-		public virtual IndentMode indent_mode { get; set; default = IndentMode.TABS; }
+		public abstract IndentMode indent_mode { get; set; }
 		public abstract BufferIter line_start (int line);
 		public abstract BufferIter line_end (int line);
 		public abstract BufferIter line_at_char (int line, int line_offset);
@@ -47,8 +47,12 @@ namespace Vanubi {
 
 			@delete (start, iter);
 			var tab_width = tab_width;
-			// mixed tab + spaces, TODO: handle indent_mode
-			insert (start, string.nfill(indent/tab_width, '\t')+string.nfill(indent-(indent/tab_width)*tab_width, ' '));
+			if (indent_mode == IndentMode.SPACES) {
+				insert (start, string.nfill(indent, ' '));
+			} else {
+				// mixed tab + spaces
+				insert (start, string.nfill(indent/tab_width, '\t')+string.nfill(indent-(indent/tab_width)*tab_width, ' '));
+			}
 		}
 
 		public virtual int get_indent (int line) {
@@ -181,6 +185,8 @@ namespace Vanubi {
 		}
 
 		public override int tab_width { get; set; default = 4; }
+
+		public override IndentMode indent_mode { get; set; default = IndentMode.TABS; }
 
 		public override string line_text (int line) {
 			return lines[line];

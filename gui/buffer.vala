@@ -50,6 +50,15 @@ namespace Vanubi.UI {
 			}
 		}
 
+		public override IndentMode indent_mode {
+			get {
+				return view.buffer.get_data<IndentMode> ("vanubi_indent_mode");
+			}
+			set {
+				view.buffer.set_data ("vanubi_indent_mode", value);
+			}
+		}
+
 		public override string line_text (int line) {
 			Gtk.TextIter start;
 			buf.get_iter_at_line (out start, line);

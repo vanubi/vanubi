@@ -197,6 +197,27 @@ deriving (Show)
 	assert_indent_haskell (buffer, 14, w); // deriving (Show)
 }
 
+void test_spaces () {
+	var buffer = new StringBuffer.from_text ("
+foo {
+    bar (foo
+   \t\tbaz);
+} test;
+
+");
+	buffer.indent_mode = IndentMode.SPACES;
+	var w = buffer.tab_width;
+	assert_indent_c (buffer, 0, 0);
+	assert_indent_c (buffer, 1, 0);
+	assert_indent_c (buffer, 2, w);
+	assert_indent_c (buffer, 3, w*2+1);
+	assert_indent_c (buffer, 4, 0);
+
+	string line = buffer.line_text (3);
+	// ensure there's no tab after reindent
+	assert (line.index_of_char ('\t') < 0);
+}
+
 int main (string[] args) {
 	Test.init (ref args);
 
@@ -204,6 +225,7 @@ int main (string[] args) {
 	Test.add_func ("/indent/lang_asm", test_lang_asm);
 	Test.add_func ("/indent/lang_shell", test_lang_shell);
 	Test.add_func ("/indent/lang_haskell", test_lang_haskell);
+	Test.add_func ("/indent/spaces", test_spaces);
 
 	return Test.run ();
 }
