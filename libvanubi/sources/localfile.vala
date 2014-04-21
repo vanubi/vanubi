@@ -141,6 +141,12 @@ namespace Vanubi {
 					} catch (Error e) {
 						warning ("Could not copy attributes of %s: %s", file.get_path(), e.message);
 					}
+
+					// set mod time
+					TimeVal tv = TimeVal ();
+					FileInfo info = new FileInfo ();
+					info.set_modification_time (tv);
+					yield tmp.set_attributes_async (info, FileQueryInfoFlags.NONE, io_priority, cancellable, null);
 					
 					var bak = File.new_for_path (file.get_path()+"~");
 					file.move (bak, FileCopyFlags.OVERWRITE, cancellable, null);
