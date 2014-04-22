@@ -527,6 +527,10 @@ namespace Vanubi.UI {
 			index_command ("toggle-atomic-save", "Whether to save files atomically");
 			execute_command["toggle-atomic-save"].connect (on_toggle_atomic_save);
 
+			bind_command (null, "toggle-indent-mode");
+			index_command ("toggle-indent-mode", "Use spaces or tabs for indentation in this file");
+			execute_command["toggle-indent-mode"].connect (on_toggle_indent_mode);
+
 			bind_command (null, "about");
 			index_command ("about", "About");
 			execute_command["about"].connect (on_about);
@@ -2748,6 +2752,7 @@ namespace Vanubi.UI {
 		void on_toggle_autoupdate_copyright_year (Editor editor) {
 			var autoupdate_copyright_year = !conf.get_global_bool ("autoupdate_copyright_year");
 			conf.set_global_bool ("autoupdate_copyright_year", autoupdate_copyright_year);
+			conf.save ();
 
 			set_status (autoupdate_copyright_year ? "Enabled" : "Disabled");
 		}
@@ -2755,8 +2760,27 @@ namespace Vanubi.UI {
 		void on_toggle_atomic_save (Editor editor) {
 			var atomic_save = !conf.get_global_bool ("atomic_file_save", true);
 			conf.set_global_bool ("atomic_file_save", atomic_save);
+			conf.save ();
 
 			set_status (atomic_save ? "Enabled" : "Disabled");
+		}
+
+		void on_toggle_indent_mode (Editor editor) {
+			var buffer = new UI.Buffer (editor.view);
+			var indent_mode = buffer.indent_mode;
+			if (indent_mode == IndentMode.TABS) {
+				indent_mode = IndentMode.SPACES;
+			} else {
+				indent_mode = IndentMode.TABS;
+			}
+
+			if (!(editor.source is ScratchSource)) {
+				conf.set_file_enum<IndentMode> (editor.source, "indent_mode", indent_mode);
+				conf.save ();
+			}
+			
+			buffer.indent_mode = indent_mode;
+			set_status (indent_mode == IndentMode.SPACES ? "Indent with spaces" : "Indent with tabs");
 		}
 
 		void on_toggle_remote_file_server (Editor editor) {

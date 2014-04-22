@@ -646,6 +646,7 @@ namespace Vanubi.UI {
 			buf.changed.connect (on_file_count);
 			buf.changed.connect (on_git_gutter);
 			buf.changed.connect (on_check_endline);
+			new UI.Buffer (view).indent_mode = conf.get_file_enum (source, "indent_mode", IndentMode.TABS);
 			buf.modified_changed.connect (on_modified_changed);
 			on_file_count ();
 			on_check_endline();

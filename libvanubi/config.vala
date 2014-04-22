@@ -395,6 +395,25 @@ namespace Vanubi {
 			var group = "source:"+file.to_string ();
 			backend.set_string (group, key, value);
 		}
+
+		public G? get_file_enum<G> (DataSource file, string key, G? default = null) {
+			string? curval = get_file_string (file, key);
+			if (curval == null) {
+				return default;
+			}
+			
+			EnumClass cls = (EnumClass) (typeof (G).class_ref ());
+			unowned EnumValue? eval = cls.get_value_by_nick (curval);
+			return (G) eval.value;
+		}
+		
+		public void set_file_enum<G> (DataSource file, string key, G value) {
+			EnumClass cls = (EnumClass) (typeof (G).class_ref ());
+			unowned EnumValue? eval = cls.get_value ((int) value);
+			if (eval != null) {
+				set_file_string (file, "indent_mode", eval.value_nick);
+			}
+		}
 		
 		public void remove_file_key (DataSource file, string key) {
 			var group = "source:"+file.to_string ();
