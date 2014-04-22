@@ -74,6 +74,16 @@ namespace Vanubi {
 					return true;
 			});
 		}
+
+		
+		bool each_same_name (FileSource file, Operation<FileSource> op) {
+			return each_file ((other) => {
+					if (file.basename == other.basename && !op (other)) {
+						return false;
+					}
+					return true;
+			});
+		}
 		
 		// Returns a similar file, or itself, for a given configuration key
 		public FileSource get_similar_file (FileSource file, string key, bool has_default) {
@@ -83,7 +93,7 @@ namespace Vanubi {
 			}
 
 			FileSource? similar = null;
-			each_sibling (file, (f) => {
+			each_same_name (file, (f) => {
 					if (config.has_file_key (f, key)) {
 						similar = f;
 						return false;
@@ -105,6 +115,17 @@ namespace Vanubi {
 				if (similar != null) {
 					return similar;
 				}
+			}
+
+			each_sibling (file, (f) => {
+					if (config.has_file_key (f, key)) {
+						similar = f;
+						return false;
+					}
+					return true;
+			});
+			if (similar != null) {
+				return similar;
 			}
 			
 			return file;

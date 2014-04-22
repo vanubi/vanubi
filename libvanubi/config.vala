@@ -372,8 +372,8 @@ namespace Vanubi {
 			FileSource[] res = null;
 			var groups = backend.get_groups ();
 			foreach (unowned string group in groups) {
-				if (group.has_prefix ("file://")) {
-					res += (FileSource) DataSource.new_from_string (group);
+				if (group.has_prefix ("source:")) {
+					res += (FileSource) DataSource.new_from_string (group.substring("source:".length));
 				}
 			}
 			return res;
