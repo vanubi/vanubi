@@ -216,7 +216,7 @@ namespace Vanubi.UI {
 			view = new EditorView ();
 			view.wrap_mode = WrapMode.CHAR;
 			view.set_data ("editor", (Editor*)this);
-			view.tab_width = conf.get_editor_int("tab_width", 4);
+			view.tab_width = conf.get_file_int(source, "tab_width", 4);
 			view.highlight_current_line = conf.get_editor_bool ("highlight_current_line", true);
 			update_show_tabs();
 			update_right_margin ();

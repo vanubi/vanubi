@@ -413,7 +413,7 @@ namespace Vanubi.UI {
 			execute_command["redo"].connect (on_redo);
 
 			bind_command (null, "set-tab-width");
-			index_command ("set-tab-width", "Tab width expressed in number of spaces, also used for indentation");
+			index_command ("set-tab-width", "Tab width for this file, expressed in number of spaces, also used for indentation");
 			execute_command["set-tab-width"].connect (on_set_tab_width);
 
 			bind_command (null, "set-shell-scrollback");
@@ -1589,12 +1589,18 @@ namespace Vanubi.UI {
 		}
 
 		void on_set_tab_width (Editor editor) {
-			var val = conf.get_editor_int("tab_width", 4);
+			if (editor is ScratchSource) {
+				return;
+			}
+			
+			var val = conf.get_file_int(editor.source, "tab_width", 4);
 			var bar = new EntryBar (val.to_string());
 			bar.activate.connect ((text) => {
 					abort (editor);
-					conf.set_editor_int("tab_width", int.parse(text));
+					int newval = int.parse (text);
+					conf.set_file_int(editor.source, "tab_width", newval);
 					conf.save ();
+					((SourceView) editor.view).tab_width = newval;
 			});
 			bar.aborted.connect (() => { abort (editor); });
 			add_overlay (bar);

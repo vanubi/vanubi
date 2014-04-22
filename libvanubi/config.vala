@@ -174,7 +174,7 @@ namespace Vanubi {
 
 				version++;
 			}
-
+			
 			if (version > from_version) {
 				set_global_int ("config_version", version);
 				return true;
@@ -396,7 +396,7 @@ namespace Vanubi {
 			backend.set_string (group, key, value);
 		}
 
-		public G? get_file_enum<G> (DataSource file, string key, G? default = null) {
+		public G get_file_enum<G> (DataSource file, string key, G default) {
 			string? curval = get_file_string (file, key);
 			if (curval == null) {
 				return default;
@@ -413,6 +413,16 @@ namespace Vanubi {
 			if (eval != null) {
 				set_file_string (file, "indent_mode", eval.value_nick);
 			}
+		}
+
+		public int get_file_int (DataSource file, string key, int default) {
+			var group = "source:"+file.to_string ();
+			return get_group_int (group, key, get_editor_int (key, default));
+		}
+		
+		public void set_file_int (DataSource file, string key, int value) {
+			var group = "source:"+file.to_string ();
+			set_group_int (group, key, value);
 		}
 		
 		public void remove_file_key (DataSource file, string key) {
