@@ -378,16 +378,21 @@ namespace Vanubi {
 			}
 			return res;
 		}
-		
-		public string? get_file_string (DataSource file, string key, string? default = null) {
+
+		string get_file_group (DataSource file, string key, bool has_default) {
 			var group = "source:"+file.to_string ();
 			if (!has_group_key (group, key)) {
 				// look into a similar file
 				if (file is FileSource) {
-					var similar = cluster.get_similar_file ((FileSource) file, key, default != null);
+					var similar = cluster.get_similar_file ((FileSource) file, key, has_default);
 					group = "source:"+similar.to_string ();
 				}
 			}
+			return group;
+		}
+		
+		public string? get_file_string (DataSource file, string key, string? default = null) {
+			var group = get_file_group (file, key, default != null);
 			return get_group_string (group, key, get_editor_string (key, default));
 		}
 		
@@ -416,7 +421,7 @@ namespace Vanubi {
 		}
 
 		public int get_file_int (DataSource file, string key, int default) {
-			var group = "source:"+file.to_string ();
+			var group = get_file_group (file, key, true);
 			return get_group_int (group, key, get_editor_int (key, default));
 		}
 		
