@@ -388,7 +388,10 @@ namespace Vanubi.UI {
 			}
 
 			var default_lang = SourceLanguageManager.get_default().guess_language (file != null ? file.local_path : null, content_type);
-			
+			if (default_lang == null && file != null && (file.local_path.has_suffix ("/COMMIT_EDITMSG") || file.local_path.has_suffix ("/MERGE_EDITMSG") || file.local_path.has_suffix ("/COMMIT_MSG") || file.local_path.has_suffix ("/MERGE_MSG"))) {
+				default_lang = SourceLanguageManager.get_default().get_language ("generic_comment");
+			}
+
 			string lang_id = null;
 			if (file != null) {
 				lang_id = conf.get_file_string (file, "language", default_lang != null ? default_lang.id : null);
