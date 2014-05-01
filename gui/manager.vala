@@ -28,8 +28,8 @@ namespace Vanubi.UI {
 		string last_pipe_command = "";
 		string last_vade_code = "";
 		// Editor selection before calling a command
-		TextIter selection_start;
-		TextIter selection_end;
+		int selection_start;
+		int selection_end;
 
 		bool saving_on_quit = false;
 
@@ -217,6 +217,10 @@ namespace Vanubi.UI {
 			bind_command ({ Key (Gdk.Key.x, Gdk.ModifierType.CONTROL_MASK) }, "cut");
 			index_command ("cut", "Cut text to clipboard");
 			execute_command["cut"].connect (on_cut);
+
+			bind_command ({ Key (Gdk.Key.v, Gdk.ModifierType.CONTROL_MASK) }, "paste");
+			index_command ("paste", "Paste text from clipboard");
+			execute_command["paste"].connect (on_paste);
 
 			index_command ("set-theme", "Switch color style of the editor");
 			execute_command["set-theme"].connect (on_set_theme);
@@ -704,11 +708,16 @@ namespace Vanubi.UI {
 		
 		public void update_selection (Editor ed) {
 			var buf = ed.view.buffer;
-			buf.get_selection_bounds (out selection_start, out selection_end);
+			TextIter start, end;
+			buf.get_selection_bounds (out start, out end);
+			selection_start = start.get_offset ();
+			selection_end = end.get_offset ();
 		}
 
-		public void on_command (Editor ed, string command) {
-			update_selection (ed);
+		public void on_command (Editor ed, string command, bool use_old_state) {
+			if (!use_old_state) {
+				update_selection (ed);
+			}
 			abort (ed);
 			execute_command[command] (ed, command);
 		}
@@ -1129,6 +1138,7 @@ namespace Vanubi.UI {
 
 			var sv = (SourceView) w;
 			Editor editor = sv.get_data ("editor");
+			update_selection (editor);
 			var keyval = e.keyval;
 			var modifiers = e.state;
 			/* message("%u %u", keyval, modifiers); */
@@ -1335,7 +1345,7 @@ namespace Vanubi.UI {
 		}
 
 		async void reload_file (Editor editor) {
-			var old_offset = selection_start.get_offset ();
+			var old_offset = selection_start;
 			try {
 				var exists = yield editor.source.exists ();
 				if (!exists && editor.moved_to != null) {
@@ -1734,11 +1744,26 @@ namespace Vanubi.UI {
 		}
 
 		void on_copy (Editor ed) {
-			ed.view.copy_clipboard ();
+			TextIter start, end;
+			ed.view.buffer.get_iter_at_offset (out start, selection_start);
+			ed.view.buffer.get_iter_at_offset (out end, selection_end);
+			
+			var text = ed.view.buffer.get_text (start, end, false);
+			Clipboard clip = Clipboard.get (Gdk.SELECTION_CLIPBOARD);
+			clip.set_text (text, -1);
 		}
 
 		void on_cut (Editor ed) {
-			ed.view.cut_clipboard ();
+			on_copy (ed);
+
+			TextIter start, end;
+			ed.view.buffer.get_iter_at_offset (out start, selection_start);
+			ed.view.buffer.get_iter_at_offset (out end, selection_end);
+			ed.view.buffer.delete (ref start, ref end);
+		}
+
+		void on_paste (Editor ed) {
+			ed.view.paste_clipboard ();
 		}
 
 		void on_select_all (Editor ed) {
@@ -1794,7 +1819,7 @@ namespace Vanubi.UI {
 		}
 
 		async void pipe_shell_replace (Editor ed) {
-			var old_offset = selection_start.get_offset ();
+			var old_offset = selection_start;
 			try {
 				var output = yield pipe_shell (ed);
 
@@ -1818,8 +1843,10 @@ namespace Vanubi.UI {
 
 		async uint8[] pipe_shell (Editor ed) throws Error {
 			// get text
-			var start = selection_start;
-			var end = selection_end;
+			TextIter start, end;
+			ed.view.buffer.get_iter_at_offset (out start, selection_start);
+			ed.view.buffer.get_iter_at_offset (out end, selection_end);
+			
 			var buf = ed.view.buffer;
 			if (start.equal(end)) { // no selection
 				buf.get_start_iter (out start);
@@ -2157,8 +2184,12 @@ namespace Vanubi.UI {
 			buf.begin_user_action ();
 
 			// indent every selected line
-			var min_line = int.min (selection_start.get_line(), selection_end.get_line());
-			var max_line = int.max (selection_start.get_line(), selection_end.get_line());
+			TextIter start, end;
+			ed.view.buffer.get_iter_at_offset (out start, selection_start);
+			ed.view.buffer.get_iter_at_offset (out end, selection_end);
+			
+			var min_line = int.min (start.get_line(), end.get_line());
+			var max_line = int.max (start.get_line(), end.get_line());
 			
 			var is_python = indent_engine is Indent_Python;
 			/* Auto indent of each line in python simply does not work.
@@ -2226,10 +2257,14 @@ namespace Vanubi.UI {
 			}
 
 			if (comment_engine != null) {
-				var iter_start = vbuf.line_at_char (selection_start.get_line (),
-													selection_start.get_line_offset ());
-				var iter_end = vbuf.line_at_char (selection_end.get_line (),
-												  selection_end.get_line_offset ());
+				TextIter start, end;
+				ed.view.buffer.get_iter_at_offset (out start, selection_start);
+				ed.view.buffer.get_iter_at_offset (out end, selection_end);
+				
+				var iter_start = vbuf.line_at_char (start.get_line (),
+													start.get_line_offset ());
+				var iter_end = vbuf.line_at_char (end.get_line (),
+												  end.get_line_offset ());
 				ed.view.buffer.begin_user_action ();
 				comment_engine.toggle_comment (iter_start, iter_end);
 				ed.view.buffer.end_user_action ();
@@ -2874,8 +2909,12 @@ namespace Vanubi.UI {
 		}
 
 		void on_clean_trailing_spaces (Editor editor) {
+			TextIter start, end;
+			editor.view.buffer.get_iter_at_offset (out start, selection_start);
+			editor.view.buffer.get_iter_at_offset (out end, selection_end);
+
 			editor.view.buffer.begin_user_action ();
-			editor.clean_trailing_spaces (selection_start, selection_end);
+			editor.clean_trailing_spaces (start, end);
 			editor.view.buffer.end_user_action ();
 		}
 

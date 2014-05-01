@@ -60,7 +60,7 @@ namespace Vanubi {
 		}
 	}
 
-	public delegate void KeyDelegate<G> (G subject, string command);
+	public delegate void KeyDelegate<G> (G subject, string command, bool use_old_state);
 
 	public class KeyManager<G> {
 		KeyNode key_root = new KeyNode ();
@@ -162,6 +162,19 @@ namespace Vanubi {
 			return res;
 		}
 
+		public void flush (G subject) {
+			// force running the pending command
+			if (key_timeout != 0) {
+				Source.remove (key_timeout);
+				key_timeout = 0;
+			}
+			
+			if (current_key != null && current_key.command != null) {
+				deleg (subject, current_key.command, true);
+			}
+			current_key = key_root;
+		}
+		
 		public bool key_press (G subject, Key pressed) {
 			if (key_timeout != 0) {
 				Source.remove (key_timeout);
@@ -175,11 +188,11 @@ namespace Vanubi {
 				var handled = false;
 				current_key = key_root;
 				if (old_key != null && old_key.command != null) {
-					deleg (subject, old_key.command);
-					if (old_key != key_root) {
-						// this might be a new command, retry from root
-						handled = key_press (subject, pressed);
-					}
+					deleg (subject, old_key.command, true);
+				}
+				if (old_key != key_root) {
+					// this might be a new command, retry from root
+					handled = key_press (subject, pressed);
 				}
 				return handled;
 			}
@@ -191,14 +204,14 @@ namespace Vanubi {
 							key_timeout = 0;
 							unowned string command = current_key.command;
 							current_key = key_root;
-							deleg (subject, command);
+							deleg (subject, command, true);
 							return false;
 						});
 				}
 			} else {
 				unowned string command = current_key.command;
 				current_key = key_root;
-				deleg (subject, command);
+				deleg (subject, command, false);
 			}
 			return true;
 		}

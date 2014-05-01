@@ -726,6 +726,9 @@ namespace Vanubi.UI {
 		}
 
 		void on_file_count () {
+			// flush pending keys
+			Idle.add_full (Priority.HIGH, () => { manager.keymanager.flush (this); return false; });
+			
 			TextIter insert;
 			var buf = view.buffer;
 			buf.get_iter_at_mark (out insert, buf.get_insert ());
