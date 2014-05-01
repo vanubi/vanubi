@@ -18,12 +18,27 @@
  */
 
 namespace Vanubi {
+	[Flags]
+	public enum SimilarFlags {
+		NONE,
+		SAME_NAME,
+		SAME_EXTENSION,
+		SIBLING,
+		SKIP_HAS_DEFAULT
+	}
+
 	public class FileCluster {
 		unowned Configuration config;
 		List<FileSource> opened_files;
+		HashTable<string, SimilarFlags> keys_flags;
 
 		public FileCluster (Configuration config) {
 			this.config = config;
+			this.keys_flags = new HashTable<string, SimilarFlags> (str_hash, str_equal);
+			keys_flags["language"] = SimilarFlags.SAME_NAME | SimilarFlags.SAME_EXTENSION | SimilarFlags.SKIP_HAS_DEFAULT;
+			keys_flags["shell_cwd"] = SimilarFlags.SIBLING;
+			keys_flags["tab_width"] = SimilarFlags.SAME_NAME | SimilarFlags.SAME_EXTENSION;
+			keys_flags["indent_mode"] = SimilarFlags.SAME_NAME | SimilarFlags.SAME_EXTENSION;
 		}
 		
 		public void opened_file (FileSource f) {
@@ -87,24 +102,32 @@ namespace Vanubi {
 		
 		// Returns a similar file, or itself, for a given configuration key
 		public FileSource get_similar_file (FileSource file, string key, bool has_default) {
-			if (key == "language" && has_default) {
+			SimilarFlags flags = keys_flags[key];
+			if (flags == SimilarFlags.NONE) {
+				return file;
+			}
+			
+			if (SimilarFlags.SKIP_HAS_DEFAULT in flags && has_default) {
 				// use the default language, do not look further if we have a default value
 				return file;
 			}
 
 			FileSource? similar = null;
-			each_same_name (file, (f) => {
-					if (config.has_file_key (f, key)) {
-						similar = f;
-						return false;
-					}
-					return true;
-			});
-			if (similar != null) {
-				return similar;
+
+			if (SimilarFlags.SAME_NAME in flags) {
+				each_same_name (file, (f) => {
+						if (config.has_file_key (f, key)) {
+							similar = f;
+							return false;
+						}
+						return true;
+				});
+				if (similar != null) {
+					return similar;
+				}
 			}
 
-			if (key == "language" || key == "tab_width" || key == "indent_mode") {
+			if (SimilarFlags.SAME_EXTENSION in flags) {
 				each_same_extension (file, (f) => {
 						if (config.has_file_key (f, key)) {
 							similar = f;
@@ -117,15 +140,17 @@ namespace Vanubi {
 				}
 			}
 
-			each_sibling (file, (f) => {
-					if (config.has_file_key (f, key)) {
-						similar = f;
-						return false;
-					}
-					return true;
-			});
-			if (similar != null) {
-				return similar;
+			if (SimilarFlags.SIBLING in flags) {
+				each_sibling (file, (f) => {
+						if (config.has_file_key (f, key)) {
+							similar = f;
+							return false;
+						}
+						return true;
+				});
+				if (similar != null) {
+					return similar;
+				}
 			}
 			
 			return file;
