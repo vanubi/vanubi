@@ -41,7 +41,7 @@ vanubi_SOURCES = \
 	$(vanubi_VALASOURCES:.vala=.c) \
 	$(NULL)
 
-.vanubi.vala.stamp: $(vanubi_VALASOURCES) $(top_srcdir)/libvanubi/vanubi.vapi
+.vanubi.vala.stamp: $(vanubi_VALASOURCES) $(top_srcdir)/libvanubi/vanubi.vapi ../libvanubi/libvanubi@PACKAGE_SUFFIX@.la
 	$(VALA_V)$(VALAC) $(VANUBI_VALAFLAGS) -C --pkg vanubi --vapidir $(top_srcdir)/libvanubi $(top_srcdir)/gui/keybinder/keybinder.vapi $(vanubi_VALASOURCES)
 	@touch $@
 
