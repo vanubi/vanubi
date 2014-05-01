@@ -66,38 +66,82 @@ namespace Vanubi {
 			return true;
 		}
 		
-		bool each_sibling (FileSource file, Operation<FileSource> op) {
-			var parent = file.parent;
-			return each_file ((other) => {
-					if (parent.equal (other.parent) && !op (other)) {
-						return false;
-					}
-					return true;
-			});
-		}
-		
-		bool each_same_extension (FileSource file, Operation<FileSource> op) {
-			var ext = file.extension;
-			if (ext == null) {
+		bool has_same_parent (FileSource left, FileSource right) {
+			var lparent = left.parent;
+			var rparent = right.parent;
+			if (lparent == rparent) {
 				return true;
 			}
-			
-			return each_file ((other) => {
-					if (file.extension == ext && !op (other)) {
-						return false;
-					}
-					return true;
-			});
+
+			if (lparent != null && rparent != null) {
+				return lparent.equal (rparent);
+			}
+			return false;
+		}
+		
+		bool has_same_extension (FileSource left, FileSource right) {
+			var lext = left.extension;
+			if (lext == null) {
+				return false;
+			}
+
+			return lext == right.extension;
+		}
+		
+		bool has_same_name (FileSource left, FileSource right) {
+			return left.basename == right.basename;
 		}
 
-		
-		bool each_same_name (FileSource file, Operation<FileSource> op) {
-			return each_file ((other) => {
-					if (file.basename == other.basename && !op (other)) {
-						return false;
-					}
-					return true;
-			});
+		bool left_more_similar_than_right (SimilarFlags left, SimilarFlags right) {
+			bool lname = SimilarFlags.SAME_NAME in left;
+			bool lext = SimilarFlags.SAME_EXTENSION in left;
+			bool lsibling = SimilarFlags.SIBLING in left;
+			
+			bool rname = SimilarFlags.SAME_NAME in right;
+			bool rext = SimilarFlags.SAME_EXTENSION in right;
+			bool rsibling = SimilarFlags.SIBLING in right;
+
+			// same extension and sibling
+			if (lext && lsibling) {
+				return true;
+			}
+			if (rext && rsibling) {
+				return false;
+			}
+
+			// same extension and name
+			if (lext && lname) {
+				return true;
+			}
+			if (rext && rname) {
+				return false;
+			}
+
+			// same name
+			if (lname) {
+				return true;
+			}
+			if (rname) {
+				return false;
+			}
+
+			// same extension
+			if (lext) {
+				return true;
+			}
+			if (rext) {
+				return false;
+			}
+
+			// sibling
+			if (lsibling) {
+				return true;
+			}
+			if (rsibling) {
+				return false;
+			}
+
+			return false;
 		}
 		
 		// Returns a similar file, or itself, for a given configuration key
@@ -108,51 +152,41 @@ namespace Vanubi {
 			}
 			
 			if (SimilarFlags.SKIP_HAS_DEFAULT in flags && has_default) {
-				// use the default language, do not look further if we have a default value
+				// use the default value, do not look further
 				return file;
 			}
 
-			FileSource? similar = null;
+			FileSource? most_similar = null;
+			SimilarFlags best_match = SimilarFlags.NONE;
 
-			if (SimilarFlags.SAME_NAME in flags) {
-				each_same_name (file, (f) => {
-						if (config.has_file_key (f, key)) {
-							similar = f;
-							return false;
+			each_file ((f) => {
+					if (!f.equal (file)) {
+						SimilarFlags cur_match = SimilarFlags.NONE;
+						
+						if (SimilarFlags.SAME_NAME in flags && has_same_name (file, f)) {
+							cur_match |= SimilarFlags.SAME_NAME;
 						}
-						return true;
-				});
-				if (similar != null) {
-					return similar;
-				}
+
+						if (SimilarFlags.SAME_EXTENSION in flags && has_same_extension (file, f)) {
+							cur_match |= SimilarFlags.SAME_EXTENSION;
+						}
+
+						if (SimilarFlags.SIBLING in flags && has_same_parent (file, f)) {
+							cur_match |= SimilarFlags.SIBLING;
+						}
+
+						if (cur_match != SimilarFlags.NONE && left_more_similar_than_right (cur_match, best_match)) {
+							most_similar = f;
+							best_match = cur_match;
+						}
+					}
+					return true;
+			});
+
+			if (most_similar != null) {
+				return most_similar;
 			}
 
-			if (SimilarFlags.SAME_EXTENSION in flags) {
-				each_same_extension (file, (f) => {
-						if (config.has_file_key (f, key)) {
-							similar = f;
-							return false;
-						}
-						return true;
-				});
-				if (similar != null) {
-					return similar;
-				}
-			}
-
-			if (SimilarFlags.SIBLING in flags) {
-				each_sibling (file, (f) => {
-						if (config.has_file_key (f, key)) {
-							similar = f;
-							return false;
-						}
-						return true;
-				});
-				if (similar != null) {
-					return similar;
-				}
-			}
-			
 			return file;
 		}
 	}
