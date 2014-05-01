@@ -184,6 +184,18 @@ namespace Vanubi {
 			});
 
 			if (most_similar != null) {
+				string[] flag_names = null;
+				if (SimilarFlags.SAME_NAME in best_match) {
+					flag_names += "same_name";
+				}
+				if (SimilarFlags.SAME_EXTENSION in best_match) {
+					flag_names += "same_extension";
+				}
+				if (SimilarFlags.SIBLING in best_match) {
+					flag_names += "sibling";
+				}
+				debug ("%s is similar to %s for key %s due to: %s",
+					   file.to_string(), most_similar.to_string(), key, string.joinv(", ", flag_names));
 				return most_similar;
 			}
 
