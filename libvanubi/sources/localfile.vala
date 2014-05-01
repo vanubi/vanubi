@@ -128,6 +128,14 @@ namespace Vanubi {
 		}
 		
 		public override async void write (uint8[] data, bool atomic, int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) throws Error {
+			try {
+				// don't do an atomic save if it's a symlink
+				var info = yield file.query_info_async (FileAttribute.STANDARD_TYPE, FileQueryInfoFlags.NOFOLLOW_SYMLINKS, io_priority, cancellable);
+				atomic &= info.get_file_type () != FileType.SYMBOLIC_LINK;
+			} catch (IOError.CANCELLED e) {
+				throw e;
+			}
+			
 			if (atomic) {
 				// write to a temp file
 				var tmp = File.new_for_path (file.get_path()+"#van.new");
