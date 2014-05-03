@@ -937,7 +937,8 @@ namespace Vanubi.UI {
 				}
 
 				if (ed.set_location (location)) {
-					Idle.add_full (Priority.HIGH, () => { ed.view.scroll_to_mark (ed.view.buffer.get_insert (), 0, true, 0.5, 0.5); return false; });
+					var prio = focus ? Priority.HIGH : Priority.DEFAULT;
+					Idle.add_full (prio, () => { ed.view.scroll_to_mark (ed.view.buffer.get_insert (), 0, true, 0.5, 0.5); return false; });
 				}
 
 				if (focus) {
@@ -982,7 +983,8 @@ namespace Vanubi.UI {
 				}
 				if (!(location.start_line == 0 && location.start_column == 0)) {
 					if (ed.set_location (location)) {
-						Idle.add_full (Priority.HIGH, () => { ed.view.scroll_to_mark (buf.get_insert (), 0, true, 0.5, 0.5); return false; });
+						var prio = focus ? Priority.HIGH : Priority.DEFAULT;
+						Idle.add_full (prio, () => { ed.view.scroll_to_mark (buf.get_insert (), 0, true, 0.5, 0.5); return false; });
 					}
 				}
 			} catch (IOError.CANCELLED e) {
