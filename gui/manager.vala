@@ -69,7 +69,7 @@ namespace Vanubi.UI {
 
 		HashTable<string, History> entry_history_map = new HashTable<string, History> (str_hash, str_equal);
 
-		GenericArray<Layout> layouts = new GenericArray<Layout> ();
+		List<Layout> layouts = null;
 		
 		public Manager () {
 			conf = new Configuration ();
@@ -595,7 +595,7 @@ namespace Vanubi.UI {
 			current_layout.add (container);
 			current_layout.views = 1;
 			current_layout.last_focused_editor = ed;
-			layouts.add (current_layout);
+			layouts.append (current_layout);
 			layout_wrapper = new EventBox ();
 			layout_wrapper.expand = true;
 			layout_wrapper.add (current_layout);
@@ -2557,7 +2557,7 @@ namespace Vanubi.UI {
 			var ed_layout = editor.parent_layout;
 			if (ed_layout.views == 1) {
 				// remove other single layouts
-				foreach (var layout in layouts.data) {
+				foreach (var layout in layouts) {
 					if (layout != ed_layout && layout.views == 1) {
 						layouts.remove (layout);
 					}
@@ -2565,7 +2565,7 @@ namespace Vanubi.UI {
 				return;
 			} else {
 				// check if there's a single layout
-				foreach (var layout in layouts.data) {
+				foreach (var layout in layouts) {
 					if (layout.views == 1) {
 						return;
 					}
@@ -2588,7 +2588,9 @@ namespace Vanubi.UI {
 			layout.views = 1;
 			layout.last_focused_editor = newed;
 			layout.show_all ();
-			layouts.add (layout);
+
+			var index = layouts.index (ed_layout);
+			layouts.insert (layout, index);
 		}
 		
 		// Returns the new editor on the splitted view
@@ -2734,25 +2736,16 @@ namespace Vanubi.UI {
 		void on_switch_layout (Editor ed, string command) {
 			int step = (command == "next-layout") ? 1 : -1;
 			var layout = ed.parent_layout;
-			var index = 0;
-			foreach (var l in layouts.data) {
-				if (l == layout) {
-					break;
-				}
-				index++;
-			}
-			if (index > layouts.length) {
-				critical ("Could not find the current layout when switching");
-				return;
-			}
-
+			var index = layouts.index (layout);
+			var len = (int) layouts.length ();
+			
 			index = index+step;
 			if (index < 0) {
-				index = layouts.length-1;
-			} else {
+				index = len-1;
+			} else if (index >= len) {
 				index = 0;
 			}
-			current_layout = layouts[index];
+			current_layout = layouts.nth_data (index);
 			layout_wrapper.remove (layout_wrapper.get_child ());
 			layout_wrapper.add (current_layout);
 
