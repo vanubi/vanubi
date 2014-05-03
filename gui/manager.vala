@@ -114,6 +114,7 @@ namespace Vanubi.UI {
 			command_index.synonyms["search"] = "find";
 			command_index.synonyms["toggle"] = "enable";
 			command_index.synonyms["toggle"] = "disable";
+			command_index.synonyms["layout"] = "splits";
 
 			// setup commands
 			bind_command ({
@@ -266,6 +267,12 @@ namespace Vanubi.UI {
 			index_command ("prev-layout", "Move to the previous layout", "cycle right splits");
 			execute_command["prev-layout"].connect (on_switch_layout);
 
+			bind_command ({
+					Key (Gdk.Key.c, Gdk.ModifierType.CONTROL_MASK),
+					Key (Gdk.Key.k, Gdk.ModifierType.CONTROL_MASK) }, "kill-layout");
+			index_command ("kill-layout", "Kill the current layout");
+			execute_command["kill-layout"].connect (on_kill_layout);
+			
 			bind_command ({
 					Key (Gdk.Key.x, Gdk.ModifierType.CONTROL_MASK),
 						Key (Gdk.Key.@1, 0)},
@@ -2745,6 +2752,26 @@ namespace Vanubi.UI {
 			} else if (index >= len) {
 				index = 0;
 			}
+			current_layout = layouts.nth_data (index);
+			layout_wrapper.remove (layout_wrapper.get_child ());
+			layout_wrapper.add (current_layout);
+
+			current_layout.last_focused_editor.grab_focus ();
+		}
+
+		void on_kill_layout (Editor ed) {
+			var layout = ed.parent_layout;
+			if (layout.views == 1) {
+				return;
+			}
+			
+			var index = layouts.index (layout);
+			// get the previous layout
+			if (index > 0) {
+				index--;
+			}
+			layouts.remove (layout);
+
 			current_layout = layouts.nth_data (index);
 			layout_wrapper.remove (layout_wrapper.get_child ());
 			layout_wrapper.add (current_layout);

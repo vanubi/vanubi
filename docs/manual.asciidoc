@@ -195,12 +195,23 @@ If a file has been edited elsewhere and you want to reload it, it is possible wi
 keywords:[buffers views editors files switch tabs manage]
 .Switch between opened files, split views and more
 
-A buffer (or editor) is a view of a file being edited. It is possible to split buffers horizontally with `split-add-bottom` (`C-x 2`) or or vertically with `split-add-right` (`C-x 3`).
-This allows you to open two views for the same file.
+A buffer (or editor) is a view of a file being edited. It is possible to split buffers horizontally with `split-add-bottom` (`C-x 2`) or vertically with `split-add-right` (`C-x 3`).
+This allows you to open two views for the same file. To navigate among splits, use `next-editor` (`C-l`) and `prev-editor` (`C-j`).
 
 You can switch between files within a view using `switch-buffer` (`C-x b`). Note that the first file in the switch buffer completion is the last file you edited in that view. That allows you to quickly switch between two files repeatedly within the same view, and to keep focus on the files you are recently editing.
 
 To close a buffer you can issue `kill-buffer` with `C-x k`. If the closed buffer was the last visible buffer for a file, the file will be removed from Vanubi and won't be visible when switching buffers anymore.
+
+== Manage layouts
+keywords:[layouts splits views editors files switch tabs manage]
+.Switch between layouts of splitted views
+
+Vanubi is able to split the window horizontally and vertically with `split-add-bottom` (`C-x 2`) or and `split-add-right` (`C-x 3`), and navigate with `C-j` and `C-l`.
+You can keep this split and switch to the previous layout with `prev-layout` (`C-c C-j`), or the following layout with `next-layout` (`C-c C-l`).
+
+Vanubi always ensures that there is *exactly one* layout with a single editor, that is without splits. Everytime you split from this single-editor layout, a new layout gets created. When joining all the splits in a layout, that layout becomes the single-editor layout.
+
+You can remove a layout with `kill-layout` (`C-c C-k`).
 
 == Shell terminals
 keywords:[compilation shell build projects errors]
