@@ -134,6 +134,7 @@ namespace Vanubi {
 				atomic &= info.get_file_type () != FileType.SYMBOLIC_LINK;
 			} catch (IOError.CANCELLED e) {
 				throw e;
+			} catch {
 			}
 			
 			if (atomic) {
