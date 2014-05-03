@@ -63,7 +63,7 @@ namespace Vanubi.UI {
 
 			var win = new ApplicationWindow (this);
 			win.title = "Vanubi";
-			win.delete_event.connect (() => { manager.execute_command (manager.last_focused_editor, "quit"); return false; });
+			win.delete_event.connect (() => { manager.execute_command (manager.current_layout.last_focused_editor, "quit"); return false; });
 			// restore geometry like one of the main window
 			win.move (manager.conf.get_global_int ("window_x"),
 					  manager.conf.get_global_int ("window_y"));
@@ -217,12 +217,12 @@ namespace Vanubi.UI {
 				if (loc.start_line < 0) {
 					loc.start_line = start_line;
 				}
-				manager.open_location.begin (manager.last_focused_editor, loc, focus, (s,r) => {
+				manager.open_location.begin (manager.current_layout.last_focused_editor, loc, focus, (s,r) => {
 						manager.open_source.end (r);
 						loaded++;
 						if (loaded > 1 && loaded == locations.length) {
 							// mark sources as used in reverse order, except the first one; this is very convenient when opening multiple files
-							var lru = manager.last_focused_editor.editor_container.lru;
+							var lru = manager.current_layout.last_focused_editor.editor_container.lru;
 							lru.used (locations[0].source);
 							for (var i=locations.length-1; i >= 1; i--) {
 								lru.used (locations[i].source);
@@ -233,7 +233,7 @@ namespace Vanubi.UI {
 			}
 
 			if (arg_vade_expression != null) {
-				var scope = get_editor_scope (manager.last_focused_editor);
+				var scope = get_editor_scope (manager.current_layout.last_focused_editor);
 				scope.eval_string.begin (arg_vade_expression, null, (s,r) => {
 						try {
 							var val = scope.eval_string.end (r);

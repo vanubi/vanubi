@@ -21,5 +21,7 @@ using Gtk;
 
 namespace Vanubi.UI {
 	public class Layout : Grid {
+		public int views { get; set; default = 0; }
+		public Editor last_focused_editor { get; set; }
 	}
 }

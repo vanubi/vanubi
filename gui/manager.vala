@@ -45,12 +45,12 @@ namespace Vanubi.UI {
 		public List<Location<string>> error_locations = new List<Location> ();
 		public unowned List<Location<string>> current_error = null;
 		EventBox main_box;
-		Grid editors_grid;
+		public Layout current_layout;
+		EventBox layout_wrapper;
 		StatusBar statusbar;
 		uint status_timeout;
 		string status_context;
 		MarkManager marks = new MarkManager ();
-		public Editor last_focused_editor = null; // must never be null
 		int next_stream_id = 1;
 		RemoteFileServer remote = null;
 		CssProvider current_css = null;
@@ -68,6 +68,8 @@ namespace Vanubi.UI {
 		HashTable<string, KeysWrapper> default_shortcuts = new HashTable<string, KeysWrapper> (str_hash, str_equal);
 
 		HashTable<string, History> entry_history_map = new HashTable<string, History> (str_hash, str_equal);
+
+		GenericArray<Layout> layouts = new GenericArray<Layout> ();
 		
 		public Manager () {
 			conf = new Configuration ();
@@ -83,10 +85,6 @@ namespace Vanubi.UI {
 			main_box = new EventBox();
 			main_box.expand = true;
 			add (main_box);
-
-			// grid containing the editors
-			editors_grid = new Layout ();
-			main_box.add (editors_grid);
 
 			// status bar
 			statusbar = new StatusBar ();
@@ -255,6 +253,18 @@ namespace Vanubi.UI {
 				Key (Gdk.Key.j, Gdk.ModifierType.CONTROL_MASK) }, "prev-editor");
 			index_command ("prev-editor", "Move to the previous buffer", "cycle left");
 			execute_command["prev-editor"].connect (on_switch_editor);
+
+			bind_command ({
+					Key (Gdk.Key.c, Gdk.ModifierType.CONTROL_MASK),
+					Key (Gdk.Key.l, Gdk.ModifierType.CONTROL_MASK) }, "next-layout");
+			index_command ("next-layout", "Move to the next layout", "cycle right splits");
+			execute_command["next-layout"].connect (on_switch_layout);
+
+			bind_command ({
+					Key (Gdk.Key.c, Gdk.ModifierType.CONTROL_MASK),
+					Key (Gdk.Key.j, Gdk.ModifierType.CONTROL_MASK) }, "prev-layout");
+			index_command ("prev-layout", "Move to the previous layout", "cycle right splits");
+			execute_command["prev-layout"].connect (on_switch_layout);
 
 			bind_command ({
 					Key (Gdk.Key.x, Gdk.ModifierType.CONTROL_MASK),
@@ -579,7 +589,18 @@ namespace Vanubi.UI {
 			unowned Editor ed = get_available_editor (ScratchSource.instance);
 			var container = new EditorContainer (ed);
 			container.lru.append (ScratchSource.instance);
-			editors_grid.add (container);
+
+			// main layout
+			current_layout = new Layout ();
+			current_layout.add (container);
+			current_layout.views = 1;
+			current_layout.last_focused_editor = ed;
+			layouts.add (current_layout);
+			layout_wrapper = new EventBox ();
+			layout_wrapper.expand = true;
+			layout_wrapper.add (current_layout);
+			main_box.add (layout_wrapper);
+
 			container.grab_focus ();
 
 			// remote file server
@@ -733,11 +754,11 @@ namespace Vanubi.UI {
 			Allocation alloc;
 			get_allocation (out alloc);
 
-			main_box.remove (editors_grid);
+			main_box.remove (layout_wrapper);
 			if (mode == OverlayMode.PANE_BOTTOM) {
 				var p = new Paned (Orientation.VERTICAL);
 				p.expand = true;
-				p.pack1 (editors_grid, true, false);
+				p.pack1 (layout_wrapper, true, false);
 				p.pack2 (widget, true, false);
 				p.position = alloc.height*2/3;
 				main_box.add (p);
@@ -746,14 +767,14 @@ namespace Vanubi.UI {
 				var p = new Paned (Orientation.HORIZONTAL);
 				p.expand = true;
 				p.pack1 (widget, true, false);
-				p.pack2 (editors_grid, true, false);
+				p.pack2 (layout_wrapper, true, false);
 				p.position = alloc.width/2;
 				main_box.add (p);
 				p.show_all ();
 			} else if (mode == OverlayMode.PANE_RIGHT) {
 				var p = new Paned (Orientation.HORIZONTAL);
 				p.expand = true;
-				p.pack1 (editors_grid, true, false);
+				p.pack1 (layout_wrapper, true, false);
 				p.pack2 (widget, true, false);
 				p.position = alloc.width/2;
 				main_box.add (p);
@@ -761,7 +782,7 @@ namespace Vanubi.UI {
 			} else {
 				var grid = new Grid ();
 				grid.orientation = Orientation.VERTICAL;
-				grid.add (editors_grid);
+				grid.add (layout_wrapper);
 				grid.add (widget);
 				main_box.add (grid);
 				grid.show_all ();
@@ -964,15 +985,15 @@ namespace Vanubi.UI {
 
 		public void abort (Editor editor) {
 			keymanager.reset ();
-			if (main_box.get_child() == editors_grid) {
+			if (main_box.get_child() == layout_wrapper) {
 				return;
 			}
 			clear_status ();
 
-			var parent = (Container) editors_grid.get_parent();
-			parent.remove (editors_grid);
+			var parent = (Container) layout_wrapper.get_parent();
+			parent.remove (layout_wrapper);
 			main_box.remove (main_box.get_child ());
-			main_box.add (editors_grid);
+			main_box.add (layout_wrapper);
 			editor.grab_focus ();
 		}
 
@@ -1055,7 +1076,11 @@ namespace Vanubi.UI {
 		}
 
 		/* Returns an Editor for the given file */
-		unowned Editor get_available_editor (DataSource source) {
+		unowned Editor get_available_editor (DataSource source, Layout? in_layout = null) {
+			if (in_layout == null) {
+				in_layout = current_layout;
+			}
+			
 			// list of editors for the file
 			unowned GenericArray<Editor> editors;
 			var s = sources[source];
@@ -1078,9 +1103,9 @@ namespace Vanubi.UI {
 				editors = source.get_data ("editors");
 			}
 
-			// first find an editor that is not visible, so we can reuse it
+			// first find an editor that is not visible in the current layout, so we can reuse it
 			foreach (unowned Editor ed in editors.data) {
-				if (!ed.visible) {
+				if (!ed.visible && in_layout == ed.parent_layout) {
 					return ed;
 				}
 			}
@@ -1352,7 +1377,7 @@ namespace Vanubi.UI {
 					var loc = editor.get_location ();
 					loc.source = editor.moved_to;
 					kill_source (editor.source);
-					var focused = last_focused_editor;
+					var focused = current_layout.last_focused_editor;
 					yield open_location (focused, loc);
 				} else {
 					var is = yield editor.source.read ();
@@ -1543,7 +1568,7 @@ namespace Vanubi.UI {
 
 			bool other_visible = false;
 			foreach (unowned Editor ed in editors.data) {
-				if (editor != ed && ed.visible) {
+				if ((editor != ed && ed.visible) || (current_layout != ed.parent_layout)) {
 					other_visible = true;
 					break;
 				}
@@ -2528,6 +2553,44 @@ namespace Vanubi.UI {
 			split_views (editor, command == "split-add-right" ? Orientation.HORIZONTAL : Orientation.VERTICAL);
 		}
 
+		void single_layout_invariant (Editor editor) {
+			var ed_layout = editor.parent_layout;
+			if (ed_layout.views == 1) {
+				// remove other single layouts
+				foreach (var layout in layouts.data) {
+					if (layout != ed_layout && layout.views == 1) {
+						layouts.remove (layout);
+					}
+				}
+				return;
+			} else {
+				// check if there's a single layout
+				foreach (var layout in layouts.data) {
+					if (layout.views == 1) {
+						return;
+					}
+				}
+			}
+
+			debug ("Creating new single layout for invariant");
+			var layout = new Layout ();
+			var newed = get_available_editor (editor.source, layout);
+			if (newed.get_parent() != null) {
+				// ensure the new editor is unparented
+				((Container) newed.get_parent ()).remove (newed);
+			}
+			// create a new container
+			var newcontainer = new EditorContainer (newed);
+			// inherit lru from existing editor
+			newcontainer.lru = editor.editor_container.lru.copy ();
+
+			layout.add (newcontainer);
+			layout.views = 1;
+			layout.last_focused_editor = newed;
+			layout.show_all ();
+			layouts.add (layout);
+		}
+		
 		// Returns the new editor on the splitted view
 		Editor split_views (Editor editor, Orientation orient) {
 			// get bounding box of the editor
@@ -2563,6 +2626,10 @@ namespace Vanubi.UI {
 			paned.show_all ();
 			editor.grab_focus ();
 
+			current_layout.views++;
+			// new layout created
+			single_layout_invariant (editor);
+			
 			return ed;
 		}
 
@@ -2664,6 +2731,34 @@ namespace Vanubi.UI {
 			}
 		}
 
+		void on_switch_layout (Editor ed, string command) {
+			int step = (command == "next-layout") ? 1 : -1;
+			var layout = ed.parent_layout;
+			var index = 0;
+			foreach (var l in layouts.data) {
+				if (l == layout) {
+					break;
+				}
+				index++;
+			}
+			if (index > layouts.length) {
+				critical ("Could not find the current layout when switching");
+				return;
+			}
+
+			index = index+step;
+			if (index < 0) {
+				index = layouts.length-1;
+			} else {
+				index = 0;
+			}
+			current_layout = layouts[index];
+			layout_wrapper.remove (layout_wrapper.get_child ());
+			layout_wrapper.add (current_layout);
+
+			current_layout.last_focused_editor.grab_focus ();
+		}
+
 		void on_join_all (Editor editor) {
 			// parent of editor is an editor container
 			var paned = editor.editor_container.get_parent() as Paned;
@@ -2675,12 +2770,15 @@ namespace Vanubi.UI {
 			var editor_container = editor.editor_container;
 			((Container) editor_container.get_parent()).remove (editor_container);
 
-			var children = editors_grid.get_children ();
-			foreach (var child in children) {
-				editors_grid.remove (child);
+			var children = current_layout.get_children();
+			foreach (Widget child in children) {
+				current_layout.remove (child);
 				detach_editors (child);
 			}
-			editors_grid.add (editor_container);
+			current_layout.add (editor_container);
+			current_layout.views = 1;
+			single_layout_invariant (editor);
+			
 			editor.grab_focus ();
 		}
 
@@ -2694,6 +2792,11 @@ namespace Vanubi.UI {
 			paned.remove (container);
 			detach_editors (paned);
 			replace_widget (paned, container);
+
+			var layout = editor.parent_layout;
+			layout.views--;
+			single_layout_invariant (editor);
+			
 			editor.grab_focus ();
 		}
 
@@ -2835,10 +2938,10 @@ namespace Vanubi.UI {
 			var bar = new AboutBar ();
 			bar.aborted.connect (() => {
 					main_box.remove (bar);
-					main_box.add (editors_grid);
+					main_box.add (layout_wrapper);
 					editor.grab_focus ();
 			});
-			main_box.remove (editors_grid);
+			main_box.remove (layout_wrapper);
 			main_box.add (bar);
 			bar.grab_focus ();
 		}
@@ -2919,7 +3022,7 @@ namespace Vanubi.UI {
 		}
 
 		void on_remote_open_file (RemoteFileSource file) {
-			open_source.begin (last_focused_editor, file);
+			open_source.begin (current_layout.last_focused_editor, file);
 		}
 
 		void on_toggle_show_tabs (Editor editor) {
