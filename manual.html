@@ -439,10 +439,20 @@ There is also the command <span class="monospaced">save-as-file</span> to save t
 <h2 id="manage_opened_files">Manage opened files</h2>
 <div class="sectionbody">
 <div class="vareskeywords" style='display:none;'>buffers views editors files switch tabs manage</div>
-<div class="paragraph"><div class="title">Switch between opened files, split views and more</div><p>A buffer (or editor) is a view of a file being edited. It is possible to split buffers horizontally with <span class="monospaced">split-add-bottom</span> (<span class="monospaced">C-x 2</span>) or or vertically with <span class="monospaced">split-add-right</span> (<span class="monospaced">C-x 3</span>).
-This allows you to open two views for the same file.</p></div>
+<div class="paragraph"><div class="title">Switch between opened files, split views and more</div><p>A buffer (or editor) is a view of a file being edited. It is possible to split buffers horizontally with <span class="monospaced">split-add-bottom</span> (<span class="monospaced">C-x 2</span>) or vertically with <span class="monospaced">split-add-right</span> (<span class="monospaced">C-x 3</span>).
+This allows you to open two views for the same file. To navigate among splits, use <span class="monospaced">next-editor</span> (<span class="monospaced">C-l</span>) and <span class="monospaced">prev-editor</span> (<span class="monospaced">C-j</span>).</p></div>
 <div class="paragraph"><p>You can switch between files within a view using <span class="monospaced">switch-buffer</span> (<span class="monospaced">C-x b</span>). Note that the first file in the switch buffer completion is the last file you edited in that view. That allows you to quickly switch between two files repeatedly within the same view, and to keep focus on the files you are recently editing.</p></div>
 <div class="paragraph"><p>To close a buffer you can issue <span class="monospaced">kill-buffer</span> with <span class="monospaced">C-x k</span>. If the closed buffer was the last visible buffer for a file, the file will be removed from Vanubi and won&#8217;t be visible when switching buffers anymore.</p></div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="manage_layouts">Manage layouts</h2>
+<div class="sectionbody">
+<div class="vareskeywords" style='display:none;'>layouts splits views editors files switch tabs manage</div>
+<div class="paragraph"><div class="title">Switch between layouts of splitted views</div><p>Vanubi is able to split the window horizontally and vertically with <span class="monospaced">split-add-bottom</span> (<span class="monospaced">C-x 2</span>) or and <span class="monospaced">split-add-right</span> (<span class="monospaced">C-x 3</span>), and navigate with <span class="monospaced">C-j</span> and <span class="monospaced">C-l</span>.
+You can keep this split and switch to the previous layout with <span class="monospaced">prev-layout</span> (<span class="monospaced">C-c C-j</span>), or the following layout with <span class="monospaced">next-layout</span> (<span class="monospaced">C-c C-l</span>).</p></div>
+<div class="paragraph"><p>Vanubi always ensures that there is <strong>exactly one</strong> layout with a single editor, that is without splits. Everytime you split from this single-editor layout, a new layout gets created. When joining all the splits in a layout, that layout becomes the single-editor layout.</p></div>
+<div class="paragraph"><p>You can remove a layout with <span class="monospaced">kill-layout</span> (<span class="monospaced">C-c C-k</span>).</p></div>
 </div>
 </div>
 <div class="sect1">
