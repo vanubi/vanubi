@@ -1119,9 +1119,6 @@ namespace Vanubi.UI {
 
 			// no editor reusable, so create one
 			var ed = new Editor (this, conf, source);
-			// set the font according to the user/system configuration
-			var system_size = ed.view.style.font_desc.get_size () / Pango.SCALE;
-			ed.view.override_font (Pango.FontDescription.from_string ("Monospace %d".printf (conf.get_editor_int ("font_size", system_size))));
 			ed.view.key_press_event.connect (on_key_press_event);
 			ed.view.scroll_event.connect (on_scroll_event);
 			if (editors.length > 0) {

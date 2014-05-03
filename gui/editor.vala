@@ -221,6 +221,10 @@ namespace Vanubi.UI {
 			update_show_tabs();
 			update_right_margin ();
 
+			// set the font according to the user/system configuration
+			var system_size = view.style.font_desc.get_size () / Pango.SCALE;
+			view.override_font (Pango.FontDescription.from_string ("Monospace %d".printf (conf.get_editor_int ("font_size", system_size))));
+
 			/* Style */
 			var style_manager = SourceStyleSchemeManager.get_default ();
 			var st = style_manager.get_scheme (conf.get_global_string ("theme", "zen"));
