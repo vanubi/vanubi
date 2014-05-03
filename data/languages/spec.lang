@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+ This file is part of Vanubi
+
+ Copyright (C) 2014 Rocco Folino <lordzen87@gmail.com>
+
+ Vanubi is free software: you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
+
+ Vanubi is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+
+ You should have received a copy of the GNU General Public License
+ along with Vanubi.  If not, see <http://www.gnu.org/licenses/>.
+
+-->
+<language id="spec" _name="SPEC" version="2.0" _section="Others">
+ <metadata>
+  <property name="mimetypes">text/text</property>
+  <property name="globs">.spec;.spec.in</property>
+  <property name="line-comment-start">#</property>
+ </metadata>
+
+ <styles>
+  <style id="comment" _name="Comment" map-to="def:comment"/>
+  <style id="string" _name="String" map-to="def:string"/>
+  <style id="decimal" _name="Decimal" map-to="def:decimal"/>
+ </styles>
+
+ <definitions>
+  <context id="generic-comment" class="no-spell-check">
+   <include>
+    <context ref="def:shell-like-comment"/>
+   </include>
+  </context>
+  <context id="keysymbol" style-ref="keyword">
+   <match>::|=</match>
+  </context>
+  <context id="number" style-ref="decimal">
+   <match>\b[0-9][0-9\.]*\b</match>
+  </context>
+  <context id="spec" class="no-spell-check">
+   <include>
+    <context ref="generic-comment"/>
+    <context ref="keysymbol"/>
+    <context ref="number"/>
+    <context ref="variable"/>
+   </include>
+  </context>
+ </definitions>
+</language>
