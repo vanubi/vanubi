@@ -16,22 +16,23 @@ bin_PROGRAMS = \
 	$(NULL)
 
 vanubi_VALASOURCES = \
+	aboutbar.vala \
 	bar.vala \
+	buffer.vala \
 	completionbar.vala \
 	editor.vala \
 	filebar.vala \
+	git.vala \
 	grepbar.vala \
 	helpbar.vala \
 	history.vala \
-	buffer.vala \
+	layout.vala \
 	main.vala \
 	manager.vala \
 	searchbar.vala \
 	shellbar.vala \
-	aboutbar.vala \
 	util.vala \
 	vade.vala \
-	git.vala \
 	trailingspace.vala \
 	$(NULL)
 

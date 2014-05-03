@@ -85,7 +85,7 @@ namespace Vanubi.UI {
 			add (main_box);
 
 			// grid containing the editors
-			editors_grid = new Grid ();
+			editors_grid = new Layout ();
 			main_box.add (editors_grid);
 
 			// status bar
