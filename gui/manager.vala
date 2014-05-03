@@ -605,6 +605,7 @@ namespace Vanubi.UI {
 			layouts.append (current_layout);
 			layout_wrapper = new EventBox ();
 			layout_wrapper.expand = true;
+			layout_wrapper.above_child = true;
 			layout_wrapper.add (current_layout);
 			main_box.add (layout_wrapper);
 
