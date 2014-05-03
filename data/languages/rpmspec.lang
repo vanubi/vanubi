@@ -19,7 +19,7 @@
  along with Vanubi.  If not, see <http://www.gnu.org/licenses/>.
 
 -->
-<language id="spec" _name="SPEC" version="2.0" _section="Others">
+<language id="rpmspec" _name="RPM SPEC" version="2.0" _section="Others">
  <metadata>
   <property name="mimetypes">text/text</property>
   <property name="globs">.spec;.spec.in</property>
@@ -44,7 +44,7 @@
   <context id="number" style-ref="decimal">
    <match>\b[0-9][0-9\.]*\b</match>
   </context>
-  <context id="spec" class="no-spell-check">
+  <context id="rpmspec" class="no-spell-check">
    <include>
     <context ref="generic-comment"/>
     <context ref="keysymbol"/>
