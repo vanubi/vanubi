@@ -592,21 +592,21 @@ namespace Vanubi.UI {
 			index_command ("toggle-show-tabs", "Toggle show tab in the editor");
 			execute_command["toggle-show-tabs"].connect (on_toggle_show_tabs);
 
+			current_layout = new Layout ();
+			layouts.append (current_layout);
+			layout_wrapper = new EventBox ();
+			layout_wrapper.expand = true;
+			layout_wrapper.add (current_layout);
+
 			// setup empty buffer
 			unowned Editor ed = get_available_editor (ScratchSource.instance);
 			var container = new EditorContainer (ed);
 			container.lru.append (ScratchSource.instance);
 
 			// main layout
-			current_layout = new Layout ();
 			current_layout.add (container);
 			current_layout.views = 1;
 			current_layout.last_focused_editor = ed;
-			layouts.append (current_layout);
-			layout_wrapper = new EventBox ();
-			layout_wrapper.expand = true;
-			layout_wrapper.above_child = true;
-			layout_wrapper.add (current_layout);
 			main_box.add (layout_wrapper);
 
 			container.grab_focus ();
@@ -1120,6 +1120,7 @@ namespace Vanubi.UI {
 
 			// no editor reusable, so create one
 			var ed = new Editor (this, conf, source);
+			ed.parent_layout = current_layout;
 			ed.view.key_press_event.connect (on_key_press_event);
 			ed.view.scroll_event.connect (on_scroll_event);
 			if (editors.length > 0) {

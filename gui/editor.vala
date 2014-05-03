@@ -374,16 +374,8 @@ namespace Vanubi.UI {
 			}
 		}
 
-		public Layout parent_layout {
-			get {
-				var cur = get_parent ();
-				while (cur != null && !(cur is Layout)) {
-					cur = cur.get_parent ();
-				}
-				return (Layout) cur;
-			}
-		}
-
+		public Layout parent_layout { get; set; }
+		
 		public void reset_language () {
 			var file = source as FileSource;
 
