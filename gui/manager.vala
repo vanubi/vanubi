@@ -2271,6 +2271,7 @@ namespace Vanubi.UI {
 				case "python":
 				case "ruby":
 				case "generic_comment":
+				case "nix":
 					comment_engine = new Comment_Hash (vbuf);
 					break;
 				case "html":
