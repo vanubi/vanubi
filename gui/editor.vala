@@ -196,10 +196,11 @@ namespace Vanubi.UI {
 		int old_selection_end_offset = -1;
 		SourceGutter? gutter = null;
 		GitGutterRenderer? gutter_renderer = null;
-		bool file_loaded = false;
+		bool file_loaded = true;
 		Cancellable diff_cancellable = null;
 		uint diff_timer = 0;
 		uint save_session_timer = 0;
+		ulong content_changed_signal = 0;
 		Git git;
 		TrailingSpaces? trailsp = null;
 
@@ -528,8 +529,7 @@ namespace Vanubi.UI {
 					file_loading.set_markup ("");
 					file_loaded = true;
 					update_show_branch ();
-					on_git_gutter ();
-					on_trailing_spaces ();
+					on_content_changed ();
 					update_read_only ();
 
 					loading_cancellable = null;
@@ -652,15 +652,44 @@ namespace Vanubi.UI {
 
 			var buf = (SourceBuffer) view.buffer;
 			buf.mark_set.connect (on_file_count);
-			buf.changed.connect (on_file_count);
-			buf.changed.connect (on_git_gutter);
-			buf.changed.connect (on_check_endline);
+			content_changed_signal = buf.changed.connect (on_content_changed);
 			new UI.Buffer (view).indent_mode = conf.get_file_enum (source, "indent_mode", IndentMode.TABS);
 			buf.modified_changed.connect (on_modified_changed);
-			on_file_count ();
-			on_check_endline();
+			on_content_changed ();
 		}
 
+		void on_content_changed () {
+			on_add_endline ();
+			on_file_count ();
+			on_git_gutter ();
+			on_check_endline ();
+		}
+
+		void on_add_endline () {
+			if (!file_loaded || !conf.get_editor_bool ("auto_add_endline", false)) {
+				return;
+			}
+			
+			TextIter iter;
+			view.buffer.get_end_iter (out iter);
+			if (iter.backward_char () && iter.get_char() != '\n') {
+				iter.forward_char ();
+				
+				Idle.add_full (Priority.HIGH, () => {
+						update_old_selection ();
+						
+						view.buffer.insert (ref iter, "\n", 1);
+						
+						// select old range, in case the cursor was at the end
+						TextIter start, end;
+						view.buffer.get_iter_at_offset (out start, old_selection_start_offset);
+						view.buffer.get_iter_at_offset (out end, old_selection_end_offset);
+						view.buffer.select_range (start, end);
+						return false;
+				});
+			}
+		}
+		
 		void on_check_endline () {
 			if (!file_loaded) {
 				return;

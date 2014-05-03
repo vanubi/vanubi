@@ -544,6 +544,10 @@ namespace Vanubi.UI {
 			index_command ("toggle-autoupdate-copyright-year", "Auto update copyright year of modified files");
 			execute_command["toggle-autoupdate-copyright-year"].connect (on_toggle_autoupdate_copyright_year);
 
+			bind_command (null, "toggle-auto-add-endline");
+			index_command ("toggle-auto-add-endline", "Auto add a newline at the end of the text");
+			execute_command["toggle-auto-add-endline"].connect (on_toggle_auto_add_endline);
+
 			bind_command (null, "toggle-atomic-save");
 			index_command ("toggle-atomic-save", "Whether to save files atomically");
 			execute_command["toggle-atomic-save"].connect (on_toggle_atomic_save);
@@ -2921,6 +2925,14 @@ namespace Vanubi.UI {
 			conf.save ();
 
 			set_status (autoupdate_copyright_year ? "Enabled" : "Disabled");
+		}
+
+		void on_toggle_auto_add_endline (Editor editor) {
+			var auto_add_endline = !conf.get_editor_bool ("auto_add_endline");
+			conf.set_editor_bool ("auto_add_endline", auto_add_endline);
+			conf.save ();
+
+			set_status (auto_add_endline ? "Enabled" : "Disabled");
 		}
 
 		void on_toggle_atomic_save (Editor editor) {
