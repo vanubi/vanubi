@@ -61,94 +61,73 @@ namespace Vanubi.UI {
 			attrs[47] = create_tag ("bg_white", background: "white");
 		}
 		
-		public async void insert_text_colored (Gtk.TextIter pos, string new_text, int new_text_length, Cancellable cancellable) throws Error {
-			yield run_in_thread<void*> (() => {
-					TextTag[] tags = null;
-					int last_start = 0;
-					string? default_charset = null;
-					for (var i=0; i < new_text_length; i++) {
-						// escape char
-						if (new_text[i] == 0x1b) {
-							if (i > last_start) {
-								// write last string with tags
-								string cur = new_text.substring (last_start, i-last_start);
-								uint8[] converted = convert_to_utf8 (cur.data, ref default_charset, null, null);
-
-								Gdk.threads_enter ();
-								try {
-									cancellable.set_error_if_cancelled ();
-									TextIter end;
-									get_end_iter (out end);
-									var offset = end.get_offset ();
-									if (((string)converted).length != converted.length) message("asd");
-									insert_text (ref end, (string) converted, converted.length);
-									// apply tags
-									TextIter start;
-									get_iter_at_offset (out start, offset);
-									foreach (unowned TextTag tag in tags) {
-										apply_tag (tag, start, end);
-									}
-								} catch (IOError.CANCELLED e) {
-									return null;
-								} catch (Error e) {
-								} finally {
-									Gdk.threads_leave ();
-								}
-							}
-							
-							// parse command
-							i++; // [
-							i++;
-							if (i < new_text_length && new_text[i] == 'm') {
-								tags.length = 0;
-								last_start = i+1;
-							} else {
-								while (i < new_text_length && new_text[i] != 'm') {
-									unowned string cur = new_text.offset (i);
-									var attr = int.parse (cur);
-									if ((attr >= 30 && attr <= 37) || (attr >= 40 && attr <= 47)) {
-										tags += attrs[attr];
-									}
-									// next attribute
-									while (++i < new_text_length && new_text[i] != ';' && new_text[i] != 'm');
-									if (i < new_text_length && new_text[i] == ';') {
-										i++;
-									}
-								}
-								last_start = i+1;
-							}
-						} else if (new_text[i] == '\n') {
-							// reset default charset for each file
-							default_charset = null;
-						}
-					}
-					
-					// write remaining text
-					if (last_start < new_text_length) {
-						string cur = new_text.substring (last_start, new_text_length-last_start);
+		public void insert_text_colored (Gtk.TextIter pos, string new_text, int new_text_length) throws Error {
+			TextTag[] tags = null;
+			int last_start = 0;
+			string? default_charset = null;
+			for (var i=0; i < new_text_length; i++) {
+				// escape char
+				if (new_text[i] == 0x1b) {
+					if (i > last_start) {
+						// write last string with tags
+						string cur = new_text.substring (last_start, i-last_start);
 						uint8[] converted = convert_to_utf8 (cur.data, ref default_charset, null, null);
 
-						Gdk.threads_enter ();
-						try {
-							cancellable.set_error_if_cancelled ();
-							TextIter end;
-							get_end_iter (out end);
-							var offset = end.get_offset ();
-							insert_text (ref end, (string) converted, converted.length);
-							// apply tags
-							TextIter start;
-							get_iter_at_offset (out start, offset);
-							foreach (unowned TextTag tag in tags) {
-								apply_tag (tag, start, end);
-							}
-						} catch (Error e) {
-						} finally {
-							Gdk.threads_leave ();
+						TextIter end;
+						get_end_iter (out end);
+						var offset = end.get_offset ();
+						insert_text (ref end, (string) converted, converted.length);
+						// apply tags
+						TextIter start;
+						get_iter_at_offset (out start, offset);
+						foreach (unowned TextTag tag in tags) {
+							apply_tag (tag, start, end);
 						}
 					}
+							
+					// parse command
+					i++; // [
+					i++;
+					if (i < new_text_length && new_text[i] == 'm') {
+						tags.length = 0;
+						last_start = i+1;
+					} else {
+						while (i < new_text_length && new_text[i] != 'm') {
+							unowned string cur = new_text.offset (i);
+							var attr = int.parse (cur);
+							if ((attr >= 30 && attr <= 37) || (attr >= 40 && attr <= 47)) {
+								tags += attrs[attr];
+							}
+							// next attribute
+							while (++i < new_text_length && new_text[i] != ';' && new_text[i] != 'm');
+							if (i < new_text_length && new_text[i] == ';') {
+								i++;
+							}
+						}
+						last_start = i+1;
+					}
+				} else if (new_text[i] == '\n') {
+					// reset default charset for each file
+					default_charset = null;
+				}
+			}
 					
-					return null;
-			});
+			// write remaining text
+			if (last_start < new_text_length) {
+				string cur = new_text.substring (last_start, new_text_length-last_start);
+				uint8[] converted = convert_to_utf8 (cur.data, ref default_charset, null, null);
+				
+				TextIter end;
+				get_end_iter (out end);
+				var offset = end.get_offset ();
+				insert_text (ref end, (string) converted, converted.length);
+				// apply tags
+				TextIter start;
+				get_iter_at_offset (out start, offset);
+				foreach (unowned TextTag tag in tags) {
+					apply_tag (tag, start, end);
+				}
+			}
 		}
 	}
 	
@@ -161,7 +140,7 @@ namespace Vanubi.UI {
 				}
 				cancellable = new Cancellable ();
 				view.buffer.set_text ("");
-				read_stream.begin (value, cancellable);
+				read_stream.begin (value, Priority.LOW, cancellable);
 			}
 		}
 		
@@ -280,7 +259,7 @@ namespace Vanubi.UI {
 			return base.on_key_press_event (e);
 		}
 		
-		public async void read_stream (InputStream stream, Cancellable cancellable) {
+		public async void read_stream (InputStream stream, int io_priority = GLib.Priority.LOW, Cancellable? cancellable = null) {
 			var buf = view.buffer;
 			TextIter cursor;
 			buf.get_iter_at_mark (out cursor, buf.get_insert ());
@@ -291,7 +270,8 @@ namespace Vanubi.UI {
 				buffer.length--; // trailing zero
 				while (true) {
 					manager.set_status ("Searching...", "grep");
-					var read = yield stream.read_async (buffer, Priority.DEFAULT, cancellable);
+					var read = yield stream.read_async (buffer, io_priority, cancellable);
+					cancellable.set_error_if_cancelled ();
 					if (read == 0) {
 						break;
 					}
@@ -308,12 +288,10 @@ namespace Vanubi.UI {
 						buf.get_iter_at_offset (out cursor, old_offset);
 						buf.place_cursor (cursor);
 					}
-					
+
 					// write
-					cancellable.set_error_if_cancelled ();
 					buffer[read] = '\0';
-					yield ((GrepBuffer) buf).insert_text_colored (iter, (string) buffer, (int) read, cancellable);
-					cancellable.set_error_if_cancelled ();
+					((GrepBuffer) buf).insert_text_colored (iter, (string) buffer, (int) read);
 				}
 				
 				// delete the last line if it's empty
@@ -327,7 +305,9 @@ namespace Vanubi.UI {
 				}
 			} catch (Error e) {
 			} finally {
-				manager.clear_status ("grep");
+				if (this.cancellable == cancellable) {
+					manager.clear_status ("grep");
+				}
 			}
 		}
 	}

@@ -2443,7 +2443,6 @@ namespace Vanubi.UI {
 				return;
 			}
 
-			var git_command = conf.get_global_string ("git_command", "git");
 			InputStream? stream = null;
 
 			var grep_hist = get_entry_history ("grep");
@@ -2471,31 +2470,15 @@ namespace Vanubi.UI {
 						return;
 					}
 
-					int stdout, stderr;
-					try {
-						Process.spawn_async_with_pipes (repo_dir.to_string(),
-										{git_command, "grep", "-inI", "--color", pat},
-										null,
-										SpawnFlags.SEARCH_PATH,
-										null, null, null, out stdout, out stderr);
-					} catch (Error e) {
-						set_status_error (e.message, "repo-grep");
-						return;
-					}
-					stream = new UnixInputStream (stdout, true);
-					bar.stream = stream;
-
-					read_all_async.begin (new UnixInputStream (stderr, true), Priority.DEFAULT, null, (s,r) => {
-							try {
-								var res = read_all_async.end (r);
-								var err = (string) res;
-								err = err.strip ();
-								if (err != "") {
-									set_status_error (err, "repo-grep");
-								}
-							} catch (Error e) {
-								set_status_error (e.message, "repo-grep");
-							}
+					git.grep.begin (repo_dir, pat, (errors) => {
+							set_status_error (errors, "repo-grep");
+					}, Priority.DEFAULT, null, (s,r) => {
+						try {
+							stream = git.grep.end (r);
+							bar.stream = stream;
+						} catch (Error e) {
+							set_status_error (e.message, "repo-grep");
+						}
 					});
 			});
 			bar.aborted.connect (() => {

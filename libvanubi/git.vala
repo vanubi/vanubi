@@ -88,8 +88,39 @@ namespace Vanubi {
 			return status == 0;
 		}
 
-		public void grep () {
-			/* TODO */
+		public async InputStream grep (FileSource dir, string pat, owned Func<string> error_callback, int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) throws Error {
+			int stdout, stderr;
+
+			bool insensitive = pat.down() == pat;
+			
+			var git_command = config.get_global_string ("git_command", "git");
+			Process.spawn_async_with_pipes (dir.local_path,
+											{git_command, "grep", insensitive ? "-inI" : "-nI", "--color", pat},
+											null,
+											SpawnFlags.SEARCH_PATH,
+											null, null, null, out stdout, out stderr);
+			
+			var stream = new UnixInputStream (stdout, true);
+			var err_stream = new UnixInputStream (stderr, true);
+
+			read_all_async.begin (err_stream, io_priority, cancellable, (s,r) => {
+					try {
+						uint8[] errors_data = read_all_async.end (r);
+						if (error_callback != null) {
+							var errors = ((string) errors_data).strip ();
+							if (errors != "") {
+								error_callback (errors);
+							}
+						}
+					} catch (IOError.CANCELLED e) {
+					} catch (Error e) {
+						if (error_callback != null) {
+							error_callback (e.message);
+						}
+					}
+			});
+
+			return stream;
 		}
 		
 		public async string? current_branch (FileSource source, int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) throws Error {
