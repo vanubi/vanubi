@@ -1126,7 +1126,7 @@ namespace Vanubi.UI {
 
 			// no editor reusable, so create one
 			var ed = new Editor (this, conf, source);
-			ed.parent_layout = current_layout;
+			ed.parent_layout = in_layout;
 			ed.view.key_press_event.connect (on_key_press_event);
 			ed.view.scroll_event.connect (on_scroll_event);
 			if (editors.length > 0) {
@@ -2734,7 +2734,7 @@ namespace Vanubi.UI {
 			var layout = ed.parent_layout;
 			var index = layouts.index (layout);
 			var len = (int) layouts.length ();
-			
+
 			index = index+step;
 			if (index < 0) {
 				index = len-1;
