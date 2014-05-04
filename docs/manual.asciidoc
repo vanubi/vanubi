@@ -209,9 +209,20 @@ keywords:[layouts splits views editors files switch tabs manage]
 Vanubi is able to split the window horizontally and vertically with `split-add-bottom` (`C-x 2`) or and `split-add-right` (`C-x 3`), and navigate with `C-j` and `C-l`.
 You can keep this split and switch to the previous layout with `prev-layout` (`C-c C-j`), or the following layout with `next-layout` (`C-c C-l`).
 
-Vanubi always ensures that there is *exactly one* layout with a single editor, that is without splits. Everytime you split from this single-editor layout, a new layout gets created. When joining all the splits in a layout, that layout becomes the single-editor layout.
+Vanubi always ensures that there is _exactly one_ layout with a single editor, that is without splits. Everytime you split from this single-editor layout, a new layout gets created. When joining all the splits in a layout, that layout becomes the single-editor layout.
 
 You can remove a layout with `kill-layout` (`C-c C-k`).
+
+== Git integration
+keywords:[git repository scm vcs integration]
+.Behavior of Vanubi when editing files within a git repository
+
+Vanubi provides basic and useful integration with git by default:
+
+	1. The git gutter on the left side showing what lines have been added/deleted/modified
+	2. The info bar of the file shows the current git branch
+	3. Search through the contents of the git repository with `repo-grep` (`C-x s`)
+	4. Browse and open files that are tracked by git with `repo-open-file` (`C-x f`)
 
 == Shell terminals
 keywords:[compilation shell build projects errors]
