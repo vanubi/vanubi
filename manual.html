@@ -451,8 +451,37 @@ This allows you to open two views for the same file. To navigate among splits, u
 <div class="vareskeywords" style='display:none;'>layouts splits views editors files switch tabs manage</div>
 <div class="paragraph"><div class="title">Switch between layouts of splitted views</div><p>Vanubi is able to split the window horizontally and vertically with <span class="monospaced">split-add-bottom</span> (<span class="monospaced">C-x 2</span>) or and <span class="monospaced">split-add-right</span> (<span class="monospaced">C-x 3</span>), and navigate with <span class="monospaced">C-j</span> and <span class="monospaced">C-l</span>.
 You can keep this split and switch to the previous layout with <span class="monospaced">prev-layout</span> (<span class="monospaced">C-c C-j</span>), or the following layout with <span class="monospaced">next-layout</span> (<span class="monospaced">C-c C-l</span>).</p></div>
-<div class="paragraph"><p>Vanubi always ensures that there is <strong>exactly one</strong> layout with a single editor, that is without splits. Everytime you split from this single-editor layout, a new layout gets created. When joining all the splits in a layout, that layout becomes the single-editor layout.</p></div>
+<div class="paragraph"><p>Vanubi always ensures that there is <em>exactly one</em> layout with a single editor, that is without splits. Everytime you split from this single-editor layout, a new layout gets created. When joining all the splits in a layout, that layout becomes the single-editor layout.</p></div>
 <div class="paragraph"><p>You can remove a layout with <span class="monospaced">kill-layout</span> (<span class="monospaced">C-c C-k</span>).</p></div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="git_integration">Git integration</h2>
+<div class="sectionbody">
+<div class="vareskeywords" style='display:none;'>git repository scm vcs integration</div>
+<div class="paragraph"><div class="title">Behavior of Vanubi when editing files within a git repository</div><p>Vanubi provides basic and useful integration with git by default:</p></div>
+<div class="olist arabic"><ol class="arabic">
+<li>
+<p>
+The git gutter on the left side showing what lines have been added/deleted/modified
+</p>
+</li>
+<li>
+<p>
+The info bar of the file shows the current git branch
+</p>
+</li>
+<li>
+<p>
+Search through the contents of the git repository with <span class="monospaced">repo-grep</span> (<span class="monospaced">C-x s</span>)
+</p>
+</li>
+<li>
+<p>
+Browse and open files that are tracked by git with <span class="monospaced">repo-open-file</span> (<span class="monospaced">C-x f</span>)
+</p>
+</li>
+</ol></div>
 </div>
 </div>
 <div class="sect1">
