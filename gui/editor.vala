@@ -530,7 +530,7 @@ namespace Vanubi.UI {
 					file_loaded = true;
 					update_show_branch ();
 					on_content_changed ();
-					update_read_only ();
+					update_read_only.begin ();
 
 					loading_cancellable = null;
 				}

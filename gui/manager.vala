@@ -24,7 +24,8 @@ namespace Vanubi.UI {
 		/* List of data sources opened. Work on unique DataSource instances. */
 		HashTable<DataSource, DataSource> sources = new HashTable<DataSource, DataSource> (DataSource.hash, DataSource.equal);
 
-		internal KeyManager<Editor> keymanager;
+		internal KeyManager keymanager;
+		internal KeyHandler keyhandler;
 		string last_pipe_command = "";
 		string last_vade_code = "";
 		// Editor selection before calling a command
@@ -74,7 +75,11 @@ namespace Vanubi.UI {
 		public Manager () {
 			conf = new Configuration ();
 			orientation = Orientation.VERTICAL;
-			keymanager = new KeyManager<Editor> (conf, on_command);
+			
+			keymanager = new KeyManager (conf);
+			keymanager.execute_command.connect (on_command);
+			keyhandler = new KeyHandler (keymanager);
+			
 			base_scope = Vade.create_base_scope ();
 			last_session = conf.get_session ();
 			var style_manager = SourceStyleSchemeManager.get_default ();
@@ -747,7 +752,9 @@ namespace Vanubi.UI {
 			selection_end = end.get_offset ();
 		}
 
-		public void on_command (Editor ed, string command, bool use_old_state) {
+		public void on_command (Object subject, string command, bool use_old_state) {
+			var ed = (Editor) subject;
+			
 			if (!use_old_state) {
 				update_selection (ed);
 			}
@@ -1176,29 +1183,15 @@ namespace Vanubi.UI {
 			var sv = (SourceView) w;
 			Editor editor = sv.get_data ("editor");
 			update_selection (editor);
-			var keyval = e.keyval;
-			var modifiers = e.state;
-			
-			if (Gdk.ModifierType.SHIFT_MASK in modifiers || Gdk.ModifierType.LOCK_MASK in modifiers) {
-				if (keyval < 256 && ((char)keyval).isalpha ()) {
-					keyval = ((char)keyval).tolower ();
-				}
-			}
-			
-			modifiers &= Gdk.ModifierType.SHIFT_MASK | Gdk.ModifierType.CONTROL_MASK | Gdk.ModifierType.MOD1_MASK;
-			if (keyval == Gdk.Key.Escape || (keyval == Gdk.Key.g && modifiers == Gdk.ModifierType.CONTROL_MASK)) {
-				// abort
-				clear_status ("keybinding");
+
+			bool is_abort;
+			var res = keyhandler.key_press_event (editor, e, out is_abort);
+			if (is_abort) {
+				clear_status ();
 				abort (editor);
 				return true;
 			}
-			if (keyval in skip_keyvals) {
-				// skip
-				return true;
-			}
-
-			var key = Key (keyval, modifiers);
-			return keymanager.key_press (editor, key);
+			return res;
 		}
 
 		bool on_scroll_event (Widget w, Gdk.EventScroll ev) {

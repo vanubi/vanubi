@@ -60,18 +60,16 @@ namespace Vanubi {
 		}
 	}
 
-	public delegate void KeyDelegate<G> (G subject, string command, bool use_old_state);
-
-	public class KeyManager<G> {
+	public class KeyManager {
 		KeyNode key_root = new KeyNode ();
 		KeyNode current_key;
 		uint key_timeout = 0;
-		KeyDelegate<G> deleg = null;
 
+		public signal void execute_command (Object subject, string command, bool use_old_state);
+		
 		public int timeout { get; set; default = 400; }
 
-		public KeyManager (Configuration conf, owned KeyDelegate<G> deleg) {
-			this.deleg = (owned) deleg;
+		public KeyManager (Configuration conf) {
 			this.timeout = conf.get_global_int ("key_timeout", 400);
 			current_key = key_root;
 		}
@@ -162,7 +160,7 @@ namespace Vanubi {
 			return res;
 		}
 
-		public void flush (G subject) {
+		public void flush (Object subject) {
 			// force running the pending command
 			if (key_timeout != 0) {
 				Source.remove (key_timeout);
@@ -170,12 +168,12 @@ namespace Vanubi {
 			}
 			
 			if (current_key != null && current_key.command != null) {
-				deleg (subject, current_key.command, true);
+				execute_command (subject, current_key.command, true);
 			}
 			current_key = key_root;
 		}
 		
-		public bool key_press (G subject, Key pressed) {
+		public bool key_press (Object subject, Key pressed) {
 			if (key_timeout != 0) {
 				Source.remove (key_timeout);
 				key_timeout = 0;
@@ -188,7 +186,7 @@ namespace Vanubi {
 				var handled = false;
 				current_key = key_root;
 				if (old_key != null && old_key.command != null) {
-					deleg (subject, old_key.command, true);
+					execute_command (subject, old_key.command, true);
 				}
 				if (old_key != key_root) {
 					// this might be a new command, retry from root
@@ -204,14 +202,14 @@ namespace Vanubi {
 							key_timeout = 0;
 							unowned string command = current_key.command;
 							current_key = key_root;
-							deleg (subject, command, true);
+							execute_command (subject, command, true);
 							return false;
 						});
 				}
 			} else {
 				unowned string command = current_key.command;
 				current_key = key_root;
-				deleg (subject, command, false);
+				execute_command (subject, command, false);
 			}
 			return true;
 		}

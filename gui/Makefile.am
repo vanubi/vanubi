@@ -26,6 +26,7 @@ vanubi_VALASOURCES = \
 	grepbar.vala \
 	helpbar.vala \
 	history.vala \
+	keys.vala \
 	layout.vala \
 	main.vala \
 	manager.vala \
