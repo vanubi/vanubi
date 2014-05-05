@@ -1872,10 +1872,13 @@ namespace Vanubi.UI {
 			Error? error = null;
 
 			// prompt for shell command
-			var bar = new EntryBar (last_pipe_command);
+			var pipe_hist = get_entry_history ("pipe");
+			var bar = new EntryBar (pipe_hist.get(0) ?? "");
+			attach_entry_history (bar.entry, pipe_hist);
+
 			bar.activate.connect ((command) => {
+					pipe_hist.add (command);
 					abort (ed);
-					last_pipe_command = command;
 					var filename = ed.source != null ? ed.source.to_string() : "*scratch*";
 					var cmd = command.replace("%f", Shell.quote(filename)).replace("%s", start.get_offset().to_string()).replace("%e", end.get_offset().to_string());
 					var base_file = ed.source.parent as FileSource;
