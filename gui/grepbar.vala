@@ -144,18 +144,18 @@ namespace Vanubi.UI {
 			}
 		}
 		
-		unowned Manager manager;
+		unowned State state;
 		TextView view;
 		ScrolledWindow sw;
 		Cancellable cancellable;
 		DataSource base_source;
 		
-		public GrepBar (Manager manager, Configuration conf, DataSource base_source, string default = "") {
+		public GrepBar (State state, DataSource base_source, string default = "") {
 			base (default);
-			this.manager = manager;
+			this.state = state;
 			this.base_source = base_source;
 			entry.expand = false;
-			view = new GrepView (conf);
+			view = new GrepView (state.config);
 			view.editable = false;
 			view.key_press_event.connect (on_key_press_event);
 			sw = new ScrolledWindow (null, null);
@@ -269,7 +269,7 @@ namespace Vanubi.UI {
 				uint8[] buffer = new uint8[1025];
 				buffer.length--; // trailing zero
 				while (true) {
-					manager.set_status ("Searching...", "grep");
+					state.status.set ("Searching...", "grep");
 					var read = yield stream.read_async (buffer, io_priority, cancellable);
 					cancellable.set_error_if_cancelled ();
 					if (read == 0) {
@@ -306,7 +306,7 @@ namespace Vanubi.UI {
 			} catch (Error e) {
 			} finally {
 				if (this.cancellable == cancellable) {
-					manager.clear_status ("grep");
+					state.status.clear ("grep");
 				}
 			}
 		}

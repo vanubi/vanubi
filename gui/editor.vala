@@ -567,7 +567,7 @@ namespace Vanubi.UI {
 						} catch (IOError.CANCELLED e) {
 							return;
 						} catch (Error e) {
-							manager.set_status_error (e.message, "show-branch");
+							manager.state.status.set (e.message, "show-branch", Status.Type.ERROR);
 							return;
 						}
 
@@ -746,7 +746,7 @@ namespace Vanubi.UI {
 								} catch (IOError.CANCELLED e) {
 									return;
 								} catch (Error e) {
-									manager.set_status_error (e.message, "git-gutter");
+									manager.state.status.set (e.message, "git-gutter", Status.Type.ERROR);
 									return;
 								}
 

@@ -21,7 +21,7 @@ using Gtk;
 
 namespace Vanubi.UI {
 	public class Manager : Grid {
-		State state;
+		public State state;
 		
 		/* List of data sources opened. Work on unique DataSource instances. */
 		HashTable<DataSource, DataSource> sources = new HashTable<DataSource, DataSource> (DataSource.hash, DataSource.equal);
@@ -103,7 +103,6 @@ namespace Vanubi.UI {
 			statusbox.expand = false;
 			statusbox.add (statusbar);
 			add (statusbox);
-			clear_status ();
 
 			// setup languages index
 			lang_index = new StringSearchIndex ();
@@ -628,7 +627,7 @@ namespace Vanubi.UI {
 				remote = new RemoteFileServer (conf);
 				remote.stop ();
 			} catch (Error e) {
-				set_status_error ("Could not start the remote server: "+e.message);
+				state.status.set ("Could not start the remote server: "+e.message, "remote", Status.Type.ERROR);
 			}
 
 			check_remote_file_server ();
@@ -646,7 +645,7 @@ namespace Vanubi.UI {
 					remote.open_file.connect (on_remote_open_file);
 					remote.start ();
 				} catch (Error e) {
-					set_status_error ("Could not start the remote server: "+e.message);
+					state.status.set ("Could not start the remote server: "+e.message, "remote", Status.Type.ERROR);
 				}
 			} else if (!flag && remote != null) {
 				remote.stop ();
@@ -661,18 +660,6 @@ namespace Vanubi.UI {
 			} else {
 				statusbar.get_style_context().add_class ("error");
 			}
-		}
-		
-		public void clear_status (string? context = null) {
-			state.status.clear (context);
-		}
-
-		public void set_status (string msg, string? context = null) {
-			state.status.set (msg, context, Status.Type.NORMAL);
-		}
-
-		public void set_status_error (string msg, string? context = null) {
-			state.status.set (msg, context, Status.Type.ERROR);
 		}
 
 		public Annotated<string>[] get_themes () {
@@ -707,7 +694,7 @@ namespace Vanubi.UI {
 					try {
 						provider.load_from_path (Configuration.VANUBI_DATADIR + "/vanubi/css/%s.css".printf (theme));
 					} catch (Error e) {
-						set_status_error ("Could not load %s css: %s".printf (theme, e.message), "theme");
+						state.status.set ("Could not load %s css: %s".printf (theme, e.message), "theme", Status.Type.ERROR);
 						return false;
 					}
 				}
@@ -717,7 +704,7 @@ namespace Vanubi.UI {
 			var style_manager = SourceStyleSchemeManager.get_default ();
 			var source_style = style_manager.get_scheme (theme);
 			if (source_style == null) {
-				set_status_error ("Sourceview style %s not found".printf (theme));
+				state.status.set ("Sourceview style %s not found".printf (theme), "theme", Status.Type.ERROR);
 				return false;
 			}
 
@@ -826,7 +813,7 @@ namespace Vanubi.UI {
 				try {
 					keyseq = parse_keys (keystring);
 				} catch (Error e) {
-					set_status_error (e.message);
+					state.status.set (e.message, null, Status.Type.ERROR);
 				}
 			}
 
@@ -967,7 +954,7 @@ namespace Vanubi.UI {
 			} catch (IOError.CANCELLED e) {
 				return;
 			} catch (Error e) {
-				set_status_error (e.message);
+				state.status.set (e.message, null, Status.Type.ERROR);
 				return;
 			}
 
@@ -995,7 +982,7 @@ namespace Vanubi.UI {
 				}
 			} catch (IOError.CANCELLED e) {
 			} catch (Error e) {
-				set_status_error (e.message);
+				state.status.set (e.message, null, Status.Type.ERROR);
 			}
 		}
 
@@ -1004,7 +991,7 @@ namespace Vanubi.UI {
 			if (main_box.get_child() == layout_wrapper) {
 				return;
 			}
-			clear_status ();
+			state.status.clear ();
 
 			var parent = (Container) layout_wrapper.get_parent();
 			parent.remove (layout_wrapper);
@@ -1177,7 +1164,7 @@ namespace Vanubi.UI {
 			bool is_abort;
 			var res = keyhandler.key_press_event (editor, e, out is_abort);
 			if (is_abort) {
-				clear_status ();
+				state.status.clear ();
 				abort (editor);
 				return true;
 			}
@@ -1226,7 +1213,7 @@ namespace Vanubi.UI {
 					abort (editor);
 					if (name != "") {
 						save_session (editor, name);
-						set_status ("Session %s saved".printf (name), "sessions");
+						state.status.set ("Session %s saved".printf (name), "sessions");
 					}
 			});
 			bar.aborted.connect (() => { abort (editor); });
@@ -1245,7 +1232,7 @@ namespace Vanubi.UI {
 			}
 
 			if (session == null) {
-				set_status ("Session not found", "sessions");
+				state.status.set ("Session not found", "sessions");
 			} else {
 				/* Load the first file */
 				FileSource? focused_file = null;
@@ -1297,7 +1284,7 @@ namespace Vanubi.UI {
 					if (name != "") {
 						conf.delete_session (name);
 						conf.save ();
-						set_status ("Session %s deleted".printf (name), "sessions");
+						state.status.set ("Session %s deleted".printf (name), "sessions");
 					}
 			});
 			bar.aborted.connect (() => { abort (editor); });
@@ -1310,20 +1297,20 @@ namespace Vanubi.UI {
 			var loc = editor.get_location ();
 			get_start_mark_for_location (loc, editor.view.buffer); // create a TextMark
 			marks.mark (loc);
-			set_status ("Mark saved", "marks");
+			state.status.set ("Mark saved", "marks");
 		}
 
 		void on_unmark (Editor editor) {
 			if (!marks.unmark ()) {
-				set_status ("No mark to be deleted", "marks");
+				state.status.set ("No mark to be deleted", "marks");
 			} else {
-				set_status ("Mark deleted", "marks");
+				state.status.set ("Mark deleted", "marks");
 			}
 		}
 
 		void on_clear_marks (Editor editor) {
 			marks.clear ();
-			set_status ("Marks cleared", "marks");
+			state.status.set ("Marks cleared", "marks");
 		}
 
 		void on_goto_mark (Editor editor, string command) {
@@ -1335,7 +1322,7 @@ namespace Vanubi.UI {
 			}
 
 			if (loc == null) {
-				set_status ("No more marks", "marks");
+				state.status.set ("No more marks", "marks");
 			} else {
 				open_location.begin (editor, loc);
 			}
@@ -1400,7 +1387,7 @@ namespace Vanubi.UI {
 			} catch (IOError.CANCELLED e) {
 			} catch (IOError.NOT_SUPPORTED e) {
 			} catch (Error e) {
-				set_status_error (e.message);
+				state.status.set (e.message, null, Status.Type.ERROR);
 			}
 		}
 
@@ -1500,13 +1487,13 @@ namespace Vanubi.UI {
 					buf.set_modified (false);
 					yield editor.reset_external_changed ();
 				} else {
-					set_status ("Saved as %s".printf (as_source.to_string ()));
+					state.status.set ("Saved as %s".printf (as_source.to_string ()));
 					if (open_as_source) {
 						yield open_source (editor, as_source);
 					}
 				}
 			} catch (Error e) {
-				set_status_error (e.message);
+				state.status.set (e.message, null, Status.Type.ERROR);
 			}
 		}
 
@@ -1822,7 +1809,7 @@ namespace Vanubi.UI {
 						}
 					} catch (IOError.CANCELLED e) {
 					} catch (Error e) {
-						set_status_error (e.message);
+						state.status.set (e.message, null, Status.Type.ERROR);
 					}
 			});
 		}
@@ -1833,9 +1820,9 @@ namespace Vanubi.UI {
 						var output = (string) pipe_shell.end (r);
 						var clipboard = Clipboard.get (Gdk.SELECTION_CLIPBOARD);
 						clipboard.set_text (output, -1);
-						set_status ("Output of command has been copied to clipboard");
+						state.status.set ("Output of command has been copied to clipboard");
 					} catch (Error e) {
-						set_status_error (e.message);
+						state.status.set (e.message, null, Status.Type.ERROR);
 					}
 			});
 		}
@@ -1860,10 +1847,10 @@ namespace Vanubi.UI {
 				buf.place_cursor (iter);
 				ed.view.scroll_mark_onscreen (buf.get_insert ());
 
-				set_status ("Output of command has been replaced into the editor");
+				state.status.set ("Output of command has been replaced into the editor");
 			} catch (IOError.CANCELLED e) {
 			} catch (Error e) {
-				set_status_error (e.message);
+				state.status.set (e.message, null, Status.Type.ERROR);
 			}
 		}
 
@@ -2344,12 +2331,12 @@ namespace Vanubi.UI {
 					var text = val.to_string ();
 					var clipboard = Clipboard.get (Gdk.SELECTION_CLIPBOARD);
 					clipboard.set_text (text, -1);
-					set_status (text, "eval");
+					state.status.set (text, "eval");
 				} else {
-					clear_status ("eval");
+					state.status.clear ("eval");
 				}
 			} catch (Error e) {
-				set_status_error (e.message, "eval");
+				state.status.set (e.message, "eval", Status.Type.ERROR);
 			}
 		}
 
@@ -2395,16 +2382,16 @@ namespace Vanubi.UI {
 			}
 
 			if (no_more_errors) {
-				set_status ("No more errors");
+				state.status.set ("No more errors");
 			} else {
 				var loc = current_error.data;
 				try {
 					var exists = yield loc.source.exists ();
 					if (exists) {
 						open_location.begin (editor, loc);
-						set_status_error (Markup.escape_text (loc.get_data ("error-message")));
+						state.status.set (Markup.escape_text (loc.get_data ("error-message")), null, Status.Type.ERROR);
 					} else {
-						set_status_error ("Source %s not found".printf (loc.source.to_string ()));
+						state.status.set ("Source %s not found".printf (loc.source.to_string ()), null, Status.Type.ERROR);
 					}
 				} catch (Error e) {
 				}
@@ -2428,14 +2415,14 @@ namespace Vanubi.UI {
 			}
 
 			if (repo_dir == null) {
-				set_status ("Not in git repository");
+				state.status.set ("Not in git repository");
 				return;
 			}
 
 			InputStream? stream = null;
 
 			var grep_hist = get_entry_history ("grep");
-			var bar = new GrepBar (this, conf, repo_dir, grep_hist.get(0) ?? "");
+			var bar = new GrepBar (state, repo_dir, grep_hist.get(0) ?? "");
 			attach_entry_history (bar.entry, grep_hist);
 			bar.activate.connect (() => {
 					grep_hist.add (bar.text);
@@ -2446,7 +2433,7 @@ namespace Vanubi.UI {
 					}
 			});
 			bar.changed.connect ((pat) => {
-					clear_status ("repo-grep");
+					state.status.clear ("repo-grep");
 
 					if (stream != null) {
 						try {
@@ -2460,13 +2447,13 @@ namespace Vanubi.UI {
 					}
 
 					git.grep.begin (repo_dir, pat, (errors) => {
-							set_status_error (errors, "repo-grep");
+							state.status.set (errors, "repo-grep", Status.Type.ERROR);
 					}, Priority.DEFAULT, null, (s,r) => {
 						try {
 							stream = git.grep.end (r);
 							bar.stream = stream;
 						} catch (Error e) {
-							set_status_error (e.message, "repo-grep");
+							state.status.set (e.message, "repo-grep", Status.Type.ERROR);
 						}
 					});
 			});
@@ -2497,7 +2484,7 @@ namespace Vanubi.UI {
 			}
 
 			if (repo_dir == null) {
-				set_status ("Not in git repository");
+				state.status.set ("Not in git repository");
 				return;
 			}
 
@@ -2507,7 +2494,7 @@ namespace Vanubi.UI {
 			try {
 				res = (string) yield repo_dir.execute_shell (@"$(git_command) ls-files");
 			} catch (Error e) {
-				set_status_error (e.message, "repo-open-file");
+				state.status.set (e.message, "repo-open-file", Status.Type.ERROR);
 				return;
 			}
 
@@ -2894,9 +2881,9 @@ namespace Vanubi.UI {
 		void on_update_copyright_year (Editor editor, string command) {
 			var vbuf = new UI.Buffer ((SourceView) editor.view);
 			if (update_copyright_year (vbuf)) {
-				set_status ("Copyright year has been updated");
+				state.status.set ("Copyright year has been updated");
 			} else if (command != "autoupdate-copyright-year") {
-				set_status ("No copyright year to update");
+				state.status.set ("No copyright year to update");
 			}
 		}
 
@@ -2905,7 +2892,7 @@ namespace Vanubi.UI {
 			conf.set_global_bool ("autoupdate_copyright_year", autoupdate_copyright_year);
 			conf.save ();
 
-			set_status (autoupdate_copyright_year ? "Enabled" : "Disabled");
+			state.status.set (autoupdate_copyright_year ? "Enabled" : "Disabled");
 		}
 
 		void on_toggle_auto_add_endline (Editor editor) {
@@ -2913,7 +2900,7 @@ namespace Vanubi.UI {
 			conf.set_editor_bool ("auto_add_endline", auto_add_endline);
 			conf.save ();
 
-			set_status (auto_add_endline ? "Enabled" : "Disabled");
+			state.status.set (auto_add_endline ? "Enabled" : "Disabled");
 		}
 
 		void on_toggle_atomic_save (Editor editor) {
@@ -2921,7 +2908,7 @@ namespace Vanubi.UI {
 			conf.set_global_bool ("atomic_file_save", atomic_save);
 			conf.save ();
 
-			set_status (atomic_save ? "Enabled" : "Disabled");
+			state.status.set (atomic_save ? "Enabled" : "Disabled");
 		}
 
 		void on_toggle_indent_mode (Editor editor) {
@@ -2939,13 +2926,13 @@ namespace Vanubi.UI {
 			}
 			
 			buffer.indent_mode = indent_mode;
-			set_status (indent_mode == IndentMode.SPACES ? "Indent with spaces" : "Indent with tabs");
+			state.status.set (indent_mode == IndentMode.SPACES ? "Indent with spaces" : "Indent with tabs");
 		}
 
 		void on_toggle_remote_file_server (Editor editor) {
 			var flag = !conf.get_global_bool ("remote_file_server", true);
 			conf.set_global_bool ("remote_file_server", flag);
-			set_status (flag ? "Enabled" : "Disabled");
+			state.status.set (flag ? "Enabled" : "Disabled");
 			check_remote_file_server ();
 		}
 
@@ -2964,7 +2951,7 @@ namespace Vanubi.UI {
 		void on_toggle_git_gutter (Editor editor) {
 			var val = !conf.get_editor_bool ("git_gutter", true);
 			conf.set_editor_bool ("git_gutter", val);
-			set_status (val ? "Enabled" : "Disabled");
+			state.status.set (val ? "Enabled" : "Disabled");
 			each_editor ((ed) => {
 					ed.on_git_gutter();
 					return true;
@@ -2974,7 +2961,7 @@ namespace Vanubi.UI {
 		void on_toggle_show_branch (Editor editor) {
 			var val = !conf.get_editor_bool ("show_branch", false);
 			conf.set_editor_bool ("show_branch", val);
-			set_status (val ? "Enabled" : "Disabled");
+			state.status.set (val ? "Enabled" : "Disabled");
 			each_editor ((ed) => {
 					ed.update_show_branch ();
 					return true;
@@ -2984,7 +2971,7 @@ namespace Vanubi.UI {
 		void on_toggle_right_margin (Editor editor) {
 			var val = !conf.get_editor_bool ("right_margin", false);
 			conf.set_editor_bool ("right_margin", val);
-			set_status (val ? "Enabled" : "Disabled");
+			state.status.set (val ? "Enabled" : "Disabled");
 			each_editor ((ed) => {
 					ed.update_right_margin ();
 					return true;
@@ -3013,7 +3000,7 @@ namespace Vanubi.UI {
 		void on_toggle_trailing_spaces (Editor editor) {
 			var val = !conf.get_editor_bool ("trailing_spaces", true);
 			conf.set_editor_bool ("trailing_spaces", val);
-			set_status (val ? "Enabled" : "Disabled");
+			state.status.set (val ? "Enabled" : "Disabled");
 			each_editor ((ed) => {
 					ed.on_trailing_spaces ();
 					return true;
@@ -3023,7 +3010,7 @@ namespace Vanubi.UI {
 		void on_toggle_auto_clean_trailing_spaces (Editor editor) {
 			var val = !conf.get_editor_bool ("auto_clean_trailing_spaces", true);
 			conf.set_editor_bool ("auto_clean_trailing_spaces", val);
-			set_status (val ? "Enabled" : "Disabled");
+			state.status.set (val ? "Enabled" : "Disabled");
 		}
 
 		void on_clean_trailing_spaces (Editor editor) {
@@ -3043,7 +3030,7 @@ namespace Vanubi.UI {
 		void on_toggle_show_tabs (Editor editor) {
 			var val = !conf.get_editor_bool ("show_tabs", false);
 			conf.set_editor_bool ("show_tabs", val);
-			set_status (val ? "Enabled" : "Disabled");
+			state.status.set (val ? "Enabled" : "Disabled");
 			each_editor ((ed) => {
 					ed.update_show_tabs ();
 					return true;

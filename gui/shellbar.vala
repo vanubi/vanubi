@@ -92,7 +92,7 @@ namespace Vanubi.UI {
 					if ("\n" in text || "\r" in text) {
 						manager.error_locations = new List<Location> ();
 						manager.current_error = null;
-						manager.clear_status ("errors");
+						manager.state.status.clear ("errors");
 					}
 					
 					// store cwd in config file
@@ -236,7 +236,7 @@ namespace Vanubi.UI {
 										return false; // buffer is shared among editors
 								});
 								manager.error_locations.append (loc);
-								manager.set_status ("Found %u errors".printf (manager.error_locations.length ()), "errors");
+								manager.state.status.set ("Found %u errors".printf (manager.error_locations.length ()), "errors");
 							}
 							
 							b.truncate ();
@@ -245,7 +245,7 @@ namespace Vanubi.UI {
 				}
 			} catch (IOError.CANCELLED e) {
 			} catch (Error e) {
-				manager.set_status_error ("Error while reading pty: %s".printf (e.message), "shell");
+				manager.state.status.set ("Error while reading pty: %s".printf (e.message), "shell", Status.Type.ERROR);
 			}
 		}
 		

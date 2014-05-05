@@ -156,11 +156,11 @@ namespace Vanubi.UI {
 			Regex regex = null;
 			if (is_regex) {
 				try {
-					manager.clear_status ("search");
+					manager.state.status.clear ("search");
 					regex = new Regex (p, RegexCompileFlags.OPTIMIZE, RegexMatchFlags.ANCHORED);
 				} catch (Error e) {
 					// user still writing regex, display an error
-					manager.set_status_error (e.message, "search");
+					manager.state.status.set (e.message, "search", Status.Type.ERROR);
 					return;
 				}
 			}
@@ -176,7 +176,7 @@ namespace Vanubi.UI {
 				}
 				
 				if (iterations >= 10000 && !displayed_searching) {
-					manager.set_status ("Searching...", "search");
+					manager.state.status.set ("Searching...", "search");
 					displayed_searching = true;
 				}
 				
@@ -230,7 +230,7 @@ namespace Vanubi.UI {
 					buf.select_range (iter, subiter);
 					editor.update_old_selection ();
 					editor.view.scroll_to_mark (buf.get_insert (), 0, true, 0.5, 0.5);
-					manager.clear_status ("search");
+					manager.state.status.clear ("search");
 					return;
 				}
 				if (mode == Mode.SEARCH_FORWARD || mode == Mode.REPLACE_FORWARD) {
@@ -239,7 +239,7 @@ namespace Vanubi.UI {
 					iter.backward_char ();
 				}
 			}
-			manager.clear_status ("search");
+			manager.state.status.clear ("search");
 
 			if (mode == Mode.REPLACE_FORWARD || mode == Mode.REPLACE_BACKWARD) {
 				if (replace_box != null) {

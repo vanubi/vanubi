@@ -161,7 +161,7 @@ namespace Vanubi.UI {
 			var modifiers = e.state & (Gdk.ModifierType.SHIFT_MASK | Gdk.ModifierType.CONTROL_MASK);
 			if (capturing) {
 				if (e.keyval == Gdk.Key.Escape || (e.keyval == Gdk.Key.g && modifiers == Gdk.ModifierType.CONTROL_MASK)) {
-					manager.set_status_error ("Cannot bind Escape or C-g");
+					manager.state.status.set ("Cannot bind Escape or C-g", "help", Status.Type.ERROR);
 					capturing = false;
 					Source.remove (capture_timeout);
 					capture_timeout = 0;
@@ -177,7 +177,7 @@ namespace Vanubi.UI {
 			if (e.keyval == Gdk.Key.c && modifiers == Gdk.ModifierType.CONTROL_MASK) {
 				var cmd = completion_box.get_selected_command ();
 				if (cmd == null) {
-					manager.set_status ("No command selected", "help");
+					manager.state.status.set ("No command selected", "help");
 				} else {
 					changing_command = cmd;
 					captured_keys = null;
@@ -190,7 +190,7 @@ namespace Vanubi.UI {
 			if (e.keyval == Gdk.Key.r && modifiers == Gdk.ModifierType.CONTROL_MASK) {
 				var cmd = completion_box.get_selected_command ();
 				if (cmd == null) {
-					manager.set_status ("No command selected", "help");
+					manager.state.status.set ("No command selected", "help");
 				} else {				
 					reset_shortcut (cmd);
 				}

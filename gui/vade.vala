@@ -46,7 +46,7 @@ namespace Vanubi.UI {
 				return NullValue.instance;
 			}
 			var cat = get_string (a, 1);
-			manager.set_status (msg, cat);
+			manager.state.status.set (msg, cat);
 			
 			return NullValue.instance;
 		}
@@ -72,7 +72,7 @@ namespace Vanubi.UI {
 				return NullValue.instance;
 			}
 			var cat = get_string (a, 1);
-			manager.set_status_error (msg, cat);
+			manager.state.status.set (msg, cat, Status.Type.ERROR);
 			
 			return NullValue.instance;
 		}
