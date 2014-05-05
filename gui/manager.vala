@@ -21,6 +21,8 @@ using Gtk;
 
 namespace Vanubi.UI {
 	public class Manager : Grid {
+		State state;
+		
 		/* List of data sources opened. Work on unique DataSource instances. */
 		HashTable<DataSource, DataSource> sources = new HashTable<DataSource, DataSource> (DataSource.hash, DataSource.equal);
 
@@ -49,8 +51,6 @@ namespace Vanubi.UI {
 		public Layout current_layout;
 		EventBox layout_wrapper;
 		StatusBar statusbar;
-		uint status_timeout;
-		string status_context;
 		MarkManager marks = new MarkManager ();
 		int next_stream_id = 1;
 		RemoteFileServer remote = null;
@@ -74,6 +74,9 @@ namespace Vanubi.UI {
 		
 		public Manager () {
 			conf = new Configuration ();
+			state = new State (conf);
+			state.status.changed.connect (on_status_changed);
+			
 			orientation = Orientation.VERTICAL;
 			
 			keymanager = new KeyManager (conf);
@@ -651,33 +654,25 @@ namespace Vanubi.UI {
 			}
 		}
 
-		public void clear_status (string? context = null) {
-			if (context == null || context == status_context) {
-				statusbar.set_markup ("");
+		public void on_status_changed () {
+			statusbar.set_markup (state.status.text);
+			if (state.status.status_type == Status.Type.NORMAL) {
+				statusbar.get_style_context().remove_class ("error");
+			} else {
+				statusbar.get_style_context().add_class ("error");
 			}
-			status_context = null;
+		}
+		
+		public void clear_status (string? context = null) {
+			state.status.clear (context);
 		}
 
 		public void set_status (string msg, string? context = null) {
-			status_context = context;
-			statusbar.set_markup (msg);
-			if (status_timeout > 0) {
-				Source.remove (status_timeout);
-				status_timeout = 0;
-			}
-			statusbar.get_style_context().remove_class ("error");
+			state.status.set (msg, context, Status.Type.NORMAL);
 		}
 
 		public void set_status_error (string msg, string? context = null) {
-			set_status (msg, context);
-			statusbar.get_style_context().add_class ("error");
-		}
-
-		public string get_status (string? context = null) {
-			if (context == null || context == status_context) {
-				return statusbar.get_label ();
-			}
-			return "";
+			state.status.set (msg, context, Status.Type.ERROR);
 		}
 
 		public Annotated<string>[] get_themes () {
@@ -1173,12 +1168,7 @@ namespace Vanubi.UI {
 									 Gdk.Key.Shift_L, Gdk.Key.Shift_R,
 									 Gdk.Key.Alt_L, Gdk.Key.Alt_R};
 		bool on_key_press_event (Widget w, Gdk.EventKey e) {
-			if (status_timeout == 0) {
-				// reset status bar
-				status_timeout = Timeout.add_seconds (conf.get_global_int ("status_timeout", 2), () => {
-						status_timeout = 0; clear_status (); return false;
-				});
-			}
+			state.status.start_timeout ();
 
 			var sv = (SourceView) w;
 			Editor editor = sv.get_data ("editor");
