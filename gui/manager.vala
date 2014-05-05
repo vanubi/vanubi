@@ -1126,7 +1126,7 @@ namespace Vanubi.UI {
 
 			// first find an editor that is not visible in the current layout, so we can reuse it
 			foreach (unowned Editor ed in editors.data) {
-				if (!ed.is_visible() && in_layout == ed.parent_layout) {
+				if (!ed.visible && in_layout == ed.parent_layout) {
 					return ed;
 				}
 			}
@@ -1528,7 +1528,7 @@ namespace Vanubi.UI {
 			
 			GenericArray<Editor> editors = source.get_data ("editors");
 			foreach (var ed in editors.data) {
-				if (ed.is_visible()) {
+				if (ed.visible) {
 					execute_command["kill-buffer"](ed, "kill-buffer");
 				}
 			}
@@ -1579,7 +1579,7 @@ namespace Vanubi.UI {
 
 			bool other_visible = false;
 			foreach (unowned Editor ed in editors.data) {
-				if (editor != ed && (ed.is_visible() || current_layout != ed.parent_layout)) {
+				if (editor != ed && (ed.visible || current_layout != ed.parent_layout)) {
 					other_visible = true;
 					break;
 				}
