@@ -1835,7 +1835,7 @@ namespace Vanubi.UI {
 			bar.activate.connect ((command) => {
 					pipe_hist.add (command);
 					abort (ed);
-					var filename = ed.source != null ? ed.source.to_string() : "*scratch*";
+					var filename = ed.source.to_string ();
 					var cmd = command.replace("%f", Shell.quote(filename)).replace("%s", start.get_offset().to_string()).replace("%e", end.get_offset().to_string());
 					var base_file = ed.source.parent as FileSource;
 					var dir = base_file != null ? base_file : (FileSource) ScratchSource.instance.parent;
