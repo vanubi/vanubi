@@ -52,7 +52,6 @@ namespace Vanubi.UI {
 		EventBox layout_wrapper;
 		StatusBar statusbar;
 		MarkManager marks = new MarkManager ();
-		int next_stream_id = 1;
 		RemoteFileServer remote = null;
 		CssProvider current_css = null;
 
@@ -634,7 +633,7 @@ namespace Vanubi.UI {
 		}
 
 		public string new_stdin_stream_name () {
-			return "*stdin %d*".printf (next_stream_id++);
+			return "*stdin %d*".printf (state.next_stream_id++);
 		}
 
 		void check_remote_file_server () {

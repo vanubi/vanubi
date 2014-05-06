@@ -22,6 +22,8 @@ namespace Vanubi {
 		public Configuration config { get; private set; }
 		public Status status { get; private set; }
 
+		public int next_stream_id { get; set; default = 1; }
+		
 		public State (Configuration config) {
 			this.config = config;
 			this.status = new Status (this);
