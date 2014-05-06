@@ -32,6 +32,7 @@ libvanubi_la_VALASOURCES = \
 	sources/remotefile.vala	\
 	sources/scratch.vala	\
 	sources/stream.vala		\
+	state/errorlocs.vala	\
 	state/state.vala	\
 	state/status.vala	\
 	state/theme.vala	\

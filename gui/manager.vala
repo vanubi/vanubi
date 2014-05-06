@@ -41,8 +41,6 @@ namespace Vanubi.UI {
 
 		public Configuration conf;
 		public Vade.Scope base_scope; // Scope for user global variables
-		public List<Location<string>> error_locations = new List<Location> ();
-		public unowned List<Location<string>> current_error = null;
 		EventBox main_box;
 		public Layout current_layout;
 		EventBox layout_wrapper;
@@ -2320,42 +2318,25 @@ namespace Vanubi.UI {
 		}
 
 		async void goto_error (Editor editor, string cmd) {
-			bool no_more_errors = true;
-			if (error_locations != null) {
-				if (error_locations.length() == 1) {
-					current_error = error_locations;
-					no_more_errors = false;
-				} else if (current_error == null) {
-					current_error = error_locations;
-					no_more_errors = false;
-				} else {
-					if (cmd == "prev-error") {
-						if (current_error.prev != null) {
-							current_error = current_error.prev;
-							no_more_errors = false;
-						}
-					} else {
-						if (current_error.next != null) {
-							current_error = current_error.next;
-							no_more_errors = false;
-						}
-					}
-				}
-			}
-
-			if (no_more_errors) {
-				state.status.set ("No more errors");
+			Location loc;
+			if (cmd == "next-error") {
+				loc = state.error_locations.next_error ();
 			} else {
-				var loc = current_error.data;
+				loc = state.error_locations.prev_error ();
+			}
+			
+			if (loc == null) {
+				state.status.set ("No more errors", "errors");
+			} else {
 				try {
 					var exists = yield loc.source.exists ();
 					if (exists) {
 						open_location.begin (editor, loc);
-						state.status.set (Markup.escape_text (loc.get_data ("error-message")), null, Status.Type.ERROR);
+						state.status.set (Markup.escape_text (loc.get_data ("error-message")), "errors", Status.Type.ERROR);
 					} else {
-						state.status.set ("Source %s not found".printf (loc.source.to_string ()), null, Status.Type.ERROR);
+						state.status.set ("Source %s not found".printf (loc.source.to_string ()), "errors", Status.Type.ERROR);
 					}
-				} catch (Error e) {
+				} catch {
 				}
 			}
 		}

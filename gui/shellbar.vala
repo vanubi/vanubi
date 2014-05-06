@@ -90,9 +90,7 @@ namespace Vanubi.UI {
 
 					// if user executed any other command, clear errors
 					if ("\n" in text || "\r" in text) {
-						manager.error_locations = new List<Location> ();
-						manager.current_error = null;
-						manager.state.status.clear ("errors");
+						manager.state.error_locations.reset ();
 					}
 					
 					// store cwd in config file
@@ -235,8 +233,7 @@ namespace Vanubi.UI {
 										get_end_mark_for_location (loc, ed.view.buffer); // create a TextMark
 										return false; // buffer is shared among editors
 								});
-								manager.error_locations.append (loc);
-								manager.state.status.set ("Found %u errors".printf (manager.error_locations.length ()), "errors");
+								manager.state.error_locations.add (loc);
 							}
 							
 							b.truncate ();

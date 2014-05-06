@@ -22,6 +22,7 @@ namespace Vanubi {
 		public Configuration config { get; private set; }
 		public Status status { get; private set; }
 		public ThemeManager theme_manager { get; private set; }
+		public ErrorLocations error_locations { get; private set; }
 		public StringSearchIndex command_index { get; private set; default = new StringSearchIndex (); }
 		public StringSearchIndex lang_index { get; private set; default = new StringSearchIndex (); }
 		public int next_stream_id { get; set; default = 1; }
@@ -31,6 +32,7 @@ namespace Vanubi {
 			this.config = config;
 			this.status = new Status (this);
 			this.theme_manager = new ThemeManager (this);
+			this.error_locations = new ErrorLocations (this);
 		}
 
 		public string new_stdin_stream_name () {
