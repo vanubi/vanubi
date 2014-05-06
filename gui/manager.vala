@@ -1110,9 +1110,6 @@ namespace Vanubi.UI {
 
 		/* events */
 
-		const uint[] skip_keyvals = {Gdk.Key.Control_L, Gdk.Key.Control_R,
-									 Gdk.Key.Shift_L, Gdk.Key.Shift_R,
-									 Gdk.Key.Alt_L, Gdk.Key.Alt_R};
 		bool on_key_press_event (Widget w, Gdk.EventKey e) {
 			state.status.start_timeout ();
 
