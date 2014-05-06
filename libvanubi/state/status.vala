@@ -18,7 +18,7 @@
  */
 
 namespace Vanubi {
-	public class Status : Object {
+	public class Status {
 		public enum Type {
 			NORMAL,
 			ERROR
@@ -26,11 +26,8 @@ namespace Vanubi {
 		
 		public weak State state;
 
-		[CCode (notify = false)]
 		public string text { get; private set; default = ""; }
-		[CCode (notify = false)]
 		public string context { get; private set; default = null; }
-		[CCode (notify = false)]
 		public Type status_type { get; private set; default = Type.NORMAL; }
 
 		public signal void changed ();

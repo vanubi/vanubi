@@ -22,7 +22,8 @@ namespace Vanubi {
 		public GenericArray<Location> locations = new GenericArray<Location> ();
 		public Location? focused_location;
 	}
-	
+
+	[CCode (cheader_filename = "config.h")]
 	public class Configuration {
 		KeyFile backend;
 		File? file;
@@ -181,6 +182,10 @@ namespace Vanubi {
 			} else {
 				return false;
 			}
+		}
+
+		public unowned string get_compile_datadir () {
+			return Configuration.VANUBI_DATADIR;
 		}
 		
 		public int get_group_int (string group, string key, int default = 0) {

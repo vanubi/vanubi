@@ -3,6 +3,7 @@ NULL =
 AM_CPPFLAGS = \
 	-I$(top_srcdir) \
 	$(LIBVANUBI_CFLAGS) \
+	-DDATADIR=\""$(datadir)"\" \
 	$(NULL)
 
 BUILT_SOURCES = .libvanubi.vala.stamp
@@ -33,6 +34,7 @@ libvanubi_la_VALASOURCES = \
 	sources/stream.vala		\
 	state/state.vala	\
 	state/status.vala	\
+	state/theme.vala	\
 	streams.vala		\
 	util.vala			\
 	vade/ast.vala		\

@@ -81,8 +81,8 @@ namespace Vanubi.UI {
 			base_scope = Vade.create_base_scope ();
 			last_session = conf.get_session ();
 			var style_manager = SourceStyleSchemeManager.get_default ();
-			style_manager.set_search_path (get_styles_search_path ());
-			set_theme (conf.get_global_string ("theme", "zen"));
+			style_manager.set_search_path (state.theme_styles_search_path);
+			set_theme (state.get_theme (conf.get_global_string ("theme", "zen")));
 
 			// placeholder for the editors grid
 			main_box = new EventBox();
@@ -648,49 +648,22 @@ namespace Vanubi.UI {
 			}
 		}
 
-		public Annotated<string>[] get_themes () {
-			Annotated<string>[] themes = { new Annotated<string> ("zen", "zen"),
-										   new Annotated<string> ("tango", "tango") };
-			Dir dir;
-			try {
-				dir = Dir.open ("~/.local/share/vanubi/css");
-			} catch {
-				return themes;
+		public bool set_theme (Theme theme) {
+			/* css */
+			var cssfile = theme.get_css_file ();
+			if (cssfile == null) {
+				state.status.set ("Could not load css file for theme %s".printf (theme.id), "theme", Status.Type.ERROR);
+				return false;
 			}
 			
-			unowned string filename = null;
-			while ((filename = dir.read_name ()) != null) {
-				if (filename.has_suffix (".css")) {
-					var theme = filename.substring (0, filename.length-4);
-					themes += new Annotated<string> (theme, theme);
-				}
-			}
-			return themes;
-		}
-		
-		public bool set_theme (string theme) {
-			/* css */
 			var provider = new CssProvider ();
-			try {
-				provider.load_from_path ("~/.local/share/vanubi/css/%s.css".printf (theme));
-			} catch (Error e) {
-				try {
-					provider.load_from_path ("./data/css/%s.css".printf (theme));
-				} catch (Error e) {
-					try {
-						provider.load_from_path (Configuration.VANUBI_DATADIR + "/vanubi/css/%s.css".printf (theme));
-					} catch (Error e) {
-						state.status.set ("Could not load %s css: %s".printf (theme, e.message), "theme", Status.Type.ERROR);
-						return false;
-					}
-				}
-			}
+			provider.load_from_path (cssfile);
 
 			/* source style */
 			var style_manager = SourceStyleSchemeManager.get_default ();
-			var source_style = style_manager.get_scheme (theme);
+			var source_style = style_manager.get_scheme (theme.id);
 			if (source_style == null) {
-				state.status.set ("Sourceview style %s not found".printf (theme), "theme", Status.Type.ERROR);
+				state.status.set ("Sourceview style %s not found".printf (theme.id), "theme", Status.Type.ERROR);
 				return false;
 			}
 
@@ -2275,14 +2248,14 @@ namespace Vanubi.UI {
 		}
 
 		void on_set_theme (Editor editor) {
-			var themes = get_themes ();
+			var themes = state.get_themes ();
 			
-			var bar = new SimpleCompletionBar<string> ((owned) themes);
+			var bar = new SimpleCompletionBar<Theme> ((owned) themes);
 			bar.activate.connect (() => {
 					abort (editor);
 					var theme = bar.get_choice();
 					if (set_theme (theme)) {
-						conf.set_global_string ("theme", theme);
+						conf.set_global_string ("theme", theme.id);
 					}
 			});
 			bar.aborted.connect (() => { abort (editor); });
