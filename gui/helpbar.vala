@@ -62,9 +62,9 @@ namespace Vanubi.UI {
 		void search (string query) {
 			List<SearchResultItem> result;
 			if (type == Type.COMMAND) {
-				result = manager.command_index.search (query, true);
+				result = manager.state.command_index.search (query, true);
 			} else {
-				result = manager.lang_index.search (query, true);
+				result = manager.state.lang_index.search (query, true);
 			}
 			completion_box.set_docs (result);
 		}

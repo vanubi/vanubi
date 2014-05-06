@@ -42,8 +42,6 @@ namespace Vanubi.UI {
 		public signal void quit ();
 
 		public Configuration conf;
-		public StringSearchIndex command_index;
-		public StringSearchIndex lang_index;
 		public Vade.Scope base_scope; // Scope for user global variables
 		public List<Location<string>> error_locations = new List<Location> ();
 		public unowned List<Location<string>> current_error = null;
@@ -104,23 +102,21 @@ namespace Vanubi.UI {
 			add (statusbox);
 
 			// setup languages index
-			lang_index = new StringSearchIndex ();
 			var lang_manager = SourceLanguageManager.get_default ();
 			foreach (unowned string lang_id in lang_manager.language_ids) {
 				var lang = lang_manager.get_language (lang_id);
-				lang_index.index_document (new StringSearchDocument (lang_id, {lang.name, lang.section}));
+				state.lang_index.index_document (new StringSearchDocument (lang_id, {lang.name, lang.section}));
 			}
 
 			// setup search index synonyms
-			command_index = new StringSearchIndex ();
-			command_index.synonyms["exit"] = "quit";
-			command_index.synonyms["buffer"] = "file";
-			command_index.synonyms["editor"] = "file";
-			command_index.synonyms["switch"] = "change";
-			command_index.synonyms["search"] = "find";
-			command_index.synonyms["toggle"] = "enable";
-			command_index.synonyms["toggle"] = "disable";
-			command_index.synonyms["layout"] = "splits";
+			state.command_index.synonyms["exit"] = "quit";
+			state.command_index.synonyms["buffer"] = "file";
+			state.command_index.synonyms["editor"] = "file";
+			state.command_index.synonyms["switch"] = "change";
+			state.command_index.synonyms["search"] = "find";
+			state.command_index.synonyms["toggle"] = "enable";
+			state.command_index.synonyms["toggle"] = "disable";
+			state.command_index.synonyms["layout"] = "splits";
 
 			// setup commands
 			bind_command ({
@@ -796,7 +792,7 @@ namespace Vanubi.UI {
 			} else {
 				doc = new StringSearchDocument (command, {description});
 			}
-			command_index.index_document (doc);
+			state.command_index.index_document (doc);
 		}
 
 		public void bind_command (owned Key[]? keyseq, string cmd) {

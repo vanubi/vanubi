@@ -21,7 +21,8 @@ namespace Vanubi {
 	public class State {
 		public Configuration config { get; private set; }
 		public Status status { get; private set; }
-
+		public StringSearchIndex command_index { get; private set; default = new StringSearchIndex (); }
+		public StringSearchIndex lang_index { get; private set; default = new StringSearchIndex (); }
 		public int next_stream_id { get; set; default = 1; }
 		
 		public State (Configuration config) {
