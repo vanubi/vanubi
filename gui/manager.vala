@@ -256,20 +256,17 @@ namespace Vanubi.UI {
 			execute_command["prev-editor"].connect (on_switch_editor);
 
 			bind_command ({
-					Key (Gdk.Key.c, Gdk.ModifierType.CONTROL_MASK),
-					Key (Gdk.Key.l, Gdk.ModifierType.CONTROL_MASK) }, "next-layout");
+					Key (Gdk.Key.l, Gdk.ModifierType.SHIFT_MASK | Gdk.ModifierType.CONTROL_MASK) }, "next-layout");
 			index_command ("next-layout", "Move to the next layout", "cycle right splits");
 			execute_command["next-layout"].connect (on_switch_layout);
 
 			bind_command ({
-					Key (Gdk.Key.c, Gdk.ModifierType.CONTROL_MASK),
-					Key (Gdk.Key.j, Gdk.ModifierType.CONTROL_MASK) }, "prev-layout");
+					Key (Gdk.Key.j, Gdk.ModifierType.SHIFT_MASK | Gdk.ModifierType.CONTROL_MASK) }, "prev-layout");
 			index_command ("prev-layout", "Move to the previous layout", "cycle right splits");
 			execute_command["prev-layout"].connect (on_switch_layout);
 
 			bind_command ({
-					Key (Gdk.Key.c, Gdk.ModifierType.CONTROL_MASK),
-					Key (Gdk.Key.k, Gdk.ModifierType.CONTROL_MASK) }, "kill-layout");
+					Key (Gdk.Key.k, Gdk.ModifierType.SHIFT_MASK | Gdk.ModifierType.CONTROL_MASK) }, "kill-layout");
 			index_command ("kill-layout", "Kill the current layout");
 			execute_command["kill-layout"].connect (on_kill_layout);
 			

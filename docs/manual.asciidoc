@@ -207,11 +207,11 @@ keywords:[layouts splits views editors files switch tabs manage]
 .Switch between layouts of splitted views
 
 Vanubi is able to split the window horizontally and vertically with `split-add-bottom` (`C-x 2`) or and `split-add-right` (`C-x 3`), and navigate with `C-j` and `C-l`.
-You can keep this split and switch to the previous layout with `prev-layout` (`C-c C-j`), or the following layout with `next-layout` (`C-c C-l`).
+You can keep this split and switch to the previous layout with `prev-layout` (`C-S-j`), or the following layout with `next-layout` (`C-S-l`).
 
 Vanubi always ensures that there is _exactly one_ layout with a single editor, that is without splits. Everytime you split from this single-editor layout, a new layout gets created. When joining all the splits in a layout, that layout becomes the single-editor layout.
 
-You can remove a layout with `kill-layout` (`C-c C-k`).
+You can remove a layout with `kill-layout` (`C-S-k`).
 
 == Git integration
 keywords:[git repository scm vcs integration]
