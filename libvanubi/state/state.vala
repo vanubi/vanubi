@@ -26,8 +26,8 @@ namespace Vanubi {
 		public StringSearchIndex command_index { get; private set; default = new StringSearchIndex (); }
 		public StringSearchIndex lang_index { get; private set; default = new StringSearchIndex (); }
 		public int next_stream_id { get; set; default = 1; }
+		public HashTable<DataSource, DataSource> sources { get; private set; default = new HashTable<DataSource, DataSource> (DataSource.hash, DataSource.equal); }
 
-		
 		public State (Configuration config) {
 			this.config = config;
 			this.status = new Status (this);

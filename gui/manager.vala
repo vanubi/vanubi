@@ -23,9 +23,6 @@ namespace Vanubi.UI {
 	public class Manager : Grid {
 		public State state;
 		
-		/* List of data sources opened. Work on unique DataSource instances. */
-		HashTable<DataSource, DataSource> sources = new HashTable<DataSource, DataSource> (DataSource.hash, DataSource.equal);
-
 		internal KeyManager keymanager;
 		internal KeyHandler keyhandler;
 		// Editor selection before calling a command
@@ -872,7 +869,7 @@ namespace Vanubi.UI {
 			var source = location.source;
 
 			// first search already opened sources
-			var s = sources[source];
+			var s = state.sources[source];
 			if (s != null) {
 				source = s; // normalize
 
@@ -961,7 +958,7 @@ namespace Vanubi.UI {
 
 		// iterate all data sources and perform the given operation on each of them
 		public bool each_source (Operation<DataSource> op, bool include_scratch = true) {
-			foreach (var source in sources.get_keys ()) {
+			foreach (var source in state.sources.get_keys ()) {
 				if (source is ScratchSource) {
 					if (include_scratch) {
 						if (!op (source)) {
@@ -987,7 +984,7 @@ namespace Vanubi.UI {
 		// iterate all editors of a given source and perform the given operation on each of them
 		public bool each_source_editor (DataSource source, Operation<Editor> op) {
 			unowned GenericArray<Editor> editors;
-			source = sources[source]; // normalize
+			source = state.sources[source]; // normalize
 			if (source == null) {
 				return true;
 			}
@@ -1043,13 +1040,13 @@ namespace Vanubi.UI {
 			
 			// list of editors for the file
 			unowned GenericArray<Editor> editors;
-			var s = sources[source];
+			var s = state.sources[source];
 			if (s == null) {
 				// update lru of all existing containers
 				each_lru ((lru) => { lru.append (source); return true; });
 
 				// this is a new source
-				sources[source] = source;
+				state.sources[source] = source;
 				if (source is FileSource) {
 					conf.cluster.opened_file ((FileSource) source);
 				}
@@ -1471,7 +1468,7 @@ namespace Vanubi.UI {
 			if (!(source is ScratchSource)) { // scratch never dies
 				// update all editor containers
 				each_lru ((lru) => { lru.remove (source); return true; });
-				sources.remove (source);
+				state.sources.remove (source);
 				if (source is FileSource) {
 					conf.cluster.closed_file ((FileSource) source);
 				}
