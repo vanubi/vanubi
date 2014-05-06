@@ -18,6 +18,59 @@
  */
 
 namespace Vanubi {
+	public class ThemeManager {
+		public weak State state;
+		public string[] styles_search_path { get; private set; }
+
+		Theme[] default_themes;
+
+		public ThemeManager (State state) {
+			this.state = state;
+
+			default_themes = new Theme[]{
+				new Theme (state, "zen", "Zen (dark)"),
+				new Theme (state, "tango", "Tango (light)")
+			};
+			
+			styles_search_path = new string[]{ absolute_path("", "~/.local/share/vanubi/styles/"), "./data/styles/", state.config.get_compile_datadir() + "/vanubi/styles/" };
+		}
+
+		public Annotated<Theme>[] get_themes () {
+			Annotated<Theme>[] themes = null;
+			foreach (unowned Theme theme in default_themes) {
+				themes += new Annotated<Theme> (theme.name, theme);
+			}
+			
+			Dir dir;
+			try {
+				dir = Dir.open ("~/.local/share/vanubi/css");
+			} catch {
+				return themes;
+			}
+			
+			unowned string filename = null;
+			while ((filename = dir.read_name ()) != null) {
+				if (filename.has_suffix (".css")) {
+					var themeid = filename.substring (0, filename.length-4);
+					var theme = new Theme (state, themeid, themeid);
+					themes += new Annotated<Theme> (themeid, theme);
+				}
+			}
+			return themes;
+		}
+
+		public Theme? get_theme (string id) {
+			var themes = get_themes ();
+			foreach (unowned Annotated<Theme> theme in themes) {
+				if (theme.obj.id == id) {
+					return theme.obj;
+				}
+			}
+			
+			return null;
+		}
+	}
+	
 	public class Theme {
 		public weak State state;
 		public string id;

@@ -81,8 +81,8 @@ namespace Vanubi.UI {
 			base_scope = Vade.create_base_scope ();
 			last_session = conf.get_session ();
 			var style_manager = SourceStyleSchemeManager.get_default ();
-			style_manager.set_search_path (state.theme_styles_search_path);
-			set_theme (state.get_theme (conf.get_global_string ("theme", "zen")));
+			style_manager.set_search_path (state.theme_manager.styles_search_path);
+			set_theme (state.theme_manager.get_theme (conf.get_global_string ("theme", "zen")));
 
 			// placeholder for the editors grid
 			main_box = new EventBox();
@@ -2248,7 +2248,7 @@ namespace Vanubi.UI {
 		}
 
 		void on_set_theme (Editor editor) {
-			var themes = state.get_themes ();
+			var themes = state.theme_manager.get_themes ();
 			
 			var bar = new SimpleCompletionBar<Theme> ((owned) themes);
 			bar.activate.connect (() => {
