@@ -192,7 +192,7 @@ namespace Vanubi.UI {
 			foreach (unowned string arg in arg_filenames) {
 				Location loc;
 				if (arg == "-") {
-					loc = new Location (new StreamSource (manager.new_stdin_stream_name (), command_line.get_stdin (), DataSource.new_from_string (command_line.get_cwd ())));
+					loc = new Location (new StreamSource (manager.state.new_stdin_stream_name (), command_line.get_stdin (), DataSource.new_from_string (command_line.get_cwd ())));
 				} else if (arg[0] == '+') {
 					// go to line for all the files
 					unowned string line = arg.offset (1);

@@ -623,10 +623,6 @@ namespace Vanubi.UI {
 			check_remote_file_server ();
 		}
 
-		public string new_stdin_stream_name () {
-			return "*stdin %d*".printf (state.next_stream_id++);
-		}
-
 		void check_remote_file_server () {
 			var flag = conf.get_global_bool ("remote_file_server", true);
 			if (flag && remote == null) {

@@ -29,5 +29,9 @@ namespace Vanubi {
 			this.config = config;
 			this.status = new Status (this);
 		}
+
+		public string new_stdin_stream_name () {
+			return "*stdin %d*".printf (next_stream_id++);
+		}
 	}
 }

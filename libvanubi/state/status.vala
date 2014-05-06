@@ -26,11 +26,11 @@ namespace Vanubi {
 		
 		public weak State state;
 
-		[Property (notify = false)]
+		[CCode (notify = false)]
 		public string text { get; private set; default = ""; }
-		[Property (notify = false)]
+		[CCode (notify = false)]
 		public string context { get; private set; default = null; }
-		[Property (notify = false)]
+		[CCode (notify = false)]
 		public Type status_type { get; private set; default = Type.NORMAL; }
 
 		public signal void changed ();
