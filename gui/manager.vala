@@ -28,8 +28,6 @@ namespace Vanubi.UI {
 
 		internal KeyManager keymanager;
 		internal KeyHandler keyhandler;
-		string last_pipe_command = "";
-		string last_vade_code = "";
 		// Editor selection before calling a command
 		int selection_start;
 		int selection_end;
@@ -2339,10 +2337,13 @@ namespace Vanubi.UI {
 		}
 
 		void on_eval_expression (Editor editor) {
-			var bar = new EntryBar (last_vade_code);
+			var vade_hist = get_entry_history ("pipe");
+			var bar = new EntryBar (vade_hist.get(0) ?? "");
+			attach_entry_history (bar.entry, vade_hist);
+
 			bar.activate.connect ((code) => {
+					vade_hist.add (code);
 					abort (editor);
-					last_vade_code = code;
 					eval_expression.begin (editor, code);
 			});
 			bar.aborted.connect (() => { abort (editor); });
