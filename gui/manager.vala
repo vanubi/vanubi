@@ -777,14 +777,9 @@ namespace Vanubi.UI {
 		}
 
 		public History<string> get_entry_history (string name) {
-			History<string>? hist = entry_history_map[name];
-			if (hist == null) {
-				hist = new History<string> (str_equal, conf.get_global_int ("entry_history_limit", 1000));
-				entry_history_map[name] = hist;
-			}
-			return hist;
+			return state.get_named_history (name, state.config.get_global_int ("entry_history_limit", 1000));
 		}			
-		
+
 		public void attach_entry_history (Entry entry, History<string> hist) {
 			new EntryHistory (hist, entry);
 		}

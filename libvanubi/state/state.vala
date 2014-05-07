@@ -29,6 +29,8 @@ namespace Vanubi {
 		public HashTable<DataSource, DataSource> sources { get; private set; default = new HashTable<DataSource, DataSource> (DataSource.hash, DataSource.equal); }
 		public MarkManager marks { get; private set; default = new MarkManager (); }
 
+		HashTable<string, History> named_history_map = new HashTable<string, History> (str_hash, str_equal);
+
 		public State (Configuration config) {
 			this.config = config;
 			this.status = new Status (this);
@@ -39,5 +41,14 @@ namespace Vanubi {
 		public string new_stdin_stream_name () {
 			return "*stdin %d*".printf (next_stream_id++);
 		}
+
+		public History<string> get_named_history (string name, int limit) {
+			History<string>? hist = named_history_map[name];
+			if (hist == null) {
+				hist = new History<string> (str_equal, limit);
+				named_history_map[name] = hist;
+			}
+			return hist;
+		}			
 	}
 }
