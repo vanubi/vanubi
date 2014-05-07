@@ -106,12 +106,12 @@ namespace Vanubi.UI {
 			if (keys.length == 0) {
 				shortcut_label.set_markup ("<b>cleared shortcut for %s</b>".printf (cmd));
 				manager.keymanager.remove_binding (cmd);
-				manager.conf.remove_shortcut (cmd);
+				manager.state.config.remove_shortcut (cmd);
 			} else {
 				var str = keys_to_string (keys);
 				shortcut_label.set_markup ("<b>%s saved as %s</b>".printf (cmd, str));
 				manager.keymanager.rebind_command (keys, cmd);
-				manager.conf.set_shortcut (changing_command, keys_to_string (keys));
+				manager.state.config.set_shortcut (changing_command, keys_to_string (keys));
 			}
 			
 			if (capture_timeout > 0) {
@@ -124,7 +124,7 @@ namespace Vanubi.UI {
 					return false;
 			});
 			
-			manager.conf.save ();
+			manager.state.config.save ();
 			// refresh
 			search (entry.get_text ());
 		}
@@ -133,10 +133,10 @@ namespace Vanubi.UI {
 			var keys = manager.get_default_shortcut (cmd);
 			if (keys.length == 0) {
 				manager.keymanager.remove_binding (cmd);
-				manager.conf.remove_shortcut (cmd);
+				manager.state.config.remove_shortcut (cmd);
 			} else {
 				manager.keymanager.rebind_command (keys, cmd);
-				manager.conf.set_shortcut (changing_command, keys_to_string (keys));
+				manager.state.config.set_shortcut (changing_command, keys_to_string (keys));
 			}
 			shortcut_label.set_markup ("<b>reset shortcut for %s</b>".printf (cmd));
 			
@@ -150,7 +150,7 @@ namespace Vanubi.UI {
 					return false;
 			});
 			
-			manager.conf.save ();
+			manager.state.config.save ();
 			// refresh
 			search (entry.get_text ());
 		}

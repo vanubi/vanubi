@@ -65,31 +65,31 @@ namespace Vanubi.UI {
 			win.title = "Vanubi";
 			win.delete_event.connect (() => { manager.execute_command (manager.current_layout.last_focused_editor, "quit"); return false; });
 			// restore geometry like one of the main window
-			win.move (manager.conf.get_global_int ("window_x"),
-					  manager.conf.get_global_int ("window_y"));
-			win.set_default_size (manager.conf.get_global_int ("window_width", 800),
-								  manager.conf.get_global_int ("window_height", 600));
+			win.move (manager.state.config.get_global_int ("window_x"),
+					  manager.state.config.get_global_int ("window_y"));
+			win.set_default_size (manager.state.config.get_global_int ("window_width", 800),
+								  manager.state.config.get_global_int ("window_height", 600));
 			if (is_main_window) {
 				// store geometry only from main window
 				win.check_resize.connect (() => {
 						int w, h;
 						win.get_size (out w, out h);
-						manager.conf.set_global_int ("window_width", w);
-						manager.conf.set_global_int ("window_height", h);
-						manager.conf.save ();
+						manager.state.config.set_global_int ("window_width", w);
+						manager.state.config.set_global_int ("window_height", h);
+						manager.state.config.save ();
 				});
 				win.configure_event.connect (() => {
 						int x, y;
 						win.get_position (out x, out y);
-						manager.conf.set_global_int ("window_x", x);
-						manager.conf.set_global_int ("window_y", y);
-						manager.conf.save ();
+						manager.state.config.set_global_int ("window_x", x);
+						manager.state.config.set_global_int ("window_y", y);
+						manager.state.config.save ();
 						return false;
 				});
 				
 				// global keybinding
 				Keybinder.init ();
-				Keybinder.bind (manager.conf.get_global_string ("global_keybinding", "<Ctrl><Mod1>v"), () => { focus_window (win, Keybinder.get_current_event_time ()); });
+				Keybinder.bind (manager.state.config.get_global_string ("global_keybinding", "<Ctrl><Mod1>v"), () => { focus_window (win, Keybinder.get_current_event_time ()); });
 			}
 			try {
 				win.icon = new Gdk.Pixbuf.from_file("./data/vanubi.png");

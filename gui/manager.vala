@@ -36,7 +36,6 @@ namespace Vanubi.UI {
 
 		public signal void quit ();
 
-		public Configuration conf;
 		public Vade.Scope base_scope; // Scope for user global variables
 		EventBox main_box;
 		public Layout current_layout;
@@ -62,7 +61,7 @@ namespace Vanubi.UI {
 		List<Layout> layouts = null;
 		
 		public Manager () {
-			conf = new Configuration ();
+			var conf = new Configuration ();
 			state = new State (conf);
 			state.status.changed.connect (on_status_changed);
 			
@@ -73,10 +72,10 @@ namespace Vanubi.UI {
 			keyhandler = new KeyHandler (keymanager);
 			
 			base_scope = Vade.create_base_scope ();
-			last_session = conf.get_session ();
+			last_session = state.config.get_session ();
 			var style_manager = SourceStyleSchemeManager.get_default ();
 			style_manager.set_search_path (state.theme_manager.styles_search_path);
-			set_theme (state.theme_manager.get_theme (conf.get_global_string ("theme", "zen")));
+			set_theme (state.theme_manager.get_theme (state.config.get_global_string ("theme", "zen")));
 
 			// placeholder for the editors grid
 			main_box = new EventBox();
@@ -618,10 +617,10 @@ namespace Vanubi.UI {
 		}
 
 		void check_remote_file_server () {
-			var flag = conf.get_global_bool ("remote_file_server", true);
+			var flag = state.config.get_global_bool ("remote_file_server", true);
 			if (flag && remote == null) {
 				try {
-					remote = new RemoteFileServer (conf);
+					remote = new RemoteFileServer (state.config);
 					remote.open_file.connect (on_remote_open_file);
 					remote.start ();
 				} catch (Error e) {
@@ -761,7 +760,7 @@ namespace Vanubi.UI {
 			}
 
 			// get a customized shortcut from the config
-			var keystring = conf.get_shortcut (cmd);
+			var keystring = state.config.get_shortcut (cmd);
 			if (keystring != null) {
 				try {
 					keyseq = parse_keys (keystring);
@@ -1042,7 +1041,7 @@ namespace Vanubi.UI {
 				// this is a new source
 				state.sources[source] = source;
 				if (source is FileSource) {
-					conf.cluster.opened_file ((FileSource) source);
+					state.config.cluster.opened_file ((FileSource) source);
 				}
 				var etors = new GenericArray<Editor> ();
 				editors = etors;
@@ -1062,7 +1061,7 @@ namespace Vanubi.UI {
 			}
 
 			// no editor reusable, so create one
-			var ed = new Editor (this, conf, source);
+			var ed = new Editor (this, state.config, source);
 			ed.parent_layout = in_layout;
 			ed.view.key_press_event.connect (on_key_press_event);
 			ed.view.scroll_event.connect (on_scroll_event);
@@ -1093,8 +1092,8 @@ namespace Vanubi.UI {
 					return true;
 			});
 			session.focused_location = ed.get_location ();
-			conf.save_session (session, name);
-			conf.save ();
+			state.config.save_session (session, name);
+			state.config.save ();
 		}
 
 		/* events */
@@ -1127,8 +1126,8 @@ namespace Vanubi.UI {
 					size--;
 				}
 				sv.override_font (Pango.FontDescription.from_string ("Monospace %d".printf (size)));
-				conf.set_editor_int ("font_size", size);
-				conf.save ();
+				state.config.set_editor_int ("font_size", size);
+				state.config.save ();
 				return true;
 			}
 			return false;
@@ -1147,7 +1146,7 @@ namespace Vanubi.UI {
 		}
 
 		void on_save_session (Editor editor) {
-			var sessions = conf.get_sessions ();
+			var sessions = state.config.get_sessions ();
 			var annotated = new Annotated<string>[0];
 			foreach (unowned string session in sessions) {
 				annotated += new Annotated<string> (session, session);
@@ -1173,7 +1172,7 @@ namespace Vanubi.UI {
 			if (name == "default") {
 				session = last_session;
 			} else {
-				session = conf.get_session (name);
+				session = state.config.get_session (name);
 			}
 
 			if (session == null) {
@@ -1195,7 +1194,7 @@ namespace Vanubi.UI {
 		}
 
 		void on_restore_session (Editor editor) {
-			var sessions = conf.get_sessions ();
+			var sessions = state.config.get_sessions ();
 			var annotated = new Annotated<string>[0];
 			foreach (unowned string session in sessions) {
 				annotated += new Annotated<string> (session, session);
@@ -1216,7 +1215,7 @@ namespace Vanubi.UI {
 		}
 
 		void on_delete_session (Editor editor) {
-			var sessions = conf.get_sessions ();
+			var sessions = state.config.get_sessions ();
 			var annotated = new Annotated<string>[0];
 			foreach (unowned string session in sessions) {
 				annotated += new Annotated<string> (session, session);
@@ -1227,8 +1226,8 @@ namespace Vanubi.UI {
 					abort (editor);
 					var name = bar.get_choice ();
 					if (name != "") {
-						conf.delete_session (name);
-						conf.save ();
+						state.config.delete_session (name);
+						state.config.save ();
 						state.status.set ("Session %s deleted".printf (name), "sessions");
 					}
 			});
@@ -1284,11 +1283,11 @@ namespace Vanubi.UI {
 							((SourceBuffer) ed.view.buffer).set_language (lang);
 						}
 						if (editor.source is FileSource) {
-							conf.set_file_string ((FileSource) editor.source, "language", lang_id);
+							state.config.set_file_string ((FileSource) editor.source, "language", lang_id);
 						}
 					} else {
 						if (editor.source is FileSource) {
-							conf.remove_file_key ((FileSource) editor.source, "language");
+							state.config.remove_file_key ((FileSource) editor.source, "language");
 						}
 					}
 			});
@@ -1417,7 +1416,7 @@ namespace Vanubi.UI {
 				return;
 			}
 
-			if (conf.get_global_bool ("autoupdate_copyright_year")) {
+			if (state.config.get_global_bool ("autoupdate_copyright_year")) {
 				execute_command["update-copyright-year"] (editor, "autoupdate-copyright-year");
 			}
 
@@ -1427,7 +1426,7 @@ namespace Vanubi.UI {
 			string text = buf.get_text (start, end, false);
 
 			try {
-				yield as_source.write (text.data, conf.get_global_bool ("atomic_file_save", true));
+				yield as_source.write (text.data, state.config.get_global_bool ("atomic_file_save", true));
 				if (as_source.equal (editor.source)) {
 					buf.set_modified (false);
 					yield editor.reset_external_changed ();
@@ -1464,7 +1463,7 @@ namespace Vanubi.UI {
 				each_lru ((lru) => { lru.remove (source); return true; });
 				state.sources.remove (source);
 				if (source is FileSource) {
-					conf.cluster.closed_file ((FileSource) source);
+					state.config.cluster.closed_file ((FileSource) source);
 				}
 			}
 
@@ -1561,13 +1560,13 @@ namespace Vanubi.UI {
 				return;
 			}
 			
-			var val = conf.get_file_int(editor.source, "tab_width", 4);
+			var val = state.config.get_file_int(editor.source, "tab_width", 4);
 			var bar = new EntryBar (val.to_string());
 			bar.activate.connect ((text) => {
 					abort (editor);
 					int newval = int.parse (text);
-					conf.set_file_int(editor.source, "tab_width", newval);
-					conf.save ();
+					state.config.set_file_int(editor.source, "tab_width", newval);
+					state.config.save ();
 					((SourceView) editor.view).tab_width = newval;
 			});
 			bar.aborted.connect (() => { abort (editor); });
@@ -1577,12 +1576,12 @@ namespace Vanubi.UI {
 		}
 
 		void on_set_shell_scrollback (Editor editor) {
-			var val = conf.get_global_int ("shell_scrollback", 65535);
+			var val = state.config.get_global_int ("shell_scrollback", 65535);
 			var bar = new EntryBar (val.to_string());
 			bar.activate.connect ((text) => {
 					abort (editor);
-					conf.set_global_int("shell_scrollback", int.parse(text));
-					conf.save ();
+					state.config.set_global_int("shell_scrollback", int.parse(text));
+					state.config.save ();
 			});
 			bar.aborted.connect (() => { abort (editor); });
 			add_overlay (bar);
@@ -1693,7 +1692,7 @@ namespace Vanubi.UI {
 
 			// hide the window to fool the user, but we want to wait for writing the configuration bits
 			hide ();
-			yield conf.save_immediate ();
+			yield state.config.save_immediate ();
 			quit ();
 		}
 
@@ -2241,7 +2240,7 @@ namespace Vanubi.UI {
 					abort (editor);
 					var theme = bar.get_choice();
 					if (set_theme (theme)) {
-						conf.set_global_string ("theme", theme.id);
+						state.config.set_global_string ("theme", theme.id);
 					}
 			});
 			bar.aborted.connect (() => { abort (editor); });
@@ -2341,7 +2340,7 @@ namespace Vanubi.UI {
 				return;
 			}
 
-			Git git = new Git (conf);
+			Git git = new Git (state.config);
 			FileSource repo_dir = null;
 			try {
 				repo_dir = yield git.get_repo ((FileSource) editor.source.parent);
@@ -2410,7 +2409,7 @@ namespace Vanubi.UI {
 				return;
 			}
 
-			Git git = new Git (conf);
+			Git git = new Git (state.config);
 			FileSource repo_dir = null;
 			try {
 				repo_dir = yield git.get_repo (parent);
@@ -2422,7 +2421,7 @@ namespace Vanubi.UI {
 				return;
 			}
 
-			var git_command = conf.get_global_string ("git_command", "git");
+			var git_command = state.config.get_global_string ("git_command", "git");
 
 			string res;
 			try {
@@ -2822,25 +2821,25 @@ namespace Vanubi.UI {
 		}
 
 		void on_toggle_autoupdate_copyright_year (Editor editor) {
-			var autoupdate_copyright_year = !conf.get_global_bool ("autoupdate_copyright_year");
-			conf.set_global_bool ("autoupdate_copyright_year", autoupdate_copyright_year);
-			conf.save ();
+			var autoupdate_copyright_year = !state.config.get_global_bool ("autoupdate_copyright_year");
+			state.config.set_global_bool ("autoupdate_copyright_year", autoupdate_copyright_year);
+			state.config.save ();
 
 			state.status.set (autoupdate_copyright_year ? "Enabled" : "Disabled");
 		}
 
 		void on_toggle_auto_add_endline (Editor editor) {
-			var auto_add_endline = !conf.get_editor_bool ("auto_add_endline");
-			conf.set_editor_bool ("auto_add_endline", auto_add_endline);
-			conf.save ();
+			var auto_add_endline = !state.config.get_editor_bool ("auto_add_endline");
+			state.config.set_editor_bool ("auto_add_endline", auto_add_endline);
+			state.config.save ();
 
 			state.status.set (auto_add_endline ? "Enabled" : "Disabled");
 		}
 
 		void on_toggle_atomic_save (Editor editor) {
-			var atomic_save = !conf.get_global_bool ("atomic_file_save", true);
-			conf.set_global_bool ("atomic_file_save", atomic_save);
-			conf.save ();
+			var atomic_save = !state.config.get_global_bool ("atomic_file_save", true);
+			state.config.set_global_bool ("atomic_file_save", atomic_save);
+			state.config.save ();
 
 			state.status.set (atomic_save ? "Enabled" : "Disabled");
 		}
@@ -2855,8 +2854,8 @@ namespace Vanubi.UI {
 			}
 
 			if (!(editor.source is ScratchSource)) {
-				conf.set_file_enum<IndentMode> (editor.source, "indent_mode", indent_mode);
-				conf.save ();
+				state.config.set_file_enum<IndentMode> (editor.source, "indent_mode", indent_mode);
+				state.config.save ();
 			}
 			
 			buffer.indent_mode = indent_mode;
@@ -2864,8 +2863,8 @@ namespace Vanubi.UI {
 		}
 
 		void on_toggle_remote_file_server (Editor editor) {
-			var flag = !conf.get_global_bool ("remote_file_server", true);
-			conf.set_global_bool ("remote_file_server", flag);
+			var flag = !state.config.get_global_bool ("remote_file_server", true);
+			state.config.set_global_bool ("remote_file_server", flag);
 			state.status.set (flag ? "Enabled" : "Disabled");
 			check_remote_file_server ();
 		}
@@ -2883,8 +2882,8 @@ namespace Vanubi.UI {
 		}
 
 		void on_toggle_git_gutter (Editor editor) {
-			var val = !conf.get_editor_bool ("git_gutter", true);
-			conf.set_editor_bool ("git_gutter", val);
+			var val = !state.config.get_editor_bool ("git_gutter", true);
+			state.config.set_editor_bool ("git_gutter", val);
 			state.status.set (val ? "Enabled" : "Disabled");
 			each_editor ((ed) => {
 					ed.on_git_gutter();
@@ -2893,8 +2892,8 @@ namespace Vanubi.UI {
 		}
 
 		void on_toggle_show_branch (Editor editor) {
-			var val = !conf.get_editor_bool ("show_branch", false);
-			conf.set_editor_bool ("show_branch", val);
+			var val = !state.config.get_editor_bool ("show_branch", false);
+			state.config.set_editor_bool ("show_branch", val);
 			state.status.set (val ? "Enabled" : "Disabled");
 			each_editor ((ed) => {
 					ed.update_show_branch ();
@@ -2903,8 +2902,8 @@ namespace Vanubi.UI {
 		}
 
 		void on_toggle_right_margin (Editor editor) {
-			var val = !conf.get_editor_bool ("right_margin", false);
-			conf.set_editor_bool ("right_margin", val);
+			var val = !state.config.get_editor_bool ("right_margin", false);
+			state.config.set_editor_bool ("right_margin", val);
 			state.status.set (val ? "Enabled" : "Disabled");
 			each_editor ((ed) => {
 					ed.update_right_margin ();
@@ -2913,12 +2912,12 @@ namespace Vanubi.UI {
 		}
 
 		void on_set_right_margin_column (Editor editor) {
-			var val = conf.get_editor_int("right_margin_column", 80);
+			var val = state.config.get_editor_int("right_margin_column", 80);
 			var bar = new EntryBar (val.to_string());
 			bar.activate.connect ((text) => {
 					abort (editor);
-					conf.set_editor_int("right_margin_column", int.parse(text));
-					conf.save ();
+					state.config.set_editor_int("right_margin_column", int.parse(text));
+					state.config.save ();
 
 					each_editor ((ed) => {
 							ed.update_right_margin ();
@@ -2932,8 +2931,8 @@ namespace Vanubi.UI {
 		}
 
 		void on_toggle_trailing_spaces (Editor editor) {
-			var val = !conf.get_editor_bool ("trailing_spaces", true);
-			conf.set_editor_bool ("trailing_spaces", val);
+			var val = !state.config.get_editor_bool ("trailing_spaces", true);
+			state.config.set_editor_bool ("trailing_spaces", val);
 			state.status.set (val ? "Enabled" : "Disabled");
 			each_editor ((ed) => {
 					ed.on_trailing_spaces ();
@@ -2942,8 +2941,8 @@ namespace Vanubi.UI {
 		}
 
 		void on_toggle_auto_clean_trailing_spaces (Editor editor) {
-			var val = !conf.get_editor_bool ("auto_clean_trailing_spaces", true);
-			conf.set_editor_bool ("auto_clean_trailing_spaces", val);
+			var val = !state.config.get_editor_bool ("auto_clean_trailing_spaces", true);
+			state.config.set_editor_bool ("auto_clean_trailing_spaces", val);
 			state.status.set (val ? "Enabled" : "Disabled");
 		}
 
@@ -2962,8 +2961,8 @@ namespace Vanubi.UI {
 		}
 
 		void on_toggle_show_tabs (Editor editor) {
-			var val = !conf.get_editor_bool ("show_tabs", false);
-			conf.set_editor_bool ("show_tabs", val);
+			var val = !state.config.get_editor_bool ("show_tabs", false);
+			state.config.set_editor_bool ("show_tabs", val);
 			state.status.set (val ? "Enabled" : "Disabled");
 			each_editor ((ed) => {
 					ed.update_show_tabs ();

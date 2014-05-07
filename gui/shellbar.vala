@@ -57,7 +57,7 @@ namespace Vanubi.UI {
 		public ShellBar (Manager manager, Editor editor) {
 			this.manager = manager;
 			this.editor = editor;
-			this.config = manager.conf;
+			this.config = manager.state.config;
 
 			init ();
 		}
