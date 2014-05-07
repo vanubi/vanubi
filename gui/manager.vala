@@ -42,7 +42,6 @@ namespace Vanubi.UI {
 		public Layout current_layout;
 		EventBox layout_wrapper;
 		StatusBar statusbar;
-		MarkManager marks = new MarkManager ();
 		RemoteFileServer remote = null;
 		CssProvider current_css = null;
 
@@ -846,7 +845,7 @@ namespace Vanubi.UI {
 
 			// reload user marks
 			Idle.add (() => {
-					foreach (var loc in marks.list ()) {
+					foreach (var loc in state.marks.list ()) {
 						if (loc.source != null) {
 							each_source_editor (loc.source, (e) => {
 									loc.set_data ("start-mark", null);
@@ -1247,12 +1246,12 @@ namespace Vanubi.UI {
 		void on_mark (Editor editor) {
 			var loc = editor.get_location ();
 			get_start_mark_for_location (loc, editor.view.buffer); // create a TextMark
-			marks.mark (loc);
+			state.marks.mark (loc);
 			state.status.set ("Mark saved", "marks");
 		}
 
 		void on_unmark (Editor editor) {
-			if (!marks.unmark ()) {
+			if (!state.marks.unmark ()) {
 				state.status.set ("No mark to be deleted", "marks");
 			} else {
 				state.status.set ("Mark deleted", "marks");
@@ -1260,16 +1259,16 @@ namespace Vanubi.UI {
 		}
 
 		void on_clear_marks (Editor editor) {
-			marks.clear ();
+			state.marks.clear ();
 			state.status.set ("Marks cleared", "marks");
 		}
 
 		void on_goto_mark (Editor editor, string command) {
 			Location? loc;
 			if (command == "next-mark") {
-				loc = marks.next_mark ();
+				loc = state.marks.next_mark ();
 			} else {
-				loc = marks.prev_mark ();
+				loc = state.marks.prev_mark ();
 			}
 
 			if (loc == null) {

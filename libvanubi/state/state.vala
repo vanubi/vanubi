@@ -25,8 +25,9 @@ namespace Vanubi {
 		public ErrorLocations error_locations { get; private set; }
 		public StringSearchIndex command_index { get; private set; default = new StringSearchIndex (); }
 		public StringSearchIndex lang_index { get; private set; default = new StringSearchIndex (); }
-		public int next_stream_id { get; set; default = 1; }
+		public int next_stream_id { get; private set; default = 1; }
 		public HashTable<DataSource, DataSource> sources { get; private set; default = new HashTable<DataSource, DataSource> (DataSource.hash, DataSource.equal); }
+		public MarkManager marks { get; private set; default = new MarkManager (); }
 
 		public State (Configuration config) {
 			this.config = config;
