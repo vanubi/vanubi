@@ -28,7 +28,8 @@ namespace Vanubi {
 		public int next_stream_id { get; private set; default = 1; }
 		public HashTable<DataSource, DataSource> sources { get; private set; default = new HashTable<DataSource, DataSource> (DataSource.hash, DataSource.equal); }
 		public MarkManager marks { get; private set; default = new MarkManager (); }
-
+		public LayoutManager layout_manager { get; private set; default = new LayoutManager (); }
+		
 		HashTable<string, History> named_history_map = new HashTable<string, History> (str_hash, str_equal);
 
 		public State (Configuration config) {
@@ -49,6 +50,6 @@ namespace Vanubi {
 				named_history_map[name] = hist;
 			}
 			return hist;
-		}			
+		}
 	}
 }

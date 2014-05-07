@@ -17,6 +17,7 @@ libvanubi_la_VALASOURCES = \
 	config.vala 		\
 	comment.vala 		\
 	completion.vala		\
+	editor.vala			\
 	filecluster.vala 	\
 	files.vala			\
 	git.vala			\
@@ -33,6 +34,7 @@ libvanubi_la_VALASOURCES = \
 	sources/scratch.vala	\
 	sources/stream.vala		\
 	state/errorlocs.vala	\
+	state/layout.vala	\
 	state/state.vala	\
 	state/status.vala	\
 	state/theme.vala	\

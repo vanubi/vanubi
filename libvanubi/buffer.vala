@@ -18,6 +18,9 @@
  */
 namespace Vanubi {
 	public abstract class Buffer {
+		/* Whether this buffer is relative to a data source */
+		public DataSource? source { get; protected set; }
+
 		public abstract int tab_width { get; set; }
 		public abstract IndentMode indent_mode { get; set; }
 		public abstract BufferIter line_start (int line);
