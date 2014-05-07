@@ -56,8 +56,6 @@ namespace Vanubi.UI {
 
 		HashTable<string, KeysWrapper> default_shortcuts = new HashTable<string, KeysWrapper> (str_hash, str_equal);
 
-		HashTable<string, History> entry_history_map = new HashTable<string, History> (str_hash, str_equal);
-
 		List<Layout> layouts = null;
 		
 		public Manager () {
