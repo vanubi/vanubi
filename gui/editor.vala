@@ -204,10 +204,10 @@ namespace Vanubi.UI {
 		Git git;
 		TrailingSpaces? trailsp = null;
 
-		public Editor (Manager manager, Configuration conf, DataSource source) {
+		public Editor (Manager manager, DataSource source) {
 			this.manager = manager;
 			this.source = source;
-			this.conf = conf;
+			this.conf = manager.state.config;
 			orientation = Orientation.VERTICAL;
 			expand = true;
 

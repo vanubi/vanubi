@@ -1059,7 +1059,7 @@ namespace Vanubi.UI {
 			}
 
 			// no editor reusable, so create one
-			var ed = new Editor (this, state.config, source);
+			var ed = new Editor (this, source);
 			ed.parent_layout = in_layout;
 			ed.view.key_press_event.connect (on_key_press_event);
 			ed.view.scroll_event.connect (on_scroll_event);
