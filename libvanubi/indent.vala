@@ -204,7 +204,7 @@ namespace Vanubi {
 			// done, fi in bash
 			// TODO: move to Indent_Shell
 			var text = buf.line_text(line).strip ();
-			if (text == "done" || text == "fi" || text == "else") {
+			if (text == "done" || text == "fi" || text == "else" || text == "elif") {
 				new_indent -= tab_width;
 			}
 			
