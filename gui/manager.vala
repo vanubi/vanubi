@@ -2074,23 +2074,30 @@ namespace Vanubi.UI {
 		void on_delete_char_forward (Editor ed) {
 			TextIter insert_iter;
 			var buf = (SourceBuffer) ed.view.buffer;
-			buf.get_iter_at_mark (out insert_iter, buf.get_insert ());
-
-			var next_iter = insert_iter;
-			next_iter.forward_char ();
-			buf.delete (ref insert_iter, ref next_iter);
+			if (buf.has_selection) {
+				buf.delete_selection (false, false);
+			} else {
+				// select the next char and delete
+				buf.begin_user_action ();
+				ed.view.move_cursor (MovementStep.LOGICAL_POSITIONS, 1, true);
+				buf.delete_selection (false, false);
+				buf.end_user_action ();
+			}
 		}
 
 		void on_delete_word_forward (Editor ed) {
 			// first unselect any currently selected text
 			TextIter insert;
 			var buf = ed.view.buffer;
-			buf.get_iter_at_mark (out insert, buf.get_insert ());
-			buf.place_cursor (insert);
-
-			// select the next word and delete
-			ed.view.move_cursor (MovementStep.WORDS, 1, true);
-			buf.delete_selection (false, false);
+			if (buf.has_selection) {
+				buf.delete_selection (false, false);
+			} else {
+				// select the next word and delete
+				buf.begin_user_action ();
+				ed.view.move_cursor (MovementStep.WORDS, 1, true);
+				buf.delete_selection (false, false);
+				buf.end_user_action ();
+			}
 		}
 
 		void on_delete_white_backward (Editor ed) {
