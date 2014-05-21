@@ -217,8 +217,8 @@ namespace Vanubi.UI {
 			
 			bind_command ({
 					Key (Gdk.Key.x, Gdk.ModifierType.CONTROL_MASK),
-						Key (Gdk.Key.b, 0)},
-				"switch-buffer");
+					Key (Gdk.Key.n, 0)},
+			"switch-buffer");
 			index_command ("switch-buffer", "Switch current buffer with another buffer");
 			execute_command["switch-buffer"].connect (on_switch_buffer);
 
