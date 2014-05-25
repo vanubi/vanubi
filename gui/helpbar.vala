@@ -155,8 +155,6 @@ namespace Vanubi.UI {
 			search (entry.get_text ());
 		}
 		
-		const uint[] skip_keyvals = {Gdk.Key.Control_L, Gdk.Key.Control_R, Gdk.Key.Shift_L, Gdk.Key.Shift_R};
-		
 		protected override bool on_key_press_event (Gdk.EventKey e) {
 			var modifiers = e.state & (Gdk.ModifierType.SHIFT_MASK | Gdk.ModifierType.CONTROL_MASK);
 			if (capturing) {
@@ -165,7 +163,7 @@ namespace Vanubi.UI {
 					capturing = false;
 					Source.remove (capture_timeout);
 					capture_timeout = 0;
-				} else if (e.keyval in skip_keyvals) {
+				} else if (e.keyval in KeyHandler.skip_keyvals) {
 					// skip
 				} else {
 					captured_keys += Key (e.keyval, modifiers);

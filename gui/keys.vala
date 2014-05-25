@@ -29,9 +29,9 @@ namespace Vanubi.UI {
 			this.keymanager = keymanager;
 		}
 
-		static const uint[] skip_keyvals = {Gdk.Key.Control_L, Gdk.Key.Control_R,
-											Gdk.Key.Shift_L, Gdk.Key.Shift_R,
-											Gdk.Key.Alt_L, Gdk.Key.Alt_R};
+		public static const uint[] skip_keyvals = {Gdk.Key.Control_L, Gdk.Key.Control_R,
+												   Gdk.Key.Shift_L, Gdk.Key.Shift_R,
+												   Gdk.Key.Alt_L, Gdk.Key.Alt_R};
 
 		public bool key_press_event (Object subject, Gdk.EventKey e, out bool abort) {
 			abort = false;
