@@ -2052,7 +2052,6 @@ namespace Vanubi.UI {
 		}
 
 		void on_delete_char_forward (Editor ed) {
-			TextIter insert_iter;
 			var buf = (SourceBuffer) ed.view.buffer;
 			if (buf.has_selection) {
 				buf.delete_selection (false, false);
@@ -2066,8 +2065,6 @@ namespace Vanubi.UI {
 		}
 
 		void on_delete_word_forward (Editor ed) {
-			// first unselect any currently selected text
-			TextIter insert;
 			var buf = ed.view.buffer;
 			if (buf.has_selection) {
 				buf.delete_selection (false, false);
