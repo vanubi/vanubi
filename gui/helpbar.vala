@@ -105,12 +105,12 @@ namespace Vanubi.UI {
 			var keys = (owned) captured_keys;
 			if (keys.length == 0) {
 				shortcut_label.set_markup ("<b>cleared shortcut for %s</b>".printf (cmd));
-				manager.keymanager.remove_binding (cmd);
+				manager.state.global_keys.remove_binding (cmd);
 				manager.state.config.remove_shortcut (cmd);
 			} else {
 				var str = keys_to_string (keys);
 				shortcut_label.set_markup ("<b>%s saved as %s</b>".printf (cmd, str));
-				manager.keymanager.rebind_command (keys, cmd);
+				manager.state.global_keys.rebind_command (keys, cmd);
 				manager.state.config.set_shortcut (changing_command, keys_to_string (keys));
 			}
 			
@@ -132,10 +132,10 @@ namespace Vanubi.UI {
 		void reset_shortcut (string cmd) {
 			var keys = manager.get_default_shortcut (cmd);
 			if (keys.length == 0) {
-				manager.keymanager.remove_binding (cmd);
+				manager.state.global_keys.remove_binding (cmd);
 				manager.state.config.remove_shortcut (cmd);
 			} else {
-				manager.keymanager.rebind_command (keys, cmd);
+				manager.state.global_keys.rebind_command (keys, cmd);
 				manager.state.config.set_shortcut (changing_command, keys_to_string (keys));
 			}
 			shortcut_label.set_markup ("<b>reset shortcut for %s</b>".printf (cmd));
@@ -241,7 +241,7 @@ namespace Vanubi.UI {
 					store.append (out iter);
 					var doc = (StringSearchDocument) item.doc;
 					if (type == Type.COMMAND) {
-						var keys = manager.keymanager.get_binding (doc.name);
+						var keys = manager.state.global_keys.get_binding (doc.name);
 						string keystring = "";
 						if (keys != null) {
 							keystring = keys_to_string (keys);

@@ -763,7 +763,7 @@ namespace Vanubi.UI {
 		void on_file_count () {
 			// flush pending keys
 			if (view.has_focus) {
-				Idle.add_full (Priority.HIGH, () => { manager.keymanager.flush (this); return false; });
+				Idle.add_full (Priority.HIGH, () => { manager.state.global_keys.flush (this); return false; });
 			}
 			
 			TextIter insert;

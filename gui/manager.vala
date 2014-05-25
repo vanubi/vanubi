@@ -23,7 +23,6 @@ namespace Vanubi.UI {
 	public class Manager : Grid {
 		public State state;
 		
-		internal KeyManager keymanager;
 		internal KeyHandler keyhandler;
 		// Editor selection before calling a command
 		int selection_start;
@@ -65,9 +64,8 @@ namespace Vanubi.UI {
 			
 			orientation = Orientation.VERTICAL;
 			
-			keymanager = new KeyManager (conf);
-			keymanager.execute_command.connect (on_command);
-			keyhandler = new KeyHandler (keymanager);
+			state.global_keys.execute_command.connect (on_command);
+			keyhandler = new KeyHandler (state.global_keys);
 			
 			base_scope = Vade.create_base_scope ();
 			last_session = state.config.get_session ();
@@ -769,7 +767,7 @@ namespace Vanubi.UI {
 
 			// bother only if there's actually a shortcut for the command
 			if (keyseq.length > 0) {
-				keymanager.bind_command (keyseq, cmd);
+				state.global_keys.bind_command (keyseq, cmd);
 			}
 		}
 
@@ -932,7 +930,7 @@ namespace Vanubi.UI {
 		}
 
 		public void abort (Editor editor) {
-			keymanager.reset ();
+			state.global_keys.reset ();
 			if (main_box.get_child() == layout_wrapper) {
 				return;
 			}

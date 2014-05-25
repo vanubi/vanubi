@@ -28,6 +28,8 @@ namespace Vanubi {
 		public int next_stream_id { get; private set; default = 1; }
 		public HashTable<DataSource, DataSource> sources { get; private set; default = new HashTable<DataSource, DataSource> (DataSource.hash, DataSource.equal); }
 		public MarkManager marks { get; private set; default = new MarkManager (); }
+		public KeyManager global_keys { get; private set; }
+		// currently unused
 		public LayoutManager layout_manager { get; private set; default = new LayoutManager (); }
 		
 		HashTable<string, History> named_history_map = new HashTable<string, History> (str_hash, str_equal);
@@ -37,6 +39,7 @@ namespace Vanubi {
 			this.status = new Status (this);
 			this.theme_manager = new ThemeManager (this);
 			this.error_locations = new ErrorLocations (this);
+			this.global_keys = new KeyManager (config);
 		}
 
 		public string new_stdin_stream_name () {
