@@ -60,10 +60,22 @@ namespace Vanubi {
 		}
 	}
 
+	class KeysWrapper {
+		public Key[] keys;
+		
+		public KeysWrapper (owned Key[] keys) {
+			this.keys = (owned) keys;
+		}
+	}
+
+
 	public class KeyManager {
 		KeyNode key_root = new KeyNode ();
 		KeyNode current_key;
 		uint key_timeout = 0;
+		/* keep a mapping of default keystrokes, this is not functional to anything,
+		   it's just convenient book keeping for any UI */
+		HashTable<string, KeysWrapper> default_shortcuts = new HashTable<string, KeysWrapper> (str_hash, str_equal);
 
 		public signal void execute_command (Object subject, string command, bool use_old_state);
 		
@@ -72,6 +84,18 @@ namespace Vanubi {
 		public KeyManager (Configuration conf) {
 			this.timeout = conf.get_global_int ("key_timeout", 400);
 			current_key = key_root;
+		}
+
+		public void set_default_shortcut (string cmd, owned Key[] keyseq) {
+			default_shortcuts[cmd] = new KeysWrapper ((owned) keyseq);
+		}
+
+		public unowned Key[]? get_default_shortcut (string cmd) {
+			var wrapped = default_shortcuts[cmd];
+			if (wrapped != null) {
+				return wrapped.keys;
+			}
+			return null;
 		}
 
 		public void reset () {

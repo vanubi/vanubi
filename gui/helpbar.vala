@@ -130,7 +130,7 @@ namespace Vanubi.UI {
 		}
 
 		void reset_shortcut (string cmd) {
-			var keys = manager.get_default_shortcut (cmd);
+			unowned Key[] keys = manager.state.global_keys.get_default_shortcut (cmd);
 			if (keys.length == 0) {
 				manager.state.global_keys.remove_binding (cmd);
 				manager.state.config.remove_shortcut (cmd);

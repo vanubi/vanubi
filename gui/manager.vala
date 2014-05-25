@@ -45,16 +45,6 @@ namespace Vanubi.UI {
 
 		Session last_session;
 
-		class KeysWrapper {
-			public Key[] keys;
-
-			public KeysWrapper (Key[] keys) {
-				this.keys = keys;
-			}
-		}
-
-		HashTable<string, KeysWrapper> default_shortcuts = new HashTable<string, KeysWrapper> (str_hash, str_equal);
-
 		List<Layout> layouts = null;
 		
 		public Manager () {
@@ -752,7 +742,7 @@ namespace Vanubi.UI {
 			if (keyseq.length > 0) {
 				// save the default shortcut from the main method,
 				// so we can easily reset the default shortcut later in the helpbar
-				default_shortcuts[cmd] = new KeysWrapper (keyseq);
+				state.global_keys.set_default_shortcut (cmd, (owned) keyseq);
 			}
 
 			// get a customized shortcut from the config
@@ -777,14 +767,6 @@ namespace Vanubi.UI {
 
 		public void attach_entry_history (Entry entry, History<string> hist) {
 			new EntryHistory (hist, entry);
-		}
-
-		public unowned Key[]? get_default_shortcut (string cmd) {
-			var wrapped = default_shortcuts[cmd];
-			if (wrapped != null) {
-				return wrapped.keys;
-			}
-			return null;
 		}
 
 		public void replace_widget (owned Widget old, Widget r) {
