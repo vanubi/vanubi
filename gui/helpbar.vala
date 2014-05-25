@@ -26,7 +26,7 @@ namespace Vanubi.UI {
 			LANGUAGE
 		}
 
-		unowned Manager manager;
+		unowned State state;
 		CompletionBox completion_box;
 		Type type;
 		
@@ -36,10 +36,10 @@ namespace Vanubi.UI {
 		uint capture_timeout = 0;
 		string changing_command = null;
 
-		public HelpBar (Manager manager, Type type) {
-			this.manager = manager;
+		public HelpBar (State state, Type type) {
+			this.state = state;
 			this.type = type;
-			completion_box = new CompletionBox (manager, type);
+			completion_box = new CompletionBox (state, type);
 			attach_next_to (completion_box, entry, PositionType.TOP, 1, 1);
 			
 			if (type == Type.COMMAND) {
@@ -62,9 +62,9 @@ namespace Vanubi.UI {
 		void search (string query) {
 			List<SearchResultItem> result;
 			if (type == Type.COMMAND) {
-				result = manager.state.command_index.search (query, true);
+				result = state.command_index.search (query, true);
 			} else {
-				result = manager.state.lang_index.search (query, true);
+				result = state.lang_index.search (query, true);
 			}
 			completion_box.set_docs (result);
 		}
@@ -105,13 +105,13 @@ namespace Vanubi.UI {
 			var keys = (owned) captured_keys;
 			if (keys.length == 0) {
 				shortcut_label.set_markup ("<b>cleared shortcut for %s</b>".printf (cmd));
-				manager.state.global_keys.remove_binding (cmd);
-				manager.state.config.remove_shortcut (cmd);
+				state.global_keys.remove_binding (cmd);
+				state.config.remove_shortcut (cmd);
 			} else {
 				var str = keys_to_string (keys);
 				shortcut_label.set_markup ("<b>%s saved as %s</b>".printf (cmd, str));
-				manager.state.global_keys.rebind_command (keys, cmd);
-				manager.state.config.set_shortcut (changing_command, keys_to_string (keys));
+				state.global_keys.rebind_command (keys, cmd);
+				state.config.set_shortcut (changing_command, keys_to_string (keys));
 			}
 			
 			if (capture_timeout > 0) {
@@ -124,19 +124,19 @@ namespace Vanubi.UI {
 					return false;
 			});
 			
-			manager.state.config.save ();
+			state.config.save ();
 			// refresh
 			search (entry.get_text ());
 		}
 
 		void reset_shortcut (string cmd) {
-			unowned Key[] keys = manager.state.global_keys.get_default_shortcut (cmd);
+			unowned Key[] keys = state.global_keys.get_default_shortcut (cmd);
 			if (keys.length == 0) {
-				manager.state.global_keys.remove_binding (cmd);
-				manager.state.config.remove_shortcut (cmd);
+				state.global_keys.remove_binding (cmd);
+				state.config.remove_shortcut (cmd);
 			} else {
-				manager.state.global_keys.rebind_command (keys, cmd);
-				manager.state.config.set_shortcut (changing_command, keys_to_string (keys));
+				state.global_keys.rebind_command (keys, cmd);
+				state.config.set_shortcut (changing_command, keys_to_string (keys));
 			}
 			shortcut_label.set_markup ("<b>reset shortcut for %s</b>".printf (cmd));
 			
@@ -150,7 +150,7 @@ namespace Vanubi.UI {
 					return false;
 			});
 			
-			manager.state.config.save ();
+			state.config.save ();
 			// refresh
 			search (entry.get_text ());
 		}
@@ -159,7 +159,7 @@ namespace Vanubi.UI {
 			var modifiers = e.state & (Gdk.ModifierType.SHIFT_MASK | Gdk.ModifierType.CONTROL_MASK);
 			if (capturing) {
 				if (e.keyval == Gdk.Key.Escape || (e.keyval == Gdk.Key.g && modifiers == Gdk.ModifierType.CONTROL_MASK)) {
-					manager.state.status.set ("Cannot bind Escape or C-g", "help", Status.Type.ERROR);
+					state.status.set ("Cannot bind Escape or C-g", "help", Status.Type.ERROR);
 					capturing = false;
 					Source.remove (capture_timeout);
 					capture_timeout = 0;
@@ -175,7 +175,7 @@ namespace Vanubi.UI {
 			if (e.keyval == Gdk.Key.c && modifiers == Gdk.ModifierType.CONTROL_MASK) {
 				var cmd = completion_box.get_selected_command ();
 				if (cmd == null) {
-					manager.state.status.set ("No command selected", "help");
+					state.status.set ("No command selected", "help");
 				} else {
 					changing_command = cmd;
 					captured_keys = null;
@@ -188,7 +188,7 @@ namespace Vanubi.UI {
 			if (e.keyval == Gdk.Key.r && modifiers == Gdk.ModifierType.CONTROL_MASK) {
 				var cmd = completion_box.get_selected_command ();
 				if (cmd == null) {
-					manager.state.status.set ("No command selected", "help");
+					state.status.set ("No command selected", "help");
 				} else {				
 					reset_shortcut (cmd);
 				}
@@ -206,11 +206,11 @@ namespace Vanubi.UI {
 		class CompletionBox : Grid {
 			ListStore store;
 			public TreeView view;
-			unowned Manager manager;
+			unowned State state;
 			HelpBar.Type type;
 
-			public CompletionBox (Manager manager, Type type) {
-				this.manager = manager;
+			public CompletionBox (State state, Type type) {
+				this.state = state;
 				this.type = type;
 				store = new ListStore (3, typeof (string), typeof (string), typeof (string));
 				view = new TreeView.with_model (store);			
@@ -241,7 +241,7 @@ namespace Vanubi.UI {
 					store.append (out iter);
 					var doc = (StringSearchDocument) item.doc;
 					if (type == Type.COMMAND) {
-						var keys = manager.state.global_keys.get_binding (doc.name);
+						var keys = state.global_keys.get_binding (doc.name);
 						string keystring = "";
 						if (keys != null) {
 							keystring = keys_to_string (keys);

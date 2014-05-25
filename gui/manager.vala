@@ -1112,7 +1112,7 @@ namespace Vanubi.UI {
 		}
 
 		void on_help (Editor editor) {
-			var bar = new HelpBar (this, HelpBar.Type.COMMAND);
+			var bar = new HelpBar (state, HelpBar.Type.COMMAND);
 			bar.activate.connect ((cmd) => {
 					abort (editor);
 					execute_command[cmd] (editor, cmd);
@@ -1251,7 +1251,7 @@ namespace Vanubi.UI {
 		}
 
 		void on_set_language (Editor editor) {
-			var bar = new HelpBar (this, HelpBar.Type.LANGUAGE);
+			var bar = new HelpBar (state, HelpBar.Type.LANGUAGE);
 			bar.activate.connect ((lang_id) => {
 					abort (editor);
 					var lang = SourceLanguageManager.get_default().get_language (lang_id);
