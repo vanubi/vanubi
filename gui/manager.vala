@@ -2748,7 +2748,7 @@ namespace Vanubi.UI {
 			
 			var search_hist = get_entry_history ("search");
 			var replace_hist = get_entry_history ("replace");
-			var bar = new SearchBar (this, editor, mode, is_regex,
+			var bar = new SearchBar (state, editor, mode, is_regex,
 									 search_hist.get(0) ?? "",
 									 replace_hist.get(0) ?? "");
 			attach_entry_history (bar.entry, search_hist);

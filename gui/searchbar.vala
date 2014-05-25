@@ -27,8 +27,8 @@ namespace Vanubi.UI {
 			REPLACE_FORWARD,
 			REPLACE_BACKWARD
 		}
-		
-		weak Manager manager;
+
+		weak State state;
 		weak Editor editor;
 		int original_insert;
 		int original_bound;
@@ -46,9 +46,9 @@ namespace Vanubi.UI {
 		Cancellable replace_cancellable;
 		bool found_occurrence;
 
-		public SearchBar (Manager manager, Editor editor, Mode mode, bool is_regex, string search_initial = "", string replace_initial = "") {
+		public SearchBar (State state, Editor editor, Mode mode, bool is_regex, string search_initial = "", string replace_initial = "") {
 			base (search_initial);
-			this.manager = manager;
+			this.state = state;
 			this.editor = editor;
 			this.mode = mode;
 			this.is_regex = is_regex;
@@ -156,11 +156,11 @@ namespace Vanubi.UI {
 			Regex regex = null;
 			if (is_regex) {
 				try {
-					manager.state.status.clear ("search");
+					state.status.clear ("search");
 					regex = new Regex (p, RegexCompileFlags.OPTIMIZE, RegexMatchFlags.ANCHORED);
 				} catch (Error e) {
 					// user still writing regex, display an error
-					manager.state.status.set (e.message, "search", Status.Type.ERROR);
+					state.status.set (e.message, "search", Status.Type.ERROR);
 					return;
 				}
 			}
@@ -176,7 +176,7 @@ namespace Vanubi.UI {
 				}
 				
 				if (iterations >= 10000 && !displayed_searching) {
-					manager.state.status.set ("Searching...", "search");
+					state.status.set ("Searching...", "search");
 					displayed_searching = true;
 				}
 				
@@ -230,7 +230,7 @@ namespace Vanubi.UI {
 					buf.select_range (iter, subiter);
 					editor.update_old_selection ();
 					editor.view.scroll_to_mark (buf.get_insert (), 0, true, 0.5, 0.5);
-					manager.state.status.clear ("search");
+					state.status.clear ("search");
 					return;
 				}
 				if (mode == Mode.SEARCH_FORWARD || mode == Mode.REPLACE_FORWARD) {
@@ -239,7 +239,7 @@ namespace Vanubi.UI {
 					iter.backward_char ();
 				}
 			}
-			manager.state.status.clear ("search");
+			state.status.clear ("search");
 
 			if (mode == Mode.REPLACE_FORWARD || mode == Mode.REPLACE_BACKWARD) {
 				if (replace_box != null) {
