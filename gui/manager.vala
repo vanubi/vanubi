@@ -742,7 +742,7 @@ namespace Vanubi.UI {
 			if (keyseq.length > 0) {
 				// save the default shortcut from the main method,
 				// so we can easily reset the default shortcut later in the helpbar
-				state.global_keys.set_default_shortcut (cmd, (owned) keyseq);
+				state.global_keys.set_default_shortcut (cmd, keyseq);
 			}
 
 			// get a customized shortcut from the config
