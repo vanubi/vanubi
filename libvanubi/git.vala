@@ -169,8 +169,28 @@ namespace Vanubi {
 			
 			return table;
 		}
+
+		public async bool add_file (FileSource file, int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) throws Error {
+			var repo = yield get_repo ((FileSource) file.parent, io_priority, cancellable);
+			if (repo == null) {
+				return false;
+			}
+			
+			var git_command = config.get_global_string ("git_command", "git");
+			var filename = file.local_path;
+			string cmdline = @"$git_command add $filename";
+			uint8[] errors;
+			int status;
+			yield repo.execute_shell (cmdline, null, out errors, out status, io_priority, cancellable);
+			string err = (string) errors;
+			if (status != 0) {
+				throw new IOError.FAILED ("Cannot add file to git: %s", err);
+			}
+
+			return true;
+		}
 		
-		public async HashTable<int, DiffType>? diff_buffer (FileSource file, owned uint8[] input, int io_priority = GLib.Priority.DEFAULT, Cancellable cancellable) throws Error {
+		public async HashTable<int, DiffType>? diff_buffer (FileSource file, owned uint8[] input, int io_priority = GLib.Priority.DEFAULT, Cancellable? cancellable = null) throws Error {
 			var in_repo = yield file_in_repo (file, io_priority, cancellable);
 			if (!in_repo) {
 				return null;

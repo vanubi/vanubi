@@ -447,6 +447,9 @@ namespace Vanubi.UI {
 			index_command ("repo-grep", "Search for text in repository");
 			execute_command["repo-grep"].connect (on_repo_grep);
 
+			index_command ("repo-add", "Add this file to the repository");
+			execute_command["repo-add"].connect (on_repo_add);
+
 			bind_command ({ Key (Gdk.Key.x, Gdk.ModifierType.CONTROL_MASK),
 							Key (Gdk.Key.f, 0) }, "repo-open-file");
 			index_command ("repo-open-file", "Find a file in a repository");
@@ -2313,6 +2316,26 @@ namespace Vanubi.UI {
 			}
 		}
 
+		void on_repo_add (Editor editor) {
+			repo_add.begin (editor);
+		}
+
+		async void repo_add (Editor editor) {
+			if (!(editor.source is FileSource)) {
+				return;
+			}
+
+			Git git = new Git (state.config);
+			try {
+				var added = yield git.add_file ((FileSource) editor.source);
+				if (added) {
+					state.status.set ("File added to the repository");
+				}
+			} catch (Error e) {
+				state.status.set (e.message, null, Status.Type.ERROR);
+			}
+		}
+		
 		void on_repo_grep (Editor editor) {
 			repo_grep.begin (editor);
 		}
