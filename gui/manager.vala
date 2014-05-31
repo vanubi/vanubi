@@ -155,6 +155,11 @@ namespace Vanubi.UI {
 			bind_command ({ Key (Gdk.Key.BackSpace, Gdk.ModifierType.SHIFT_MASK) }, "delete-white-backward");
 			index_command ("delete-white-backward", "Delete whitespaces and empty lines backwards");
 			execute_command["delete-white-backward"].connect (on_delete_white_backward);
+
+			bind_command ({ Key (Gdk.Key.c, Gdk.ModifierType.CONTROL_MASK),
+							Key (Gdk.Key.u, Gdk.ModifierType.CONTROL_MASK) }, "delete-upto");
+			index_command ("delete-upto", "Delete from the current position up to the provided character");
+			execute_command["delete-upto"].connect (on_delete_upto);
 			
 			bind_command ({ Key (Gdk.Key.Tab, 0) }, "indent");
 			index_command ("indent", "Indent the current line");
@@ -2091,6 +2096,32 @@ namespace Vanubi.UI {
 				start_iter.forward_char ();
 			}
 			buf.delete (ref start_iter, ref end_iter);
+		}
+
+		void on_delete_upto (Editor ed) {
+			var bar = new EntryBar ();
+			bar.changed.connect ((text) => {
+					if (text != "") {
+						delete_upto (ed, text[0]);
+						abort (ed);
+					}
+			});
+			bar.aborted.connect (() => { abort (ed); });
+			add_overlay (bar);
+			bar.show ();
+			bar.grab_focus ();
+		}
+
+		void delete_upto (Editor ed, char c) {
+			TextIter start;
+			var buf = ed.view.buffer;
+			buf.get_iter_at_mark (out start, buf.get_insert ());
+
+			TextIter end = start;
+			while (end.get_char() != c && end.forward_char());
+			if (end.get_char() == c) {
+				buf.delete (ref start, ref end);
+			}
 		}
 
 		Indent? get_indent_engine (Editor ed) {
