@@ -156,11 +156,16 @@ namespace Vanubi.UI {
 			index_command ("delete-white-backward", "Delete whitespaces and empty lines backwards");
 			execute_command["delete-white-backward"].connect (on_delete_white_backward);
 
-			bind_command ({ Key (Gdk.Key.c, Gdk.ModifierType.CONTROL_MASK),
+			bind_command ({ Key (Gdk.Key.@9, Gdk.ModifierType.CONTROL_MASK),
 							Key (Gdk.Key.u, Gdk.ModifierType.CONTROL_MASK) }, "delete-upto");
-			index_command ("delete-upto", "Delete from the current position up to the provided character");
-			execute_command["delete-upto"].connect (on_delete_upto);
+			index_command ("delete-upto", "Delete text up to the given character");
+			execute_command["delete-upto"].connect (on_delete_with_char);
 			
+			bind_command ({ Key (Gdk.Key.@9, Gdk.ModifierType.CONTROL_MASK),
+							Key (Gdk.Key.a, Gdk.ModifierType.CONTROL_MASK) }, "delete-around");
+			index_command ("delete-around", "Delete text around between the given character");
+			execute_command["delete-around"].connect (on_delete_with_char);
+
 			bind_command ({ Key (Gdk.Key.Tab, 0) }, "indent");
 			index_command ("indent", "Indent the current line");
 			execute_command["indent"].connect (on_indent);
@@ -2098,11 +2103,11 @@ namespace Vanubi.UI {
 			buf.delete (ref start_iter, ref end_iter);
 		}
 
-		void on_delete_upto (Editor ed) {
+		void on_delete_with_char (Editor ed, string cmd) {
 			var bar = new EntryBar ();
 			bar.changed.connect ((text) => {
 					if (text != "") {
-						delete_upto (ed, text[0]);
+						delete_with_char (ed, text[0], cmd);
 						abort (ed);
 					}
 			});
@@ -2112,16 +2117,42 @@ namespace Vanubi.UI {
 			bar.grab_focus ();
 		}
 
-		void delete_upto (Editor ed, char c) {
+		void delete_with_char (Editor ed, char c, string cmd) {
 			TextIter start;
 			var buf = ed.view.buffer;
 			buf.get_iter_at_mark (out start, buf.get_insert ());
 
 			TextIter end = start;
 			while (end.get_char() != c && end.forward_char());
-			if (end.get_char() == c) {
-				buf.delete (ref start, ref end);
+			if (end.get_char() != c) {
+				return;
 			}
+
+			int start_offset = 0;
+			if (cmd == "delete-around") {
+				if (!start.backward_char ()) {
+					return;
+				}
+				
+				while (start.get_char() != c && start.backward_char());
+				if (start.get_char() != c) {
+					return;
+				}
+				start.forward_char ();
+				start_offset = start.get_offset ();
+			}
+
+			buf.begin_user_action ();
+			buf.delete (ref start, ref end);
+			if (cmd == "delete-around") {
+				Idle.add_full (Priority.HIGH, () => {
+						TextIter iter;
+						buf.get_iter_at_offset (out iter, start_offset);
+						buf.place_cursor (start);
+						return false;
+				});
+			}
+			buf.end_user_action ();
 		}
 
 		Indent? get_indent_engine (Editor ed) {
