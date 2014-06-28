@@ -17,6 +17,10 @@
  *  along with Vanubi.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+public extern int lockf (int fd, int cmd, Posix.off_t len);
+
+public extern static const int F_TLOCK;
+
 namespace Vanubi {
 	/* Useful for functional combinators.
 	   Return false to quit the loop. */

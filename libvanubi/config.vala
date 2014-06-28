@@ -31,6 +31,7 @@ namespace Vanubi {
 		public FileCluster cluster;
 		bool save_queued = false;
 		string last_saved_data = null;
+		bool locked = false;
 		
 		const int SAVE_TIMEOUT = 500;
 		const int LATEST_CONFIG_VERSION = 3;
@@ -448,8 +449,33 @@ namespace Vanubi {
 		int64 last_time_saved = 0; // seconds
 		uint save_timeout = 0;
 
+		bool acquire_lock () {
+			if (locked) {
+				return true;
+			}
+			
+			// try locking
+			int fd = Posix.open (file.get_path ()+".lock", Posix.O_WRONLY | Posix.O_CREAT, 0600);
+			if (fd >= 0) {
+				if (lockf (fd, F_TLOCK, 0) < 0) {
+					// already locked
+					Posix.close (fd);
+				} else {
+					locked = true;
+				}
+			} else {
+				warning ("Could not open lock file: %s", Posix.strerror (errno));
+			}
+
+			return locked;
+		}
+			
 		public void save () {
 			if (file == null) {
+				return;
+			}
+
+			if (!acquire_lock ()) {
 				return;
 			}
 			
@@ -478,8 +504,12 @@ namespace Vanubi {
 			if (file == null) {
 				return;
 			}
-			
+
 			if (save_queued) {
+				return;
+			}
+
+			if (!acquire_lock ()) {
 				return;
 			}
 			
