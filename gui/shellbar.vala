@@ -44,7 +44,9 @@ namespace Vanubi.UI {
 				var php_error = """^(?<msg>.+)error:.* in (?<f>.+) on line (?<sl>\d+)\s*$""";
 				// sh style
 				var sh_error = """^(?<f>.+?):.*?(?<sl>\d+?):.*?:(?<msg>.*? error):""";
-				error_regex = new Regex (@"(?:$(vala_error))|(?:$(php_error))|(?:$(c_error))|(?:$(sh_error))|(?:$(java_error))", RegexCompileFlags.CASELESS|RegexCompileFlags.OPTIMIZE|RegexCompileFlags.DUPNAMES);
+				// go style
+				var go_error = """^(?<f>.+?):(?<sl>\d+?): (?<msg>.+)$""";
+				error_regex = new Regex (@"(?:$(vala_error))|(?:$(php_error))|(?:$(c_error))|(?:$(sh_error))|(?:$(java_error))|(?:$(go_error))", RegexCompileFlags.CASELESS|RegexCompileFlags.OPTIMIZE|RegexCompileFlags.DUPNAMES);
 				
 				// enter directory
 				var make_dir = """^.*Entering directory `(.+?)'.*$""";
@@ -117,7 +119,7 @@ namespace Vanubi.UI {
 		
 		string? get_cwd () {
 			Pid pid = term.get_data ("pid");
-			var buf = new char[1024];
+			var buf = new char[4096];
 			if (Posix.readlink (@"/proc/$(pid)/cwd", buf) > 0) {
 				return (string) buf;
 			} else {
