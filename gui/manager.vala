@@ -2268,11 +2268,11 @@ namespace Vanubi.UI {
 				TextIter start, end;
 				ed.view.buffer.get_iter_at_offset (out start, selection_start);
 				ed.view.buffer.get_iter_at_offset (out end, selection_end);
-				
+
 				var iter_start = vbuf.line_at_char (start.get_line (),
-													start.get_line_offset ());
+								    start.get_line_offset ());
 				var iter_end = vbuf.line_at_char (end.get_line (),
-												  end.get_line_offset ());
+								  end.get_line_offset ());
 				ed.view.buffer.begin_user_action ();
 				comment_engine.toggle_comment (iter_start, iter_end);
 				ed.view.buffer.end_user_action ();
@@ -2281,7 +2281,7 @@ namespace Vanubi.UI {
 
 		void on_set_theme (Editor editor) {
 			var themes = state.theme_manager.get_themes ();
-			
+
 			var bar = new SimpleCompletionBar<Theme> ((owned) themes);
 			bar.activate.connect (() => {
 					abort (editor);
