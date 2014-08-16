@@ -78,7 +78,7 @@ namespace Vanubi {
 			}
 
 			if (tot_lines == 1) { /* Processing single line */
-				find_common_offset (start_line, start_line + 1);
+				find_common_offset (start_line, start_line);
 				if (is_line_commented (start_line)) {
 					decomment_line (start_line);
 				} else {
