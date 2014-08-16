@@ -110,7 +110,7 @@ namespace Vanubi {
 		}
 
 		protected override bool is_line_commented (int line) {
-			return /\s*\/\* .+ \*\//.match(buf.line_text (line));
+			return /\s*\/\*\s?.+\s?\*\//.match(buf.line_text (line));
 		}
 
 		protected override int count_commented_lines (int start_line, int end_line) {
@@ -243,15 +243,18 @@ namespace Vanubi {
 				var del_iter = iter.copy ();
 				iter.forward_char (); /* Skip '/' */
 				iter.forward_char (); /* Skip '*' */
-				iter.forward_char (); /* Skip ' ' */
+				if (iter.char == ' ')
+					iter.forward_char (); /* Skip ' ' */
 				buf.delete (del_iter, iter);
 				iter = buf.line_end (line);
 				iter.backward_spaces ();
 				iter.forward_char(); /* Must point after '/' */
 				del_iter = iter.copy ();
-				iter.backward_char (); /* Skip ' ' */
-				iter.backward_char (); /* Skip '*' */
 				iter.backward_char (); /* Skip '/' */
+				iter.backward_char (); /* Skip '*' */
+				iter.backward_char (); /* Skip ' ' */
+				if (iter.char != ' ')
+					iter.forward_char();
 				buf.delete (iter, del_iter);
 				unescape_line (line);
 			}
