@@ -24,7 +24,6 @@ namespace Vanubi {
 		protected int common_offset;
 
 		protected abstract bool is_line_commented (int line);
-		protected abstract int count_commented_lines (int start_line, int end_line);
 		protected abstract void comment_line (int line);
 		protected abstract void decomment_line (int line);
 
@@ -47,14 +46,12 @@ namespace Vanubi {
 			}
 		}
 
-		/* Return the total lines to be processed skipping empty lines */
-		private int find_tot_lines(int start_line, int end_line) {
-			int count = 0;
+		private int count_commented_lines (int start_line, int end_line) {
+			var count = 0;
 			for (var i=start_line; i<=end_line; i++) {
-				if (buf.empty_line (i)) {
-					continue;
+				if (is_line_commented (i) || buf.empty_line (i)) {
+					count++;
 				}
-				count++;
 			}
 			return count;
 		}
@@ -62,7 +59,7 @@ namespace Vanubi {
 		public virtual void toggle_comment (BufferIter start_iter, BufferIter end_iter) {
 			var start_line = start_iter.line;
 			var end_line = end_iter.line;
-			var tot_lines = find_tot_lines (start_line, end_line);
+			var tot_lines = (end_line - start_line) + 1;
 
 			debug ("start-line=%d end-line=%d tot-line=%d",
 			       start_line, end_line, tot_lines);
@@ -111,16 +108,6 @@ namespace Vanubi {
 
 		protected override bool is_line_commented (int line) {
 			return /\s*\/\*\s?.+\s?\*\//.match(buf.line_text (line));
-		}
-
-		protected override int count_commented_lines (int start_line, int end_line) {
-			var count = 0;
-			for (var i=start_line; i<=end_line; i++) {
-				if (is_line_commented (i) || buf.empty_line(i)) {
-					count++;
-				}
-			}
-			return count;
 		}
 
 		protected void escape_line (int line) {
@@ -270,16 +257,6 @@ namespace Vanubi {
 			return /\s*#\s?.*/.match(buf.line_text (line));
 		}
 
-		protected override int count_commented_lines (int start_line, int end_line) {
-			var count = 0;
-			for (var i=start_line; i<=end_line; i++) {
-				if (is_line_commented (i)) {
-					count++;
-				}
-			}
-			return count;
-		}
-
 		protected override void comment_line (int line) {
 			if (buf.empty_line (line)) {
 				return;
@@ -311,16 +288,6 @@ namespace Vanubi {
 
 		protected override bool is_line_commented (int line) {
 			return /\s*;\s?.*/.match(buf.line_text (line));
-		}
-
-		protected override int count_commented_lines (int start_line, int end_line) {
-			var count = 0;
-			for (var i=start_line; i<=end_line; i++) {
-				if (is_line_commented (i)) {
-					count++;
-				}
-			}
-			return count;
 		}
 
 		protected override void comment_line (int line) {
@@ -357,16 +324,6 @@ namespace Vanubi {
 			return /\s*--\s?.*/.match(buf.line_text (line));
 		}
 
-		protected override int count_commented_lines (int start_line, int end_line) {
-			var count = 0;
-			for (var i=start_line; i<=end_line; i++) {
-				if (is_line_commented (i)) {
-					count++;
-				}
-			}
-			return count;
-		}
-
 		protected override void comment_line (int line) {
 			if (buf.empty_line (line)) {
 				return;
@@ -399,16 +356,6 @@ namespace Vanubi {
 
 		protected override bool is_line_commented (int line) {
 			return /^<!--.*-->$/.match (buf.line_text (line).strip ());
-		}
-
-		protected override int count_commented_lines (int start_line, int end_line) {
-			var count = 0;
-			for (var i=start_line; i<=end_line; i++) {
-				if (is_line_commented (i) || buf.empty_line(i)) {
-					count++;
-				}
-			}
-			return count;
 		}
 
 		protected void escape_line (int line) {
