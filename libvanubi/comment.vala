@@ -351,7 +351,7 @@ namespace Vanubi {
 
 		protected override bool is_line_commented (int line) {
 			/* XXX: evaluate support "---" commenting */
-			return /\s*-- .*/.match(buf.line_text (line));
+			return /\s*--\s?.*/.match(buf.line_text (line));
 		}
 
 		protected override int count_commented_lines (int start_line, int end_line) {
@@ -382,7 +382,8 @@ namespace Vanubi {
 				var del_iter = iter.copy ();
 				iter.forward_char (); /* Skip '-' */
 				iter.forward_char (); /* Skip '-' */
-				iter.forward_char (); /* Skip ' ' */
+				if (iter.char == ' ')
+					iter.forward_char (); /* Skip ' ' */
 				buf.delete (del_iter, iter);
 			}
 		}
