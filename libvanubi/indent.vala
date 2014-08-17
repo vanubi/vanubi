@@ -25,13 +25,13 @@ namespace Vanubi {
 
 	public abstract class Indent {
 		public Buffer buffer { get; protected set; }
-		
+
 		public Indent (Buffer buffer) {
 			this.buffer = buffer;
 		}
 
 		public abstract void indent (BufferIter iter);
-		
+
 		// utils
 		protected int first_non_empty_prev_line (int line) {
 			// find first non-blank prev line, excluding line
@@ -45,7 +45,7 @@ namespace Vanubi {
 		public Indent_C (Buffer buffer) {
 			base (buffer);
 		}
-		
+
 		bool is_char (BufferIter iter) {
 			if (!iter.is_in_code) {
 				return false;
@@ -61,17 +61,17 @@ namespace Vanubi {
 			}
 			return false;
 		}
-		
+
 		bool is_open_paren (BufferIter iter) {
 			var c = iter.char;
 			return (c == '{' || c == '[' || c == '(') && iter.is_in_code && !is_char (iter);
 		}
-		
+
 		bool is_close_paren (BufferIter iter) {
 			var c = iter.char;
 			return (c == '}' || c == ']' || c == ')') && iter.is_in_code && !is_char (iter);
 		}
-		
+
 		// counts closed parens in front of a line
 		int count_closed (int line) {
 			var buf = buffer;
@@ -88,7 +88,7 @@ namespace Vanubi {
 			}
 			return closed;
 		}
-		
+
 		// counts unclosed parens in a line
 		int count_unclosed (int line) {
 			var buf = buffer;
@@ -106,7 +106,7 @@ namespace Vanubi {
 			}
 			return unclosed;
 		}
-		
+
 		// returns the iter for the opened paren for which there's a given unbalance
 		BufferIter unclosed_paren (int line, int unbalance) {
 			var buf = buffer;
@@ -141,16 +141,16 @@ namespace Vanubi {
 
 		public override void indent (BufferIter indent_iter) {
 			var buf = buffer;
-			
+
 			var line = indent_iter.line;
 			if (line == 0) {
 				buf.set_indent (line, 0);
 				return;
 			}
-			
+
 			var new_indent = 0;
 			var tab_width = buf.tab_width;
-			
+
 			var prev_line = first_non_empty_prev_line (line);
 			if (prev_line < 0) {
 				buf.set_indent (line, 0);
@@ -158,7 +158,7 @@ namespace Vanubi {
 			}
 
 			var prev_indent = buf.get_indent (prev_line);
-			
+
 			var prev_text = buf.line_text(prev_line);
 			var prev_semicomma = prev_text.last_index_of (";");
 			string text_after_semicomma = null;
@@ -170,7 +170,7 @@ namespace Vanubi {
 				buf.set_indent (line, new_indent);
 				return;
 			}
-			
+
 			// indent
 			var unclosed = count_unclosed (prev_line);
 			if (unclosed == 0) {
@@ -190,8 +190,8 @@ namespace Vanubi {
 				} else {
 					new_indent = paren_iter.effective_line_offset-1;
 				}
-			}		 
-		
+			}
+
 			// unindent
 			var closed = count_closed (line);
 			if (closed > 0) {
@@ -207,7 +207,7 @@ namespace Vanubi {
 			if (text == "done" || text == "fi" || text == "else" || text == "elif") {
 				new_indent -= tab_width;
 			}
-			
+
 			// prev label or case statement
 			if (prev_text.strip().has_suffix (":")) {
 				new_indent += tab_width;
@@ -221,12 +221,12 @@ namespace Vanubi {
 			buf.set_indent (line, new_indent);
 		}
 	}
-	
+
 	public class Indent_Python : Indent {
 		public Indent_Python (Buffer buffer) {
 			base (buffer);
 		}
-		
+
 		bool is_char (BufferIter iter) {
 			if (!iter.is_in_code) {
 				return false;
@@ -242,17 +242,17 @@ namespace Vanubi {
 			}
 			return false;
 		}
-		
+
 		bool is_open_paren (BufferIter iter) {
 			var c = iter.char;
 			return (c == '{' || c == '[' || c == '(') && iter.is_in_code && !is_char (iter);
 		}
-		
+
 		bool is_close_paren (BufferIter iter) {
 			var c = iter.char;
 			return (c == '}' || c == ']' || c == ')') && iter.is_in_code && !is_char (iter);
 		}
-		
+
 		// counts closed parens in front of a line
 		int count_closed (int line) {
 			var buf = buffer;
@@ -269,7 +269,7 @@ namespace Vanubi {
 			}
 			return closed;
 		}
-		
+
 		// counts unclosed parens in a line
 		int count_unclosed (int line) {
 			var buf = buffer;
@@ -287,7 +287,7 @@ namespace Vanubi {
 			}
 			return unclosed;
 		}
-		
+
 		// returns the iter for the opened paren for which there's a given unbalance
 		BufferIter unclosed_paren (int line, int unbalance) {
 			var buf = buffer;
@@ -322,16 +322,16 @@ namespace Vanubi {
 
 		public override void indent (BufferIter indent_iter) {
 			var buf = buffer;
-			
+
 			var line = indent_iter.line;
 			if (line == 0) {
 				buf.set_indent (line, 0);
 				return;
 			}
-			
+
 			var new_indent = 0;
 			var tab_width = buf.tab_width;
-			
+
 			var prev_line = first_non_empty_prev_line (line);
 			if (prev_line < 0) {
 				buf.set_indent (line, 0);
@@ -339,7 +339,7 @@ namespace Vanubi {
 			}
 
 			var prev_text = buf.line_text(prev_line);
-			
+
 			// indent
 			var unclosed = count_unclosed (prev_line);
 			if (unclosed == 0) {
@@ -359,8 +359,8 @@ namespace Vanubi {
 				} else {
 					new_indent = paren_iter.effective_line_offset-1;
 				}
-			}		 
-		
+			}
+
 			// unindent
 			var closed = count_closed (line);
 			if (closed > 0) {
@@ -383,7 +383,7 @@ namespace Vanubi {
 		public Indent_Markup (Buffer buffer) {
 			base (buffer);
 		}
-		
+
 		bool is_open_tag (BufferIter iter) {
 			if (!iter.is_in_code) {
 				return false;
@@ -395,12 +395,12 @@ namespace Vanubi {
 			cp.forward_char ();
 			return cp.is_in_code && cp.char != '!' && cp.char != '/';
 		}
-		
+
 		bool is_close_tag (BufferIter iter) {
 			if (!iter.is_in_code) {
 				return false;
 			}
-			
+
 			if (iter.char == '<') {
 				var cp = iter.copy ();
 				cp.forward_char ();
@@ -412,7 +412,7 @@ namespace Vanubi {
 			}
 			return false;
 		}
-		
+
 		// counts closed parens in front of a line
 		int count_closed (int line) {
 			var buf = buffer;
@@ -429,7 +429,7 @@ namespace Vanubi {
 			}
 			return closed;
 		}
-		
+
 		// counts unclosed parens in a line
 		int count_unclosed (int line) {
 			var buf = buffer;
@@ -447,7 +447,7 @@ namespace Vanubi {
 			}
 			return unclosed;
 		}
-		
+
 		// returns the iter for the opened paren for which there's a given unbalance
 		BufferIter unclosed_paren (int line, int unbalance) {
 			var buf = buffer;
@@ -479,19 +479,19 @@ namespace Vanubi {
 				}
 			}
 		}
-		
+
 		public override void indent (BufferIter indent_iter) {
 			var buf = buffer;
-			
+
 			var line = indent_iter.line;
 			if (line == 0) {
 				buf.set_indent (line, 0);
 				return;
 			}
-			
+
 			var new_indent = 0;
 			var tab_width = buf.tab_width;
-			
+
 			var prev_line = first_non_empty_prev_line (line);
 			if (prev_line < 0) {
 				buf.set_indent (line, 0);
@@ -517,8 +517,8 @@ namespace Vanubi {
 				} else {
 					new_indent = paren_iter.effective_line_offset-1;
 				}
-			}		 
-		
+			}
+
 			// unindent
 			var closed = count_closed (line);
 			if (closed > 0) {
@@ -530,17 +530,17 @@ namespace Vanubi {
 			buf.set_indent (line, new_indent);
 		}
 	}
-	
+
 	public class Indent_Asm : Indent {
 		public Indent_Asm (Buffer buffer) {
 			base (buffer);
 		}
-		
+
 		public override void indent (BufferIter indent_iter) {
 			var buf = buffer;
-			
+
 			var line = indent_iter.line;
-			
+
 			// indent everything to tab_width except for labels
 			var new_indent = buf.tab_width;
 			var text = buf.line_text(line);
@@ -551,22 +551,22 @@ namespace Vanubi {
 			buf.set_indent (line, new_indent);
 		}
 	}
-	
+
 	public class Indent_Lua : Indent {
 		public Indent_Lua (Buffer buffer) {
 			base (buffer);
 		}
-		
+
 		bool is_open_paren (BufferIter iter) {
 			var c = iter.char;
 			return (c == '{' || c == '[' || c == '(') && iter.is_in_code;
 		}
-		
+
 		bool is_close_paren (BufferIter iter) {
 			var c = iter.char;
 			return (c == '}' || c == ']' || c == ')') && iter.is_in_code;
 		}
-		
+
 		// counts closed parens in front of a line
 		int count_closed (int line) {
 			var buf = buffer;
@@ -583,7 +583,7 @@ namespace Vanubi {
 			}
 			return closed;
 		}
-		
+
 		// counts unclosed parens in a line
 		int count_unclosed (int line) {
 			var buf = buffer;
@@ -601,7 +601,7 @@ namespace Vanubi {
 			}
 			return unclosed;
 		}
-		
+
 		// returns the iter for the opened paren for which there's a given unbalance
 		BufferIter unclosed_paren (int line, int unbalance) {
 			var buf = buffer;
@@ -636,16 +636,16 @@ namespace Vanubi {
 
 		public override void indent (BufferIter indent_iter) {
 			var buf = buffer;
-			
+
 			var line = indent_iter.line;
 			if (line == 0) {
 				buf.set_indent (line, 0);
 				return;
 			}
-			
+
 			var new_indent = 0;
 			var tab_width = buf.tab_width;
-			
+
 			var prev_line = first_non_empty_prev_line (line);
 			if (prev_line < 0) {
 				buf.set_indent (line, 0);
@@ -653,7 +653,7 @@ namespace Vanubi {
 			}
 
 			var prev_indent = buf.get_indent (prev_line);
-			
+
 			// indent
 			var unclosed = count_unclosed (prev_line);
 			if (unclosed == 0) {
@@ -673,8 +673,8 @@ namespace Vanubi {
 				} else {
 					new_indent = paren_iter.effective_line_offset-1;
 				}
-			}		 
-		
+			}
+
 			// unindent
 			var closed = count_closed (line);
 			if (closed > 0) {
@@ -689,32 +689,32 @@ namespace Vanubi {
 			if (prev_text.has_suffix (" do") || prev_text.has_suffix (" then") || prev_text == "else" || prev_text.has_prefix ("function ") || prev_text.has_prefix ("local function ")) {
 				new_indent = prev_indent + tab_width;
 			}
-			
+
 			// end
 			var text = buf.line_text(line).strip ();
 			if (text == "end" || text == "else") {
 				new_indent -= tab_width;
 			}
-			
+
 			buf.set_indent (line, new_indent);
 		}
 	}
-	
+
 	public class Indent_Haskell : Indent {
 		public Indent_Haskell (Buffer buffer) {
 			base (buffer);
 		}
-		
+
 		bool is_open_paren (BufferIter iter) {
 			var c = iter.char;
 			return (c == '{' || c == '[' || c == '(') && iter.is_in_code;
 		}
-		
+
 		bool is_close_paren (BufferIter iter) {
 			var c = iter.char;
 			return (c == '}' || c == ']' || c == ')') && iter.is_in_code;
 		}
-		
+
 		// counts closed parens in front of a line
 		int count_closed (int line) {
 			var buf = buffer;
@@ -731,7 +731,7 @@ namespace Vanubi {
 			}
 			return closed;
 		}
-		
+
 		// counts unclosed parens in a line
 		int count_unclosed (int line) {
 			var buf = buffer;
@@ -749,7 +749,7 @@ namespace Vanubi {
 			}
 			return unclosed;
 		}
-		
+
 		// returns the iter for the opened paren for which there's a given unbalance
 		BufferIter unclosed_paren (int line, int unbalance) {
 			var buf = buffer;
@@ -784,16 +784,16 @@ namespace Vanubi {
 
 		public override void indent (BufferIter indent_iter) {
 			var buf = buffer;
-			
+
 			var line = indent_iter.line;
 			if (line == 0) {
 				buf.set_indent (line, 0);
 				return;
 			}
-			
+
 			var new_indent = 0;
 			var tab_width = buf.tab_width;
-			
+
 			var prev_line = first_non_empty_prev_line (line);
 			if (prev_line < 0) {
 				buf.set_indent (line, 0);
@@ -819,8 +819,8 @@ namespace Vanubi {
 				} else {
 					new_indent = paren_iter.effective_line_offset-1;
 				}
-			}		 
-		
+			}
+
 			// unindent
 			var closed = count_closed (line);
 			if (closed > 0) {
@@ -844,17 +844,17 @@ namespace Vanubi {
 					while (prev_text[idx++].isalpha()); // skip keyword
 					var len = prev_text.length;
 					while (idx < len && prev_text[idx].isspace ()) idx++;
-					
+
 					var iter = buf.line_at_byte (prev_line, idx);
 					new_indent = iter.effective_line_offset;
 				}
 			}
-			
+
 			var cur_text = buf.line_text (line).strip ();
 			if (cur_text.has_prefix ("deriving ")) {
 				new_indent += tab_width;
 			}
-			
+
 			buf.set_indent (line, new_indent);
 		}
 	}
