@@ -2242,6 +2242,7 @@ namespace Vanubi.UI {
 				case "i386 assembly":
 					comment_engine = new Comment_Asm (vbuf);
 					break;
+				case "m4":
 				case "sh":
 				case "makefile":
 				case "python":
