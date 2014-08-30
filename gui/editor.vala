@@ -763,7 +763,13 @@ namespace Vanubi.UI {
 		void on_file_count () {
 			// flush pending keys
 			if (view.has_focus) {
-				Idle.add_full (Priority.HIGH, () => { manager.state.global_keys.flush (this); return false; });
+				TextIter selection_start, selection_end;
+				view.buffer.get_selection_bounds (out selection_start,
+												  out selection_end);
+				if (old_selection_start_offset != selection_start.get_offset () &&
+					old_selection_end_offset != selection_end.get_offset ()) {
+					Idle.add_full (Priority.HIGH, () => { manager.state.global_keys.flush (this); return false; });
+				}
 			}
 			
 			TextIter insert;

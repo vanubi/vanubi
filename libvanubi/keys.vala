@@ -190,7 +190,7 @@ namespace Vanubi {
 				Source.remove (key_timeout);
 				key_timeout = 0;
 			}
-			
+
 			if (current_key != null && current_key.command != null) {
 				execute_command (subject, current_key.command, true);
 			}

@@ -298,4 +298,25 @@ namespace Vanubi {
 			}
 		}
 	}
+
+	[CCode (cname = "backtrace", cheader_filename = "execinfo.h")]
+	extern int backtrace (void*[] buffer);
+	[CCode (cname = "backtrace_symbols", cheader_filename = "execinfo.h", array_length = false)]
+	extern string*[] backtrace_symbols (void*[] buffer);
+	
+	void print_backtrace (int n = 10) {
+		void*[] array = new void*[n];
+		int size;
+		string*[] strings;
+		size_t i;
+		
+		size = backtrace (array);
+		strings = backtrace_symbols (array);
+		
+		print ("Obtained %d stack frames.\n", size);
+		
+		for (i = 0; i < size; i++) {
+			print ("%s\n", strings[i]);
+		}
+     }
 }
