@@ -2245,6 +2245,7 @@ namespace Vanubi.UI {
 				case "m4":
 				case "sh":
 				case "makefile":
+				case "automake":
 				case "python":
 				case "ruby":
 				case "generic_comment":
