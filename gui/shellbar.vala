@@ -166,7 +166,7 @@ namespace Vanubi.UI {
 				var buf = new uint8[1024];
 				var b = new StringBuilder ();
 				var base_file = editor.source.parent as FileSource;
-				var curdir = base_file != null ? base_file.to_string () : ".";
+				var curdir = get_cwd ();
 				
 				while (true) {
 					var r = yield is.read_async (buf, Priority.DEFAULT, cancellable);
