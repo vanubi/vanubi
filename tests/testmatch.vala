@@ -5,6 +5,10 @@
 
 using Vanubi;
 
+Annotated<string> annotate (string s) {
+	return new Annotated<string> (s, s);
+}
+
 void test_nomatch () {
 	assert (pattern_match ("foo", "bar") < 0);
 }
@@ -53,6 +57,19 @@ void test_many () {
 	assert (res[0] == objs[1]);
 }
 
+
+void test_real1 () {
+	Annotated<string>[] objs = null;
+	objs += annotate ("matching.vala");
+	objs += annotate ("vanubi.deps");
+	objs += annotate ("vanubi.nix");
+	
+	var res = pattern_match_many<string> ("v", objs);
+	assert (res[0] == objs[2]);
+	assert (res[1] == objs[1]);
+	assert (res[2] == objs[0]);
+}
+
 int main (string[] args) {
 	Test.init (ref args);
 
@@ -64,6 +81,7 @@ int main (string[] args) {
 	Test.add_func ("/match/count", test_count);
 	Test.add_func ("/match/common-prefix", test_common_prefix);
 	Test.add_func ("/match/many", test_many);
+	Test.add_func ("/match/real1", test_real1);
 
 	return Test.run ();
 }
