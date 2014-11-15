@@ -74,7 +74,7 @@ void test_hash () {
 foo bar
 ");
 	comment_hash (buffer, 0);
-	assert (/# .*/.match(buffer.line_text (0)));
+	assert (buffer.line_text (0) == "\n");
 
 	comment_hash (buffer, 1);
 	assert (/# .+/.match(buffer.line_text (1)));
@@ -101,7 +101,7 @@ void test_asm () {
 foo bar
 ");
 	comment_asm (buffer, 0);
-	assert (/; .*/.match(buffer.line_text (0)));
+	assert (buffer.line_text (0) == "\n");
 
 	comment_asm (buffer, 1);
 	assert (/; .+/.match(buffer.line_text (1)));
@@ -128,7 +128,7 @@ void test_lua () {
 foo bar
 ");
 	comment_lua (buffer, 0);
-	assert (/-- .*/.match(buffer.line_text (0)));
+	assert (buffer.line_text (0) == "\n");
 
 	comment_lua (buffer, 1);
 	assert (/-- .+/.match(buffer.line_text (1)));
