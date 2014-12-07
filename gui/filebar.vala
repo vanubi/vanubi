@@ -40,7 +40,11 @@ namespace Vanubi.UI {
 		protected override async Annotated<FileSource>[]? complete (string pattern, out string common_choice, Cancellable cancellable) throws Error {
 			common_choice = pattern;
 			var absolute_pattern = absolute_path (base_directory, pattern);
+			debug("Completing file pattern %s, base dir %s, root %s, abs pattern %s", pattern, base_directory, root.to_string(), absolute_pattern);
+
 			var files = yield run_in_thread<GenericArray<FileSource>> (() => { return (GenericArray<FileSource>) file_complete (root, absolute_pattern, cancellable); });
+			debug("Got %d files", files.length);
+
 			if (files.length == 0) {
 				return null;
 			}

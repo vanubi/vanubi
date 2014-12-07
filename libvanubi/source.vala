@@ -77,7 +77,7 @@ namespace Vanubi {
 
 			Mutex mutex = Mutex ();
 			Cond cond = Cond ();
-			mutex.lock ();
+			debug("Exists in thread %p", Thread.self<void*>());
 			
 			Idle.add (() => {
 					exists.begin (Priority.DEFAULT, cancellable, (s,r) => {
@@ -86,15 +86,18 @@ namespace Vanubi {
 							} catch (Error e) {
 								err = e;
 							} finally {
+								debug("Locking mutex in thread %p", Thread.self<void*>());
 								mutex.lock ();
 								complete = true;
 								cond.signal ();
 								mutex.unlock ();
+								debug("Unlocked mutex");
 							}
 					});
 					return false;
 			});
 
+			mutex.lock ();
 			while (!complete) {
 				cond.wait (mutex);
 			}
@@ -113,24 +116,29 @@ namespace Vanubi {
 
 			Mutex mutex = Mutex ();
 			Cond cond = Cond ();
-			mutex.lock ();
+			debug("Is directory in thread %p", Thread.self<void*>());
 			
 			Idle.add (() => {
 					is_directory.begin (Priority.DEFAULT, cancellable, (s,r) => {
 							try {
 								ret = is_directory.end (r);
+								debug("Is directory %s? %d", this.to_string(), (int)ret);
 							} catch (Error e) {
 								err = e;
 							} finally {
+								debug("Locking mutex in idle thread %p", Thread.self<void*>());
 								mutex.lock ();
 								complete = true;
 								cond.signal ();
 								mutex.unlock ();
+								debug("Unlocking mutex");
 							}
 					});
 					return false;
 			});
 
+			debug("Locking mutex in orig thread %p", Thread.self<void*>());
+			mutex.lock ();
 			while (!complete) {
 				cond.wait (mutex);
 			}

@@ -1,4 +1,4 @@
-{ stdenv, fetchurl, pkgconfig, vala, which, autoconf, automake
+{ stdenv, fetchurl, pkgconfig, vala_0_26, which, autoconf, automake
 , libtool, glib, gtk3, gnome3, libwnck3, asciidoc, python3Packages }:
 
 stdenv.mkDerivation rec {
@@ -10,7 +10,7 @@ stdenv.mkDerivation rec {
     sha256 = "0cd45zm54j6xz1a31qllg2w7l77sncv7mrpfx9bjzdiqpmzsdypl";
   };
 
-  buildInputs = [ pkgconfig vala which autoconf automake
+  buildInputs = [ pkgconfig vala_0_26 which autoconf automake
                   libtool glib gtk3 libwnck3 asciidoc
                   gnome3.gtksourceview gnome3.vte python3Packages.pygments ];
 
