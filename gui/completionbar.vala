@@ -32,7 +32,7 @@ namespace Vanubi.UI {
 			base (default);
 		}
 
-		~Bar () {
+		~CompletionBar () {
 			if (current_completion != null) {
 				current_completion.cancel ();
 			}
