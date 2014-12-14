@@ -1620,12 +1620,16 @@ namespace Vanubi.UI {
 					bar.key_pressed.connect ((e) => {
 							if (e.keyval == Gdk.Key.s) {
 								ignore_abort = true;
+								aborted = true;
+								debug ("Adding idle resume");
 								Idle.add ((owned) resume);
 								abort (ed);
 								return true;
 							} else if (e.keyval == Gdk.Key.n) {
 								ignore_abort = true;
+								aborted = true;
 								discard = true;
+								debug ("Adding idle resume");
 								Idle.add ((owned) resume);
 								abort (ed);
 								return true;
@@ -1635,6 +1639,7 @@ namespace Vanubi.UI {
 							} else if (e.keyval == '!') {
 								ignore_abort = true;
 								save_all = true;
+								debug ("Adding idle resume");
 								Idle.add ((owned) resume);
 								abort (ed);
 								return true;
@@ -1643,15 +1648,17 @@ namespace Vanubi.UI {
 					});
 					bar.aborted.connect (() => {
 							aborted = true;
+							debug ("Adding idle resume");
 							Idle.add ((owned) resume);
 							abort (ed);
 					});
 					// ensure this coroutine does not deadlock
 					bar.destroy.connect (() => {
 							if (!aborted) {
+								aborted = true;
+								debug ("Adding idle resume");
 								Idle.add ((owned) resume);
 							}
-							aborted = true;
 					});
 					add_overlay (bar);
 					bar.show ();
