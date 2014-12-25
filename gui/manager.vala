@@ -28,7 +28,7 @@ namespace Vanubi.UI {
 		int selection_start;
 		int selection_end;
 
-		bool saving_on_quit = false;
+		bool saving_all = false;
 
 		[Signal (detailed = true)]
 		public signal void execute_command (Editor editor, string command);
@@ -137,6 +137,9 @@ namespace Vanubi.UI {
 			index_command ("kill-buffer", "Close the current editor");
 			execute_command["kill-buffer"].connect (on_kill_buffer);
 
+			/* index_command ("kill-all", "Kill all buffers, without quitting"); */
+			/* execute_command["kill-all"].connect (on_kill_all); */
+			
 			bind_command ({
 					Key (Gdk.Key.x, Gdk.ModifierType.CONTROL_MASK),
 						Key (Gdk.Key.c, Gdk.ModifierType.CONTROL_MASK) },
@@ -1592,11 +1595,11 @@ namespace Vanubi.UI {
 			return res;
 		}
 
-		async void ask_save_modified_editors (Editor ed) {
-			if (saving_on_quit) {
-				return;
+		async bool ask_save_modified_editors (Editor ed) {
+			if (saving_all) {
+				return false;
 			}
-			saving_on_quit = true;
+			saving_all = true;
 
 			var modified = get_modified_editors ();
 			if (modified.length > 0) {
@@ -1616,7 +1619,7 @@ namespace Vanubi.UI {
 					SourceFunc resume = ask_save_modified_editors.callback;
 
 					// ask user
-					var bar = new MessageBar ("<b>s = save, n = discard, ! = save-all, q = discard all</b>");
+					var bar = new MessageBar ("<b>s = save, n = discard, ! = save all, q = discard all</b>");
 					bar.key_pressed.connect ((e) => {
 							if (e.keyval == Gdk.Key.s) {
 								ignore_abort = true;
@@ -1634,7 +1637,10 @@ namespace Vanubi.UI {
 								abort (ed);
 								return true;
 							} else if (e.keyval == Gdk.Key.q) {
-								quit();
+								ignore_abort = false;
+								aborted = true;
+								Idle.add ((owned) resume);
+								abort (ed);
 								return true;
 							} else if (e.keyval == '!') {
 								ignore_abort = true;
@@ -1666,8 +1672,8 @@ namespace Vanubi.UI {
 
 					yield;
 					if (aborted && !ignore_abort) {
-						saving_on_quit = false;
-						return;
+						saving_all = false;
+						return true;
 					}
 					if (discard) {
 						continue;
@@ -1688,14 +1694,36 @@ namespace Vanubi.UI {
 				}
 			}
 
-			// hide the window to fool the user, but we want to wait for writing the configuration bits
-			hide ();
-			yield state.config.save_immediate ();
-			quit ();
+			saving_all = false;
+			return true;
 		}
 
+		async void on_quit_helper (Editor ed) {
+			var ok = yield ask_save_modified_editors (ed);
+			if (ok) {
+				// hide the window to fool the user, but we want to wait for writing the configuration bits
+				hide ();
+				yield state.config.save_immediate ();
+				quit ();
+			}
+		}
+		
 		void on_quit (Editor ed) {
-			ask_save_modified_editors.begin (ed);
+			on_quit_helper.begin (ed);
+		}
+
+		async void on_kill_all_helper (Editor ed) {
+			var ok = yield ask_save_modified_editors (ed);
+			if (ok) {
+				var sources = state.sources.get_keys ();
+				foreach (var source in sources) {
+					kill_source (source);
+				}
+			}
+		}
+		
+		void on_kill_all (Editor ed) {
+			on_kill_all_helper.begin (ed);
 		}
 
 		void on_copy (Editor ed) {
