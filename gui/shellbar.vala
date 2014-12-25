@@ -166,7 +166,7 @@ namespace Vanubi.UI {
 				var buf = new uint8[1024];
 				var b = new StringBuilder ();
 				var base_file = editor.source.parent as FileSource;
-				
+				string curdir = null;
 				
 				while (true) {
 					var r = yield is.read_async (buf, Priority.DEFAULT, cancellable);
@@ -190,7 +190,6 @@ namespace Vanubi.UI {
 						} else {
 							// new line, match error or directory change
 							MatchInfo info;
-							string curdir = null;
 							if (dir_regex.match (b.str, 0, out info)) {
 								curdir = info.fetch (1);
 							} else if (error_regex.match (b.str, 0, out info)) {
