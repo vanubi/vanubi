@@ -170,7 +170,7 @@ namespace Vanubi.UI {
 	
 	class SwitchBufferBar : SimpleCompletionBar<DataSource> {
 		public SwitchBufferBar (owned Annotated[] choices) {
-			base ((owned) choices, "", false);
+			base ((owned) choices, "", true);
 		}
 	}
 	

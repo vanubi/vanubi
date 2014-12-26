@@ -63,6 +63,7 @@ namespace Vanubi.UI {
 					}
 				}
 			}
+
 			var common_comp_index = string.joinv ("/", common_comps).length+1;
 			Annotated<FileSource>[] res = null;
 			// only display the uncommon part of the files

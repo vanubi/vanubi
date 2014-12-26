@@ -101,7 +101,7 @@ namespace Vanubi {
 			}
 		}
 		
-		if (sort) {
+		if (pattern != "" && sort) {
 			qsort_with_data<Match> (matches, sizeof (Match), (CompareDataFunc<Match>) match_compare_func);
 		}
 		
