@@ -64,6 +64,40 @@ namespace Vanubi.UI {
 		construct {
 			tab_width = 4;
 			buffer = new EditorBuffer ();
+			overwrite = true;
+		}
+
+		public override bool key_press_event (Gdk.EventKey e) {
+			if (e.keyval == Gdk.Key.Return ||
+				e.keyval == Gdk.Key.ISO_Enter ||
+				e.keyval == Gdk.Key.KP_Enter) {
+				commit_text ("\n");
+				return true;
+			} else if ((e.keyval == Gdk.Key.Tab ||
+					e.keyval == Gdk.Key.KP_Tab ||
+					e.keyval == Gdk.Key.ISO_Left_Tab) &&
+			!(Gdk.ModifierType.CONTROL_MASK in e.state)) {
+				commit_text ("\t");
+				return true;
+			}
+
+			if (Gdk.ModifierType.CONTROL_MASK in e.state ||
+				e.keyval == Gdk.Key.Up ||
+				e.keyval == Gdk.Key.Left ||
+				e.keyval == Gdk.Key.Down ||
+				e.keyval == Gdk.Key.Right) {
+				return base.key_press_event(e);
+			}
+				
+			commit_text(e.str);
+
+			return false;
+		}
+
+		void commit_text (string text) {
+			buffer.begin_user_action ();
+			buffer.insert_at_cursor (text, -1);
+			buffer.end_user_action ();
 		}
 	}
 
