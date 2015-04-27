@@ -61,82 +61,10 @@ namespace Vanubi.UI {
 	}
 
 	public class EditorView : SourceView {
-#if 0
-		TextTag caret_text_tag;
-		int caret_offset = 0;
-#endif
-
 		construct {
 			tab_width = 4;
 			buffer = new EditorBuffer ();
-			buffer.mark_set.connect (update_caret_position);
-			buffer.changed.connect (update_caret_position);
-#if 0
-			caret_text_tag = buffer.create_tag ("caret_text", foreground: "black");
-			((SourceBuffer) buffer).highlight_matching_brackets = true;
-			get_settings().gtk_cursor_blink = false;
-#endif
 		}
-
-		void update_caret_position () {
-#if 0
-			// remove previous tag
-			TextIter start;
-			buffer.get_iter_at_offset (out start, caret_offset);
-			var end = start;
-			end.forward_char ();
-			buffer.remove_tag (caret_text_tag, start, end);
-
-			buffer.get_iter_at_mark (out start, buffer.get_insert ());
-			caret_offset = start.get_offset ();
-			end = start;
-			end.forward_char ();
-			// change the color of the text
-			buffer.apply_tag (caret_text_tag, start, end);
-#endif
-		}
-
-#if 0
-		public override bool draw (Cairo.Context cr) {
-			var buffer = this.buffer;
-			TextIter it;
-			// get the location of the caret
-			buffer.get_iter_at_mark (out it, buffer.get_insert ());
-			Gdk.Rectangle rect;
-			get_iter_location (it, out rect);
-			int x, y;
-			// convert location to view coords
-			buffer_to_window_coords (TextWindowType.TEXT, rect.x, rect.y, out x, out y);
-			// now get the size of a generic character, assuming it's monospace
-			var layout = create_pango_layout ("X");
-			Pango.Rectangle extents;
-			layout.get_extents (null, out extents);
-			int width = extents.width / Pango.SCALE;
-			int height = extents.height / Pango.SCALE;
-			// now x,y,width,height is the cursor rectangle
-
-			// first draw the code
-			base.draw (cr);
-
-			// now draw the big caret
-			cr.set_source_rgba (1, 1, 1, 1.0); // white caret
-			cr.rectangle (x, y, width+1, height);
-			cr.fill ();
-
-			// make any selection be transparent
-			var ctx = get_style_context();
-			ctx.save ();
-			ctx.add_class ("caret");
-			// now redraw the code clipped to the new caret, exluding the old caret
-			cr.rectangle (x+1, y, width-1, height); // don't render the original cursor
-			cr.clip ();
-			base.draw (cr);
-			// revert
-			ctx.restore ();
-
-			return false;
-		}
-#endif
 	}
 
 	public class EditorContainer : EventBox {

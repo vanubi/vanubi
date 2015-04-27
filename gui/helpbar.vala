@@ -204,7 +204,7 @@ namespace Vanubi.UI {
 		}
 
 		class CompletionBox : Grid {
-			ListStore store;
+			Gtk.ListStore store;
 			public TreeView view;
 			unowned State state;
 			HelpBar.Type type;
@@ -212,7 +212,7 @@ namespace Vanubi.UI {
 			public CompletionBox (State state, Type type) {
 				this.state = state;
 				this.type = type;
-				store = new ListStore (3, typeof (string), typeof (string), typeof (string));
+				store = new Gtk.ListStore (3, typeof (string), typeof (string), typeof (string));
 				view = new TreeView.with_model (store);			
 				view.headers_visible = false;
 				var sel = view.get_selection ();
