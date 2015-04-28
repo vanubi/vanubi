@@ -82,6 +82,9 @@ namespace Vanubi.UI {
 			}
 
 			if (Gdk.ModifierType.CONTROL_MASK in e.state ||
+				e.keyval == Gdk.Key.BackSpace ||
+				e.keyval == Gdk.Key.Delete ||
+				e.keyval == Gdk.Key.KP_Delete ||
 				e.keyval == Gdk.Key.Up ||
 				e.keyval == Gdk.Key.Left ||
 				e.keyval == Gdk.Key.Down ||
