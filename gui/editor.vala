@@ -154,6 +154,10 @@ namespace Vanubi.UI {
 				e.keyval == Gdk.Key.BackSpace ||
 				e.keyval == Gdk.Key.Delete ||
 				e.keyval == Gdk.Key.KP_Delete ||
+				e.keyval == Gdk.Key.Page_Up ||
+				e.keyval == Gdk.Key.KP_Page_Up ||
+				e.keyval == Gdk.Key.Page_Down ||
+				e.keyval == Gdk.Key.KP_Page_Down ||
 				e.keyval == Gdk.Key.Up ||
 				e.keyval == Gdk.Key.Left ||
 				e.keyval == Gdk.Key.Down ||
