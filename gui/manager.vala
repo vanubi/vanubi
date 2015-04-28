@@ -588,6 +588,10 @@ namespace Vanubi.UI {
 			index_command ("toggle-show-tabs", "Toggle show tab in the editor");
 			execute_command["toggle-show-tabs"].connect (on_toggle_show_tabs);
 
+			bind_command (null, "toggle-block-cursor");
+			index_command ("toggle-block-cursor", "Invert the overwrite style of the caret");
+			execute_command["toggle-block-cursor"].connect (on_toggle_block_cursor);
+
 			current_layout = new Layout ();
 			layouts.append (current_layout);
 			layout_wrapper = new EventBox ();
@@ -2938,6 +2942,19 @@ namespace Vanubi.UI {
 			state.config.save ();
 
 			state.status.set (auto_add_endline ? "Enabled" : "Disabled");
+		}
+
+		void on_toggle_block_cursor (Editor editor) {
+			var block_cursor = !state.config.get_editor_bool ("block_cursor");
+			state.config.set_editor_bool ("block_cursor", block_cursor);
+			state.config.save ();
+
+			state.status.set (block_cursor ? "Enabled" : "Disabled");
+
+			each_editor ((ed) => {
+					ed.view.overwrite = block_cursor;
+					return true;
+			});
 		}
 
 		void on_toggle_atomic_save (Editor editor) {

@@ -61,10 +61,13 @@ namespace Vanubi.UI {
 	}
 
 	public class EditorView : SourceView {
-		construct {
+		State state;
+		
+		public EditorView (State state) {
+			this.state = state;
 			tab_width = 4;
 			buffer = new EditorBuffer ();
-			overwrite = true;
+			overwrite = state.config.get_editor_bool ("block_cursor");
 		}
 
 		public override bool key_press_event (Gdk.EventKey e) {
@@ -180,7 +183,7 @@ namespace Vanubi.UI {
 			git = new Git (conf);
 
 			// view
-			view = new EditorView ();
+			view = new EditorView (manager.state);
 			view.wrap_mode = WrapMode.CHAR;
 			view.set_data ("editor", (Editor*)this);
 			view.tab_width = conf.get_file_int(source, "tab_width", 4);
