@@ -99,6 +99,7 @@ namespace Vanubi.UI {
 
 		void commit_text (string text) {
 			buffer.begin_user_action ();
+			buffer.delete_selection (true, true);
 			buffer.insert_at_cursor (text, -1);
 			buffer.end_user_action ();
 		}
