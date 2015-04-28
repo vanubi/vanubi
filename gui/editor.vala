@@ -60,15 +60,81 @@ namespace Vanubi.UI {
 		}
 	}
 
+	public class EditorSelection {
+		public EditorBuffer buffer { get; private set; }
+		public TextMark start { get; private set; }
+		public TextMark end { get; private set; }
+
+		public EditorSelection (TextMark start, TextMark end) {
+			assert (start.get_buffer () == end.get_buffer ());
+			buffer = (EditorBuffer) start.get_buffer ();
+			this.start = start;
+			this.end = end;
+		}
+
+		public EditorSelection.with_iters (TextIter start, TextIter end) {
+			assert (start.get_buffer () == end.get_buffer ());
+			buffer = (EditorBuffer) start.get_buffer ();
+			this.start = buffer.create_mark (null, start, true);
+			this.end = buffer.create_mark (null, start, false);
+		}
+
+		public void get_iters (out TextIter start, out TextIter end) {
+			buffer.get_iter_at_mark (out start, this.start);
+			buffer.get_iter_at_mark (out end, this.end);
+		}
+
+		~EditorSelection() {
+			// delete marks if they are owned by us and by the buffer
+			if (!this.start.get_deleted () && this.start.ref_count == 2) {
+				buffer.delete_mark (this.start);
+			}
+
+			if (!this.end.get_deleted () && this.end.ref_count == 2) {
+				buffer.delete_mark (this.end);
+			}
+		}
+	}
+	
 	public class EditorView : SourceView {
 		State state;
+		
+		public EditorSelection selection {
+			get {
+				return _selection;
+			}
+			
+			set {
+				value = _selection;
+				if (has_focus) {
+					set_buffer_selection ();
+				}
+			}
+		}
+
+		private EditorSelection _selection;
 		
 		public EditorView (State state) {
 			this.state = state;
 			tab_width = 4;
 			buffer = new EditorBuffer ();
 			overwrite = state.config.get_editor_bool ("block_cursor");
+			update_selection ();
 		}
+
+		internal void update_selection () {
+			TextIter start, end;
+			buffer.get_selection_bounds (out start, out end);
+			_selection = new EditorSelection.with_iters (start, end);
+		}
+
+		void set_buffer_selection () {
+			TextIter start, end;
+			selection.get_iters (out start, out end);
+			buffer.select_range (start, end);
+		}
+
+		/* events */
 
 		public override bool key_press_event (Gdk.EventKey e) {
 			if (e.keyval == Gdk.Key.Return ||
@@ -149,7 +215,7 @@ namespace Vanubi.UI {
 		public weak Manager manager;
 		Configuration conf;
 		public weak DataSource source { get; private set; }
-		public SourceView view { get; private set; }
+		public EditorView view { get; private set; }
 		public SourceStyleSchemeManager editor_style { get; private set; }
 		public DataSource? moved_to;
 		ScrolledWindow sw;
@@ -312,9 +378,10 @@ namespace Vanubi.UI {
 		public void update_old_selection () {
 			TextIter old_selection_start, old_selection_end;
 			view.buffer.get_selection_bounds (out old_selection_start,
-							  out old_selection_end);
+											  out old_selection_end);
 			old_selection_start_offset = old_selection_start.get_offset ();
 			old_selection_end_offset = old_selection_end.get_offset ();
+			view.update_selection ();
 		}
 
 		public bool is_externally_changed () {
@@ -330,7 +397,7 @@ namespace Vanubi.UI {
 
 		public override void grab_focus () {
 			view.grab_focus ();
-			manager.save_session (this); // changed focused
+			manager.save_session (this); // changed focused editor
 			parent_layout.last_focused_editor = this;
 		}
 
