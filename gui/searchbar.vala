@@ -228,7 +228,8 @@ namespace Vanubi.UI {
 					// found
 					found_occurrence = true;
 					editor.view.selection = new EditorSelection.with_iters (iter, subiter);
-					editor.view.scroll_to_mark (buf.get_insert (), 0, true, 0.5, 0.5);
+					editor.view.set_buffer_selection ();
+					editor.view.scroll_to_mark (editor.view.selection.end, 0, true, 0.5, 0.5);
 					state.status.clear ("search");
 					return;
 				}
@@ -321,9 +322,9 @@ namespace Vanubi.UI {
 				var buf = editor.view.buffer;
 				buf.get_iter_at_offset (out insert, original_insert);
 				buf.get_iter_at_offset (out bound, original_bound);
-				editor.view.buffer.select_range (insert, bound);
-				editor.view.scroll_to_mark (editor.view.buffer.get_insert (), 0, false, 0.5, 0.5);
-				editor.view.update_selection ();
+				editor.view.selection = new EditorSelection.with_iters (insert, bound);
+				editor.view.set_buffer_selection ();
+				editor.view.scroll_to_mark (editor.view.selection.end, 0, false, 0.5, 0.5);
 				aborted ();
 				return true;
 			} else if (mode == Mode.SEARCH_FORWARD || mode == Mode.SEARCH_BACKWARD) {

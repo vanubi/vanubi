@@ -104,6 +104,8 @@ namespace Vanubi.UI {
 	
 	public class EditorView : SourceView {
 		State state;
+		ulong mark_set_signal;
+		TextBuffer old_buffer;
 		
 		public EditorSelection selection {
 			get {
@@ -124,26 +126,33 @@ namespace Vanubi.UI {
 		public EditorView (State state) {
 			this.state = state;
 			tab_width = 4;
-			buffer = new EditorBuffer ();
+			old_buffer = buffer = new EditorBuffer ();
 			overwrite = state.config.get_editor_bool ("block_cursor");
 			update_selection ();
 
 			notify["buffer"].connect (on_buffer_changed);
+			mark_set_signal = buffer.mark_set.connect (on_mark_set);
 		}
 
-		internal void update_selection () {
+		public void update_selection () {
 			TextIter start, end;
 			buffer.get_selection_bounds (out start, out end);
 			_selection = new EditorSelection.with_iters (start, end);
 		}
 
-		void set_buffer_selection () {
+		public void set_buffer_selection () {
 			TextIter start, end;
 			selection.get_iters (out start, out end);
 			buffer.select_range (start, end);
 		}
 
 		/* events */
+
+		void on_mark_set (TextIter loc, TextMark mark) {
+			if (has_focus && (mark == buffer.get_insert () || mark == buffer.get_selection_bound ())) {
+				update_selection ();
+			}
+		}
 
 		public override bool focus_in_event (Gdk.EventFocus e) {
 			set_buffer_selection ();
@@ -199,7 +208,12 @@ namespace Vanubi.UI {
 		}
 
 		void on_buffer_changed () {
-			update_selection ();
+			if (old_buffer == buffer) {
+				return;
+			}
+			
+			old_buffer.disconnect (mark_set_signal);
+			old_buffer = buffer;
 		}
 	}
 
