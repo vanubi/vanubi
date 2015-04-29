@@ -76,12 +76,18 @@ namespace Vanubi.UI {
 			assert (start.get_buffer () == end.get_buffer ());
 			buffer = (EditorBuffer) start.get_buffer ();
 			this.start = buffer.create_mark (null, start, true);
-			this.end = buffer.create_mark (null, start, false);
+			this.end = buffer.create_mark (null, end, false);
 		}
 
 		public void get_iters (out TextIter start, out TextIter end) {
 			buffer.get_iter_at_mark (out start, this.start);
 			buffer.get_iter_at_mark (out end, this.end);
+		}
+
+		public EditorSelection copy () {
+			TextIter start, end;
+			get_iters (out start, out end);
+			return new EditorSelection.with_iters (start, end);
 		}
 
 		~EditorSelection() {
@@ -105,7 +111,8 @@ namespace Vanubi.UI {
 			}
 			
 			set {
-				value = _selection;
+				assert (value.buffer == buffer);
+				_selection = value;
 				if (has_focus) {
 					set_buffer_selection ();
 				}
@@ -120,6 +127,8 @@ namespace Vanubi.UI {
 			buffer = new EditorBuffer ();
 			overwrite = state.config.get_editor_bool ("block_cursor");
 			update_selection ();
+
+			notify["buffer"].connect (on_buffer_changed);
 		}
 
 		internal void update_selection () {
@@ -135,6 +144,18 @@ namespace Vanubi.UI {
 		}
 
 		/* events */
+
+		public override bool focus_in_event (Gdk.EventFocus e) {
+			set_buffer_selection ();
+			return base.focus_in_event (e);
+		}
+
+		public override bool focus_out_event (Gdk.EventFocus e) {
+			update_selection ();
+			TextIter start, end;
+			selection.get_iters (out start, out end);
+			return base.focus_in_event (e);
+		}
 
 		public override bool key_press_event (Gdk.EventKey e) {
 			if (e.keyval == Gdk.Key.Return ||
@@ -175,6 +196,10 @@ namespace Vanubi.UI {
 			buffer.delete_selection (true, true);
 			buffer.insert_at_cursor (text, -1);
 			buffer.end_user_action ();
+		}
+
+		void on_buffer_changed () {
+			update_selection ();
 		}
 	}
 
@@ -331,19 +356,12 @@ namespace Vanubi.UI {
 
 			view.focus_in_event.connect(() => {
 					parent_layout.last_focused_editor = this;
-					if (old_selection_start_offset >= 0 && old_selection_end_offset >= 0) {
-						TextIter start, end;
-						view.buffer.get_iter_at_offset (out start, old_selection_start_offset);
-						view.buffer.get_iter_at_offset (out end, old_selection_end_offset);
-						view.buffer.select_range (start, end);
-					}
 					infobar.get_style_context().remove_class ("nonfocused");
 					infobar.reset_style (); // GTK+ 3.4 bug, solved in 3.6
 					return false;
 			});
 
 			view.focus_out_event.connect(() => {
-					update_old_selection ();
 					infobar.get_style_context().add_class ("nonfocused");
 					infobar.reset_style (); // GTK+ 3.4 bug, solved in 3.6
 					return false;
@@ -377,15 +395,6 @@ namespace Vanubi.UI {
 
 			yield git.monitor_special_file (parent, "HEAD");
 			yield git.monitor_special_file (parent, "refs/heads/"+branch);
-		}
-
-		public void update_old_selection () {
-			TextIter old_selection_start, old_selection_end;
-			view.buffer.get_selection_bounds (out old_selection_start,
-											  out old_selection_end);
-			old_selection_start_offset = old_selection_start.get_offset ();
-			old_selection_end_offset = old_selection_end.get_offset ();
-			view.update_selection ();
 		}
 
 		public bool is_externally_changed () {
@@ -481,9 +490,7 @@ namespace Vanubi.UI {
 			TextIter end_iter;
 			var mark = get_end_mark_for_location (location, buf);
 			buf.get_iter_at_mark (out end_iter, mark);
-			buf.select_range (start_iter, end_iter);
-
-			update_old_selection ();
+			view.selection = new EditorSelection.with_iters (start_iter, end_iter);
 
 			return true;
 		}
@@ -716,15 +723,12 @@ namespace Vanubi.UI {
 				iter.forward_char ();
 				
 				Idle.add_full (Priority.HIGH, () => {
-						update_old_selection ();
+						var old = view.selection.copy ();
 						
 						view.buffer.insert (ref iter, "\n", 1);
 						
 						// select old range, in case the cursor was at the end
-						TextIter start, end;
-						view.buffer.get_iter_at_offset (out start, old_selection_start_offset);
-						view.buffer.get_iter_at_offset (out end, old_selection_end_offset);
-						view.buffer.select_range (start, end);
+						view.selection = old;
 						return false;
 				});
 			}
@@ -803,13 +807,7 @@ namespace Vanubi.UI {
 		void on_file_count () {
 			// flush pending keys
 			if (view.has_focus) {
-				TextIter selection_start, selection_end;
-				view.buffer.get_selection_bounds (out selection_start,
-												  out selection_end);
-				if (old_selection_start_offset != selection_start.get_offset () &&
-					old_selection_end_offset != selection_end.get_offset ()) {
-					Idle.add_full (Priority.HIGH, () => { manager.state.global_keys.flush (this); return false; });
-				}
+				Idle.add_full (Priority.HIGH, () => { manager.state.global_keys.flush (this); return false; });
 			}
 			
 			TextIter insert;
