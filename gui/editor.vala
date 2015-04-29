@@ -177,8 +177,6 @@ namespace Vanubi.UI {
 
 		public override bool focus_out_event (Gdk.EventFocus e) {
 			update_selection ();
-			TextIter start, end;
-			selection.get_iters (out start, out end);
 			return base.focus_in_event (e);
 		}
 
