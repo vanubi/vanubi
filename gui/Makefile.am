@@ -31,6 +31,7 @@ vanubi_VALASOURCES = \
 	main.vala \
 	manager.vala \
 	searchbar.vala \
+	seltree.vala \
 	shellbar.vala \
 	util.vala \
 	vade.vala \

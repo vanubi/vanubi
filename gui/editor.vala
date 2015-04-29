@@ -156,15 +156,15 @@ namespace Vanubi.UI {
 		ulong cursor_signal;
 		TextBuffer old_buffer;
 
-		public bool insert_overwrite {
-			get { return _insert_overwrite; }
+		public bool overwrite_mode {
+			get { return _overwrite_mode; }
 			set {
-				_insert_overwrite = value;
+				_overwrite_mode = value;
 				update_block_cursor ();
 			}
 		}
 
-		bool _insert_overwrite;
+		bool _overwrite_mode;
 		
 		public EditorSelection selection {
 			get {
@@ -179,9 +179,8 @@ namespace Vanubi.UI {
 				}
 			}
 		}
-
 		private EditorSelection _selection;
-		
+
 		public EditorView (State state) {
 			this.state = state;
 			tab_width = 4;
@@ -213,7 +212,7 @@ namespace Vanubi.UI {
 		}
 
 		public void update_block_cursor () {
-			overwrite = state.config.get_editor_bool ("block_cursor") ^ insert_overwrite;
+			overwrite = state.config.get_editor_bool ("block_cursor") ^ overwrite_mode;
 		}
 
 		/* events */
@@ -237,7 +236,7 @@ namespace Vanubi.UI {
 		public override bool key_press_event (Gdk.EventKey e) {
 			if (e.keyval == Gdk.Key.Insert ||
 				e.keyval == Gdk.Key.KP_Insert) {
-				insert_overwrite = !insert_overwrite;
+				overwrite_mode = !overwrite_mode;
 				return true;
 			}
 			
@@ -279,7 +278,7 @@ namespace Vanubi.UI {
 
 			TextIter start, end;
 			selection.get_iters (out start, out end);
-			if (insert_overwrite) {
+			if (overwrite_mode) {
 				if (start.equal (end)) {
 					// delete the next char
 					if (end.forward_char ()) {
