@@ -282,12 +282,13 @@ namespace Vanubi.UI {
 			if (insert_overwrite) {
 				if (start.equal (end)) {
 					// delete the next char
-					end.forward_char ();
-					buffer.delete_range (start, end);
+					if (end.forward_char ()) {
+						buffer.delete_range (start, end);
+					}
 				} else {
 					buffer.delete_range (start, end);
 				}
-			} else {
+			} else if (!start.equal (end)) {
 				buffer.delete_range (start, end);
 			}
 			
