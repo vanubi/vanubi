@@ -2944,7 +2944,7 @@ namespace Vanubi.UI {
 			state.status.set (block_cursor ? "Enabled" : "Disabled");
 
 			each_editor ((ed) => {
-					ed.view.overwrite = block_cursor;
+					ed.view.update_block_cursor ();
 					return true;
 			});
 		}

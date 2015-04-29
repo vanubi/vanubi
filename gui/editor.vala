@@ -23,8 +23,10 @@ namespace Vanubi.UI {
 	public class EditorBuffer : SourceBuffer {
 		public AbbrevCompletion abbrevs { get; private set; default = new AbbrevCompletion (); }
 		uint abbrev_timeout = 0;
+		public TextTag selection_tag;
 
 		public EditorBuffer () {
+			selection_tag = create_tag (null, background: "blue", foreground: "white");
 		}
 
 		~EditorBuffer () {
@@ -64,6 +66,25 @@ namespace Vanubi.UI {
 		public EditorBuffer buffer { get; private set; }
 		public TextMark start { get; private set; }
 		public TextMark end { get; private set; }
+
+		public bool show {
+			get {
+				return _show;
+			}
+
+			set {
+				if (_show != value) {
+					_show = value;
+					if (value) {
+						add_tags ();
+					} else {
+						remove_tags ();
+					}
+				}
+			}
+		}
+
+		bool _show;
 
 		public EditorSelection (TextMark start, TextMark end) {
 			assert (start.get_buffer () == end.get_buffer ());
@@ -106,6 +127,18 @@ namespace Vanubi.UI {
 			return new EditorSelection.with_iters (start, end);
 		}
 
+		void add_tags () {
+			TextIter start, end;
+			get_iters (out start, out end);
+			buffer.apply_tag (buffer.selection_tag, start, end);
+		}
+
+		void remove_tags () {
+			TextIter start, end;
+			get_iters (out start, out end);
+			buffer.remove_tag (buffer.selection_tag, start, end);
+		}
+
 		~EditorSelection() {
 			// delete marks if they are owned by us and by the buffer
 			if (!this.start.get_deleted () && this.start.ref_count == 2) {
@@ -120,8 +153,18 @@ namespace Vanubi.UI {
 	
 	public class EditorView : SourceView {
 		State state;
-		ulong mark_set_signal;
+		ulong cursor_signal;
 		TextBuffer old_buffer;
+
+		public bool insert_overwrite {
+			get { return _insert_overwrite; }
+			set {
+				_insert_overwrite = value;
+				update_block_cursor ();
+			}
+		}
+
+		bool _insert_overwrite;
 		
 		public EditorSelection selection {
 			get {
@@ -147,40 +190,57 @@ namespace Vanubi.UI {
 			update_selection ();
 
 			notify["buffer"].connect (on_buffer_changed);
-			mark_set_signal = buffer.mark_set.connect (on_mark_set);
+			cursor_signal = buffer.notify["cursor-position"].connect (on_cursor_changed);
 		}
 
 		public void update_selection () {
+			if (_selection != null) {
+				_selection.show = false;
+			}
+			
 			TextIter start, end;
-			buffer.get_selection_bounds (out start, out end);
+			buffer.get_iter_at_mark (out start, buffer.get_insert ());
+			buffer.get_iter_at_mark (out end, buffer.get_selection_bound ());
 			_selection = new EditorSelection.with_iters (start, end);
+			_selection.show = true;
 		}
 
 		public void set_buffer_selection () {
 			TextIter start, end;
 			selection.get_iters (out start, out end);
 			buffer.select_range (start, end);
+			selection.show = true;
+		}
+
+		public void update_block_cursor () {
+			overwrite = state.config.get_editor_bool ("block_cursor") ^ insert_overwrite;
 		}
 
 		/* events */
 
-		void on_mark_set (TextIter loc, TextMark mark) {
-			if (has_focus && (mark == buffer.get_insert () || mark == buffer.get_selection_bound ())) {
+		void on_cursor_changed () {
+			if (has_focus) {
 				update_selection ();
 			}
 		}
-
+		
 		public override bool focus_in_event (Gdk.EventFocus e) {
 			set_buffer_selection ();
 			return base.focus_in_event (e);
 		}
 
 		public override bool focus_out_event (Gdk.EventFocus e) {
-			update_selection ();
+			selection.show = false;
 			return base.focus_in_event (e);
 		}
 
 		public override bool key_press_event (Gdk.EventKey e) {
+			if (e.keyval == Gdk.Key.Insert ||
+				e.keyval == Gdk.Key.KP_Insert) {
+				insert_overwrite = !insert_overwrite;
+				return true;
+			}
+			
 			if (e.keyval == Gdk.Key.Return ||
 				e.keyval == Gdk.Key.ISO_Enter ||
 				e.keyval == Gdk.Key.KP_Enter) {
@@ -209,14 +269,28 @@ namespace Vanubi.UI {
 				return base.key_press_event(e);
 			}
 				
-			commit_text(e.str);
+			commit_text (e.str);
 
 			return false;
 		}
 
 		void commit_text (string text) {
 			buffer.begin_user_action ();
-			buffer.delete_selection (true, true);
+
+			if (insert_overwrite) {
+				TextIter start, end;
+				selection.get_iters (out start, out end);
+				if (start.equal (end)) {
+					// delete the next char
+					end.forward_char ();
+					buffer.delete_range (start, end);
+				} else {
+					buffer.delete_selection (true, true);
+				}
+			} else {
+				buffer.delete_selection (true, true);
+			}
+			
 			buffer.insert_at_cursor (text, -1);
 			buffer.end_user_action ();
 		}
@@ -225,9 +299,18 @@ namespace Vanubi.UI {
 			if (old_buffer == buffer) {
 				return;
 			}
-			
-			old_buffer.disconnect (mark_set_signal);
+
+			if (cursor_signal > 0) {
+				old_buffer.disconnect (cursor_signal);
+			}
+
 			old_buffer = buffer;
+			if (buffer is EditorBuffer) {
+				cursor_signal = buffer.notify["cursor-position"].connect (on_cursor_changed);
+				update_selection ();
+			} else {
+				cursor_signal = 0;
+			}
 		}
 	}
 
