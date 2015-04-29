@@ -25,8 +25,7 @@ namespace Vanubi.UI {
 		
 		internal KeyHandler keyhandler;
 		// Editor selection before calling a command
-		int selection_start;
-		int selection_end;
+		EditorSelection selection;
 
 		bool saving_all = false;
 
@@ -685,11 +684,7 @@ namespace Vanubi.UI {
 		}
 		
 		public void update_selection (Editor ed) {
-			var buf = ed.view.buffer;
-			TextIter start, end;
-			buf.get_selection_bounds (out start, out end);
-			selection_start = start.get_offset ();
-			selection_end = end.get_offset ();
+			selection = ed.view.selection.copy ();
 		}
 
 		public void on_command (Object subject, string command, bool use_old_state) {
@@ -1300,7 +1295,9 @@ namespace Vanubi.UI {
 		}
 
 		async void reload_file (Editor editor) {
-			var old_offset = selection_start;
+			int start_offset, end_offset;
+			selection.get_offsets (out start_offset, out end_offset);
+			
 			try {
 				var exists = yield editor.source.exists ();
 				if (!exists && editor.moved_to != null) {
@@ -1313,11 +1310,10 @@ namespace Vanubi.UI {
 					var is = yield editor.source.read ();
 					yield replace_editor_contents (editor, is);
 					is.close ();
-					
-					TextIter iter;
-					var buf = editor.view.buffer;
-					buf.get_iter_at_offset (out iter, old_offset);
-					buf.place_cursor (iter);
+
+					var buf = (EditorBuffer) editor.view.buffer;
+					editor.view.selection = new EditorSelection.with_offsets (buf, start_offset, end_offset);
+					editor.view.set_buffer_selection ();
 					editor.view.scroll_mark_onscreen (buf.get_insert ());
 					
 					// in case of splitted editors
@@ -1732,10 +1728,9 @@ namespace Vanubi.UI {
 
 		void on_copy (Editor ed) {
 			TextIter start, end;
-			ed.view.buffer.get_iter_at_offset (out start, selection_start);
-			ed.view.buffer.get_iter_at_offset (out end, selection_end);
+			selection.get_iters (out start, out end);
 			
-			var text = ed.view.buffer.get_text (start, end, false);
+			var text = selection.buffer.get_text (start, end, false);
 			Clipboard clip = Clipboard.get (Gdk.SELECTION_CLIPBOARD);
 			clip.set_text (text, -1);
 		}
@@ -1744,9 +1739,8 @@ namespace Vanubi.UI {
 			on_copy (ed);
 
 			TextIter start, end;
-			ed.view.buffer.get_iter_at_offset (out start, selection_start);
-			ed.view.buffer.get_iter_at_offset (out end, selection_end);
-			ed.view.buffer.delete (ref start, ref end);
+			selection.get_iters (out start, out end);
+			selection.buffer.delete (ref start, ref end);
 		}
 
 		void on_paste (Editor ed) {
@@ -1806,19 +1800,20 @@ namespace Vanubi.UI {
 		}
 
 		async void pipe_shell_replace (Editor ed) {
-			var old_offset = selection_start;
+			int start_offset, end_offset;
+			selection.get_offsets (out start_offset, out end_offset);
+
 			try {
 				var output = yield pipe_shell (ed);
 
 				var stream = new MemoryInputStream.from_data ((owned) output, GLib.free);
 
-				var buf = ed.view.buffer;
+				var buf = (EditorBuffer) ed.view.buffer;
 				yield replace_editor_contents (ed, stream, true);
 				stream.close ();
 
-				TextIter iter;
-				buf.get_iter_at_offset (out iter, old_offset);
-				buf.place_cursor (iter);
+				ed.view.selection = new EditorSelection.with_offsets (buf, start_offset, end_offset);
+				ed.view.set_buffer_selection ();
 				ed.view.scroll_mark_onscreen (buf.get_insert ());
 
 				state.status.set ("Output of command has been replaced into the editor");
@@ -1831,10 +1826,9 @@ namespace Vanubi.UI {
 		async uint8[] pipe_shell (Editor ed) throws Error {
 			// get text
 			TextIter start, end;
-			ed.view.buffer.get_iter_at_offset (out start, selection_start);
-			ed.view.buffer.get_iter_at_offset (out end, selection_end);
+			selection.get_iters (out start, out end);
 			
-			var buf = ed.view.buffer;
+			var buf = selection.buffer;
 			if (start.equal(end)) { // no selection
 				buf.get_start_iter (out start);
 				buf.get_end_iter (out end);
@@ -2231,8 +2225,7 @@ namespace Vanubi.UI {
 
 			// indent every selected line
 			TextIter start, end;
-			ed.view.buffer.get_iter_at_offset (out start, selection_start);
-			ed.view.buffer.get_iter_at_offset (out end, selection_end);
+			selection.get_iters (out start, out end);
 			
 			var min_line = int.min (start.get_line(), end.get_line());
 			var max_line = int.max (start.get_line(), end.get_line());
@@ -2307,8 +2300,7 @@ namespace Vanubi.UI {
 
 			if (comment_engine != null) {
 				TextIter start, end;
-				ed.view.buffer.get_iter_at_offset (out start, selection_start);
-				ed.view.buffer.get_iter_at_offset (out end, selection_end);
+				selection.get_iters (out start, out end);
 
 				var iter_start = vbuf.line_at_char (start.get_line (),
 								    start.get_line_offset ());
@@ -3069,8 +3061,7 @@ namespace Vanubi.UI {
 
 		void on_clean_trailing_spaces (Editor editor) {
 			TextIter start, end;
-			editor.view.buffer.get_iter_at_offset (out start, selection_start);
-			editor.view.buffer.get_iter_at_offset (out end, selection_end);
+			selection.get_iters (out start, out end);
 
 			editor.view.buffer.begin_user_action ();
 			editor.clean_trailing_spaces (start, end);

@@ -79,9 +79,25 @@ namespace Vanubi.UI {
 			this.end = buffer.create_mark (null, end, false);
 		}
 
+		public EditorSelection.with_offsets (EditorBuffer buffer, int start, int end) {
+			TextIter istart, iend;
+			this.buffer = buffer;
+			buffer.get_iter_at_offset (out istart, start);
+			buffer.get_iter_at_offset (out iend, end);
+			this.start = buffer.create_mark (null, istart, true);
+			this.end = buffer.create_mark (null, iend, false);
+		}
+
 		public void get_iters (out TextIter start, out TextIter end) {
 			buffer.get_iter_at_mark (out start, this.start);
 			buffer.get_iter_at_mark (out end, this.end);
+		}
+
+		public void get_offsets (out int start, out int end) {
+			TextIter istart, iend;
+			get_iters (out istart, out iend);
+			start = istart.get_offset ();
+			end = iend.get_offset ();
 		}
 
 		public EditorSelection copy () {
@@ -270,8 +286,6 @@ namespace Vanubi.UI {
 		Label file_read_only;
 		Label endline_status;
 		EditorInfoBar infobar;
-		int old_selection_start_offset = -1;
-		int old_selection_end_offset = -1;
 		SourceGutter? gutter = null;
 		GitGutterRenderer? gutter_renderer = null;
 		bool file_loaded = true;

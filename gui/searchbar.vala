@@ -229,7 +229,7 @@ namespace Vanubi.UI {
 					found_occurrence = true;
 					editor.view.selection = new EditorSelection.with_iters (iter, subiter);
 					editor.view.set_buffer_selection ();
-					editor.view.scroll_to_mark (editor.view.selection.end, 0, true, 0.5, 0.5);
+					editor.view.scroll_to_mark (editor.view.buffer.get_insert (), 0, true, 0.5, 0.5);
 					state.status.clear ("search");
 					return;
 				}
@@ -324,7 +324,7 @@ namespace Vanubi.UI {
 				buf.get_iter_at_offset (out bound, original_bound);
 				editor.view.selection = new EditorSelection.with_iters (insert, bound);
 				editor.view.set_buffer_selection ();
-				editor.view.scroll_to_mark (editor.view.selection.end, 0, false, 0.5, 0.5);
+				editor.view.scroll_to_mark (buf.get_insert (), 0, false, 0.5, 0.5);
 				aborted ();
 				return true;
 			} else if (mode == Mode.SEARCH_FORWARD || mode == Mode.SEARCH_BACKWARD) {
