@@ -277,18 +277,18 @@ namespace Vanubi.UI {
 		void commit_text (string text) {
 			buffer.begin_user_action ();
 
+			TextIter start, end;
+			selection.get_iters (out start, out end);
 			if (insert_overwrite) {
-				TextIter start, end;
-				selection.get_iters (out start, out end);
 				if (start.equal (end)) {
 					// delete the next char
 					end.forward_char ();
 					buffer.delete_range (start, end);
 				} else {
-					buffer.delete_selection (true, true);
+					buffer.delete_range (start, end);
 				}
 			} else {
-				buffer.delete_selection (true, true);
+				buffer.delete_range (start, end);
 			}
 			
 			buffer.insert_at_cursor (text, -1);
