@@ -1,5 +1,5 @@
 /*
- *  Copyright © 2011-2014 Luca Bruno
+ *  Copyright © 2011-2015 Luca Bruno
  *
  *  This file is part of Vanubi.
  *
@@ -698,7 +698,7 @@ namespace Vanubi.UI {
 			}
 
 			var buf = (SourceBuffer) view.buffer;
-			buf.mark_set.connect (on_file_count);
+			buf.mark_set.connect (on_mark_set);
 			content_changed_signal = buf.changed.connect (on_content_changed);
 			new UI.Buffer (view).indent_mode = conf.get_file_enum (source, "indent_mode", IndentMode.TABS);
 			buf.modified_changed.connect (on_modified_changed);
@@ -707,7 +707,7 @@ namespace Vanubi.UI {
 
 		void on_content_changed () {
 			on_add_endline ();
-			on_file_count ();
+			update_file_count ();
 			on_git_gutter ();
 			on_check_endline ();
 		}
@@ -804,11 +804,15 @@ namespace Vanubi.UI {
 			}
 		}
 
-		void on_file_count () {
-			// flush pending keys
-			if (view.has_focus) {
-				Idle.add_full (Priority.HIGH, () => { manager.state.global_keys.flush (this); return false; });
+		void on_mark_set (TextIter loc, TextMark mark) {
+			if (mark == view.buffer.get_insert () && view.has_focus) {
+				update_file_count ();
 			}
+		}
+		
+		void update_file_count () {
+			// flush pending keys
+			Idle.add_full (Priority.HIGH, () => { manager.state.global_keys.flush (this); return false; });
 			
 			TextIter insert;
 			var buf = view.buffer;
