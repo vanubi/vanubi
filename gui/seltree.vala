@@ -61,7 +61,6 @@ namespace Vanubi.UI {
 
 			if (first < 0) {
 				first = imax;
-				do_insert = true;
 			}
 
 			// find the last selection that overlaps with the given selection
