@@ -140,6 +140,10 @@ namespace Vanubi.UI {
 		}
 
 		~EditorSelection() {
+			if (!this.start.get_deleted () && !this.end.get_deleted ()) {
+				show = false;
+			}
+			
 			// delete marks if they are owned by us and by the buffer
 			if (!this.start.get_deleted () && this.start.ref_count == 2) {
 				buffer.delete_mark (this.start);
