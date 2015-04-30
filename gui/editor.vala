@@ -212,7 +212,12 @@ namespace Vanubi.UI {
 		}
 
 		public void update_block_cursor () {
+#ifdef VALA_0_28
 			overwrite = state.config.get_editor_bool ("block_cursor") ^ overwrite_mode;
+#else
+			var bc = get_editor_bool ("block_cursor");
+			overwrite = (overwrite_mode && !bc) || (!overwrite_mode && bc);
+#endif
 		}
 
 		/* events */

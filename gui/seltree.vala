@@ -26,6 +26,7 @@ namespace Vanubi.UI {
 			sel.get_offsets (out left, out right);
 
 			var first = -1;
+			var first_found = false;
 			var last = -1;
 			
 			// find the first selection that ovarlaps with the given selection
@@ -56,6 +57,11 @@ namespace Vanubi.UI {
 					// look left
 					imax = cur-1;
 				}
+			}
+
+			if (first < 0) {
+				first = imax;
+				do_insert = true;
 			}
 
 			// find the last selection that overlaps with the given selection
