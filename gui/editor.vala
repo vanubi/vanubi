@@ -86,27 +86,48 @@ namespace Vanubi.UI {
 
 		bool _show;
 
-		public EditorSelection (TextMark start, TextMark end) {
-			assert (start.get_buffer () == end.get_buffer ());
-			buffer = (EditorBuffer) start.get_buffer ();
-			this.start = start;
-			this.end = end;
+		public EditorSelection (TextMark insert, TextMark bound) {
+			assert (insert.get_buffer () == bound.get_buffer ());
+			buffer = (EditorBuffer) insert.get_buffer ();
+
+			TextIter iinsert, ibound;
+			buffer.get_iter_at_mark (out iinsert, this.start);
+			buffer.get_iter_at_mark (out ibound, this.end);
+			if (iinsert.get_offset() < ibound.get_offset()) {
+				this.start = insert;
+				this.end = bound;
+			} else {
+				this.start = bound;
+				this.end = insert;
+			}
 		}
 
-		public EditorSelection.with_iters (TextIter start, TextIter end) {
-			assert (start.get_buffer () == end.get_buffer ());
-			buffer = (EditorBuffer) start.get_buffer ();
-			this.start = buffer.create_mark (null, start, true);
-			this.end = buffer.create_mark (null, end, false);
+		public EditorSelection.with_iters (TextIter insert, TextIter bound) {
+			assert (insert.get_buffer () == bound.get_buffer ());
+			buffer = (EditorBuffer) insert.get_buffer ();
+
+			if (insert.get_offset() < bound.get_offset()) {
+				this.start = buffer.create_mark (null, insert, true);
+				this.end = buffer.create_mark (null, bound, false);
+			} else {
+				this.start = buffer.create_mark (null, bound, true);
+				this.end = buffer.create_mark (null, insert, false);
+			}
 		}
 
-		public EditorSelection.with_offsets (EditorBuffer buffer, int start, int end) {
-			TextIter istart, iend;
+		public EditorSelection.with_offsets (EditorBuffer buffer, int insert, int bound) {
+			TextIter iinsert, ibound;
 			this.buffer = buffer;
-			buffer.get_iter_at_offset (out istart, start);
-			buffer.get_iter_at_offset (out iend, end);
-			this.start = buffer.create_mark (null, istart, true);
-			this.end = buffer.create_mark (null, iend, false);
+			buffer.get_iter_at_offset (out iinsert, insert);
+			buffer.get_iter_at_offset (out ibound, bound);
+
+			if (iinsert.get_offset() < ibound.get_offset()) {
+				this.start = buffer.create_mark (null, iinsert, true);
+				this.end = buffer.create_mark (null, ibound, false);
+			} else {
+				this.start = buffer.create_mark (null, ibound, true);
+				this.end = buffer.create_mark (null, iinsert, false);
+			}
 		}
 
 		public void get_iters (out TextIter start, out TextIter end) {
@@ -139,6 +160,12 @@ namespace Vanubi.UI {
 			buffer.remove_tag (buffer.selection_tag, start, end);
 		}
 
+		public string to_string () {
+			TextIter start, end;
+			get_iters (out start, out end);
+			return "%d.%d-%d.%d".printf (start.get_line(), start.get_line_offset(), end.get_line(), end.get_line_offset());
+		}
+		
 		~EditorSelection() {
 			if (!this.start.get_deleted () && !this.end.get_deleted ()) {
 				show = false;
