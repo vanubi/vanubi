@@ -1452,7 +1452,12 @@ namespace Vanubi.UI {
 		/* Kill a buffer. The file of this buffer must not have any other editors visible. */
 		void kill_buffer (Editor editor, GenericArray<Editor> editors, owned DataSource next_source) {
 			var source = editor.source; // keep alive
-			if (!(source is ScratchSource)) { // scratch never dies
+			if (source is ScratchSource) {
+				// just empty the buffer
+				editor.reset_language ();
+				editor.view.buffer.set_text ("", -1);
+				editor.view.buffer.set_modified (false);
+			} else {
 				// update all editor containers
 				each_lru ((lru) => { lru.remove (source); return true; });
 				state.sources.remove (source);
