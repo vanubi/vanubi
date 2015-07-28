@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+ Author: Rocco Folino <rocco@devzen.net>
+ Copyright (C) 2015 Rocco Folino <rocco@devzen.net>
+
+ GtkSourceView is free software; you can redistribute it and/or
+ modify it under the terms of the GNU Lesser General Public
+ License as published by the Free Software Foundation; either
+ version 2.1 of the License, or (at your option) any later version.
+
+ GtkSourceView is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ Lesser General Public License for more details.
+
+ You should have received a copy of the GNU Lesser General Public
+ License along with this library; if not, write to the Free Software
+ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+
+-->
+<language id="dts" _name="Device Tree" version="2.0" _section="Others">
+ <metadata>
+  <property name="globs">*.dts;*.dtsi</property>
+  <property name="line-comment-start">//</property>
+  <property name="block-comment-start">/*</property>
+  <property name="block-comment-end">*/</property>
+ </metadata>
+
+  <styles>
+    <style id="comment" _name="Comment" map-to="def:comment"/>
+    <style id="included-file" _name="Included File" map-to="def:string"/>
+    <style id="keyword" _name="Keyword" map-to="def:keyword"/>
+    <style id="error" _name="Error" map-to="def:error"/>
+  </styles>
+
+  <definitions>
+
+   <define-regex id="preproc-start">^\s*#\s*</define-regex>
+
+   <context id="comment" style-ref="comment">
+	<start>/\*</start>
+	<end>\*/</end>
+   </context>
+
+   <context id="include" style-ref="def:statement">
+      <match extended="true">
+        \%{preproc-start}
+        (include|import)\s*
+        (".*?"|&lt;.*&gt;)
+      </match>
+      <include>
+        <context id="included-file" sub-pattern="2"
+	 style-ref="included-file" class="path"/>
+      </include>
+    </context>
+
+   <context id="keyword" style-ref="def:keyword">
+	<match extended="true">
+	 /.{0,}/
+	</match>
+   </context>
+
+   <context id="reference" style-ref="def:special-char">
+	<match extended="true">
+	 &amp;[[:alpha:][:digit:]_]+
+	</match>
+   </context>
+
+   <context id="bin-prop" style-ref="def:statement">
+	<start>\[</start>
+	<end>\]</end>
+   </context>
+
+   <context id="string-prop" style-ref="def:string">
+	<start>"</start>
+	<end>"</end>
+   </context>
+
+   <context id="cell-prop" style-ref="def:statement">
+	<start>&lt;</start>
+	<end>&gt;</end>
+	<include>
+	 <context ref="reference"/>
+	 <context ref="bin-prop"/>
+	 <context ref="string-prop"/>
+	 <context ref="comment"/>
+	</include>
+   </context>
+
+   <context id="node">
+    <match extended="true">
+     ([/[:alpha:][:digit:]-_]+(@[0-9a-fA-F]+|)[[:space:]]*){
+    </match>
+    <include>
+     <context id="node-name" sub-pattern="1"
+	 style-ref="def:identifier"/>
+    </include>
+   </context>
+
+   <context id="label" style-ref="def:type">
+	<match extended="true">
+	 ^[[:space:]]*[[:alpha:][:digit:]_]+:
+	</match>
+   </context>
+
+ <!--Main context-->
+ <context id="dts">
+  <include>
+   <context ref="comment"/>
+   <context ref="include"/>
+   <context ref="string-prop"/>
+   <context ref="bin-prop"/>
+   <context ref="cell-prop"/>
+   <context ref="reference"/>
+   <context ref="node"/>
+   <context ref="label"/>
+   <context ref="keyword"/>
+  </include>
+ </context>
+
+  </definitions>
+</language>
