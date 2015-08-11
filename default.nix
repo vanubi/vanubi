@@ -3,7 +3,7 @@
 
 stdenv.mkDerivation rec {
   name = "vanubi-${version}";
-  version = "0.0.14";
+  version = "0.0.16";
 
   src = fetchurl {
     url = "https://github.com/vanubi/vanubi/archive/v${version}.tar.gz";

@@ -416,9 +416,13 @@ namespace Vanubi.UI {
 			bind_command ({ Key (Gdk.Key.F9, Gdk.ModifierType.CONTROL_MASK) }, "compile-shell-right");
 			index_command ("compile-shell-right", "Execute a shell for compiling the code", "build");
 			execute_command["compile-shell-right"].connect (on_compile_shell);
+			
+			bind_command ({ Key (Gdk.Key.z, Gdk.ModifierType.CONTROL_MASK) }, "undo");
+			index_command ("undo", "Undo last action");
+			execute_command["undo"].connect (on_undo);
 
 			bind_command ({ Key (Gdk.Key.y, Gdk.ModifierType.CONTROL_MASK) }, "redo");
-			index_command ("redo", "Redo action");
+			index_command ("redo", "Redo last action");
 			execute_command["redo"].connect (on_redo);
 
 			bind_command (null, "set-tab-width");
@@ -1054,17 +1058,21 @@ namespace Vanubi.UI {
 			}
 
 			// no editor reusable, so create one
-			var ed = new Editor (this, source);
-			ed.parent_layout = in_layout;
-			ed.view.key_press_event.connect (on_key_press_event);
-			ed.view.scroll_event.connect (on_scroll_event);
+			Editor ed;
 			if (editors.length > 0) {
 				// share TextBuffer with an existing editor for this file,
 				// so that they display the same content
-				ed.view.buffer = editors[0].view.buffer;
+				Editor other = editors[0];
+				ed = new Editor (this, source, (EditorBuffer) other.view.buffer);
+				ed.view.selection = other.view.selection.copy ();
 			} else {
+				ed = new Editor (this, source);
 				ed.reset_language ();
 			}
+			ed.parent_layout = in_layout;
+			ed.view.key_press_event.connect (on_key_press_event);
+			ed.view.scroll_event.connect (on_scroll_event);
+			
 			// let the Manager own the reference to the editor
 			unowned Editor ret = ed;
 			editors.add ((owned) ed);
@@ -1295,8 +1303,8 @@ namespace Vanubi.UI {
 		}
 
 		async void reload_file (Editor editor) {
-			int start_offset, end_offset;
-			selection.get_offsets (out start_offset, out end_offset);
+			int insert_offset, bound_offset;
+			selection.get_offset_bounds (out insert_offset, out bound_offset);
 			
 			try {
 				var exists = yield editor.source.exists ();
@@ -1312,9 +1320,8 @@ namespace Vanubi.UI {
 					is.close ();
 
 					var buf = (EditorBuffer) editor.view.buffer;
-					editor.view.selection = new EditorSelection.with_offsets (buf, start_offset, end_offset);
-					editor.view.set_buffer_selection ();
-					editor.view.scroll_mark_onscreen (buf.get_insert ());
+					editor.view.selection = new EditorSelection.with_offsets (buf, insert_offset, bound_offset);
+					editor.view.scroll_mark_onscreen (editor.view.selection.insert);
 					
 					// in case of splitted editors
 					each_source_editor (editor.source, (ed) => {
@@ -1805,8 +1812,8 @@ namespace Vanubi.UI {
 		}
 
 		async void pipe_shell_replace (Editor ed) {
-			int start_offset, end_offset;
-			selection.get_offsets (out start_offset, out end_offset);
+			int insert_offset, bound_offset;
+			selection.get_offsets (out insert_offset, out bound_offset);
 
 			try {
 				var output = yield pipe_shell (ed);
@@ -1817,9 +1824,8 @@ namespace Vanubi.UI {
 				yield replace_editor_contents (ed, stream, true);
 				stream.close ();
 
-				ed.view.selection = new EditorSelection.with_offsets (buf, start_offset, end_offset);
-				ed.view.set_buffer_selection ();
-				ed.view.scroll_mark_onscreen (buf.get_insert ());
+				ed.view.selection = new EditorSelection.with_offsets (buf, insert_offset, bound_offset);
+				ed.view.scroll_mark_onscreen (ed.view.selection.insert);
 
 				state.status.set ("Output of command has been replaced into the editor");
 			} catch (IOError.CANCELLED e) {
@@ -1984,6 +1990,7 @@ namespace Vanubi.UI {
 				/* Already at the visual end, move to the logical end */
 				ed.view.move_cursor (MovementStep.PARAGRAPH_ENDS, 1, extend_select);
 			}
+
 			ed.view.scroll_mark_onscreen (buf.get_insert ());
 		}
 
@@ -2033,10 +2040,11 @@ namespace Vanubi.UI {
 		}
 
 		void on_insert_simple (Editor ed, string command) {
-			var buf = ed.view.buffer;
+			var view = ed.view;
+			var buf = view.buffer;
 			buf.begin_user_action ();
 
-			buf.delete_selection (true, true);
+			view.delete_selection ();
 
 			bool do_indent = true;
 			// check if this is the first non-white char of the line
@@ -2048,16 +2056,16 @@ namespace Vanubi.UI {
 			}
 			
 			if (command == "return") {
-				buf.insert_at_cursor ("\n", -1);
+				view.insert_at_cursor ("\n");
 				do_indent = true;
 			} else if (command == "close-paren") {
-				buf.insert_at_cursor (")", -1);
+				view.insert_at_cursor (")");
 			} else if (command == "close-curly-brace") {
-				buf.insert_at_cursor ("}", -1);
+				view.insert_at_cursor ("}");
 			} else if (command == "close-square-brace") {
-				buf.insert_at_cursor ("]", -1);
+				view.insert_at_cursor ("]");
 			} else if (command == "tab") {
-				buf.insert_at_cursor ("\t", -1);
+				view.insert_at_cursor ("\t");
 				do_indent = false;
 			}
 
@@ -2262,6 +2270,8 @@ namespace Vanubi.UI {
 					indent_engine.indent (viter);
 				}
 			}
+			
+			ed.view.reset_selection ();
 
 			buf.end_user_action ();
 		}
@@ -2889,6 +2899,10 @@ namespace Vanubi.UI {
 			}
 			bar.show ();
 			bar.grab_focus ();
+		}
+
+		void on_undo (Editor editor) {
+			editor.view.undo ();
 		}
 
 		void on_redo (Editor editor) {

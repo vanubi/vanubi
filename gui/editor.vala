@@ -64,8 +64,10 @@ namespace Vanubi.UI {
 
 	public class EditorSelection {
 		public EditorBuffer buffer { get; private set; }
-		public TextMark start { get; private set; }
-		public TextMark end { get; private set; }
+		public TextMark insert { get; private set; }
+		public TextMark bound { get; private set; }
+		public weak TextMark start { get; private set; }
+		public weak TextMark end { get; private set; }
 
 		public bool show {
 			get {
@@ -89,7 +91,9 @@ namespace Vanubi.UI {
 		public EditorSelection (TextMark insert, TextMark bound) {
 			assert (insert.get_buffer () == bound.get_buffer ());
 			buffer = (EditorBuffer) insert.get_buffer ();
-
+			this.insert = insert;
+			this.bound = bound;
+			
 			TextIter iinsert, ibound;
 			buffer.get_iter_at_mark (out iinsert, this.start);
 			buffer.get_iter_at_mark (out ibound, this.end);
@@ -107,11 +111,15 @@ namespace Vanubi.UI {
 			buffer = (EditorBuffer) insert.get_buffer ();
 
 			if (insert.get_offset() < bound.get_offset()) {
-				this.start = buffer.create_mark (null, insert, true);
-				this.end = buffer.create_mark (null, bound, false);
+				this.insert = buffer.create_mark (null, insert, true);
+				this.start = this.insert;
+				this.bound = buffer.create_mark (null, bound, false);
+				this.end = this.bound;
 			} else {
-				this.start = buffer.create_mark (null, bound, true);
-				this.end = buffer.create_mark (null, insert, false);
+				this.bound = buffer.create_mark (null, bound, true);
+				this.start = this.bound;
+				this.insert = buffer.create_mark (null, insert, false);
+				this.end = this.insert;
 			}
 		}
 
@@ -122,11 +130,15 @@ namespace Vanubi.UI {
 			buffer.get_iter_at_offset (out ibound, bound);
 
 			if (iinsert.get_offset() < ibound.get_offset()) {
-				this.start = buffer.create_mark (null, iinsert, true);
-				this.end = buffer.create_mark (null, ibound, false);
+				this.insert = buffer.create_mark (null, iinsert, true);
+				this.start = this.insert;
+				this.bound = buffer.create_mark (null, ibound, false);
+				this.end = this.bound;
 			} else {
-				this.start = buffer.create_mark (null, ibound, true);
-				this.end = buffer.create_mark (null, iinsert, false);
+				this.bound = buffer.create_mark (null, ibound, true);
+				this.start = this.bound;
+				this.insert = buffer.create_mark (null, iinsert, false);
+				this.end = this.insert;
 			}
 		}
 
@@ -140,6 +152,18 @@ namespace Vanubi.UI {
 			get_iters (out istart, out iend);
 			start = istart.get_offset ();
 			end = iend.get_offset ();
+		}
+
+		public void get_iter_bounds (out TextIter insert, out TextIter bound) {
+			buffer.get_iter_at_mark (out insert, this.insert);
+			buffer.get_iter_at_mark (out bound, this.bound);
+		}
+
+		public void get_offset_bounds (out int insert, out int bound) {
+			TextIter iinsert, ibound;
+			get_iter_bounds (out iinsert, out ibound);
+			insert = iinsert.get_offset ();
+			bound = ibound.get_offset ();
 		}
 
 		public EditorSelection copy () {
@@ -167,26 +191,34 @@ namespace Vanubi.UI {
 		}
 		
 		~EditorSelection() {
-			if (!this.start.get_deleted () && !this.end.get_deleted ()) {
+			if (!this.insert.get_deleted () && !this.bound.get_deleted ()) {
 				show = false;
 			}
 			
 			// delete marks if they are owned by us and by the buffer
-			if (!this.start.get_deleted () && this.start.ref_count == 2) {
-				buffer.delete_mark (this.start);
+			if (!this.insert.get_deleted () && this.insert.ref_count == 2) {
+				buffer.delete_mark (this.insert);
 			}
 
-			if (!this.end.get_deleted () && this.end.ref_count == 2) {
-				buffer.delete_mark (this.end);
+			if (!this.bound.get_deleted () && this.bound.ref_count == 2) {
+				buffer.delete_mark (this.bound);
 			}
 		}
 	}
 	
 	public class EditorView : SourceView {
 		State state;
-		ulong cursor_signal;
-		TextBuffer old_buffer;
 
+		public new EditorBuffer buffer {
+			get {
+				return (EditorBuffer) ((SourceView) this).buffer;
+			}
+			
+			set {
+				((SourceView) this).buffer = value;
+			}
+		}
+		
 		public bool overwrite_mode {
 			get { return _overwrite_mode; }
 			set {
@@ -204,42 +236,43 @@ namespace Vanubi.UI {
 			
 			set {
 				assert (value.buffer == buffer);
+
+				if (_selection != null) {
+					_selection.show = false;
+				}
+				
 				_selection = value;
 				if (has_focus) {
-					set_buffer_selection ();
+					_selection.show = true;
+					TextIter insert;
+					buffer.get_iter_at_mark (out insert, _selection.insert);
+
+					// nullify gtk selection
+					buffer.select_range (insert, insert);
 				}
 			}
 		}
 		private EditorSelection _selection;
 
-		public EditorView (State state) {
+		public EditorView (State state, EditorBuffer? buf = null) {
 			this.state = state;
 			tab_width = 4;
-			old_buffer = buffer = new EditorBuffer ();
-			overwrite = state.config.get_editor_bool ("block_cursor");
-			update_selection ();
 
-			notify["buffer"].connect (on_buffer_changed);
-			cursor_signal = buffer.notify["cursor-position"].connect (on_cursor_changed);
-		}
-
-		public void update_selection () {
-			if (_selection != null) {
-				_selection.show = false;
+			if (buf != null) {
+				buffer = buf;
+			} else {
+				buffer = new EditorBuffer ();
 			}
-			
-			TextIter start, end;
-			buffer.get_iter_at_mark (out start, buffer.get_insert ());
-			buffer.get_iter_at_mark (out end, buffer.get_selection_bound ());
-			_selection = new EditorSelection.with_iters (start, end);
-			_selection.show = true;
-		}
 
-		public void set_buffer_selection () {
-			TextIter start, end;
-			selection.get_iters (out start, out end);
-			buffer.select_range (start, end);
-			selection.show = true;
+			overwrite = state.config.get_editor_bool ("block_cursor");
+			
+			reset_selection ();
+		}
+		
+		public void reset_selection () {
+			TextIter insert;
+			buffer.get_iter_at_mark (out insert, buffer.get_insert ());
+			selection = new EditorSelection.with_iters (insert, insert);
 		}
 
 		public void update_block_cursor () {
@@ -253,20 +286,36 @@ namespace Vanubi.UI {
 
 		/* events */
 
-		void on_cursor_changed () {
-			if (has_focus) {
-				update_selection ();
-			}
-		}
-		
 		public override bool focus_in_event (Gdk.EventFocus e) {
-			set_buffer_selection ();
+			selection.show = true;
+			
+			// fix cursor
+			TextIter insert;
+			buffer.get_iter_at_mark (out insert, selection.insert);
+			buffer.select_range (insert, insert);
+			
 			return base.focus_in_event (e);
 		}
 
 		public override bool focus_out_event (Gdk.EventFocus e) {
-			selection.show = false;
+			_selection.show = false;
 			return base.focus_in_event (e);
+		}
+
+		bool is_key_move (Gdk.EventKey e) {
+			return (e.keyval == Gdk.Key.BackSpace ||
+					e.keyval == Gdk.Key.Home ||
+					e.keyval == Gdk.Key.End ||
+					e.keyval == Gdk.Key.Delete ||
+					e.keyval == Gdk.Key.KP_Delete ||
+					e.keyval == Gdk.Key.Page_Up ||
+					e.keyval == Gdk.Key.KP_Page_Up ||
+					e.keyval == Gdk.Key.Page_Down ||
+					e.keyval == Gdk.Key.KP_Page_Down ||
+					e.keyval == Gdk.Key.Up ||
+					e.keyval == Gdk.Key.Left ||
+					e.keyval == Gdk.Key.Down ||
+					e.keyval == Gdk.Key.Right);
 		}
 
 		public override bool key_press_event (Gdk.EventKey e) {
@@ -289,19 +338,23 @@ namespace Vanubi.UI {
 				return true;
 			}
 
-			if (Gdk.ModifierType.CONTROL_MASK in e.state ||
-				e.keyval == Gdk.Key.BackSpace ||
-				e.keyval == Gdk.Key.Delete ||
-				e.keyval == Gdk.Key.KP_Delete ||
-				e.keyval == Gdk.Key.Page_Up ||
-				e.keyval == Gdk.Key.KP_Page_Up ||
-				e.keyval == Gdk.Key.Page_Down ||
-				e.keyval == Gdk.Key.KP_Page_Down ||
-				e.keyval == Gdk.Key.Up ||
-				e.keyval == Gdk.Key.Left ||
-				e.keyval == Gdk.Key.Down ||
-				e.keyval == Gdk.Key.Right) {
-				return base.key_press_event(e);
+			if (is_key_move (e)) {
+				bool fix_bound = Gdk.ModifierType.SHIFT_MASK in e.state;
+
+				bool ret = base.key_press_event (e);
+
+				TextIter insert, bound;
+				buffer.get_iter_at_mark (out insert, buffer.get_insert ());
+				
+				if (!fix_bound) {
+					bound = insert;
+				} else {
+					buffer.get_iter_at_mark (out bound, selection.bound);
+				}
+
+				selection = new EditorSelection.with_iters (insert, bound);
+				
+				return ret;
 			}
 				
 			commit_text (e.str);
@@ -311,9 +364,18 @@ namespace Vanubi.UI {
 
 		void commit_text (string text) {
 			buffer.begin_user_action ();
-
+			
+			delete_selection ();
+			insert_at_cursor (text);
+			
+			buffer.end_user_action ();
+		}
+		
+		public void delete_selection () {
 			TextIter start, end;
 			selection.get_iters (out start, out end);
+
+			// FIXME: fix delete_range to use ref
 			if (overwrite_mode) {
 				if (start.equal (end)) {
 					// delete the next char
@@ -326,30 +388,35 @@ namespace Vanubi.UI {
 			} else if (!start.equal (end)) {
 				buffer.delete_range (start, end);
 			}
-			
-			buffer.insert_at_cursor (text, -1);
-			buffer.end_user_action ();
 		}
-
-		void on_buffer_changed () {
-			if (old_buffer == buffer) {
-				return;
-			}
-
-			if (cursor_signal > 0) {
-				old_buffer.disconnect (cursor_signal);
-			}
-
-			old_buffer = buffer;
-			if (buffer is EditorBuffer) {
-				cursor_signal = buffer.notify["cursor-position"].connect (on_cursor_changed);
-				update_selection ();
+		
+		public void insert_at_cursor (string text) {
+			TextIter insert;
+			buffer.get_iter_at_mark (out insert, selection.insert);
+			buffer.insert (ref insert, text, -1);
+			buffer.move_mark (selection.insert, insert);
+			buffer.move_mark (selection.bound, insert);
+			
+			// nullify gtk selection
+			buffer.select_range (insert, insert);
+		}
+		
+		public override void move_cursor (MovementStep step, int count, bool extend_selection) {
+			base.move_cursor (step, count, extend_selection);
+			
+			TextIter insert, bound;
+			buffer.get_iter_at_mark (out insert, buffer.get_insert ());
+			
+			if (extend_selection) {
+				buffer.get_iter_at_mark (out bound, selection.bound);
 			} else {
-				cursor_signal = 0;
+				bound = insert;
 			}
+			
+			selection = new EditorSelection.with_iters (insert, bound);
 		}
 	}
-
+	
 	public class EditorContainer : EventBox {
 		public LRU<DataSource> lru = new LRU<DataSource> (DataSource.compare);
 
@@ -391,7 +458,9 @@ namespace Vanubi.UI {
 		public weak Manager manager;
 		Configuration conf;
 		public weak DataSource source { get; private set; }
+
 		public EditorView view { get; private set; }
+
 		public SourceStyleSchemeManager editor_style { get; private set; }
 		public DataSource? moved_to;
 		ScrolledWindow sw;
@@ -409,11 +478,10 @@ namespace Vanubi.UI {
 		Cancellable diff_cancellable = null;
 		uint diff_timer = 0;
 		uint save_session_timer = 0;
-		ulong content_changed_signal = 0;
 		Git git;
 		TrailingSpaces? trailsp = null;
 
-		public Editor (Manager manager, DataSource source) {
+		public Editor (Manager manager, DataSource source, EditorBuffer? buf = null) {
 			this.manager = manager;
 			this.source = source;
 			this.conf = manager.state.config;
@@ -423,7 +491,7 @@ namespace Vanubi.UI {
 			git = new Git (conf);
 
 			// view
-			view = new EditorView (manager.state);
+			view = new EditorView (manager.state, buf);
 			view.wrap_mode = WrapMode.CHAR;
 			view.set_data ("editor", (Editor*)this);
 			view.tab_width = conf.get_file_int(source, "tab_width", 4);
@@ -496,8 +564,9 @@ namespace Vanubi.UI {
 			((SourceBuffer)view.buffer).undo.connect_after (on_trailing_spaces);
 			((SourceBuffer)view.buffer).redo.connect_after (on_trailing_spaces);
 			view.buffer.insert_text.connect_after (on_insert_text);
-			view.notify["buffer"].connect_after (on_buffer_changed);
-			on_buffer_changed ();
+			view.buffer.mark_set.connect_after (on_mark_set);
+			view.buffer.modified_changed.connect_after (on_modified_changed);
+			view.buffer.changed.connect_after (on_content_changed);
 
 			view.focus_in_event.connect(() => {
 					parent_layout.last_focused_editor = this;
@@ -836,20 +905,6 @@ namespace Vanubi.UI {
 			}
 		}
 
-		void on_buffer_changed () {
-			if (!(view.buffer is SourceBuffer)) {
-				// very weird, done on textview disposal
-				return;
-			}
-
-			var buf = (SourceBuffer) view.buffer;
-			buf.mark_set.connect (on_mark_set);
-			content_changed_signal = buf.changed.connect (on_content_changed);
-			new UI.Buffer (view).indent_mode = conf.get_file_enum (source, "indent_mode", IndentMode.TABS);
-			buf.modified_changed.connect (on_modified_changed);
-			on_content_changed ();
-		}
-
 		void on_content_changed () {
 			on_add_endline ();
 			update_file_count ();
@@ -961,7 +1016,8 @@ namespace Vanubi.UI {
 			
 			TextIter insert;
 			var buf = view.buffer;
-			buf.get_iter_at_mark (out insert, buf.get_insert ());
+			buf.get_iter_at_mark (out insert, view.selection.insert);
+
 			int line = insert.get_line ();
 
 			// we count tabs as tab_width
