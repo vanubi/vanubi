@@ -2111,15 +2111,14 @@ namespace Vanubi.UI {
 		}
 
 		void on_delete_char_forward (Editor ed) {
-			var buf = (SourceBuffer) ed.view.buffer;
-			if (buf.has_selection) {
-				buf.delete_selection (false, false);
+			if (!ed.view.selection.empty) {
+				ed.view.delete_selection ();
 			} else {
 				// select the next char and delete
-				buf.begin_user_action ();
+				ed.view.buffer.begin_user_action ();
 				ed.view.move_cursor (MovementStep.LOGICAL_POSITIONS, 1, true);
-				buf.delete_selection (false, false);
-				buf.end_user_action ();
+				ed.view.delete_selection ();
+				ed.view.buffer.end_user_action ();
 			}
 		}
 
@@ -2146,6 +2145,7 @@ namespace Vanubi.UI {
 				start_iter.forward_char ();
 			}
 			buf.delete (ref start_iter, ref end_iter);
+			ed.view.reset_selection (); // easiest, reset to new cursor position
 		}
 
 		void on_delete_with_char (Editor ed, string cmd) {
@@ -2189,11 +2189,13 @@ namespace Vanubi.UI {
 
 			buf.begin_user_action ();
 			buf.delete (ref start, ref end);
+			ed.view.reset_selection (); // easiest, reset to new cursor position
+			
 			if (cmd == "delete-around") {
 				Idle.add_full (Priority.HIGH, () => {
 						TextIter iter;
 						buf.get_iter_at_offset (out iter, start_offset);
-						buf.place_cursor (start);
+						ed.view.selection = new EditorSelection.with_iters (iter, iter);
 						return false;
 				});
 			}
