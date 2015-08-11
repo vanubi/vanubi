@@ -2035,7 +2035,7 @@ namespace Vanubi.UI {
 			}
 
 			buf.begin_user_action ();
-			buf.delete (ref start, ref end);
+			ed.view.delete_text (ref start, ref end);
 			buf.end_user_action ();
 		}
 
@@ -2144,8 +2144,7 @@ namespace Vanubi.UI {
 			if (!start_iter.get_char().isspace()) {
 				start_iter.forward_char ();
 			}
-			buf.delete (ref start_iter, ref end_iter);
-			ed.view.reset_selection (); // easiest, reset to new cursor position
+			ed.view.delete_text (ref start_iter, ref end_iter);
 		}
 
 		void on_delete_with_char (Editor ed, string cmd) {
@@ -2188,8 +2187,7 @@ namespace Vanubi.UI {
 			}
 
 			buf.begin_user_action ();
-			buf.delete (ref start, ref end);
-			ed.view.reset_selection (); // easiest, reset to new cursor position
+			ed.view.delete_text (ref start, ref end);
 			
 			if (cmd == "delete-around") {
 				Idle.add_full (Priority.HIGH, () => {

@@ -387,6 +387,14 @@ namespace Vanubi.UI {
 			
 			buffer.end_user_action ();
 		}
+
+		public void delete_text (ref TextIter start, ref TextIter end) {
+			buffer.delete (ref start, ref end);
+
+			if (has_focus) {
+				draw_selection ();
+			}
+		}
 		
 		public void delete_selection () {
 			TextIter start, end;
@@ -397,13 +405,13 @@ namespace Vanubi.UI {
 				if (start.equal (end)) {
 					// delete the next char
 					if (end.forward_char ()) {
-						buffer.delete_range (start, end);
+						delete_text (ref start, ref end);
 					}
 				} else {
-					buffer.delete_range (start, end);
+					delete_text (ref start, ref end);
 				}
 			} else if (!start.equal (end)) {
-				buffer.delete_range (start, end);
+				delete_text (ref start, ref end);
 			}
 		}
 		
