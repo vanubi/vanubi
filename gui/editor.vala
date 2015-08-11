@@ -166,6 +166,14 @@ namespace Vanubi.UI {
 			bound = ibound.get_offset ();
 		}
 
+		public bool empty {
+			get {
+				int start, end;
+				get_offsets (out start, out end);
+				return start == end;
+			}
+		}
+		
 		public EditorSelection copy () {
 			TextIter start, end;
 			get_iters (out start, out end);

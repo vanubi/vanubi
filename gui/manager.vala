@@ -2124,15 +2124,14 @@ namespace Vanubi.UI {
 		}
 
 		void on_delete_word_forward (Editor ed) {
-			var buf = ed.view.buffer;
-			if (buf.has_selection) {
-				buf.delete_selection (false, false);
+			if (!ed.view.selection.empty) {
+				ed.view.delete_selection ();
 			} else {
 				// select the next word and delete
-				buf.begin_user_action ();
+				ed.view.buffer.begin_user_action ();
 				ed.view.move_cursor (MovementStep.WORDS, 1, true);
-				buf.delete_selection (false, false);
-				buf.end_user_action ();
+				ed.view.delete_selection ();
+				ed.view.buffer.end_user_action ();
 			}
 		}
 
@@ -2903,10 +2902,12 @@ namespace Vanubi.UI {
 
 		void on_undo (Editor editor) {
 			editor.view.undo ();
+			editor.view.reset_selection (); // TODO: selection history
 		}
 
 		void on_redo (Editor editor) {
 			editor.view.redo ();
+			editor.view.reset_selection (); // TODO: selection history
 		}
 
 		void on_forward_backward_line (Editor ed, string command) {
