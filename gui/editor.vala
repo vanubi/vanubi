@@ -268,6 +268,15 @@ namespace Vanubi.UI {
 			
 			reset_selection ();
 		}
+
+		public void draw_selection () {
+			_selection.show = true;
+			TextIter insert;
+			buffer.get_iter_at_mark (out insert, _selection.insert);
+
+			// nullify gtk selection
+			buffer.select_range (insert, insert);
+		}
 		
 		public void reset_selection () {
 			TextIter insert;

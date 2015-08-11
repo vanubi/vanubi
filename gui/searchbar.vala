@@ -228,6 +228,7 @@ namespace Vanubi.UI {
 					// found
 					found_occurrence = true;
 					editor.view.selection = new EditorSelection.with_iters (iter, subiter);
+					editor.view.draw_selection (); // has no selection
 					editor.view.scroll_to_mark (editor.view.selection.insert, 0, true, 0.5, 0.5);
 					state.status.clear ("search");
 					return;
@@ -322,6 +323,7 @@ namespace Vanubi.UI {
 				buf.get_iter_at_offset (out insert, original_insert);
 				buf.get_iter_at_offset (out bound, original_bound);
 				editor.view.selection = new EditorSelection.with_iters (insert, bound);
+				editor.view.draw_selection (); // has no focus
 				editor.view.scroll_to_mark (editor.view.selection.insert, 0, false, 0.5, 0.5);
 				aborted ();
 				return true;
