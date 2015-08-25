@@ -116,7 +116,7 @@ namespace Vanubi.UI {
 			wnscreen.force_update ();
 			
 			// get wnck window
-			var xid = Gdk.X11Window.get_xid (w.get_window());
+			var xid = Gdk.X11Window.get_desktop (w.get_window());
 			weak Wnck.Window wnw = Wnck.Window.get (xid);
 			if (wnw != null) {
 				wnw.get_workspace().activate (time);
