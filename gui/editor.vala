@@ -323,8 +323,6 @@ namespace Vanubi.UI {
 			return (e.keyval == Gdk.Key.BackSpace ||
 					e.keyval == Gdk.Key.Home ||
 					e.keyval == Gdk.Key.End ||
-					e.keyval == Gdk.Key.Delete ||
-					e.keyval == Gdk.Key.KP_Delete ||
 					e.keyval == Gdk.Key.Page_Up ||
 					e.keyval == Gdk.Key.KP_Page_Up ||
 					e.keyval == Gdk.Key.Page_Down ||
@@ -373,7 +371,12 @@ namespace Vanubi.UI {
 				
 				return ret;
 			}
-				
+
+			if (e.keyval == Gdk.Key.Delete ||
+				e.keyval == Gdk.Key.KP_Delete) {
+				return false;
+			}
+			
 			commit_text (e.str);
 
 			return false;

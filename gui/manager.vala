@@ -147,6 +147,7 @@ namespace Vanubi.UI {
 			execute_command["quit"].connect (on_quit);
 
 			bind_command ({ Key (Gdk.Key.d, Gdk.ModifierType.CONTROL_MASK) }, "delete-char-forward");
+			bind_command ({ Key (Gdk.Key.Delete, 0) }, "delete-char-forward");
 			index_command ("delete-char-forward", "Delete the char next to the cursor");
 			execute_command["delete-char-forward"].connect (on_delete_char_forward);
 
