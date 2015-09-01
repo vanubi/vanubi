@@ -2976,8 +2976,12 @@ namespace Vanubi.UI {
 			
 			start = (UI.BufferIter) vbuf.line_start (first_line);
 			end = (UI.BufferIter) vbuf.line_end (last_line);
-			
-			ed.view.selection = new EditorSelection.with_iters (start.iter, end.iter);
+
+			if (selection.start == selection.insert) {
+				ed.view.selection = new EditorSelection.with_iters (start.iter, end.iter);
+			} else {
+				ed.view.selection = new EditorSelection.with_iters (end.iter, start.iter);
+			}				
 			
 			ed.view.buffer.end_user_action ();
 		}
@@ -3012,7 +3016,11 @@ namespace Vanubi.UI {
 			start = (UI.BufferIter) vbuf.line_start (first_line);
 			end = (UI.BufferIter) vbuf.line_end (last_line);
 			
-			ed.view.selection = new EditorSelection.with_iters (start.iter, end.iter);
+			if (selection.start == selection.insert) {
+				ed.view.selection = new EditorSelection.with_iters (start.iter, end.iter);
+			} else {
+				ed.view.selection = new EditorSelection.with_iters (end.iter, start.iter);
+			}
 			
 			ed.view.buffer.end_user_action ();
 		}

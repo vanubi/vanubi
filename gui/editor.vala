@@ -175,9 +175,9 @@ namespace Vanubi.UI {
 		}
 		
 		public EditorSelection copy () {
-			TextIter start, end;
-			get_iters (out start, out end);
-			return new EditorSelection.with_iters (start, end);
+			TextIter insert, bound;
+			get_iter_bounds (out insert, out bound);
+			return new EditorSelection.with_iters (insert, bound);
 		}
 
 		void add_tags () {
@@ -193,9 +193,9 @@ namespace Vanubi.UI {
 		}
 
 		public string to_string () {
-			TextIter start, end;
-			get_iters (out start, out end);
-			return "%d.%d-%d.%d".printf (start.get_line(), start.get_line_offset(), end.get_line(), end.get_line_offset());
+			TextIter insert, bound;
+			get_iter_bounds (out insert, out bound);
+			return "%d.%d-%d.%d".printf (insert.get_line(), insert.get_line_offset(), bound.get_line(), bound.get_line_offset());
 		}
 		
 		~EditorSelection() {
