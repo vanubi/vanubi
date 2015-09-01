@@ -307,6 +307,10 @@ namespace Vanubi.UI {
 			index_command ("backward-char-select", "Select the char before the cursor");
 			execute_command["backward-char-select"].connect (on_forward_backward_char);
 
+			bind_command ({ Key (Gdk.Key.Up, Gdk.ModifierType.MOD1_MASK) }, "move-selection-up");
+			index_command ("move-selection-up", "Move selected text one line up");
+			execute_command["move-selection-up"].connect (on_move_selection_up);
+
 			bind_command ({ Key (Gdk.Key.s, Gdk.ModifierType.CONTROL_MASK) }, "search-forward");
 			index_command ("search-forward", "Search text forward incrementally");
 			execute_command["search-forward"].connect (on_search_replace);
@@ -2920,6 +2924,41 @@ namespace Vanubi.UI {
 			int direction = "forward" in command ? 1 : -1;
 			bool select = "select" in command;
 			ed.view.move_cursor (MovementStep.VISUAL_POSITIONS, direction, select);
+		}
+
+		void on_move_selection_up (Editor ed) {
+			TextIter istart, iend;
+			selection.get_iters (out istart, out iend);
+			if (!istart.backward_line ()) {
+				return;
+			}
+
+			if (!iend.backward_line ()) {
+				return;
+			}
+
+			ed.view.buffer.begin_user_action ();
+						
+			var vbuf = new UI.Buffer (ed.view);
+			var start = (UI.BufferIter) vbuf.line_start (istart.get_line ());
+			var endstart = vbuf.line_end (start.line).forward_char ();
+
+			// remember
+			var first_line = istart.get_line();
+			var last_line = iend.get_line();
+			
+			var text = vbuf.line_text (start.line);
+			vbuf.delete (start, endstart);
+			
+			var end = (UI.BufferIter) vbuf.line_end (last_line);
+			vbuf.insert (end, "\n"+text);
+			
+			start = (UI.BufferIter) vbuf.line_start (first_line);
+			end = (UI.BufferIter) vbuf.line_end (last_line);
+			
+			ed.view.selection = new EditorSelection.with_iters (start.iter, end.iter);
+			
+			ed.view.buffer.end_user_action ();
 		}
 
 		void on_zen_mode (Editor editor) {
