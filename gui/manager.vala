@@ -151,6 +151,10 @@ namespace Vanubi.UI {
 			index_command ("delete-char-forward", "Delete the char next to the cursor");
 			execute_command["delete-char-forward"].connect (on_delete_char_forward);
 
+			bind_command ({ Key (Gdk.Key.BackSpace, 0) }, "delete-char-backward");
+			index_command ("delete-char-backward", "Delete the char behind the cursor");
+			execute_command["delete-char-backward"].connect (on_delete_char_backward);
+
 			bind_command ({ Key (Gdk.Key.d, Gdk.ModifierType.MOD1_MASK) }, "delete-word-forward");
 			index_command ("delete-word-forward", "Delete the word next to the cursor");
 			execute_command["delete-word-forward"].connect (on_delete_word_forward);
@@ -2126,6 +2130,18 @@ namespace Vanubi.UI {
 				// select the next char and delete
 				ed.view.buffer.begin_user_action ();
 				ed.view.move_cursor (MovementStep.LOGICAL_POSITIONS, 1, true);
+				ed.view.delete_selection ();
+				ed.view.buffer.end_user_action ();
+			}
+		}
+
+		void on_delete_char_backward (Editor ed) {
+			if (!ed.view.selection.empty) {
+				ed.view.delete_selection ();
+			} else {
+				// select the previous char and delete
+				ed.view.buffer.begin_user_action ();
+				ed.view.move_cursor (MovementStep.LOGICAL_POSITIONS, -1, true);
 				ed.view.delete_selection ();
 				ed.view.buffer.end_user_action ();
 			}
