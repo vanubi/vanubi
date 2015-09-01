@@ -356,14 +356,65 @@ namespace Vanubi.UI {
 			}
 
 			if (is_key_move (e)) {
-				bool fix_bound = Gdk.ModifierType.SHIFT_MASK in e.state;
+				bool shift = Gdk.ModifierType.SHIFT_MASK in e.state;
+				bool alt = Gdk.ModifierType.MOD1_MASK in e.state;
+				if (alt && shift) {
+					return false;
+				}
+
+				if (alt) {
+					if (e.keyval == Gdk.Key.Up) {
+						// move line above, below the selected block
+						TextIter istart, iend;
+						selection.get_iters (out istart, out iend);
+						if (!istart.backward_line ()) {
+							return true;
+						}
+
+						if (!iend.backward_line ()) {
+							return true;
+						}
+
+						buffer.begin_user_action ();
+						
+						var vbuf = new UI.Buffer (this);
+						var start = (UI.BufferIter) vbuf.line_start (istart.get_line ());
+						var endstart = vbuf.line_end (start.line).forward_char ();
+
+						// remember
+						var first_line = istart.get_line();
+						var last_line = iend.get_line();
+
+						var text = vbuf.line_text (start.line);
+						vbuf.delete (start, endstart);
+
+						var end = (UI.BufferIter) vbuf.line_end (last_line);
+						vbuf.insert (end, "\n"+text);
+
+						start = (UI.BufferIter) vbuf.line_start (first_line);
+						end = (UI.BufferIter) vbuf.line_end (last_line);
+
+						selection = new EditorSelection.with_iters (start.iter, end.iter);
+
+						buffer.end_user_action ();
+						return true;
+					} else if (e.keyval == Gdk.Key.Down) {
+						// move line below, above the selected block
+					} else if (e.keyval == Gdk.Key.Left) {
+						// TODO:
+						return false;
+					} else if (e.keyval == Gdk.Key.Right) {
+						// TODO:
+						return false;
+					}
+				}
 
 				bool ret = base.key_press_event (e);
-
+				
 				TextIter insert, bound;
 				buffer.get_iter_at_mark (out insert, buffer.get_insert ());
 				
-				if (!fix_bound) {
+				if (!shift) {
 					bound = insert;
 				} else {
 					buffer.get_iter_at_mark (out bound, selection.bound);

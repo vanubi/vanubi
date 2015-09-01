@@ -72,7 +72,7 @@ namespace Vanubi.UI {
 
 		public override Vanubi.BufferIter line_start (int line) {
 			Gtk.TextIter iter;
-			buf.get_iter_at_line (out iter, line);		
+			buf.get_iter_at_line (out iter, line);
 			return new BufferIter (this, iter);
 		}
 
@@ -152,7 +152,7 @@ namespace Vanubi.UI {
 			iter.backward_line ();
 			return this;
 		}
-		
+
 		public override bool is_in_code {
 			get {
 				var buf = (Gtk.SourceBuffer) iter.get_buffer ();
