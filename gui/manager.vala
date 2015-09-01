@@ -2125,7 +2125,9 @@ namespace Vanubi.UI {
 
 		void on_delete_char_forward (Editor ed) {
 			if (!ed.view.selection.empty) {
+				ed.view.buffer.begin_user_action ();
 				ed.view.delete_selection ();
+				ed.view.buffer.end_user_action ();
 			} else {
 				// select the next char and delete
 				ed.view.buffer.begin_user_action ();

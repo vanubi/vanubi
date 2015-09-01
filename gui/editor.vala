@@ -286,10 +286,17 @@ namespace Vanubi.UI {
 			buffer.select_range (insert, insert);
 		}
 		
-		public void reset_selection () {
-			TextIter insert;
+		public void reset_selection (bool fixed_bound = false) {
+			TextIter insert, bound;
 			buffer.get_iter_at_mark (out insert, buffer.get_insert ());
-			selection = new EditorSelection.with_iters (insert, insert);
+			
+			if (fixed_bound && selection != null) {
+				buffer.get_iter_at_mark (out bound, selection.bound);
+			} else {
+				bound = insert;
+			}
+			
+			selection = new EditorSelection.with_iters (insert, bound);
 		}
 
 		public void update_block_cursor () {
@@ -354,21 +361,10 @@ namespace Vanubi.UI {
 			}
 
 			if (is_key_move (e)) {
-				bool shift = Gdk.ModifierType.SHIFT_MASK in e.state;
-
 				bool ret = base.key_press_event (e);
 				
-				TextIter insert, bound;
-				buffer.get_iter_at_mark (out insert, buffer.get_insert ());
-				
-				if (!shift) {
-					bound = insert;
-				} else {
-					buffer.get_iter_at_mark (out bound, selection.bound);
-				}
+				reset_selection (Gdk.ModifierType.SHIFT_MASK in e.state);
 
-				selection = new EditorSelection.with_iters (insert, bound);
-				
 				return ret;
 			}
 
@@ -380,6 +376,14 @@ namespace Vanubi.UI {
 			commit_text (e.str);
 
 			return false;
+		}
+
+		public override bool button_press_event (Gdk.EventButton e) {
+			bool ret = base.button_press_event (e);
+			
+			reset_selection (Gdk.ModifierType.SHIFT_MASK in e.state);
+
+			return ret;
 		}
 
 		void commit_text (string text) {
