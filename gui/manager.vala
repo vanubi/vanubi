@@ -2124,41 +2124,39 @@ namespace Vanubi.UI {
 		}
 
 		void on_delete_char_forward (Editor ed) {
+			ed.view.buffer.begin_user_action ();
 			if (!ed.view.selection.empty) {
-				ed.view.buffer.begin_user_action ();
 				ed.view.delete_selection ();
-				ed.view.buffer.end_user_action ();
 			} else {
 				// select the next char and delete
-				ed.view.buffer.begin_user_action ();
 				ed.view.move_cursor (MovementStep.LOGICAL_POSITIONS, 1, true);
 				ed.view.delete_selection ();
-				ed.view.buffer.end_user_action ();
 			}
+			ed.view.buffer.end_user_action ();
 		}
 
 		void on_delete_char_backward (Editor ed) {
+			ed.view.buffer.begin_user_action ();
 			if (!ed.view.selection.empty) {
 				ed.view.delete_selection ();
 			} else {
 				// select the previous char and delete
-				ed.view.buffer.begin_user_action ();
 				ed.view.move_cursor (MovementStep.LOGICAL_POSITIONS, -1, true);
 				ed.view.delete_selection ();
-				ed.view.buffer.end_user_action ();
 			}
+			ed.view.buffer.end_user_action ();
 		}
 
 		void on_delete_word_forward (Editor ed) {
+			ed.view.buffer.begin_user_action ();
 			if (!ed.view.selection.empty) {
 				ed.view.delete_selection ();
 			} else {
 				// select the next word and delete
-				ed.view.buffer.begin_user_action ();
 				ed.view.move_cursor (MovementStep.WORDS, 1, true);
 				ed.view.delete_selection ();
-				ed.view.buffer.end_user_action ();
 			}
+			ed.view.buffer.end_user_action ();
 		}
 
 		void on_delete_white_backward (Editor ed) {
