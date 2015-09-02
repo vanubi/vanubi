@@ -156,6 +156,7 @@ namespace Vanubi.UI {
 			execute_command["delete-char-backward"].connect (on_delete_char_backward);
 
 			bind_command ({ Key (Gdk.Key.d, Gdk.ModifierType.MOD1_MASK) }, "delete-word-forward");
+			bind_command ({ Key (Gdk.Key.Delete, Gdk.ModifierType.CONTROL_MASK) }, "delete-word-forward");
 			index_command ("delete-word-forward", "Delete the word next to the cursor");
 			execute_command["delete-word-forward"].connect (on_delete_word_forward);
 
