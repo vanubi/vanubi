@@ -327,8 +327,7 @@ namespace Vanubi.UI {
 		}
 
 		bool is_key_move (Gdk.EventKey e) {
-			return (e.keyval == Gdk.Key.BackSpace ||
-					e.keyval == Gdk.Key.Home ||
+			return (e.keyval == Gdk.Key.Home ||
 					e.keyval == Gdk.Key.End ||
 					e.keyval == Gdk.Key.Page_Up ||
 					e.keyval == Gdk.Key.KP_Page_Up ||
@@ -369,7 +368,8 @@ namespace Vanubi.UI {
 			}
 
 			if (e.keyval == Gdk.Key.Delete ||
-				e.keyval == Gdk.Key.KP_Delete) {
+				e.keyval == Gdk.Key.KP_Delete ||
+				e.keyval == Gdk.Key.BackSpace) {
 				return false;
 			}
 			
@@ -384,6 +384,11 @@ namespace Vanubi.UI {
 			reset_selection (Gdk.ModifierType.SHIFT_MASK in e.state);
 
 			return ret;
+		}
+
+		public override bool drag_motion (Gdk.DragContext context, int x, int y, uint time) {
+			message("foo");
+			return true;
 		}
 
 		void commit_text (string text) {
