@@ -272,6 +272,8 @@ namespace Vanubi.UI {
 				buffer = new EditorBuffer ();
 			}
 
+			buffer.paste_done.connect (on_paste_done);
+
 			overwrite = state.config.get_editor_bool ("block_cursor");
 			
 			reset_selection ();
@@ -308,6 +310,45 @@ namespace Vanubi.UI {
 #endif
 		}
 
+
+		public void delete_text (ref TextIter start, ref TextIter end) {
+			buffer.delete (ref start, ref end);
+
+			if (has_focus) {
+				draw_selection ();
+			}
+		}
+		
+		public void delete_selection () {
+			TextIter start, end;
+			selection.get_iters (out start, out end);
+
+			// FIXME: fix delete_range to use ref
+			if (overwrite_mode) {
+				if (start.equal (end)) {
+					// delete the next char
+					if (end.forward_char ()) {
+						delete_text (ref start, ref end);
+					}
+				} else {
+					delete_text (ref start, ref end);
+				}
+			} else if (!start.equal (end)) {
+				delete_text (ref start, ref end);
+			}
+		}
+		
+		public void insert_at_cursor (string text) {
+			TextIter insert;
+			buffer.get_iter_at_mark (out insert, selection.insert);
+			buffer.insert (ref insert, text, -1);
+			buffer.move_mark (selection.insert, insert);
+			buffer.move_mark (selection.bound, insert);
+			
+			// nullify gtk selection
+			buffer.select_range (insert, insert);
+		}
+		
 		/* events */
 
 		public override bool focus_in_event (Gdk.EventFocus e) {
@@ -400,44 +441,6 @@ namespace Vanubi.UI {
 			buffer.end_user_action ();
 		}
 
-		public void delete_text (ref TextIter start, ref TextIter end) {
-			buffer.delete (ref start, ref end);
-
-			if (has_focus) {
-				draw_selection ();
-			}
-		}
-		
-		public void delete_selection () {
-			TextIter start, end;
-			selection.get_iters (out start, out end);
-
-			// FIXME: fix delete_range to use ref
-			if (overwrite_mode) {
-				if (start.equal (end)) {
-					// delete the next char
-					if (end.forward_char ()) {
-						delete_text (ref start, ref end);
-					}
-				} else {
-					delete_text (ref start, ref end);
-				}
-			} else if (!start.equal (end)) {
-				delete_text (ref start, ref end);
-			}
-		}
-		
-		public void insert_at_cursor (string text) {
-			TextIter insert;
-			buffer.get_iter_at_mark (out insert, selection.insert);
-			buffer.insert (ref insert, text, -1);
-			buffer.move_mark (selection.insert, insert);
-			buffer.move_mark (selection.bound, insert);
-			
-			// nullify gtk selection
-			buffer.select_range (insert, insert);
-		}
-		
 		public override void move_cursor (MovementStep step, int count, bool extend_selection) {
 			base.move_cursor (step, count, extend_selection);
 			
@@ -451,6 +454,12 @@ namespace Vanubi.UI {
 			}
 			
 			selection = new EditorSelection.with_iters (insert, bound);
+		}
+
+		public void on_paste_done (Clipboard clipboard) {
+			if (has_focus) {
+				reset_selection ();
+			}
 		}
 	}
 	
