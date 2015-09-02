@@ -318,5 +318,24 @@ namespace Vanubi {
 		for (i = 0; i < size; i++) {
 			print ("%s\n", strings[i]);
 		}
-     }
+	}
+
+	static Regex strip_ansi_escape_regex = null;
+	
+	public string strip_ansi_escape (string str) {
+		if (strip_ansi_escape_regex == null) {
+			try {
+				strip_ansi_escape_regex = new Regex ("\x1b\\[[^a-z]+[a-z]", RegexCompileFlags.CASELESS|RegexCompileFlags.OPTIMIZE|RegexCompileFlags.DUPNAMES);
+			} catch (Error e) {
+				error (e.message);
+			}
+		}
+
+		try {
+			return strip_ansi_escape_regex.replace_literal (str, -1, 0, "");
+		} catch (Error e) {
+			warning (e.message);
+			return str;
+		}
+	}
 }
