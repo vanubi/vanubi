@@ -325,7 +325,7 @@ namespace Vanubi {
 	public string strip_ansi_escape (string str) {
 		if (strip_ansi_escape_regex == null) {
 			try {
-				strip_ansi_escape_regex = new Regex ("\x1b\\[[^a-z]+[a-z]", RegexCompileFlags.CASELESS|RegexCompileFlags.OPTIMIZE|RegexCompileFlags.DUPNAMES);
+				strip_ansi_escape_regex = new Regex ("\x1b\\[[^@-~]+[@-~]", RegexCompileFlags.CASELESS|RegexCompileFlags.OPTIMIZE|RegexCompileFlags.DUPNAMES);
 			} catch (Error e) {
 				error (e.message);
 			}
