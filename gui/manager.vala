@@ -160,6 +160,10 @@ namespace Vanubi.UI {
 			index_command ("delete-word-forward", "Delete the word next to the cursor");
 			execute_command["delete-word-forward"].connect (on_delete_word_forward);
 
+			bind_command ({ Key (Gdk.Key.BackSpace, Gdk.ModifierType.CONTROL_MASK) }, "delete-word-backward");
+			index_command ("delete-word-backward", "Delete the word behind the cursor");
+			execute_command["delete-word-backward"].connect (on_delete_word_backward);
+
 			bind_command ({ Key (Gdk.Key.BackSpace, Gdk.ModifierType.SHIFT_MASK) }, "delete-white-backward");
 			index_command ("delete-white-backward", "Delete whitespaces and empty lines backwards");
 			execute_command["delete-white-backward"].connect (on_delete_white_backward);
@@ -2155,6 +2159,18 @@ namespace Vanubi.UI {
 			} else {
 				// select the next word and delete
 				ed.view.move_cursor (MovementStep.WORDS, 1, true);
+				ed.view.delete_selection ();
+			}
+			ed.view.buffer.end_user_action ();
+		}
+
+		void on_delete_word_backward (Editor ed) {
+			ed.view.buffer.begin_user_action ();
+			if (!ed.view.selection.empty) {
+				ed.view.delete_selection ();
+			} else {
+				// select the prev word and delete
+				ed.view.move_cursor (MovementStep.WORDS, -1, true);
 				ed.view.delete_selection ();
 			}
 			ed.view.buffer.end_user_action ();
