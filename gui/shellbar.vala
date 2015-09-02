@@ -108,6 +108,7 @@ namespace Vanubi.UI {
 			});
 			
 			if (!is_new) {
+				// key UP
 				term.feed_child ("\033[B\033[A", -1);
 			}
 
@@ -189,10 +190,11 @@ namespace Vanubi.UI {
 							b.append_c ((char) cur[i]);
 						} else {
 							// new line, match error or directory change
+							var line = strip_ansi_escape (b.str);
 							MatchInfo info;
-							if (dir_regex.match (b.str, 0, out info)) {
+							if (dir_regex.match (line, 0, out info)) {
 								curdir = info.fetch (1);
-							} else if (error_regex.match (b.str, 0, out info)) {
+							} else if (error_regex.match (line, 0, out info)) {
 								var filename = info.fetch_named ("f");
 								var start_line_str = info.fetch_named ("sl");
 								var start_column_str = info.fetch_named ("sc");
