@@ -2635,8 +2635,10 @@ namespace Vanubi.UI {
 		}
 
 
-		void on_split (Editor editor, string command) {
-			split_views (editor, command == "split-add-right" ? Orientation.HORIZONTAL : Orientation.VERTICAL);
+		void on_split (Editor ed, string command) {
+			Editor newed = split_views (ed, command == "split-add-right" ? Orientation.HORIZONTAL : Orientation.VERTICAL);
+			newed.view.selection = selection.copy ();
+			Idle.add (() => { newed.view.scroll_to_mark (newed.view.selection.insert, 0, true, 0.5, 0.5); return false; });
 		}
 
 		void single_layout_invariant (Editor editor) {
