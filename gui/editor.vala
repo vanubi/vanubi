@@ -277,6 +277,9 @@ namespace Vanubi.UI {
 			overwrite = state.config.get_editor_bool ("block_cursor");
 			
 			reset_selection ();
+
+			// override does not work because GtkTextView will connect and return TRUE
+			motion_notify_event.connect (on_motion_notify_event);
 		}
 
 		public void draw_selection () {
@@ -364,7 +367,8 @@ namespace Vanubi.UI {
 
 		public override bool focus_out_event (Gdk.EventFocus e) {
 			_selection.show = false;
-			return base.focus_in_event (e);
+			mouse_selection = false;
+			return base.focus_out_event (e);
 		}
 
 		bool is_key_move (Gdk.EventKey e) {
@@ -419,17 +423,31 @@ namespace Vanubi.UI {
 			return false;
 		}
 
+		bool mouse_selection = false;
+		
 		public override bool button_press_event (Gdk.EventButton e) {
 			bool ret = base.button_press_event (e);
 			
 			reset_selection (Gdk.ModifierType.SHIFT_MASK in e.state);
+			mouse_selection = true;
 
 			return ret;
 		}
 
-		public override bool drag_motion (Gdk.DragContext context, int x, int y, uint time) {
-			message("foo");
-			return true;
+		public override bool button_release_event (Gdk.EventButton e) {
+			bool ret = base.button_release_event (e);
+
+			mouse_selection = false;
+
+			return ret;
+		}
+		
+		public bool on_motion_notify_event (Gdk.EventMotion e) {
+			if (mouse_selection) {
+				Idle.add_full (Priority.HIGH, () => { reset_selection (true); return false; });
+			}
+			
+			return false;
 		}
 
 		void commit_text (string text) {
