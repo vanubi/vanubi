@@ -36,7 +36,7 @@ namespace Vanubi.UI {
 
 		public Vade.Scope base_scope; // Scope for user global variables
 		EventBox main_box;
-		public Layout current_layout;
+		public Layout current_layout { get; set; }
 		EventBox layout_wrapper;
 		StatusBar statusbar;
 		RemoteFileServer remote = null;
@@ -2833,6 +2833,7 @@ namespace Vanubi.UI {
 			} else if (index >= len) {
 				index = 0;
 			}
+
 			current_layout = layouts.nth_data (index);
 			layout_wrapper.remove (layout_wrapper.get_child ());
 			layout_wrapper.add (current_layout);

@@ -550,6 +550,7 @@ namespace Vanubi.UI {
 		uint save_session_timer = 0;
 		Git git;
 		TrailingSpaces? trailsp = null;
+		public Layout parent_layout;
 
 		public Editor (Manager manager, DataSource source, EditorBuffer? buf = null) {
 			this.manager = manager;
@@ -638,6 +639,12 @@ namespace Vanubi.UI {
 			view.buffer.modified_changed.connect_after (on_modified_changed);
 			view.buffer.changed.connect_after (on_content_changed);
 
+			manager.notify["current-layout"].connect (() => {
+					if (manager.current_layout == parent_layout) {
+						on_git_gutter ();
+					}
+			});
+			
 			view.focus_in_event.connect(() => {
 					parent_layout.last_focused_editor = this;
 					infobar.get_style_context().remove_class ("nonfocused");
@@ -708,8 +715,6 @@ namespace Vanubi.UI {
 			}
 		}
 
-		public Layout parent_layout { get; set; }
-		
 		public void reset_language () {
 			var file = source as FileSource;
 
@@ -1039,7 +1044,7 @@ namespace Vanubi.UI {
 				gutter.insert (gutter_renderer, 0);
 			}
 
-			if (file_loaded) {
+			if (file_loaded && manager.current_layout == parent_layout) {
 				if (diff_timer > 0) {
 					Source.remove (diff_timer);
 				}
@@ -1053,6 +1058,7 @@ namespace Vanubi.UI {
 						}
 
 						var cancellable = diff_cancellable = new Cancellable ();
+						message("diff");
 						git.diff_buffer.begin ((FileSource) source, view.buffer.text.data, Priority.DEFAULT, cancellable, (obj, res) => {
 								HashTable<int, DiffType> table;
 								try {
