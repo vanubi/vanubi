@@ -2072,12 +2072,14 @@ namespace Vanubi.UI {
 			var buf = view.buffer;
 			buf.begin_user_action ();
 
-			view.delete_selection ();
+			if (command != "tab") {
+				view.delete_selection ();
+			}
 
 			bool do_indent = true;
 			// check if this is the first non-white char of the line
 			TextIter iter;
-			buf.get_iter_at_mark (out iter, buf.get_insert ());
+			buf.get_iter_at_mark (out iter, selection.insert);
 			while (!iter.starts_line () && iter.backward_char() && iter.get_char().isspace ());
 			if (!iter.starts_line ()) {
 				do_indent = false;
@@ -2093,11 +2095,23 @@ namespace Vanubi.UI {
 			} else if (command == "close-square-brace") {
 				view.insert_at_cursor ("]");
 			} else if (command == "tab") {
-				view.insert_at_cursor ("\t");
+				// insert a tab on each line
+				TextIter start, end;
+				selection.get_iters (out start, out end);
+
+				int start_line = start.get_line ();
+				int end_line = end.get_line ();
+				var vbuf = new UI.Buffer (view);
+				var viter = vbuf.line_start (start_line);
+				while (viter.line <= end_line && !viter.eof) {
+					vbuf.insert (viter, "\t");
+					viter.forward_line ();
+				}
+				
 				do_indent = false;
 			}
 
-			ed.view.scroll_mark_onscreen (buf.get_insert ());
+			ed.view.scroll_mark_onscreen (selection.start);
 			update_selection (ed);
 
 			var indent_engine = get_indent_engine (ed);
@@ -2105,6 +2119,7 @@ namespace Vanubi.UI {
 			if (indent_engine is Indent_Python && command != "return") {
 				do_indent = false;
 			}
+			
 			if (indent_engine != null && do_indent) {
 				execute_command["indent"] (ed, "indent");
 			}

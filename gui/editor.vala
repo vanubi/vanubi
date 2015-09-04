@@ -147,6 +147,14 @@ namespace Vanubi.UI {
 			buffer.get_iter_at_mark (out end, this.end);
 		}
 
+		public void get_viters (UI.Buffer vbuf, out UI.BufferIter start, out UI.BufferIter end) {
+			TextIter istart, iend;
+			get_iters (out istart, out iend);
+
+			start = new UI.BufferIter (vbuf, istart);
+			end = new UI.BufferIter (vbuf, iend);
+		}
+		
 		public void get_offsets (out int start, out int end) {
 			TextIter istart, iend;
 			get_iters (out istart, out iend);
@@ -396,12 +404,6 @@ namespace Vanubi.UI {
 				e.keyval == Gdk.Key.KP_Enter) {
 				commit_text ("\n");
 				return true;
-			} else if ((e.keyval == Gdk.Key.Tab ||
-					e.keyval == Gdk.Key.KP_Tab ||
-					e.keyval == Gdk.Key.ISO_Left_Tab) &&
-			!(Gdk.ModifierType.CONTROL_MASK in e.state)) {
-				commit_text ("\t");
-				return true;
 			}
 
 			if (is_key_move (e)) {
@@ -412,9 +414,13 @@ namespace Vanubi.UI {
 				return ret;
 			}
 
+			// handled by manager
 			if (e.keyval == Gdk.Key.Delete ||
 				e.keyval == Gdk.Key.KP_Delete ||
-				e.keyval == Gdk.Key.BackSpace) {
+				e.keyval == Gdk.Key.BackSpace ||
+				e.keyval == Gdk.Key.Tab ||
+				e.keyval == Gdk.Key.KP_Tab ||
+				e.keyval == Gdk.Key.ISO_Left_Tab) {
 				return false;
 			}
 			
