@@ -1770,9 +1770,6 @@ namespace Vanubi.UI {
 			on_copy (ed);
 
 			ed.view.delete_selection ();
-			/* TextIter start, end; */
-			/* selection.get_iters (out start, out end); */
-			/* selection.buffer.delete (ref start, ref end); */
 			ed.view.buffer.end_user_action ();
 		}
 
@@ -1780,14 +1777,14 @@ namespace Vanubi.UI {
 			// TODO: make it asynchronous
 			
 			Clipboard clip = Clipboard.get (Gdk.SELECTION_CLIPBOARD);
-			var text = clip.wait_for_text ();
-			
-			if (text != null) {
-				ed.view.buffer.begin_user_action ();
-				ed.view.delete_selection ();
-				ed.view.insert_at_cursor (text);
-				ed.view.buffer.end_user_action ();
-			}
+			clip.request_text ((c, text) => {
+					if (text != null) {
+						ed.view.buffer.begin_user_action ();
+						ed.view.delete_selection ();
+						ed.view.insert_at_cursor (text);
+						ed.view.buffer.end_user_action ();
+					}
+			});
 		}
 
 		void on_select_all (Editor ed) {
