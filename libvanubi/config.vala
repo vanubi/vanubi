@@ -379,7 +379,10 @@ namespace Vanubi {
 			var groups = backend.get_groups ();
 			foreach (unowned string group in groups) {
 				if (group.has_prefix ("source:")) {
-					res += (FileSource) DataSource.new_from_string (group.substring("source:".length));
+					var file = DataSource.new_from_string (group.substring("source:".length));
+					if (file is FileSource) {
+						res += (FileSource) file;
+					}
 				}
 			}
 			return res;
