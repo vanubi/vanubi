@@ -440,6 +440,11 @@ namespace Vanubi.UI {
 		uint mouse_selection_idle = 0;
 		
 		public override bool button_press_event (Gdk.EventButton e) {
+			if (e.button == 3) {
+				// no, right click will not open a menu. Find a better use case for this button...
+				return true;
+			}
+			
 			bool ret = base.button_press_event (e);
 
 			if (e.button == 1) {
