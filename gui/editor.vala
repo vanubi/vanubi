@@ -1058,7 +1058,6 @@ namespace Vanubi.UI {
 						}
 
 						var cancellable = diff_cancellable = new Cancellable ();
-						message("diff");
 						git.diff_buffer.begin ((FileSource) source, view.buffer.text.data, Priority.DEFAULT, cancellable, (obj, res) => {
 								HashTable<int, DiffType> table;
 								try {
