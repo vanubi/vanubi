@@ -1761,10 +1761,12 @@ namespace Vanubi.UI {
 		void on_copy (Editor ed) {
 			TextIter start, end;
 			selection.get_iters (out start, out end);
-			
-			var text = selection.buffer.get_text (start, end, false);
-			Clipboard clip = Clipboard.get (Gdk.SELECTION_CLIPBOARD);
-			clip.set_text (text, -1);
+
+			if (start.get_offset() != end.get_offset()) {
+				var text = selection.buffer.get_text (start, end, false);
+				Clipboard clip = Clipboard.get (Gdk.SELECTION_CLIPBOARD);
+				clip.set_text (text, -1);
+			}
 		}
 
 		void on_cut (Editor ed) {
