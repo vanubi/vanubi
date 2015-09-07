@@ -359,6 +359,17 @@ namespace Vanubi.UI {
 			// nullify gtk selection
 			buffer.select_range (insert, insert);
 		}
+
+		void set_primary_clipboard () {
+			TextIter start, end;
+			selection.get_iters (out start, out end);
+
+			if (start.get_offset() != end.get_offset()) {
+				var text = selection.buffer.get_text (start, end, false);
+				Clipboard clip = Clipboard.get (Gdk.SELECTION_PRIMARY);
+				clip.set_text (text, -1);
+			}
+		}
 		
 		/* events */
 
@@ -426,6 +437,7 @@ namespace Vanubi.UI {
 		}
 
 		bool mouse_selection = false;
+		uint mouse_selection_idle = 0;
 		
 		public override bool button_press_event (Gdk.EventButton e) {
 			bool ret = base.button_press_event (e);
@@ -433,6 +445,7 @@ namespace Vanubi.UI {
 			if (e.button == 1) {
 				reset_selection (Gdk.ModifierType.SHIFT_MASK in e.state);
 				mouse_selection = true;
+				set_primary_clipboard ();
 			}
 
 			return ret;
@@ -450,7 +463,16 @@ namespace Vanubi.UI {
 		
 		public bool on_motion_notify_event (Gdk.EventMotion e) {
 			if (mouse_selection) {
-				Idle.add_full (Priority.HIGH, () => { reset_selection (true); return false; });
+				if (mouse_selection_idle > 0) {
+					Source.remove (mouse_selection_idle);
+				}
+				
+				mouse_selection_idle = Idle.add_full (Priority.HIGH, () => {
+						mouse_selection_idle = 0;
+						reset_selection (true);
+						set_primary_clipboard ();
+						return false;
+				});
 			}
 			
 			return false;
