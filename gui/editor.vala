@@ -407,11 +407,7 @@ namespace Vanubi.UI {
 			}
 
 			if (is_key_move (e)) {
-				bool ret = base.key_press_event (e);
-				
-				reset_selection (Gdk.ModifierType.SHIFT_MASK in e.state);
-
-				return ret;
+				return base.key_press_event (e);
 			}
 
 			// handled by manager
@@ -433,9 +429,11 @@ namespace Vanubi.UI {
 		
 		public override bool button_press_event (Gdk.EventButton e) {
 			bool ret = base.button_press_event (e);
-			
-			reset_selection (Gdk.ModifierType.SHIFT_MASK in e.state);
-			mouse_selection = true;
+
+			if (e.button == 1) {
+				reset_selection (Gdk.ModifierType.SHIFT_MASK in e.state);
+				mouse_selection = true;
+			}
 
 			return ret;
 		}
@@ -443,7 +441,9 @@ namespace Vanubi.UI {
 		public override bool button_release_event (Gdk.EventButton e) {
 			bool ret = base.button_release_event (e);
 
-			mouse_selection = false;
+			if (e.button == 1) {
+				mouse_selection = false;
+			}
 
 			return ret;
 		}
