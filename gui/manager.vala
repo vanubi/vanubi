@@ -19,6 +19,8 @@
 
 using Gtk;
 
+public extern void gtk_clipboard_request_text (Gtk.Clipboard clipboard, [CCode (scope = "async")] owned Gtk.ClipboardTextReceivedFunc callback);
+
 namespace Vanubi.UI {
 	public class Manager : Grid {
 		public State state;
@@ -1774,10 +1776,8 @@ namespace Vanubi.UI {
 		}
 
 		void on_paste (Editor ed) {
-			// TODO: make it asynchronous
-			
 			Clipboard clip = Clipboard.get (Gdk.SELECTION_CLIPBOARD);
-			clip.request_text ((c, text) => {
+			gtk_clipboard_request_text (clip, (c, text) => {
 					if (text != null) {
 						ed.view.buffer.begin_user_action ();
 						ed.view.delete_selection ();
