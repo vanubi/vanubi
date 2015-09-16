@@ -448,7 +448,16 @@ namespace Vanubi.UI {
 			bool ret = base.button_press_event (e);
 
 			if (e.button == 1) {
-				reset_selection (Gdk.ModifierType.SHIFT_MASK in e.state);
+				if (e.type == Gdk.EventType.@2BUTTON_PRESS) {
+					// use the gtk selection :(
+					TextIter insert, bound;
+					buffer.get_iter_at_mark (out insert, buffer.get_insert ());
+					buffer.get_iter_at_mark (out bound, buffer.get_selection_bound ());
+					selection = new EditorSelection.with_iters (insert, bound);
+				} else {
+					reset_selection (Gdk.ModifierType.SHIFT_MASK in e.state);
+				}
+				
 				mouse_selection = true;
 				set_primary_clipboard ();
 			}
