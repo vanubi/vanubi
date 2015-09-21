@@ -228,7 +228,7 @@ namespace Vanubi.UI {
 					// found
 					found_occurrence = true;
 					editor.view.selection = new EditorSelection.with_iters (iter, subiter);
-					editor.view.draw_selection (); // has no selection
+					editor.view.draw_selection (); // has no focus
 					editor.view.scroll_to_mark (editor.view.selection.insert, 0, true, 0.5, 0.5);
 					state.status.clear ("search");
 					return;
@@ -299,12 +299,12 @@ namespace Vanubi.UI {
 
 			var buf = editor.view.buffer;
 			buf.begin_user_action ();		
-			buf.delete_selection (true, true);
-			buf.insert_at_cursor (r, -1);
+			editor.view.delete_selection ();
+			editor.view.insert_at_cursor (r);
 			buf.end_user_action ();
 						
 			TextIter iter;
-			buf.get_iter_at_mark (out iter, buf.get_insert ());
+			buf.get_iter_at_mark (out iter, editor.view.selection.insert);
 			search.begin (iter);
 		}
 		
