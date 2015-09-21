@@ -1790,7 +1790,10 @@ namespace Vanubi.UI {
 		}
 
 		void on_select_all (Editor ed) {
-			ed.view.select_all(true);
+			TextIter start, end;
+			ed.view.buffer.get_start_iter (out start);
+			ed.view.buffer.get_end_iter (out end);
+			ed.view.selection = new EditorSelection.with_iters(start, end);
 		}
 
 		void on_abbrev_complete (Editor ed) {
