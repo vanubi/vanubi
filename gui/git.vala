@@ -1,5 +1,5 @@
 /*
-*  Copyright © 2014 Rocco Folino
+*  Copyright © 2014-2016 Rocco Folino
 *
 *  This file is part of Vanubi.
 *

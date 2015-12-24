@@ -1,6 +1,6 @@
 /* gspawn.c - Process launching
  *
- *  Copyright 2000-2014 Red Hat, Inc.
+ *  Copyright 2000-2016 Red Hat, Inc.
  *  g_execvpe implementation based on GNU libc execvp:
  *   Copyright 1991, 92, 95, 96, 97, 98, 99 Free Software Foundation, Inc.
  *

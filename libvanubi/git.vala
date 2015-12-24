@@ -1,6 +1,6 @@
 /*
- *  Copyright © 2014 Luca Bruno
- *  Copyright © 2014 Rocco Folino
+ *  Copyright © 2014-2016-2016 Luca Bruno
+ *  Copyright © 2014-2016-2016 Rocco Folino
  *
  *  This file is part of Vanubi.
  *
