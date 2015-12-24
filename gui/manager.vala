@@ -2014,7 +2014,7 @@ namespace Vanubi.UI {
 			TextIter current;
 			buf.get_iter_at_mark (out current, buf.get_insert ());
 
-			/* Gtk stops at just one char :( */
+			/* Gtk stops at just one char :( is this still a bug? */
 			if (extend_select && !current.ends_line ()) {
 				ed.view.move_cursor (MovementStep.LOGICAL_POSITIONS, 1, extend_select);
 			}
