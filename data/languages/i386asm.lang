@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE language SYSTEM "language.dtd">
-<language _name="i386 Assembly" version="1.0" _section="Sources" globs="*.S" mimetypes="text/x-asm;text/x-assembler">
+<language _name="i386 Assembler" version="1.0" _section="Sources" mimetypes="text/x-asm;text/x-assembler">
 	
 	<escape-char>\</escape-char>
 
@@ -34,25 +34,53 @@
 		match-empty-string-at-beginning = "FALSE"
 		match-empty-string-at-end = "TRUE"
 		beginning-regex = "%">
-		
-		<!-- intel 386 -->
 
+		<!-- x86-64 -->
 		<keyword>rax</keyword>
 		<keyword>rbx</keyword>
 		<keyword>rcx</keyword>
-		<keyword>rdx</keyword>
-		<keyword>rdi</keyword>
+		<keyword>rdx</keyword>		
 		<keyword>rsi</keyword>
+		<keyword>rdi</keyword>		
 		<keyword>rsp</keyword>
-		<keyword>rip</keyword>
+		<keyword>rbp</keyword>
 		<keyword>r8</keyword>
 		<keyword>r9</keyword>
 		<keyword>r10</keyword>
-		<keyword>r11</keyword>
+		<keyword>r11</keyword>		
 		<keyword>r12</keyword>
-		<keyword>r13</keyword>
+		<keyword>r13</keyword>		
 		<keyword>r14</keyword>
 		<keyword>r15</keyword>
+
+		<keyword>r8d</keyword>
+		<keyword>r9d</keyword>
+		<keyword>r10d</keyword>
+		<keyword>r11d</keyword>		
+		<keyword>r12d</keyword>
+		<keyword>r13d</keyword>		
+		<keyword>r14d</keyword>
+		<keyword>r15d</keyword>
+
+		<keyword>r8w</keyword>
+		<keyword>r9w</keyword>
+		<keyword>r10w</keyword>
+		<keyword>r11w</keyword>		
+		<keyword>r12w</keyword>
+		<keyword>r13w</keyword>		
+		<keyword>r14w</keyword>
+		<keyword>r15w</keyword>
+
+		<keyword>r8b</keyword>
+		<keyword>r9b</keyword>
+		<keyword>r10b</keyword>
+		<keyword>r11b</keyword>		
+		<keyword>r12b</keyword>
+		<keyword>r13b</keyword>		
+		<keyword>r14b</keyword>
+		<keyword>r15b</keyword>
+		
+		<!-- intel 386 -->
 		
 		<keyword>eax</keyword>
 		<keyword>ebx</keyword>
@@ -91,6 +119,7 @@
 		<keyword>cr0</keyword>
 		<keyword>cr2</keyword>
 		<keyword>cr3</keyword>
+		<keyword>cr4</keyword>
 		
 		<keyword>db0</keyword>
 		<keyword>db1</keyword>
@@ -129,12 +158,73 @@
 		<keyword>xmm5</keyword>
 		<keyword>xmm6</keyword>
 		<keyword>xmm7</keyword>
+		<!-- x86_64 -->
+		<keyword>xmm8</keyword>
+		<keyword>xmm9</keyword>
+		<keyword>xmm10</keyword>
+		<keyword>xmm11</keyword>
+		<keyword>xmm12</keyword>
+		<keyword>xmm13</keyword>
+		<keyword>xmm14</keyword>
+		<keyword>xmm15</keyword>
+
+		<!-- AVX -->
+		<keyword>ymm0</keyword>
+		<keyword>ymm1</keyword>
+		<keyword>ymm2</keyword>
+		<keyword>ymm3</keyword>
+		<keyword>ymm4</keyword>
+		<keyword>ymm5</keyword>
+		<keyword>ymm6</keyword>
+		<keyword>ymm7</keyword>
+		<keyword>ymm8</keyword>
+		<keyword>ymm9</keyword>
+		<keyword>ymm10</keyword>
+		<keyword>ymm11</keyword>
+		<keyword>ymm12</keyword>
+		<keyword>ymm13</keyword>
+		<keyword>ymm14</keyword>
+		<keyword>ymm15</keyword>
+
+		<!-- AVX-512 -->
+		<keyword>zmm0</keyword>
+		<keyword>zmm1</keyword>
+		<keyword>zmm2</keyword>
+		<keyword>zmm3</keyword>
+		<keyword>zmm4</keyword>
+		<keyword>zmm5</keyword>
+		<keyword>zmm6</keyword>
+		<keyword>zmm7</keyword>
+		<keyword>zmm8</keyword>
+		<keyword>zmm9</keyword>
+		<keyword>zmm10</keyword>
+		<keyword>zmm11</keyword>
+		<keyword>zmm12</keyword>
+		<keyword>zmm13</keyword>
+		<keyword>zmm14</keyword>
+		<keyword>zmm15</keyword>
+		<keyword>zmm16</keyword>
+		<keyword>zmm17</keyword>
+		<keyword>zmm18</keyword>
+		<keyword>zmm19</keyword>
+		<keyword>zmm20</keyword>
+		<keyword>zmm21</keyword>
+		<keyword>zmm22</keyword>
+		<keyword>zmm23</keyword>
+		<keyword>zmm24</keyword>
+		<keyword>zmm25</keyword>
+		<keyword>zmm26</keyword>
+		<keyword>zmm27</keyword>
+		<keyword>zmm28</keyword>
+		<keyword>zmm29</keyword>
+		<keyword>zmm30</keyword>
+		<keyword>zmm31</keyword>
 	</keyword-list>
 <!--
 		<end-regex>"[bwl]"</end-regex>
 -->
 	<keyword-list _name = "InstData" style = "Keyword" case-sensitive="TRUE"
-		end-regex = "[bwl]">
+		end-regex = "[bwlq]">
 		<keyword>adc</keyword>
 		<keyword>add</keyword>
 		<keyword>and</keyword>
