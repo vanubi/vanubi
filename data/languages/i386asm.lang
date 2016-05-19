@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE language SYSTEM "language.dtd">
-<language _name="i386 Assembler" version="1.0" _section="Sources" mimetypes="text/x-asm;text/x-assembler">
+<language _name="i386 Assembler" version="1.0" _section="Sources" globs="*.S" mimetypes="text/x-asm;text/x-assembler">
 	
 	<escape-char>\</escape-char>
 
