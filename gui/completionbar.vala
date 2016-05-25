@@ -146,6 +146,11 @@ namespace Vanubi.UI {
 			Label label;
 			int n_render = 100; // too few means not all space is exploited, too many means more things to negotiate size with
 
+			construct {
+				get_style_context().add_class ("VanubiUICompletionBarCompletionBox");
+				reset_style ();
+			}
+			
 			public CompletionBox (owned Annotated[] choices) {
 				orientation = Orientation.HORIZONTAL;
 				this.choices = (owned) choices;

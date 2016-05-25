@@ -22,6 +22,11 @@ using Gtk;
 
 namespace Vanubi.UI {
 	public class GrepView : SourceView {
+		construct {
+			get_style_context().add_class ("VanubiUIGrepView");
+			reset_style ();
+		}
+
 		public GrepView (Configuration conf) {
 			Object (buffer: new GrepBuffer ());
 			var style_manager = SourceStyleSchemeManager.get_default ();

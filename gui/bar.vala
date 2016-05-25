@@ -30,6 +30,11 @@ namespace Vanubi.UI {
 	}
 	
 	public class Bar : Grid {
+		construct {
+			get_style_context().add_class ("VanubiUIBar");
+			reset_style ();
+		}
+		
 		public signal void aborted ();
 
 		protected virtual bool on_key_press_event (Gdk.EventKey e) {
@@ -42,6 +47,10 @@ namespace Vanubi.UI {
 	}
 
 	public class StatusBar : Label {
+		construct {
+			get_style_context().add_class ("VanubiUIStatusBar");
+			reset_style ();
+		}
 	}
 
 	public class MessageBar : Bar {
@@ -123,6 +132,10 @@ namespace Vanubi.UI {
 	}
 
 	class EditorInfoBar : Grid {
+		construct {
+			get_style_context().add_class ("VanubiUIEditorInfoBar");
+			reset_style ();
+		}
 	}
 
 	class SimpleCompletionBar<G> : CompletionBar<G> {

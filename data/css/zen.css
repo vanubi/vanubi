@@ -1,32 +1,33 @@
-VanubiUIEditorView {
+.VanubiUIEditorView * {
 	-GtkWidget-cursor-aspect-ratio: 0.1;
 }
 
-VanubiUIEditorView {
+.VanubiUIEditorView * {
 	-GtkWidget-cursor-color: yellow;
 }
 
-VanubiUIEditorInfoBar {
+.VanubiUIEditorInfoBar {
 	background: #1b2e35;
 }
 
-VanubiUIEditorInfoBar GtkLabel {
+.VanubiUIEditorInfoBar GtkLabel, .VanubiUIEditorInfoBar label {
 	color: #babdb6;
 }
 
-VanubiUIEditorInfoBar.nonfocused {
+.VanubiUIEditorInfoBar.nonfocused {
 	background: black;
 }
 
-VanubiUIEditorInfoBar.nonfocused GtkLabel {
+.VanubiUIEditorInfoBar.nonfocused GtkLabel, .VanubiUIEditorInfoBar.nonfocused label {
 	color: #555753;
 }
 
-VanubiUIEditorView {
+.VanubiUIEditorView * {
 	background: black;
+	color: white;
 }
 
-VanubiUIEditorView:selected {
+.VanubiUIEditorView *:selected {
 	background: blue;
 }
 
@@ -34,64 +35,64 @@ VanubiUIEditorView:selected {
 	font-weight: bold;
 }
 
-VanubiUIBar GtkEntry {
+.VanubiUIBar GtkEntry, .VanubiUIBar entry {
 	color: white;
 	border: 1px solid #204a87;
 	background: black;
 	padding: 2px 3px 2px 3px;
 }
 
-VanubiUIBar GtkEntry:selected {
+.VanubiUIBar GtkEntry:selected, .VanubiUIBar entry:selected {
 	background: #001522;
 }
 
-VanubiUIBar GtkEntry.error {
+.VanubiUIBar GtkEntry.error, VanubiUIBar entry.error {
 	background: #720000;
 }
 
-VanubiUIAboutBar GtkTextView {
+.VanubiUIAboutBar GtkTextView *, .VanubiUIAboutBar textview * {
 	background: #000000;
 }
 
-VanubiUICompletionBarCompletionBox GtkLabel {
+.VanubiUICompletionBarCompletionBox GtkLabel, .VanubiUICompletionBarCompletionBox label {
 	padding: 2px 6px 2px 6px;
 	color: white;
 }
 
-VanubiUIGrepView {
+.VanubiUIGrepView * {
 	background: black;
 	color: white;
 }
 
-VanubiUIManager {
+.VanubiUIManager {
 	background: black;
 	color: white;
 }
 
-VanubiUIManager VanubiUICompletionBarCompletionBox {
+.VanubiUIManager .VanubiUICompletionBarCompletionBox {
 	background: black;
 	color: white;
 }
 
-VanubiUIManager VanubiUIStatusBar {
+.VanubiUIManager .VanubiUIStatusBar {
 	color: #729fcf;
 	background: black;
 	font-weight: bold;
 }
 
-VanubiUIManager GtkEventBox {
+.VanubiUIManager GtkEventBox {
     background: black;
 }
 
-VanubiUIManager VanubiUIStatusBar.error {
+.VanubiUIManager .VanubiUIStatusBar.error {
 	color: red;
 }
 
-GtkTreeView {
+GtkTreeView, treeview {
 	background: black;
 	color: white;
 }
 
-GtkTreeView:selected {
+GtkTreeView:selected, treeview:selected {
 	background: #204a87;
 }

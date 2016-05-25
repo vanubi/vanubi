@@ -270,6 +270,11 @@ namespace Vanubi.UI {
 		}
 		private EditorSelection _selection;
 
+		construct {
+			get_style_context().add_class ("VanubiUIEditorView");
+			reset_style ();
+		}
+		
 		public EditorView (State state, EditorBuffer? buf = null) {
 			this.state = state;
 			tab_width = 4;

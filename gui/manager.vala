@@ -47,7 +47,12 @@ namespace Vanubi.UI {
 		Session last_session;
 
 		List<Layout> layouts = null;
-		
+
+		construct {
+			get_style_context().add_class ("VanubiUIManager");
+			reset_style ();
+		}
+
 		public Manager () {
 			var conf = new Configuration ();
 			state = new State (conf);

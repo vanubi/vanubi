@@ -116,6 +116,9 @@ namespace Vanubi.UI {
 			view.colorize_text ();
 			add (view);
 			show_all ();
+
+			get_style_context().add_class ("VanubiUIAboutBar");
+			reset_style ();
 		}
 
 		public override void grab_focus () {
